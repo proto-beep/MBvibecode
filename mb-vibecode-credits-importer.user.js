@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.187.0
+// @version      3.188.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.187.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.187.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.188.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.188.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.187.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.188.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -205,6 +205,7 @@
       "log.aboutOn": "“about” text taken in again (rows back: {rows}, dates back: {dates})",
       "ignored.why.package": "about the package",
       "log.notesCompanies": "From the Discogs notes, not listed by Discogs ({n}): {list}",
+      "log.entryMerged": "“{name}” is the same entry in MusicBrainz as “{into}”: one entry",
       "log.notesExtras": "From the Discogs notes, besides the credits: {list}",
       "notesExtras.ensembles": "ensembles",
       "notesExtras.liveHeads": "live recordings named",
@@ -233,6 +234,9 @@
       "supp.remove": "remove",
       "supp.title": "From the added source: {name}",
       "supp.summary": "confirmed: {confirmed} · new: {added} · differing: {differ} · not recognized: {unrec}",
+      "supp.known.one": "{n} line recognised as known (not read, but it names what the dashboard has)",
+      "supp.known.other": "{n} lines recognised as known (not read, but they name what the dashboard has)",
+      "log.suppKnown": "Added source: “{line}” not read, but known – {name}: {role} (S327)",
       "supp.msgSome": "Added source: {name} – {list}. What to use is in the list “From the added source: …” of the dashboard.",
       "supp.written": "written “{name}”",
       "supp.kind.more": "more tracks",
@@ -2194,6 +2198,18 @@
       "dsup.plainInstr": "instruments",
       "dsup.plainVocal": "vocals",
       "dsup.conflict": "“{role}” only in the source – held on Skip (MusicBrainz has other roles of this person)",
+      "dsup.ask": "The source has “{role}”, MusicBrainz has other roles of this person ({list}) – is it the same as one of them?",
+      "dsup.sameAs": "The same as “{mb}”",
+      "dsup.same": "“{role}” is “{mb}” on MusicBrainz – nothing to add",
+      "dsup.sameTypo": "“{role}” looks like “{mb}” on MusicBrainz (a slip of spelling) – nothing to add",
+      "dsup.notSame": "Not the same",
+      "dsup.roles": "{n} roles ({list})",
+      "dsup.dates.add": "Date of {role}: MusicBrainz has none – add {to}",
+      "dsup.dates.refine": "Date of {role}: MusicBrainz {mb} – more precisely {to}",
+      "dsup.dates.change": "Date of {role}: MusicBrainz {mb} – the source differs, both have {to} in common",
+      "log.dsupSame": "Compared with MusicBrainz: “{role}” is the same as “{mb}” – nothing to add",
+      "log.dsupNotSame": "Compared with MusicBrainz: “{role}” is not the same as a role of MusicBrainz",
+      "dgStatus.same": "on MusicBrainz, written otherwise",
       "dsup.covered": "“{role}”: MusicBrainz has it more precisely (“{mb}”) – held on Skip",
       "dsup.update": "“{role}” instead of “{mb}” on MusicBrainz – an update",
       "dsup.takeAnyway": "Add anyway",
@@ -3993,6 +4009,7 @@
       "em.narrow": "Show the roles of {name} compact again",
       "em.chipAskTitle": "A question to answer: opens the full matrix of this entry at this role",
       "em.chipAsk": "Answer the question of {name} here",
+      "em.chipJoined": "MusicBrainz takes “{name}” once per person and target: one relationship with the other “{name}” of this entry, credited “{credit}”",
       "em.chipNoteType": "“{role}” – chosen: {type}",
       "em.chipOut": "Remove {name} from this event",
       "em.by.event": "by event",
@@ -5414,6 +5431,11 @@
     { id: 'S321', where: 'TEXT.parse (editionLines)', note: 'Texts (3.187.0; collected items Z-BCEDITION, Z-LINERNOTE, Z-FORLABEL, Z-TITLEGUEST): credit lines written another way are read – several people in one line ("Glen Moore: Bass - Paul McCandless: Bass Clarinet, Flute - Ralph Towner: Guitar": each their own); "Mastered by David Hachour Colorsound Studio, Paris" (the engineer, and the studio as the place); "All concert photos courtesy of Keith Hodkinson" (photography); "Mandala (Front cover) by Moki Cherry courtesy of the Moki Cherry Estate" (cover art by Moki Cherry; the title of the picture and "courtesy of the … Estate" left out); "Liner Note: X" (the singular) and "Liner Note translation: X"; "Produced by X for Y" (X the producer, Y a label it was produced for – until 3.186.0 a person "X for Y")' },
     { id: 'S322', where: 'titleGuestTracks, applyTrackArtistTracks (TITLE_GUEST)', note: 'Tracks (3.187.0; collected item Z-TITLEGUEST): a guest named in the titles of tracks – "Acute ( w Shelley Hirsch)", "Echo ( w Makigami )", "(with X & Y)", "(feat. X)" – plays on those tracks only: the instruments and voices the source gives without tracks are put on them (not on all tracks, as until 3.186.0). The name of a title may be a part of the full name of an entry ("Makigami" – Makigami Koichi) when no other entry has that part; who is in no title stays on all tracks. With S078 (the tracks of the track artists); the row and the edit note say where the tracks come from' },
     { id: 'S323', where: 'mapRole (prefix)', note: 'Roles (3.187.0; collected item Z-HONORARY): a title of honour – "Producer [Honorary]", "Honorary Producer" – says nothing of single tracks: the role on the release (until 3.186.0 on every recording), credited with the word in full ("honorary producer", as "assistant arranger" – S065: MusicBrainz has no such attribute; where the type takes no role credit, the edit note says it)' },
+    { id: 'S324', where: 'mergeSameCompanies, samePlaceName (PLACE_FILLER), DISCOGS.toRelease (prodFor), withoutAreaTail', note: 'Companies (3.188.0; collected items Z-PLACEDUP, Z-PLACECREDIT): a place or label named twice is one entry – Discogs\'s "Recorded At – Alchemia (2)" and the notes\' "Recorded … at Alchemia Club, Kraków" ("Club", "Estudi" count like "Studio": the same name), "Produced For – Fundacja Słuchaj!" and "Producer [Produced For Fundacja Słuchaj]"; and two entries that are the same place or label in MusicBrainz (found by a link, an alias, or set by hand) are joined – the one with the source\'s link stays, of a role both have the rows that say more stay (the notes\' tracks and date: the place then holds only for those tracks), credited as the notes write it. A place is credited without where it lies: "Hilversum, Holland" for Studio Hilversum is "Hilversum". Off: as until 3.187.0' },
+    { id: 'S325', where: 'msynCreditsOf', note: 'Role credits (3.188.0; collected item Z-SAMEROLECREDIT): MusicBrainz takes an instrument or voice of a person once per target – two rows of the same instrument with different role credits are one relationship (S155). Their role credits are joined as the source joins them: "Drones and loops" (both the instrument effects) is credited "drones and loops"; role credits of different lines of the source are joined by commas as before ("Juno 6, Multipoly"). Off: always commas' },
+    { id: 'S326', where: 'compareSupplement (compare), suppWordKey, suppRowWords', note: 'Added sources (3.188.0; collected item Z-SUPPWORDS): first the word – a role of an added source whose word the same person has in the dashboard already ("cracklebox" beside Discogs\'s "Electronics [Cracklebox]", "voice" beside "Voice", "bass" beside "Bass") is confirmed, whatever the rules make of the word in each source ("other instruments" there, "electronic instruments" here), whether a question of the row is still open, and on which level the row stands now (after "on the release" the tracks it had before count). A new role is named by the word of the source. Off: compared by what the rules make of the words, as until 3.187.0' },
+    { id: 'S327', where: 'compareSupplement, suppKnownLine, renderSupp (supp-known)', note: 'Added sources (3.188.0; collected item Z-SUPPWORDS – the safety net): a line of an added source the reader cannot read is known all the same when it names only people of the dashboard and every other word of it is a word of a role one of them has there – "Liner Note: Lucía Martínez" beside her "Liner Notes [Spanish]", "Liner Note translation: Sarah Claman" beside "Liner Notes [English Translation]". Such a line counts as confirmed and is not shown as "not recognized"; below the table "n lines recognised as known" lists each with the entry and role it was matched to. A line with an unknown name or an unknown word stays "not recognized". Off: every unread line is shown' },
+    { id: 'S328', where: 'dsupHtml, dsupSameOf, typoNear (dsup-same, dsup-notsame), yellItems, companion status "same"', note: 'Compared with MusicBrainz (3.188.0; collected items Z-DSUPASK, Z-COMPMARK): a role only the source has, beside others only MusicBrainz has for the person, is a question with its answers – "The same as “chimes”" (nothing is added) or "Add anyway"; a word a slip of spelling away from a role of MusicBrainz ("chaims" – "chimes") is suggested as the same and is no question ("Not the same" brings it back). The same date for several roles is one line that names them. The footer\'s question leads to the question itself. In the tab of the source such a credit is marked "≈" (on MusicBrainz, written otherwise; Script Companion 1.23.0). Off: the line with "Add anyway" alone, a line per role, as until 3.187.0' },
     { id: 'S299', where: 'TEXT.parse (shopLines; SHOP_BLOCK_LINES)', note: 'Texts (3.169.0; Z-BCSHOPBLOCK): what a shop writes below an edition is left out as "shop" – the edition\'s name with "(Limited Edition …)" and its format, what the records look like ("2 x 180gsm …", "DiscA/B - Transparent green with gold blob", "Packaged in a standard Sleeve."), the block about shipping ("+++++INTERNATIONAL SHIPPING +++++", "- WE DO NOT SHIP TO PO BOXES", "- ALL ORDERS ARE SENT BY TRACKED COURIER …", "UK: 2-3 days") and the page\'s own details ("published March 29, 2019", "license"). They stood under "not recognized". Every free text' },
     { id: 'S298', where: 'TEXT.parse (hyphenTrackLines; HT_TRACKS, HT_HYPHEN, HT_HEAD, HT_SPLIT)', note: 'Texts (3.169.0; Z-HYPHENTRACKS): a lineup written "Pete Callard-Acoustic Guitar On Tracks 1,2,3, Electric Guitar on Tracks 18,19 Hari-Om- Vocals On Tracks 9,10 …" – a hyphen without spaces between name and role, each role with its tracks, the whole lineup in one paragraph (Beatport and shop texts): the paragraph is cut before each name, the name is what stands before the first hyphen whose right side begins with a role ("Hari-Om- Vocals": Hari-Om), "and Vocals on Tracks …" and a role after a list of tracks are roles of their own, "on all tracks" says nothing new; a heading before the first name ("Musicians In The Studio") is a heading. Only for a line that names tracks that way. Every free text' },
     { id: 'S296', where: 'videoLevelWant, videoLevelFor, VIDEO_RULES, R033 (mapRole), rgIsDjMix, Q022', note: 'Video credits and DJ mixes (3.164.0; proposals F-VIDEOLEVEL, F-DJMIX of review run 2): every credit of a video – video director, camera work, cinematographer and the table of video credits (R076, R110, R119) – is on the recordings when its tracks are videos – from 3.169.0 on the videos only when just some of its tracks are (Z-VIDEOTRACKS; until then such a credit went to the release) – and on the release when none is, where MusicBrainz has the type there (the cinematographer and the camera work were always on the recordings, the others on the release). "Mixed By [DJ Mix]" is the DJ-mix of the release, not the mix engineer; on a release group of the type DJ-mix "Mixed By" asks which of the two (Q022)' },
@@ -8704,8 +8726,12 @@
       // [Z-PRODFOR] (3.122.0, S191) a label named after "for" once per role (two producers of the same session); its tracks joined
       for (const c of prodFor) {
         // ((review) Discogs lists it under "Companies, etc." too: that entry only)
-        if (companies.some((x) => !x.prodFor && norm(x.who.name) === norm(c.who.name) && /produced for$/i.test(x.role))) continue;
-        const same = companies.find((x) => x.prodFor && norm(x.who.name) === norm(c.who.name) && x.role === c.role);
+        // ([Z-PLACEDUP] 3.188.0) also written otherwise – "Fundacja Słuchaj" beside the company "Fundacja Słuchaj!": no second label
+        // ((in Node the comparison of company names is not reachable yet: the names as written)
+        const alike = (p, q) => { try { return sameCompanyName(p, q); } catch (e) { return false; } };
+        const sameName = (x) => norm(x.who.name) === norm(c.who.name) || (ruleOn('S324') && alike(x.who.name, c.who.name));
+        if (companies.some((x) => !x.prodFor && sameName(x) && /produced for$/i.test(x.role))) continue;
+        const same = companies.find((x) => x.prodFor && sameName(x) && x.role === c.role);
         if (!same) companies.push({ ...c, prodFor: true });
         else if (same.tracks && (!c.tracks || !c.tracks.indexes)) same.tracks = null;
         else if (same.tracks && c.tracks) same.tracks = { ...same.tracks, indexes: uniq([...same.tracks.indexes, ...c.tracks.indexes]), spec: uniq([same.tracks.spec, c.tracks.spec].filter(Boolean)).join(', ') };
@@ -20440,20 +20466,59 @@
       for (const gid of gids) {
         const key = planKeyOf(gid, artist, lt, r.attrs, row);
         if (!lists.has(key)) lists.set(key, []);
-        lists.get(key).push(prim);
+        lists.get(key).push(prim.map((a) => ({ ...a, msynRow: row })));
       }
     }
     for (const [key, list] of lists) {
       if (list.length < 2) continue;
       const m = new Map();
+      const said = new Map();
       list.flat().forEach((a) => {
         const c = String(a.credited_as || '').trim();
         if (!m.has(a.type.id)) m.set(a.type.id, []);
         if (c && !m.get(a.type.id).some((x) => norm(x) === norm(c))) m.get(a.type.id).push(c);
+        if (!said.has(a.type.id)) said.set(a.type.id, []);
+        said.get(a.type.id).push(...[(a.msynRow && a.msynRow.dSplitFrom) || '', ...(((a.msynRow && a.msynRow.srcRefs) || []).map((x) => x && x.line))].filter(Boolean).map(String));
       });
+      // [Z-SAMEROLECREDIT] (3.188.0, S325) the credits as the source joins them: "Drones and loops" – credited "drones and loops", not
+      // "drones, loops" (several words of one role of the source: its wording, in the case of the credits)
+      if (ruleOn('S325')) {
+        for (const [id, credits] of m) {
+          const joined = msynJoinText(credits, said.get(id) || []);
+          if (joined) m.set(id, [joined]);
+        }
+      }
       out.set(key, m);
     }
     return out;
+  }
+  /**
+   * [Z-SAMEROLECREDIT] (3.188.0, S325) Two role credits the source joins itself in one of its lines ("Drones and loops", "rattles &
+   * bells"): its wording, in the case of the credits – '' when no line has them so.
+   */
+  function msynJoinText(credits, lines) {
+    if (credits.length !== 2) return '';
+    const [x, y] = credits.map(escRe);
+    for (const line of uniq(lines.filter(Boolean).map(String))) {
+      const hit = line.match(new RegExp(`(?<![\\p{L}\\p{N}])(${x})\\s+(and|&|\\+|und|y|et|e)\\s+(${y})(?![\\p{L}\\p{N}])`, 'iu'))
+        || line.match(new RegExp(`(?<![\\p{L}\\p{N}])(${y})\\s+(and|&|\\+|und|y|et|e)\\s+(${x})(?![\\p{L}\\p{N}])`, 'iu'));
+      if (!hit) continue;
+      const own = (w) => credits.find((c) => norm(c) === norm(w)) || w;
+      return `${own(hit[1])} ${hit[2].toLowerCase()} ${own(hit[3])}`;
+    }
+    return '';
+  }
+  /**
+   * [Z-SAMEROLECREDIT] (3.188.0) The role credit a row is staged with when other rows of its entry are the same relationship (the same
+   * instrument or voice on the same level and date, tracks in common): "drones and loops", "Juno 6, Multipoly" – '' when it is alone.
+   */
+  function msynShown(r) {
+    if (!msynMerge() || !r || r.level === 'skip' || !norm(r.primaryText) || !instsKind(r)) return '';
+    const peers = S.rows.filter((x) => x.artistKey === r.artistKey && x.level === r.level && norm(x.primaryText) === norm(r.primaryText) && instsKind(x) === instsKind(r)
+      && instsDateKey(x.date) === instsDateKey(r.date) && (r.level !== 'recording' || [...(x.tracks || [])].some((i) => r.tracks && r.tracks.has(i))));
+    const credits = uniq(peers.map((x) => String(x.roleCredit || '').trim()).filter(Boolean));
+    if (peers.length < 2 || credits.length < 2) return '';
+    return (ruleOn('S325') && msynJoinText(credits, peers.flatMap((x) => [x.dSplitFrom, ...(x.srcRefs || []).map((y) => y && y.line)]))) || credits.join(', ');
   }
   /** [Z-MSYN] The attributes of a row with the role credits of all rows of its relationship ("Juno 6, Multipoly"). */
   function msynApply(attrs, m) {
@@ -20470,7 +20535,9 @@
 
   /** [E4] (3.35.0) Items of the kind that is joined (whether it is joined now or not – a single one keeps its jkey). */
   function joinableKind(it) {
-    return it.kind === 'credit' && !!it.row && !!it.artist && !it.update && !it.replaces && !it.fill && !it.fillDate && !it.attrFill
+    // ([Z-DSUPDATES] 3.188.0) not an item that edits a relationship of MusicBrainz (its date, its instrument made more precise): joined,
+    // only the first of them was edited – 18 dates "Taken ✓", one relationship changed
+    return it.kind === 'credit' && !!it.row && !!it.artist && !it.update && !it.replaces && !it.fill && !it.fillDate && !it.attrFill && !it.relDate && !it.relAttr
       && ['recording', 'release', 'release_group'].includes(it.target.kind) && ['instrument', 'vocal'].includes(norm(it.lt.name))
       && primaryAttrsOf(it).length > 0;
   }
@@ -22868,7 +22935,7 @@
       if (rows.some(uncrPending)) add(rows.filter(uncrPending).every((r) => r.pkgAsk) ? 'can' : 'must', 'uncr', `uncr:${a.key}`, { a });
       // [Z-RMXTITLE] (3.126.0, S200) a remixer of a title, a "remix of" not taken: may be answered
       if (ruleOn('S200') && (rows.some(rmxAsk) || remixOfFor(a).some((x) => !x.taken))) add('can', 'rmx', `rmx:${a.key}`, { a });
-      if (rows.some((r) => r.dsupHold && r.level === 'skip' && ['conflict', 'update'].includes(r.dsupHold.kind))) add('must', 'dsup', `dsup:${a.key}`, { a });
+      if (rows.some((r) => r.dsupHold && r.level === 'skip' && ['conflict', 'update'].includes(r.dsupHold.kind) && !dsupSameOf(r))) add('must', 'dsup', `dsup:${a.key}`, { a }); // ([Z-DSUPASK] 3.188.0: answered "the same": no question)
       rows.filter((r) => r.instsAuto && r.level !== 'skip' && r.level !== 'work').forEach((r) => {
         const ev = eventKeyOf(r);
         if (emAutoCovered(a, ev).length) add('can', 'auto', `auto:${ak}|${ev}`, { row: r, a, ev, ok: true });
@@ -22927,7 +22994,7 @@
     else if (it.kind === 'link') el = sec && sec.querySelector(`[data-match="${it.a.key}"]`);
     else if (it.kind === 'uncr') el = sec && sec.querySelector('[data-el=uncr] > span');
     else if (it.kind === 'rmx') el = sec && sec.querySelector('[data-el=rmx]');
-    else if (it.kind === 'dsup') el = sec && sec.querySelector('[data-el=dsup] .dci-dsup-h');
+    else if (it.kind === 'dsup') el = sec && (sec.querySelector('[data-el=dsup] .dci-dsup-ask, [data-el=dsup] [data-dsup=update]') || sec.querySelector('[data-el=dsup] .dci-dsup-h')); // ([Z-DSUPASK] 3.188.0: the question itself)
     else if (it.kind === 'plays') el = ov.querySelector(`[data-el=plays] [data-plays="${it.q.id}"]`);
     else if (it.kind === 'dgl') el = ov.querySelector('[data-el=dglineup] .dci-festival-offers');
     else if (it.kind === 'rmd') el = ov.querySelector('[data-el=rmdask] .dci-festival-offers');
@@ -27677,6 +27744,47 @@
    * [Z-SUPPMSG] (3.116.0) What a supplement brings, said at the top, in the log and (the cover art) in its window: new, more tracks,
    * other tracks, there already or very similar (nothing to do), not recognized – "Nothing new" when it brings nothing.
    */
+  /** [Z-SUPPWORDS] (3.188.0) A word of a role for comparing: small letters, no accents, no "by", no plural ending. */
+  const suppWordKey = (x) => nameKey(String(x || '').replace(/\s+by$/i, '')).split(' ').map((w) => (w.length > 3 ? w.replace(/(?:es|s)$/, '') : w)).join(' ').trim();
+  /** [Z-SUPPWORDS] (3.188.0, S326) The words of a row: its role as the source writes it, its details, its role credit and its instrument. */
+  function suppRowWords(r) {
+    const out = new Set();
+    [r.dBase, r.base, String(r.raw || '').replace(/\s*\[[^\]]*\]/g, ''), ...(r.mods || []), r.roleCredit, r.primaryText, r.dSplitFrom, (r.instrGuess || {}).word].filter(Boolean)
+      .forEach((x) => { const k = suppWordKey(x); if (k) out.add(k); });
+    return out;
+  }
+  /**
+   * [Z-SUPPWORDS] (3.188.0, S327) A line of an added source the reader could not read, known all the same: it names people of the
+   * dashboard only (no other name), and every other word of it is a word of a role one of them has. → { line, name, role, rowId } or null.
+   */
+  function suppKnownLine(l) {
+    const line = String((l && l.line) || l || '').replace(/\s+→\s+\?.*$/u, '').trim();
+    if (!line) return null;
+    let rest = ` ${nameKey(line)} `;
+    const people = [];
+    for (const a of S.artists.values()) {
+      if (!S.rows.some((r) => r.artistKey === a.key)) continue;
+      for (const n of uniq([a.name, a.rawName, a.mbName, a.caseFrom, ...(a.anvs || []).map((x) => (typeof x === 'string' ? x : x && (x.name || x.anv)))].filter(Boolean).map(nameKey)).sort((x, y) => y.length - x.length)) {
+        if (n.length < 4 || !rest.includes(` ${n} `)) continue;
+        rest = rest.replace(` ${n} `, ' ');
+        people.push(a);
+        break;
+      }
+    }
+    if (!people.length) return null;
+    // (no other name in it: two words with capitals in a row that are no name of the dashboard)
+    const others = line.replace(/[:;,()\[\]–—-]/g, ' ').match(/\p{Lu}[\p{L}'’.-]+\s+\p{Lu}[\p{L}'’.-]+/gu) || [];
+    if (others.some((x) => !people.some((a) => [a.name, a.rawName, a.mbName].filter(Boolean).some((n) => nameKey(n).includes(nameKey(x)) || nameKey(x).includes(nameKey(n)))) && !suppWordKey(x).split(' ').every((w) => people.some((a) => S.rows.some((r) => r.artistKey === a.key && [...suppRowWords(r)].some((k) => k.split(' ').includes(w))))))) return null;
+    const words = rest.trim().split(/\s+/).filter((w) => w.length > 2 && !/^(?:and|the|for|with|von|und|par|por|des|del)$/.test(w)).map((w) => (w.length > 3 ? w.replace(/(?:es|s)$/, '') : w));
+    if (!words.length) return null;
+    for (const a of people) {
+      for (const r of S.rows.filter((x) => x.artistKey === a.key && !x.supp)) {
+        const have = new Set([...suppRowWords(r)].flatMap((k) => k.split(' ')));
+        if (words.every((w) => have.has(w))) return { line, name: a.mbName || a.name, role: r.raw || rowRelText(r), rowId: r.id };
+      }
+    }
+    return null;
+  }
   function suppSummary() {
     const sp = S.supp;
     if (!sp) return;
@@ -27733,11 +27841,31 @@
     }
     const kin = new Set();
     const compare = (a, probe, info) => {
+      // [Z-SUPPWORDS] (3.188.0, S326) first the word: the same person with the same word of the source – "cracklebox", "voice", "bass" –
+      // is there already, whatever the rules make of the word in each source, whether its question is open and on which level the row
+      // stands now (the tracks it had before "on the release" count)
+      let wordRow = null;
+      if (ruleOn('S326') && !info.company) {
+        const w = suppWordKey(probe.dBase || probe.base || probe.raw);
+        const had = (r) => (r.instsPrev ? r.instsPrev.tracks : [...(r.tracks || [])]);
+        // (on the same tracks – or the row on the release or its group, the source naming no tracks; other tracks are a difference: below)
+        const fits = (r) => sameTracks(new Set(had(r)), new Set(info.tracks)) || (r.level !== 'recording' && !r.instsPrev && info.all);
+        const cands = w ? S.rows.filter((r) => r.artistKey === a.key && !r.supp && suppRowWords(r).has(w)) : [];
+        const byWord = cands.find(fits);
+        wordRow = byWord ? null : cands.find((r) => r.level === 'recording' && !kin.has(r)) || null;
+        if (byWord) {
+          if (!byWord.confirmedBy) byWord.confirmedBy = new Set();
+          byWord.confirmedBy.add(short);
+          if (sp.ocr) byWord.ocrSeen = uniq([...(byWord.ocrSeen || []), info.line].filter(Boolean));
+          sp.confirmed++;
+          return null;
+        }
+      }
       // [Z-SUPPMSG] (3.116.0) else a row of the same kind (writer – composer) on the same tracks: very similar ((review) only to say
       // it is there – other tracks make it a new role; each row once)
       const same = S.rows.find((r) => r.artistKey === a.key && suppSig(r) === suppSig(probe));
       const near = same ? null : S.rows.find((r) => r.artistKey === a.key && r.level !== 'skip' && !kin.has(r) && suppSameKind(r, probe) && sameTracks(r.tracks, new Set(info.tracks)));
-      const row = same || near;
+      const row = same || near || wordRow; // ([Z-SUPPWORDS] 3.188.0: the row of the same word on other tracks – a difference, not a new role)
       if (!row) {
         // [Z-SUPPTABLE] (3.148.0) the same relationship more or less precise (an instrument below the other one's, one where the other
         // has none) on tracks of the row: the more precise one preselected; less precise than the dashboard – nothing to decide
@@ -27757,7 +27885,9 @@
           }
           return { kind: 'precise', rowId: r.id, mainSays: rowRelText(r), mainPrimary: r.primaryText || '', mainKey: rowTrustKey(r), firstTracks: trackSetText(r.tracks, r.dAllTracks), firstAll: !!r.dAllTracks, toPrimary: probe.primaryText };
         }
-        return { kind: 'role', types: probe.types || [] };
+        // ([Z-SUPPWORDS] 3.188.0) a new role is named by the word of the source, not only by what the rules guess of it
+        const word = String(probe.dBase || probe.base || probe.raw || '').trim();
+        return { kind: 'role', types: probe.types || [], ...(ruleOn('S326') && word && !norm(info.rel).includes(norm(word)) ? { rel: `${info.rel} · ${tr('common.quoted', { text: word })}` } : {}) };
       }
       if (near) kin.add(near);
       // [Z-SUPPNAV] (3.116.0) a line of the cover art that says what is there already: the row shows it (🖼️, its cut-out)
@@ -27850,7 +27980,25 @@
           rel: fresh.map((x) => x.rel).join('; '), tracks: uniq(fresh.flatMap((x) => x.tracks)), all: fresh.every((x) => x.all) });
       }
     }
-    (sp.rel.unrecognized || []).forEach((l) => items.push({ id: id(), kind: 'unrec', sel: false, line: l }));
+    // [Z-SUPPWORDS] (3.188.0, S327) the safety net: a line the reader could not read that names only people of the dashboard, with words
+    // of a role they have there ("Liner Note: Lucía Martínez" beside her "Liner Notes [Spanish]"), is known – not shown as "not
+    // recognized", listed below the table
+    sp.known = [];
+    (sp.rel.unrecognized || []).forEach((l) => {
+      const k = ruleOn('S327') ? suppKnownLine(l) : null;
+      if (k) {
+        sp.known.push(k);
+        sp.confirmed++;
+        const row = S.rows.find((r) => r.id === k.rowId);
+        if (row) {
+          if (!row.confirmedBy) row.confirmedBy = new Set();
+          row.confirmedBy.add(short);
+        }
+        log('info', 'suppKnown', { line: k.line, name: k.name, role: k.role });
+        return;
+      }
+      items.push({ id: id(), kind: 'unrec', sel: false, line: l });
+    });
     sp.items = items;
     // New entries: what MusicBrainz has for them (shown in the list; looked up again when taken over)
     for (const it of items.filter((x) => x.kind === 'entry')) {
@@ -28399,7 +28547,9 @@
     : `<div class="dci-supp-foot"><span>${esc(tr('supp.nSelected', { n: nSel }))}</span>
           <button type="button" class="dci-apply dci-small" data-act="supp-apply" ${nSel ? '' : 'disabled'}>${esc(tr('supp.apply'))}</button>
           <button type="button" data-act="supp-discard">${esc(tr('supp.discard'))}</button>
-          <span class="dci-sub">${esc(tr('supp.applyHint', { short }))}</span></div>`}` : ''}`;
+          <span class="dci-sub">${esc(tr('supp.applyHint', { short }))}</span></div>`}${(sp.known || []).length ? `<details class="dci-supp-known" data-el="supp-known"><summary>${esc(tr((sp.known.length === 1 ? 'supp.known.one' : 'supp.known.other'), { n: sp.known.length }))}
+          <button type="button" class="dci-textbtn dci-ruleid" data-act="rule-goto" data-rule="S327" title="${esc(tr('rules.gotoTitle'))}">S327</button></summary>
+          <ul>${sp.known.map((k) => `<li><span class="dci-supp-knownline">${esc(k.line)}</span> → <strong>${esc(k.name)}</strong>: ${esc(k.role)}</li>`).join('')}</ul></details>` : ''}` : ''}`;
   }
 
   /** The marks of a row: its source, and the second source when it says the same (or other tracks). */
@@ -29105,7 +29255,7 @@
   // rows already in MusicBrainz are skipped anew, the stage choice is not remembered
   // [3.36.1] also what a supplement marked (differ, confirmedBy, suppTook) and what is open for editing (redrawLater, dateEdit)
   const ROW_OWN_FIELDS = new Set(['id', 'artistKey', 'tracksOpen', 'existingChecked', 'existingAll', 'levelBeforeSkip', 'scopeLevel',
-    'differ', 'confirmedBy', 'suppTook', 'suppOcr', 'ocrSeen', 'redrawLater', 'dateEdit', 'instsPrev', 'instsAuto', 'instsCopy', 'instsWas', 'instsDate', 'instsCommon', 'arhl', 'dsupSeen', 'dsupHold', 'dsupUpd', 'dsupRel', 'dsupTaken']);
+    'differ', 'confirmedBy', 'suppTook', 'suppOcr', 'ocrSeen', 'redrawLater', 'dateEdit', 'instsPrev', 'instsAuto', 'instsCopy', 'instsWas', 'instsDate', 'instsCommon', 'arhl', 'dsupSeen', 'dsupHold', 'dsupUpd', 'dsupRel', 'dsupSame', 'dsupNotSame', 'dsupTaken']);
   const encField = (v) => JSON.stringify(v, (k, x) => (x instanceof Set ? { $set: [...x] } : x instanceof Map ? { $map: [...x] } : x));
   const decField = (t) => JSON.parse(t, (k, x) => (x && typeof x === 'object' && !Array.isArray(x)
     ? (Array.isArray(x.$set) ? new Set(x.$set) : Array.isArray(x.$map) ? new Map(x.$map) : x) : x));
@@ -32908,7 +33058,7 @@
     let shown = String((caps && row.anvFrom) || row.anv || (caps && a.caseFrom) || a.name || '').replace(/\s*\(\d+\)$/, '').replace(/\*$/, '').trim();
     // [Z-PCR] (3.51.0; Q-gd) a place or label with its town or country after a comma ("Sound Development Studio, Zürich"): without it
     // when the rest is MusicBrainz's name or the end is the area the source gives – unless it is part of MusicBrainz's name ("Studio Zürich")
-    if (a.company && mb && ruleOn('S080') && (!a.entityType || ['place', 'label'].includes(a.entityType))) shown = withoutAreaTail(shown, mb, a.area);
+    if (a.company && mb && ruleOn('S080') && (!a.entityType || ['place', 'label'].includes(a.entityType))) shown = withoutAreaTail(shown, mb, a.area, a.entityType === 'place' && ruleOn('S324'));
     // [S031] (3.28.2) only the case differs ("Voices Of Wonder" for Voices of Wonder, "VALFAR" for Valfar): MusicBrainz's
     // spelling, no "credited as" (typed in by hand it stays)
     if (shown && mb && ruleOn('S031') && typo(shown).toLocaleLowerCase() === typo(mb).toLocaleLowerCase()) return '';
@@ -32916,7 +33066,7 @@
   }
 
   /** [Z-PCR] (3.51.0) A name without its area after a comma: "Sound Development Studio, Zürich" → "Sound Development Studio" (see S080). */
-  function withoutAreaTail(name0, mb, area) {
+  function withoutAreaTail(name0, mb, area, place = false) {
     const name = String(name0 || '').replace(/[\s,;]+$/, '');
     const parts = name.split(/\s*,\s*/);
     // ((3.51.0, review) a comma at the end alone goes too: "Studio X,")
@@ -32935,6 +33085,9 @@
       if (same(head, mb)) return head;
       if (same(parts.join(' '), mb)) return name0;
       if (area && norm(area) === norm(tail.replace(/\s*\([A-Z]{2,3}\)$/, ''))) return head;
+      // [Z-PLACECREDIT] (3.188.0, S324) a place: where it lies is no part of its credit – "Hilversum, Holland" for Studio Hilversum is
+      // credited "Hilversum"
+      if (place) return head;
     }
     return name0;
   }
@@ -34806,6 +34959,8 @@
     const name = (ask && r.instrGuess && !(primaryIsValid(r) && norm(r.primaryText)) ? r.instrGuess.word : root ? r.primaryText || rowPhrase(r) || r.raw : rowPhrase(r) || r.raw) || '–';
     const flags = [...r.flags].filter((f) => ['additional', 'guest', 'solo'].includes(f)).map((f) => tr(`em.flag.${f}`));
     const credit = String(r.roleCredit || '').trim();
+    // [Z-SAMEROLECREDIT] (3.188.0) one relationship with other rows of the same instrument: the role credit it is staged with
+    const joinedCredit = credit ? msynShown(r) : '';
     // [176] (3.38.11) its credited as ("as “Lake”"; item 176)
     const as = String(r.credit || '').trim();
     const ids = l.rows.map((x) => x.id).join(',');
@@ -34817,7 +34972,7 @@
     const info = note ? `<span class="dci-em-chipinfo" role="img" tabindex="0" title="${esc(note)}" aria-label="${esc(note)}">ⓘ</span>` : '';
     const menu = open ? `<span class="dci-em-chipmenu dci-em-ask" data-rows="${ids}" data-ask="${esc(key)}" role="group" aria-label="${esc(tr('em.chipAsk', { name }))}">${answers.map((o) => `<button type="button" class="dci-textbtn" data-act="${o.act}"${o.attr ? ` data-${o.attr}="${esc(o.value)}"` : ''}>${esc(o.text)}</button>`).join('')}</span>` : '';
     return `<span class="dci-em-chip${ask ? ' dci-em-chip-ask' : ''}${open ? ' dci-em-chip-open' : ''}${l.rows.some(dsupMark) ? ' dci-dsup-mark' : ''}" data-rows="${ids}" data-line="${esc(l.id)}"${e && !e.skip ? ` data-drag="em-chip" data-id="${esc(l.id)}" data-ev="${esc(e.key)}" draggable="true"` : e ? ` data-ev="${esc(e.key)}"` : ''}>
-      <button type="button" class="dci-em-chipname" data-act="em-chip" title="${esc([tr(ask ? 'em.chipAskTitle' : 'drop.chipTitle'), roleLabel(r).title].filter(Boolean).join('\n'))}">${ask ? '? ' : ''}${esc(name)}${credit ? ` <em>${esc(tr('common.quoted', { text: credit }))}</em>` : ''}${flags.length ? ` <span class="dci-sub">· ${esc(flags.join(' · '))}</span>` : ''}${as ? ` <span class="dci-em-chipas">${esc(tr('group.creditedAs', { name: tr('common.quoted', { text: as }) }))}</span>` : ''}</button>${ruleOn('S201') ? rowOriginsHtml(l.rows, a || S.artists.get(r.artistKey)) : ''}${info}${q}${e ? `<button type="button" class="dci-em-chipx" data-act="em-chipout" data-ev="${esc(e.key)}" title="${esc(tr('em.chipOut', { name }))}" aria-label="${esc(tr('em.chipOut', { name }))}">✕</button>` : ''}${menu}</span>`;
+      <button type="button" class="dci-em-chipname" data-act="em-chip" title="${esc([tr(ask ? 'em.chipAskTitle' : 'drop.chipTitle'), roleLabel(r).title].filter(Boolean).join('\n'))}">${ask ? '? ' : ''}${esc(name)}${credit ? ` <em>${esc(tr('common.quoted', { text: credit }))}</em>` : ''}${joinedCredit ? ` <span class="dci-em-chipjoin" title="${esc(tr('em.chipJoined', { name, credit: joinedCredit }))}">⧉ ${esc(tr('common.quoted', { text: joinedCredit }))}</span>` : ''}${flags.length ? ` <span class="dci-sub">· ${esc(flags.join(' · '))}</span>` : ''}${as ? ` <span class="dci-em-chipas">${esc(tr('group.creditedAs', { name: tr('common.quoted', { text: as }) }))}</span>` : ''}</button>${ruleOn('S201') ? rowOriginsHtml(l.rows, a || S.artists.get(r.artistKey)) : ''}${info}${q}${e ? `<button type="button" class="dci-em-chipx" data-act="em-chipout" data-ev="${esc(e.key)}" title="${esc(tr('em.chipOut', { name }))}" aria-label="${esc(tr('em.chipOut', { name }))}">✕</button>` : ''}${menu}</span>`;
   }
 
   /**
@@ -39221,7 +39376,58 @@
       S.originMemo = null;
     }
   }
+  /**
+   * [Z-PLACEDUP] (3.188.0, S324) Two entries of "Companies, etc." that are the same place or label in MusicBrainz – Discogs's
+   * "Recorded At – Alchemia (2)" and the notes' "… at Alchemia Club, Kraków", found by a link, an alias or by hand – are one entry: the
+   * one with the source's link stays. Of a role both have, the rows that say more stay (the tracks and the date the notes give: fewer
+   * tracks than the whole release), credited as the notes write it; the other rows of the entry that goes move over. Returns how many
+   * entries went.
+   */
+  function mergeSameCompanies() {
+    if (!ruleOn('S324')) return 0;
+    const by = new Map();
+    for (const a of S.artists.values()) {
+      if (!a.company || !a.mbid || a.other || !S.rows.some((r) => r.artistKey === a.key)) continue;
+      const k = `${a.entityType || ''}|${a.mbid}`;
+      if (!by.has(k)) by.set(k, []);
+      by.get(k).push(a);
+    }
+    let n = 0;
+    const typeOf = (r) => { const lt = r.level !== 'skip' ? currentLinkType(r) : null; return lt ? lt.gid : norm(String(r.raw || '')); };
+    const size = (rows) => new Set(rows.flatMap((r) => [...(r.tracks || [])])).size;
+    for (const list of by.values()) {
+      if (list.length < 2) continue;
+      const main = list.find((a) => a.dId) || list[0];
+      for (const o of list) {
+        if (o === main) continue;
+        const mine = S.rows.filter((r) => r.artistKey === o.key);
+        if (mine.some((r) => r.manual || r.entrySkip) || S.rows.some((r) => r.artistKey === main.key && r.entrySkip)) continue;
+        const credit = sourceCreditFor({ anv: o.name }, { ...main, name: o.name, regionPick: null });
+        for (const t of uniq(mine.map(typeOf))) {
+          const theirs = mine.filter((r) => typeOf(r) === t);
+          const ours = S.rows.filter((r) => r.artistKey === main.key && typeOf(r) === t);
+          const recLevel = (rows) => rows.every((r) => r.level === 'recording');
+          // (the rows that say more: the same role on fewer tracks – the notes' "CD 1–4" against the source's whole release)
+          const keepTheirs = !ours.length || (recLevel(theirs) && recLevel(ours) && size(theirs) < size(ours));
+          if (keepTheirs) {
+            S.rows = S.rows.filter((r) => !ours.includes(r));
+            // (the spelling of the entry that goes stays the row's own – its credit follows it: sourceCreditFor)
+            theirs.forEach((r) => { r.artistKey = main.key; if (!r.anv) r.anv = o.name; if (!r.creditTouched && !norm(r.credit) && credit) r.credit = credit; });
+          } else {
+            S.rows = S.rows.filter((r) => !theirs.includes(r));
+            ours.forEach((r) => { if (!r.creditTouched && !norm(r.credit) && credit && !main.dId) Object.assign(r, { credit, anv: r.anv || o.name }); });
+          }
+        }
+        main.altNames = uniq([...(main.altNames || []), o.name].filter(Boolean));
+        if (!main.area && o.area) main.area = o.area;
+        log('info', 'entryMerged', { name: o.name, into: main.mbName || main.name });
+        n++;
+      }
+    }
+    return n;
+  }
   function renderGroupsNow() {
+    mergeSameCompanies(); // [Z-PLACEDUP] (3.188.0, S324)
     yellSoon(); // [Z-YELL] (3.110.0)
     renderSortBox(); // [Z-SORT] (3.112.0)
     dropStaleEntrySkip();
@@ -43279,6 +43485,30 @@
     const [key, vars] = dsupWhyOf(a);
     return `<div class="dci-gapwhy dci-dsupwhy" data-el="dsup" data-why="${esc(key)}" role="note">${esc(`${tr('dsupWhy.head', { script: EDIT_NOTE_SCRIPT_NAME })} ${tr(`dsupWhy.${key}`, vars || {})}`)}</div>`;
   }
+  /** [Z-DSUPASK] (3.188.0) Two words one or two letters apart (five letters at least, the same first letter): "chaims" – "chimes". */
+  function typoNear(a, b) {
+    if (a === b || a.length < 5 || b.length < 5 || a[0] !== b[0] || Math.abs(a.length - b.length) > 2) return false;
+    let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+    for (let i = 1; i <= a.length; i++) {
+      const cur = [i];
+      for (let j = 1; j <= b.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      prev = cur;
+    }
+    return prev[b.length] <= 2;
+  }
+  /**
+   * [Z-DSUPASK] (3.188.0, S328) A role held because only the source has it, answered as the same as one MusicBrainz has ("chaims" is
+   * "chimes") – by a click, or suggested because the two words are a slip apart: the name of MusicBrainz's role, else ''.
+   */
+  function dsupSameOf(r) {
+    if (!r || !r.dsupHold || r.dsupHold.kind !== 'conflict' || r.level !== 'skip') return '';
+    if (r.dsupSame) return r.dsupSame;
+    if (r.dsupNotSame || !ruleOn('S328')) return '';
+    const a = S.artists.get(r.artistKey);
+    const w = norm(String((r.instrGuess && r.instrGuess.word) || r.raw || '').replace(/\s*\[[^\]]*\]/g, ''));
+    const hit = (((a && a.dsup) || {}).mbOnly || []).find((m) => typoNear(w, norm(m.name)));
+    return hit ? hit.name : '';
+  }
   function dsupHtml(a) {
     // (as the rows are now – a role taken meanwhile is no longer held)
     const e0 = a.dsup;
@@ -43291,25 +43521,46 @@
     for (const r of e.held) {
       const h = r.dsupHold;
       const plain = tr(h.rk === 'vocal' ? 'dsup.plainVocal' : 'dsup.plainInstr');
+      // [Z-DSUPASK] (3.188.0, S328) a role only the source has is a question with its answers: the same as one MusicBrainz has (nothing
+      // to add), or another one (added as well); answered – or suggested for a slip of spelling – the line says so and can be changed
+      if (h.kind === 'conflict' && ruleOn('S328')) {
+        const same = dsupSameOf(r);
+        const role = (r.instrGuess && r.instrGuess.word) || name(r);
+        if (same) {
+          parts.push(`<div class="dci-dsup-l dci-dsup-same" data-dsup="same"><span>${esc(tr(r.dsupSame ? 'dsup.same' : 'dsup.sameTypo', { role, mb: same }))}</span>
+            <button type="button" class="dci-textbtn" data-act="dsup-notsame" data-rows="${esc(r.id)}">${esc(tr('dsup.notSame'))}</button></div>`);
+          continue;
+        }
+        const only = e.mbOnly.slice(0, 4);
+        parts.push(`<div class="dci-dsup-l dci-dsup-ask" data-dsup="conflict" data-row="${esc(r.id)}"><span>${esc(tr('dsup.ask', { role, list: e.mbOnly.map((m) => m.name).join(', ') }))}</span>
+          ${only.map((m) => `<button type="button" class="dci-small" data-act="dsup-same" data-rows="${esc(r.id)}" data-mb="${esc(m.name)}">${esc(tr('dsup.sameAs', { mb: m.name }))}</button>`).join(' ')}
+          <button type="button" class="dci-small" data-act="dsup-take" data-rows="${esc(r.id)}">${esc(tr('dsup.takeAnyway'))}</button></div>`);
+        continue;
+      }
       const text = h.kind === 'conflict' ? tr('dsup.conflict', { role: name(r) }) : h.kind === 'covered' ? tr('dsup.covered', { role: name(r) || plain, mb: h.mb || plain }) : tr('dsup.update', { role: name(r), mb: h.mb || plain });
       parts.push(`<div class="dci-dsup-l" data-dsup="${esc(h.kind)}"><span>${esc(text)}</span> <button type="button" class="dci-small" data-act="dsup-take" data-rows="${esc(r.id)}">${esc(tr(h.kind === 'update' ? 'dsup.takeUpdate' : 'dsup.takeAnyway'))}</button></div>`);
     }
     S.rows.filter((r) => r.artistKey === a.key && r.dsupRel && r.level === 'release').forEach((r) => parts.push(`<div class="dci-dsup-l" data-dsup="release"><span>${esc(tr('dsup.onRelease', { role: name(r), mb: r.dsupRel }))}</span></div>`));
     // a line for each row and change (its relationships on all its tracks together)
+    // ([Z-DSUPASK] 3.188.0) the same change of several rows – the same date for 18 instruments – is one line that names them
     const groups = new Map();
     for (const x of dates) {
       const sg = x.sug;
-      const g = `${x.row.id}|${sg.kind}|${dsupDateText(sg.mb)}|${dsupDateText(sg.to || sg.row)}`;
-      if (!groups.has(g)) groups.set(g, { x, keys: [] });
+      const g = `${ruleOn('S328') ? '' : x.row.id}|${sg.kind}|${dsupDateText(sg.mb)}|${dsupDateText(sg.to || sg.row)}`;
+      if (!groups.has(g)) groups.set(g, { x, keys: [], rows: [] });
       groups.get(g).keys.push(x.key);
+      if (!groups.get(g).rows.includes(x.row)) groups.get(g).rows.push(x.row);
     }
-    for (const { x, keys } of groups.values()) {
+    for (const { x, keys, rows: grows } of groups.values()) {
       const sg = x.sug;
-      const n = keys.length > 1 ? ` (${keys.length}×)` : '';
-      const text = (sg.kind === 'differs' ? tr('dsup.dateDiffers', { role: name(x.row), mb: dsupDateText(sg.mb), src: dsupDateText(sg.row) })
-        : tr(`dsup.date.${sg.kind}`, { role: name(x.row), mb: dsupDateText(sg.mb), to: dsupDateText(sg.to) })) + n;
+      const many = grows.length > 1;
+      const n = !many && keys.length > 1 ? ` (${keys.length}×)` : '';
+      const roles = uniq(grows.map(name));
+      const role = many ? tr('dsup.roles', { n: roles.length, list: roles.slice(0, 3).join(', ') + (roles.length > 3 ? ', …' : '') }) : name(x.row);
+      const text = (sg.kind === 'differs' ? tr('dsup.dateDiffers', { role, mb: dsupDateText(sg.mb), src: dsupDateText(sg.row) })
+        : tr(many ? `dsup.dates.${sg.kind}` : `dsup.date.${sg.kind}`, { role, mb: dsupDateText(sg.mb), to: dsupDateText(sg.to) })) + n;
       const taken = keys.every((k) => dsupTaken(k, sg.kind));
-      parts.push(`<div class="dci-dsup-l" data-dsup="date-${sg.kind}"><span>${esc(text)}</span>${sg.kind === 'differs' ? '' : ` <button type="button" class="dci-small" data-act="dsup-date" data-keys="${esc(keys.join('\n'))}" aria-pressed="${taken}">${esc(taken ? tr('dsup.dateTaken') : tr('dsup.takeDate'))}</button>`}</div>`);
+      parts.push(`<div class="dci-dsup-l" data-dsup="date-${sg.kind}"${many ? ` title="${esc(roles.join(', '))}"` : ''}><span>${esc(text)}</span>${sg.kind === 'differs' ? '' : ` <button type="button" class="dci-small" data-act="dsup-date" data-keys="${esc(keys.join('\n'))}" aria-pressed="${taken}">${esc(taken ? tr('dsup.dateTaken') : tr('dsup.takeDate'))}</button>`}</div>`);
     }
     const allHeld = S.rows.filter((r) => r.dsupHold && r.dsupHold.kind === 'conflict' && r.level === 'skip' && !r.entrySkip).length;
     const allDates = [...S.artists.values()].reduce((n, x) => n + (x.dsupDates || []).filter((y) => y.sug.kind !== 'differs' && !dsupTaken(y.key, y.sug.kind)).length, 0);
@@ -43586,7 +43837,7 @@
     c.suggested = new Set(c.tracks);
     // ((review) nothing of the row it was copied from that would act on it: its updates of MusicBrainz, its sources, its words …)
     ['instrGuess', 'abbrAsk', 'abbr', 'abbrAlt', 'uncrOff', 'uncrLevel', 'askVoice', 'typeAnswer', 'fromNotes', 'notesCredit', 'typePicked', 'instsAuto', 'instsCopy', 'instsPrev', 'instsDate',
-      'dsupUpd', 'dsupTaken', 'dsupSeen', 'dsupHold', 'dsupRel', 'translatedBase', 'confirmedBy', 'differ', 'suppTook', 'supp', 'creditPhrases', 'creditLowered',
+      'dsupUpd', 'dsupTaken', 'dsupSeen', 'dsupHold', 'dsupRel', 'dsupSame', 'dsupNotSame', 'translatedBase', 'confirmedBy', 'differ', 'suppTook', 'supp', 'creditPhrases', 'creditLowered',
       'roleCreditSuggest', 'keepCase', 'primaryCands', 's046', 's078'].forEach((k) => delete c[k]);
     c.srcRefs = [];
     ['guest', 'additional', 'solo'].filter((f) => rows.every((r) => r.flags.has(f))).forEach((f) => c.flags.add(f));
@@ -44883,7 +45134,8 @@
    * the same words, or the text's words the first ones of the source's ("Tonart" – "Tonart Studio, Kerpen-Horrem"); its other
    * spellings too.
    */
-  const PLACE_FILLER = /\b(?:the|at|studios?|recording|recordings|sound|sounds|tonstudio|tonstudios|studio[ns]?|estudios?|music|records)\b/giu;
+  // ([Z-PLACEDUP] 3.188.0: "club", "klub", "estudi", "studi" too – "Alchemia Club" is Discogs's "Alchemia", "Rosazul Estudi" its "Rosazul")
+  const PLACE_FILLER = /\b(?:the|at|studios?|recording|recordings|sound|sounds|tonstudio|tonstudios|studio[ns]?|estudios?|estudis?|studi|clubs?|klub|music|records)\b/giu;
   function samePlaceName(who, name) {
     const words = (x) => String(x || '').split(',')[0].normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
       .replace(PLACE_FILLER, ' ').replace(/[^\p{L}\p{N}]+/gu, ' ').trim().split(/\s+/).filter(Boolean);
@@ -49198,7 +49450,9 @@
           if (site === 'discogs' ? !a.dId : (row.supp || !refs.length)) continue;
           const info = rowInfo && rowInfo.get(row.id);
           let status = 'open';
-          if (row.level === 'skip') status = row.existingAll ? 'mb' : 'skip';
+          // ([Z-COMPMARK] 3.188.0) held as the same as a role of MusicBrainz written otherwise ("Chaims" – chimes): "≈" (companion 1.23.0)
+          const sameMb = row.level === 'skip' && !row.existingAll ? dsupSameOf(row) : '';
+          if (row.level === 'skip') status = row.existingAll ? 'mb' : sameMb ? 'same' : 'skip';
           else if (info && (info.ready > 0 || info.issues.length)) status = 'open';
           else if (info && info.applied > 0) status = removed.has(row.id) ? 'removed' : 'staged';
           else if (info && info.existing > 0) status = 'mb';
@@ -49234,7 +49488,7 @@
             return pt;
           };
           if (textSite(site)) {
-            items.push({ row: row.id, role: row.raw, status, unmapped: isUnmapped(row), mb, ...(row.srcOff ? { off: true } : {}),
+            items.push({ row: row.id, role: row.raw, status, unmapped: isUnmapped(row), mb, ...(row.srcOff ? { off: true } : {}), ...(sameMb ? { note: `(MusicBrainz: ${sameMb})` } : {}),
               refs: refs.map((r) => ({ page: r.page, line: r.line, part: r.part, pi: r.pi, n: r.n, ...(r.about ? { about: true } : {}), ...(r.pos ? { pos: r.pos, ...ofTrack(r.pos) } : { status }) })) });
             continue;
           }
@@ -49244,12 +49498,12 @@
           let byPos = null;
           if ((row.dPositions || []).length && row.level !== 'skip') byPos = row.dPositions.map((pos) => ({ pos, ...ofTrack(pos) }));
           items.push({ row: row.id, artistId: a.company ? null : a.dId, labelId: a.company ? a.dId : null, role: row.raw, base: row.dSplitBase || row.base,
-            positions: row.dPositions || [], status, unmapped: isUnmapped(row), mb, byPos, ...(row.srcOff ? { off: true } : {}) });
+            positions: row.dPositions || [], status, unmapped: isUnmapped(row), mb, byPos, ...(row.srcOff ? { off: true } : {}), ...(sameMb ? { note: `(MusicBrainz: ${sameMb})` } : {}) });
         }
       }
       // [173] (3.38.9) "multi": two imports of the same release open (companion 1.10.0)
       const labels = Object.fromEntries(['mb', 'staged', 'open', 'skip', 'unmapped', 'click', 'pending', 'checked', 'artwork', 'artworkHide', 'artworkShow', 'artPrev', 'artNext', 'artBig', 'artTab', 'artOnly',
-        'off', 'on', 'isOff', 'hover', 'multi', 'removed']
+        'off', 'on', 'isOff', 'hover', 'multi', 'removed', 'same']
         .map((k) => [k, tr(`dgStatus.${k}`)]));
       // [3.17.5] toggle: a click on a mark switches its credit; keepAfterClose: the marks stay after the editor is closed
       // [3.28.3] the dates and track groups used, underlined by the companion (1.9.0) in the notes and texts
@@ -51166,6 +51420,19 @@
         break;
       // [Z-ARTL] (3.100.0, S159) the label credited for the artwork as an artist again, or as the label
       // [Z-DSUP] (3.106.0) a role held taken (anyway, or as an update); all of them; a date offered taken; all dates
+      // [Z-DSUPASK] (3.188.0, S328) the role is the same as one MusicBrainz has – or not
+      case 'dsup-same':
+      case 'dsup-notsame': {
+        const ids = new Set(String(btn.dataset.rows || '').split(','));
+        S.rows.filter((r) => ids.has(String(r.id))).forEach((r) => {
+          if (act === 'dsup-same') Object.assign(r, { dsupSame: btn.dataset.mb || '', dsupNotSame: false });
+          else Object.assign(r, { dsupSame: '', dsupNotSame: true });
+          log('info', act === 'dsup-same' ? 'dsupSame' : 'dsupNotSame', { role: String(r.raw || ''), mb: btn.dataset.mb || '' });
+        });
+        renderGroups();
+        refresh();
+        break;
+      }
       case 'dsup-take':
       case 'dsup-all': {
         const ids = new Set(String(btn.dataset.rows || '').split(','));
@@ -61046,6 +61313,11 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       .dci-supp-unrec { border: 1px solid #c8c5d6; color: var(--muted); }
       .dci-supp-line { max-width: 34ch; }
       .dci-supp-hint { font-weight: 600; }
+      /* [Z-SUPPWORDS] (3.188.0, S327) the lines known without being read, below the table */
+      .dci-supp-known { margin: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 12); font-size: calc(var(--u, 1px) * 12); color: var(--muted, #5d5a6c); }
+      .dci-supp-known summary { cursor: pointer; }
+      .dci-supp-known ul { margin: calc(var(--u, 1px) * 4) 0 0 calc(var(--u, 1px) * 18); padding: 0; }
+      .dci-supp-knownline { font-style: italic; }
       .dci-supp-foot { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12); padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12); border-top: 1px solid var(--line); }
       .dci-srcmarks { display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 3); margin: calc(var(--u, 1px) * 2) 0; }
       .dci-srcmark { padding: 0 calc(var(--u, 1px) * 5); border-radius: 3px; background: #262430; color: #fff; font-size: calc(var(--u, 1px) * 11); font-weight: 700; }
@@ -61837,6 +62109,8 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
          invisible twin at the right of "fold" keeps "fold" in the middle, folded or open – the texts at the left and right give way */
       .dci-pools-c { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 6); }
       .dci-pools-ghost { visibility: hidden; pointer-events: none; }
+      /* [Z-SAMEROLECREDIT] (3.188.0) a chip that is one relationship with another of the same instrument: the role credit it is staged with */
+      .dci-em-chipjoin { margin-left: calc(var(--u, 1px) * 4); padding: 0 calc(var(--u, 1px) * 4); border-radius: 3px; background: var(--soft, #f1f0f6); color: var(--muted, #5d5a6c); font-size: calc(var(--u, 1px) * 11); white-space: nowrap; }
       .dci-pools-applyfold:hover { background: var(--date-d); }
       /* [166] (3.37.15) in the head, at the same place open and folded; [178] (3.38.13) in its middle */
       .dci-pools-head .dci-pools-fold { min-width: calc(var(--u, 1px) * 70); font-size: calc(var(--u, 1px) * 12); text-align: center; }

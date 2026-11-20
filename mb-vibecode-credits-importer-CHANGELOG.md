@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-20 | 3.185.0 – 3.187.0 | – |
+| 2026-11-20 | 3.185.0 – 3.188.0 | 1.23.0 |
 | 2026-11-19 | 3.170.0 – 3.184.0 | – |
 | 2026-11-18 | 3.159.0 – 3.169.0 | – |
 | 2026-11-17 | 3.152.0 – 3.158.0 | – |
@@ -134,6 +134,24 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.188.0 · COMPANION 1.23.0
+
+**Entries, roles and the comparison of sources: one entry, one relationship, one answer.**
+
+- **A bug: dates "Taken ✓" were not all entered.** In the box "Compared with MusicBrainz" the same date could be taken for many roles of a person (18 instruments on the release) – staged, only the first relationship of MusicBrainz got it. The edits were joined like new instruments of one relationship. Now every relationship is edited.
+- **A place or label named twice is one entry** (rule S324):
+  - the same place under another name – Discogs's "Recorded At – Alchemia (2)" and the notes' "Recorded … at Alchemia Club, Kraków" ("Club", "Estudi" count like "Studio");
+  - "Produced For – Fundacja Słuchaj!" and "Producer [Produced For Fundacja Słuchaj]";
+  - two entries that are the same place or label in MusicBrainz – found by a link, by an alias, or set by hand.
+  The entry with the source's link stays. What the notes say more – the tracks, the date – holds for it: Alchemia then stands only on the tracks of CD 1–4, not on CD 5 as well. The log names each joining.
+- **A place is credited without where it lies:** "Hilversum, Holland" for Studio Hilversum is credited "Hilversum".
+- **The same instrument twice is one relationship** (rule S325): MusicBrainz takes an instrument of a person once per target. "Drones and loops" – both the instrument effects – is staged as effects credited "drones and loops" (the source's own joining; role credits of different lines are joined by commas as before). The chips of the two rows show it: ⧉ "drones and loops".
+- **An added source is compared by the word first** (rule S326): the same person with the same word – "cracklebox", "voice", "bass" – is confirmed, whatever the rules make of the word in each source, whether a question of the row is open, and although the row was put on the release meanwhile. A new role is named by the word of the source, not by a guess ("other instruments").
+- **The safety net** (rule S327): a line of an added source the reader cannot read is known all the same when it names only people of the dashboard and its other words are a role they have there. It is not shown as "not recognized"; below the table "n lines recognised as known" lists each with the entry and role it was matched to. The rule is in "Rules" like every other one and can be switched off.
+- **"Compared with MusicBrainz" asks a real question** (rule S328): a role only the source has is asked with its answers – "The same as “chimes”" (nothing is added), "Add anyway". A word a slip of spelling away from a role of MusicBrainz ("chaims" – "chimes") is suggested as the same and is no question; "Not the same" brings the question back. The same date for several roles is one line that names them. The question counter of the footer leads to the question itself.
+- **COMPANION 1.23.0:** a new mark "≈" in the tab of the source – on MusicBrainz already, written otherwise ("Chaims": chimes); the tooltip names MusicBrainz's role. Install the companion anew for it.
+- Not done: updating the role credit of MusicBrainz's relationship with the source's spelling as a third answer of the question.
 
 ### Import 3.187.0
 

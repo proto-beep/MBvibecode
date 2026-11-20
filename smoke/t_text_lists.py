@@ -742,6 +742,46 @@ def case_loopsart3183():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_samerole3188():
+    """Credits Importer 3.188.0 (collected item Z-SAMEROLECREDIT; rule S325): "Drum Guy: Drones and loops" – both the instrument effects.
+    MusicBrainz takes an instrument of a person once per target, so the two are one relationship.
+    A) The chips of the two rows say so: "⧉ “drones and loops”" (the role credit the relationship is staged with).
+    B) Staged: one relationship per recording, effects credited "drones and loops" (the source's own joining, not "drones, loops")."""
+    H.attr(9301, 'effects', 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
+    results = []
+    try:
+        with sync_playwright() as p:
+            H.ENTRIES_VIEW = 'matrix'
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.src_menu(pg, 'text-open')
+            pg.fill('[data-f=text-src]', 'Drum Guy: Drones and loops')
+            pg.click('[data-act=text-load]')
+            H.wait_for(pg, f"{LOGS}.filter(x => /Import complete/.test(x)).length >= 2", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 400)
+            # (the compact view of the entry: its chips)
+            pg.evaluate("(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => /Drum Guy/.test(x.querySelector('.dci-gname strong').textContent)); const f = g && g.querySelector('[data-act=group-fold][aria-expanded=true]'); if (f) f.click(); })()")
+            H.wait_still(pg, "document.body.innerHTML", 10, 400)
+            chips = pg.evaluate("[...document.querySelectorAll('.dci-em-chipjoin')].map(x => x.textContent.trim())")
+            print('A)', chips)
+            results.append(len(chips) == 2 and all('drones and loops' in c for c in chips))
+            H.stage_click(pg, least=2500)
+            added = pg.evaluate("""MB.relationshipEditor.state.added.filter((r) => (r.entity0 || {}).name === 'Drum Guy').map((r) => ((r.attributes && r.attributes.__tree) || [])
+              .map((x) => (x.typeName || x.type.name) + (x.credited_as ? ' [' + x.credited_as + ']' : '')).sort().join(', '))""")
+            print('B)', added, '| Fehler:', errs)
+            results.append(added == ['effects [drones and loops]'] * 4 and not errs)
+            b.close()
+    finally:
+        H.ENTRIES_VIEW = 'legacy'
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_edition3187():
     """Credits Importer 3.187.0 (collected items Z-BCPROMO, Z-BCCONDITION, Z-BCEDITION, Z-LINERNOTE, Z-FORLABEL, Z-TITLEGUEST, Z-HONORARY;
     rules S320–S323).

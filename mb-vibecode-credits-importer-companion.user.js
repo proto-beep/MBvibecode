@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer Companion
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      1.22.0
+// @version      1.23.0
 // @date         2026-11-03
 // @description  Companion for "MB x Vibecode: Credits Importer": connects the import dashboard with a Discogs, Bandcamp or YouTube tab (e.g. the other half of a split view), loads the release there and highlights where each credit comes from.
 // @description:de Ergänzung zu „MB x Vibecode: Credits Importer“: verbindet das Import-Dashboard mit einem Discogs-, Bandcamp- oder YouTube-Tab (z. B. der anderen Hälfte einer geteilten Ansicht), lädt dort das Release und markiert, woher jeder Credit stammt.
@@ -50,7 +50,7 @@
   // The main script never needs special permissions; only this companion does.
 
   // [1.10.0] sent with each status (the dashboard names an older companion: several imports at once need 1.10.0)
-  const COMPANION_VERSION = '1.22.0';
+  const COMPANION_VERSION = '1.23.0';
   const HEARTBEAT_MS = 2000;
   const STALE_MS = 7000;
   // [1.8.2] how long the status of an edit or release page in a background tab counts as alive without a new beat;
@@ -602,6 +602,7 @@
       .dci-dg-mark { -webkit-user-select: none; user-select: none; display: inline-block; min-width: 1.4em; margin-right: 0.35em; padding: 0 0.3em; border: 0; border-radius: 3px;
         font: bold 12px/1.5 sans-serif; text-align: center; color: #fff; cursor: pointer; vertical-align: 0.1em; }
       .dci-dg-mb { background: #2e7d4f; }
+      .dci-dg-same { background: #2e7d4f; } /* [1.23.0] as "in MusicBrainz", its sign "≈" */
       .dci-dg-staged { background: #736dab; }
       .dci-dg-open { background: #8a8a8a; }
       .dci-dg-skip { background: #c4c4c4; color: #333; }
@@ -1435,7 +1436,8 @@
   // --- Status marks: which Discogs credits are in MusicBrainz, staged, open, skipped or not mapped ----
 
   // [1.21.0] (Credits Importer 3.131.0, Z-CPREMOVED) removed: staged, then taken out in the relationship editor by hand – grey, not red
-  const MARK_SYMBOL = { mb: '✓', staged: '●', open: '○', skip: '–', unmapped: '!', pending: '✗', removed: '✗' };
+  // [1.23.0] (Credits Importer 3.188.0, Z-COMPMARK) same: on MusicBrainz already, written otherwise ("Chaims" – chimes) – "≈"
+  const MARK_SYMBOL = { mb: '✓', staged: '●', open: '○', skip: '–', unmapped: '!', pending: '✗', removed: '✗', same: '≈' };
 
   /**
    * The tooltip of a mark: where (track position or role), status, note, checked; [1.8.3] switched off, and what a click
