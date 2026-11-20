@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.191.0, Companion 1.6.0 – 1.23.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.192.0, Companion 1.6.0 – 1.23.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,15 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.192.0 · 2026-11-20
+
+- **New:** `sameWorkSuffixRe`, `sameWorkBase` (mapping `SAME_WORK_SUFFIXES`), `sameWorkGroups`, `sameWorkExisting`, `sameWorkOne`, `sameWorkApart`, `sameWorkUndo`, `sameWorkRows`, `sameWorkGate` (in `apply`, after `suiteGate`; also in `suiteGate`'s `then`), `startSameWorkCreate`; actions `samework-one`, `samework-apart`, `samework-undo`; state `S.sameWork`; plans carry `sameWork: key`; **`matrixBodyHtml`:** the rows of `sameWorkRows` and `notesRows`; **`magicPlan`:** `pickFor(i)`, the groups before the tracks (S342).
+- **New:** `TRACK_NOTE_HEAD`, `TRACK_NOTE_INTRO`, `TRACK_NOTE_PART`, `TEXT` `trackNotesLines` (after `shopLines`; `why: 'trackNotes'`) (S344); `notesTrackParts(rel)`, `notesRows`, action `notes-suites` (`QS_ONCE`); **`suiteOffers`:** `from: 'notes'` with `parts`; **`acceptSuite`:** `o.parts`; **`magicPlan`:** `notes` on "bold" (S343; `DEFAULT_OFF_RULES`, `QUICK_SWITCHES`, `QUICK_GROUPS`).
+- **`statsMore4Html`:** `statBornKind` – born / founded / no type; **`statExtras`:** `magic` (`statMagic`, `magicSig`, `S.magicStat` from `magicApply`), `promo`, `dsup`, `lc` (`S.statLc` from clicks on `a.dci-lc-add`), `instsAuto` (`S.statInstsAuto` from `loadRelease`); **`statMore`:** `ded`, `magic`, `helpers`, `x192`; new `statsMore192Html` (cards `dedications`, `magic`, `helpers`); suites `perSuite`.
+- **Bug:** `QUICK_SWITCHES` without S339 – its switch was not shown.
+- **Rules:** S342, S343, S344 (register). **Texts:** `samework.*`, `notes.trackHint`, `notes.mightSuite`, `notes.readSuites`, `suite.from.notes`, `ignored.why.trackNotes`, `quick.name.S343`, `quick.S343`, `magic.what.sameOne/sameNew/sameFirst`, `log.sameWorkOne/Gate/Created`, `stats.art.born/founded/bornNoType`, `stats.suites.perSuite`, `stats.more.dedications/magic/helpers`, `stats.ded.*`, `stats.magic.n`, `stats.helpers.*` (en, de, es, fr).
+- **Tests:** `t_works_more.py` `case_samework3192`, `case_notesparts3192`; `t_ui_settings.py` `case_stats3192`, `case_statsmore2` (the new fields of `x`); `t_rules_window.py` `case_quickswitch` (S339, S343 shown); `register_golden.json`.
 
 ## Import 3.191.0 · 2026-11-20
 

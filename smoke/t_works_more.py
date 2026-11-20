@@ -2487,4 +2487,218 @@ def case_same3168():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+
+def case_samework3192():
+    """Credits Importer 3.192.0 (collected item Z-SAMEWORK, rule S342): tracks 2–4 of one title – "Song Two", "Song Two (Alternate
+    Take)", "Song Two - Live" – are one work (track 1 has its work in MusicBrainz).
+    A) Above the first of them, one yellow question "the same work “Song Two”?" with "✓ One work" and "✕ Separate works".
+    B) "✓ One work" (none has a work): the line says so and that the form opens at "Stage". "Stage": nothing staged – the form of the work
+       opens, prefilled with "Song Two" (without "Alternate Take"); closed: nothing staged, a message says why. "Stage" again, the work
+       created: staging goes on – all three recordings linked with it.
+    C) "↺ ask again" brings the question back; "✕ Separate works" answers it.
+    D) "✨ Answer all": "careful" a new work for the first track only; "balanced" the same (the titles differ); "bold" one new work for
+       all three.
+    E) In Node: the endings of versions are left out ("(Alternate Take 2) [Mono]", "- Live at …", "(Dub Mix)"), not "(Reprise)",
+       "(Part 2)".
+    F) Rule S342 off: no question.
+    G) Track 1 "Song One" has its work in MusicBrainz, track 2 is "Song One (Take 2)": "✓ One work" links that work with track 2 – "Stage"
+       stages it at once, no form."""
+    import json, subprocess, urllib.parse
+    WG = H.uid('cccccccc', 192)
+    orig = H.discogs_release
+    old = H.TITLES[:]
+    H.TITLES[:] = ['Intro', 'Song Two', 'Song Two (Alternate Take)', 'Song Two - Live']
+
+    def rel():
+        d = orig()
+        for tk, title in zip(d['tracklist'], H.TITLES):
+            tk['title'] = title
+        return d
+    H.discogs_release = rel
+    ROW = """(() => [...document.querySelectorAll('[data-el=works] [data-sameworkrow]')].map(x => [x.textContent.replace(/\\s+/g, ' ').trim().slice(0, 120),
+      [...x.querySelectorAll('button')].map(y => y.dataset.act), !!x.querySelector('.dci-mx-ask')]))()"""
+    ADDED = "MB.relationshipEditor.state.added.length"
+    results = []
+
+    def start(p, level=None, off=None):
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        init = ''
+        if level:
+            init += f" localStorage.setItem('dci-magic-level', '\"{level}\"');"
+        if off:
+            init += f" localStorage.setItem('dci-rules-off', JSON.stringify({json.dumps(off)}));"
+        if init:
+            ctx.add_init_script("if (/musicbrainz/.test(location.hostname)) {" + init + " }")
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Checks complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(1500)
+        return b, pg, errs
+
+    def preview(pg):
+        pg.locator('[data-act=magic-open]').evaluate('b => b.click()'); H.wait_for(pg, "!!document.querySelector('[data-act=magic-cancel]')", 30)
+        out = pg.evaluate("[...document.querySelectorAll('[data-el=magic-preview] [data-el=magic-item]')].map(x => [x.dataset.kind, x.textContent.replace(/\\s+/g, ' ').trim()])")
+        pg.locator('[data-act=magic-cancel]').evaluate('b => b.click()')
+        return [x for x in out if x[0] == 'work']
+    try:
+        with sync_playwright() as p:
+            b, pg, errs = start(p)
+            a = pg.evaluate(ROW)
+            print('A)', a)
+            results.append(len(a) == 1 and 'the same work “Song Two”?' in a[0][0] and '2–4' in a[0][0] and a[0][1] == ['samework-one', 'samework-apart'] and a[0][2])
+            pg.locator('[data-sameworkrow] [data-act=samework-one]').evaluate('b => b.click()'); pg.wait_for_timeout(600)
+            b1 = pg.evaluate(ROW)
+            n0 = pg.evaluate(ADDED)
+            pg.click('[data-act=apply]')
+            H.wait_for(pg, "!!document.querySelector('[data-el=sub-frame]') && /work\\/create/.test(document.querySelector('[data-el=sub-frame]').src)", 20)
+            q = urllib.parse.parse_qs(urllib.parse.urlparse(pg.evaluate("document.querySelector('[data-el=sub-frame]').src")).query)
+            pg.click('[data-act=sub-close]'); pg.wait_for_timeout(600)
+            msg = pg.evaluate("[...document.querySelectorAll('.dci-msg, [data-el=messages] *')].map(x => x.textContent).join(' ')")
+            print('B)', b1, q.get('edit-work.name'), pg.evaluate(ADDED) - n0, 'Nothing staged' in msg)
+            ok_b = len(b1) == 1 and 'one work “Song Two”' in b1[0][0] and 'form opens at “Stage”' in b1[0][0] and not b1[0][2] and q.get('edit-work.name') == ['Song Two'] and pg.evaluate(ADDED) == n0 and 'Nothing staged' in msg
+            pg.click('[data-act=apply]')
+            H.wait_for(pg, "!!document.querySelector('[data-el=sub-frame]') && /work\\/create/.test(document.querySelector('[data-el=sub-frame]').src)", 20)
+            H.COMPANIES[7192] = ('work', WG, 'Song Two')
+            H.WORK_TITLES[WG] = 'Song Two'
+            pg.evaluate(f"document.querySelector('[data-el=sub-frame]').src = 'https://musicbrainz.org/work/{WG}'")
+            H.wait_for(pg, f"{ADDED} > {n0}", 30)
+            pg.wait_for_timeout(1500)
+            linked = pg.evaluate(f"MB.relationshipEditor.state.added.filter(r => JSON.stringify(r).includes('{WG}')).length")
+            print('B2)', linked, errs)
+            results.append(ok_b and linked >= 3 and not errs)
+            b.close()
+            b, pg, errs = start(p)
+            pg.locator('[data-sameworkrow] [data-act=samework-one]').evaluate('b => b.click()'); pg.wait_for_timeout(400)
+            pg.locator('[data-sameworkrow] [data-act=samework-undo]').evaluate('b => b.click()'); pg.wait_for_timeout(400)
+            c1 = pg.evaluate(ROW)
+            pg.locator('[data-sameworkrow] [data-act=samework-apart]').evaluate('b => b.click()'); pg.wait_for_timeout(400)
+            c2 = pg.evaluate(ROW)
+            print('C)', c1, c2)
+            results.append(c1[0][2] and 'separate works' in c2[0][0] and not c2[0][2] and not errs)
+            b.close()
+            d = []
+            for lv in ('careful', 'balanced', 'bold'):
+                b, pg, errs = start(p, level=lv)
+                d.append(preview(pg))
+                b.close()
+            print('D)', d)
+            results.append(len(d[0]) == 1 and 'first of its tracks only' in d[0][0][1] and len(d[1]) == 1 and 'first of its tracks only' in d[1][0][1]
+                           and any('one new work “Song Two” for 3 tracks' in x[1] for x in d[2]))
+            b, pg, errs = start(p, off=['S342'])
+            f = pg.evaluate(ROW)
+            print('F)', f)
+            results.append(f == [] and not errs)
+            b.close()
+            H.TITLES[:] = ['Song One', 'Song One (Take 2)', 'Song Three', 'Song Four']
+            b, pg, errs = start(p)
+            g0 = pg.evaluate(ROW)
+            pg.locator('[data-sameworkrow] [data-act=samework-one]').evaluate('b => b.click()'); pg.wait_for_timeout(600)
+            n0 = pg.evaluate(ADDED)
+            pg.click('[data-act=apply]')
+            pg.wait_for_timeout(2500)
+            frame = pg.evaluate("!!document.querySelector('[data-el=sub-frame]') && /work\\/create/.test(document.querySelector('[data-el=sub-frame]').src)")
+            w1 = pg.evaluate(f"MB.relationshipEditor.state.added.filter(r => JSON.stringify(r).includes('{H.WORK1}')).length")
+            print('G)', g0, frame, pg.evaluate(ADDED) - n0, w1, errs)
+            results.append(len(g0) == 1 and 'has this work in MusicBrainz' in g0[0][0] and not frame and w1 >= 1 and not errs)
+            b.close()
+        js = ("global.localStorage={getItem:()=>null,setItem(){},removeItem(){},key:()=>null,length:0};const m=require(process.argv[1]);"
+              "console.log(JSON.stringify(['Song (Alternate Take 2) [Mono]','Song - Live at the Fillmore','Song (Dub Mix)','Song (Reprise)','Song (Part 2)'].map(t=>m.sameWorkBase(t).base)))")
+        e = json.loads(subprocess.run(['node', '-e', js, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True).stdout)
+        print('E)', e)
+        results.append(e == ['Song', 'Song', 'Song', 'Song (Reprise)', 'Song (Part 2)'])
+    finally:
+        H.discogs_release = orig
+        H.TITLES[:] = old
+        H.COMPANIES.pop(7192, None)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_notesparts3192():
+    """Credits Importer 3.192.0 (collected item Z-NOTESPARTS, rules S343, S344): the notes of the release name the parts of track 2
+    ("Track 2:" and "I. …", "II. …", "III. …") and a subtitle of track 1.
+    A) "Suites from notes" off (default): no suite asked; a grey line at track 2 "might be a suite?" with "Read suites from notes"; at
+       track 1 its subtitle as a hint. No entry from these lines (no "Cliff Hectopasil", no "Peter").
+    B) "Read suites from notes": the suite "Big Piece" of track 2 asked (from the notes of the track); "✓ Yes": 3 parts.
+    C) "✨ Answer all": the suite on "bold" only (not on "balanced").
+    D) Rule S344 off: no grey lines."""
+    import json
+    orig = H.discogs_release
+    old = H.TITLES[:]
+    H.TITLES[:] = ['Song One', 'Big Piece', 'Song Three', 'Song Four']
+    NOTES = ("Recorded at Abbey Road Studios.\n\nSubtitles / annotations / dedications for:\nTrack 1:\nDurch Dick und Dünn mit Gunning Günter\n"
+             "Track 2:\nI. Die Turnbulle - am Reck: Cliff Hectopasil, Tret-Schelle für Peter\nII. China-Frühling im Hochgebirg\n"
+             "III. Freiheitskämpfer auf dem Weg zur Arbeit (Günter backt\nPlätzchen in Untersuhl)\nTrack 3:\nFor my Daughter")
+
+    def rel():
+        d = orig()
+        for tk, title in zip(d['tracklist'], H.TITLES):
+            tk['title'] = title
+        d['notes'] = NOTES
+        return d
+    H.discogs_release = rel
+    NOTE = "[...document.querySelectorAll('[data-el=works] tr.dci-mx-noterow')].map(x => [x.dataset.noterow, x.textContent.replace(/\\s+/g, ' ').trim().slice(0, 300)])"
+    SUITE = "[...document.querySelectorAll('[data-el=works] [data-suite]')].map(x => x.textContent.replace(/\\s+/g, ' ').trim().slice(0, 140))"
+    results = []
+
+    def start(p, level=None, off=None):
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        init = ''
+        if level:
+            init += f" localStorage.setItem('dci-magic-level', '\"{level}\"');"
+        if off:
+            init += f" localStorage.setItem('dci-rules-off', JSON.stringify({json.dumps(off)}));"
+        if init:
+            ctx.add_init_script("if (/musicbrainz/.test(location.hostname)) {" + init + " }")
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(2000)
+        return b, pg, errs
+
+    def preview(pg):
+        pg.locator('[data-act=magic-open]').evaluate('b => b.click()'); H.wait_for(pg, "!!document.querySelector('[data-act=magic-cancel]')", 30)
+        out = pg.evaluate("[...document.querySelectorAll('[data-el=magic-preview] [data-el=magic-item]')].map(x => x.dataset.kind)")
+        pg.locator('[data-act=magic-cancel]').evaluate('b => b.click()')
+        return out
+    try:
+        with sync_playwright() as p:
+            b, pg, errs = start(p)
+            a = [pg.evaluate(NOTE), pg.evaluate(SUITE), pg.evaluate("[...document.querySelectorAll('section.dci-group .dci-gname strong')].map(x => x.textContent)")]
+            print('A)', a)
+            results.append(any(r[0] == '1' and 'might be a suite?' in r[1] and 'Read suites from notes' in r[1] for r in a[0])
+                           and any(r[0] == '0' and 'Durch Dick und Dünn' in r[1] for r in a[0]) and a[1] == []
+                           and not any(re.search(r'Cliff|Peter|Hectopasil', x) for x in a[2]))
+            pg.locator('[data-act=notes-suites]').evaluate('b => b.click()'); pg.wait_for_timeout(600)
+            b1 = pg.evaluate(SUITE)
+            pg.locator('[data-suite] [data-act=suite-yes]').first.evaluate('b => b.click()'); pg.wait_for_timeout(600)
+            b2 = pg.evaluate(SUITE)
+            print('B)', b1, b2, errs)
+            results.append(len(b1) == 1 and '“Big Piece”' in b1[0] and 'from the notes of the track' in b1[0] and '3' in b2[0] and not errs)
+            b.close()
+            c = []
+            for lv in ('balanced', 'bold'):
+                b, pg, errs = start(p, level=lv)
+                pg.locator('[data-act=notes-suites]').evaluate('b => b.click()'); pg.wait_for_timeout(500)
+                c.append(preview(pg))
+                b.close()
+            print('C)', c)
+            results.append('suite' not in c[0] and 'suite' in c[1])
+            b, pg, errs = start(p, off=['S344'])
+            d = pg.evaluate(NOTE)
+            print('D)', d)
+            results.append(d == [] and not errs)
+            b.close()
+    finally:
+        H.discogs_release = orig
+        H.TITLES[:] = old
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
