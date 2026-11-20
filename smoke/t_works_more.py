@@ -527,7 +527,7 @@ def case_suiteask():
         pg.wait_for_timeout(500)
         a0 = pg.evaluate(ASK)
         print('A)', a0)
-        results.append(a0 is not None and len(a0) == 1 and a0[0][1] == 'all 4 tracks: parts of the suite “Trisect”?' and a0[0][2] == ['✓ Yes', '✕ No', '✓ Yes, with this name']
+        results.append(a0 is not None and len(a0) == 1 and a0[0][1] == 'all 4 tracks: parts of the suite “Trisect”?' and a0[0][2] == ['✓ Yes', '✕ No suite', '✓ Yes, with this name']
                        and a0[0][3] == 'Trisect' and a0[0][4] == 'rgb(255, 248, 219)' and 'from the title of the release' in pg.evaluate("document.querySelector('[data-el=works] .dci-mx-suite').textContent"))
         pg.click('[data-el=works] [data-act=suite-yes]'); pg.wait_for_timeout(500)
         b0 = [pg.evaluate(PARTS, i) for i in range(4)] + [pg.evaluate(ASK)[0][1], [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'Suite “' in x]]
@@ -1478,7 +1478,7 @@ def case_bwv3138():
     A) "Bach Adagio From The Sonata For Violin Solo In G Minor BWV1001" → the movement "… BWV 1001: I. Adagio" only (not the sonata, not
        BWV 1002), the list says "with BWV 1001"; the query "work:"bwv 1001"" with Bach's MBID.
     B) "Sonata in G minor, BWV 1001" (no movement named) → the sonata itself. C) "Fuga (BWV 1001)" → "II. Fuga".
-    D) S224 off: nothing found for them."""
+    D) S224 off (and S333, which from 3.189.0 offers the sonata as a similar title): nothing found for them."""
     BACH = H.uid('dddddddd', 401)
     H.ARTISTS[3201] = (BACH, 'Johann Sebastian Bach')
     S1001 = H.uid('eeeeeeee', 401)
@@ -1511,7 +1511,7 @@ def case_bwv3138():
             b = p.chromium.launch(args=H.LAUNCH_ARGS)
             ctx = H.new_context(b)
             if off:
-                ctx.add_init_script("if (/musicbrainz/.test(location.hostname)) localStorage.setItem('dci-rules-off', JSON.stringify(['S224']))")
+                ctx.add_init_script("if (/musicbrainz/.test(location.hostname)) localStorage.setItem('dci-rules-off', JSON.stringify(['S224', 'S333']))")
             pg, errs = H.open_mb_edit(ctx, companion=False)
             pg.on('dialog', lambda d: d.accept())
             pg.wait_for_selector('#dci-open', timeout=20000)
@@ -1745,6 +1745,248 @@ def case_magic3155():
     finally:
         H.WORK_SEARCH[:] = []
         H.JS_WORKS.pop(FOUND, None)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_suiteprefix3189():
+    """Credits Importer 3.189.0 (collected items Z-SUITEPREFIX, Z-SUITENO; rules S330, S331). MusicBrainz's titles: "Trisect: Introduction"
+    (has a work), "Trisect: Phase 1", "Trisect: Phase 2 – Coda I–II", "Other".
+    A) The works matrix asks "tracks 1–3: parts of the suite “Trisect”?" – "from the titles in MusicBrainz"; the answers "✓ Yes",
+       "✕ No suite", "✓ Yes, with this name".
+    B) "✨ Answer all" (careful): the preview names the suite, with a tick; unticked, "Answer" counts one less; ticked again and applied:
+       track 2 "Trisect: Phase 1", track 3 one part "Trisect: Phase 2 – Coda I–II" (no suite within the suite).
+    C) Undone; "✕ No suite": kept for the release – after the page is loaded again the question is not asked ("no suite “Trisect”",
+       "↺ ask again"); "↺": asked again, and no longer kept.
+    D) In Node: a catalogue number or a medium names no suite ("105-2", "ECM 1064", "CD 2"; "BWV 1004", "Symphony 5" may), whatever
+       the offer is from; a suite named as the release's own catalogue number is none either.
+    E) Rule S330 off: no question from MusicBrainz's titles."""
+    import json, subprocess
+    old = H.TITLES[:]
+    H.TITLES[:] = ['Trisect: Introduction', 'Trisect: Phase 1', 'Trisect: Phase 2 – Coda I–II', 'Other']
+    ASK = """(() => { if (!document.querySelector('[data-el=works] table.dci-matrix')) return null; return [...document.querySelectorAll('[data-el=works] [data-suite]')].map(x => [
+      x.querySelector('strong') ? x.querySelector('strong').textContent.trim() : x.textContent.replace(/\\s+/g, ' ').trim(), [...x.querySelectorAll('button')].map(y => y.textContent.trim()),
+      x.textContent.replace(/\\s+/g, ' ').includes('from the titles in MusicBrainz')]); })()"""
+    PARTS = """(i) => [...document.querySelectorAll(`.dci-matrix tr[data-work="${i}"]`)].map(tr => [(tr.querySelector('.dci-mx-part') || {textContent: ''}).textContent.trim(),
+      (tr.querySelector('.dci-mx-line strong') || tr.querySelector('.dci-mx-line .dci-mblink') || {textContent: ''}).textContent.trim()])"""
+    PREVIEW = """(() => { const p = document.querySelector('[data-el=magic-preview]'); return p ? { items: [...p.querySelectorAll('[data-el=magic-item]')].map(x => [x.dataset.kind, x.textContent.trim(),
+      (x.querySelector('input') || {}).checked]), btn: (p.querySelector('[data-act=magic-apply]') || {}).textContent, dis: (p.querySelector('[data-act=magic-apply]') || {}).disabled } : null; })()"""
+    results = []
+    try:
+        def start(p, off=None):
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            if off:
+                pg.evaluate(f"localStorage.setItem('dci-rules-off', JSON.stringify({json.dumps(off)}))")
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1500)
+            return b, pg, errs
+        with sync_playwright() as p:
+            b, pg, errs = start(p)
+            a = pg.evaluate(ASK)
+            print('A)', a)
+            results.append(bool(a) and len(a) == 1 and a[0][0] == 'tracks 1–3: parts of the suite “Trisect”?' and a[0][1] == ['✓ Yes', '✕ No suite', '✓ Yes, with this name'] and a[0][2])
+            pg.locator('[data-act=magic-open]').evaluate('b => b.click()'); H.wait_for(pg, "!!document.querySelector('[data-act=magic-cancel]')", 30)
+            p0 = pg.evaluate(PREVIEW)
+            pg.locator('[data-el=magic-item][data-kind=suite] input').evaluate('b => b.click()'); pg.wait_for_timeout(300)
+            p1 = pg.evaluate(PREVIEW)
+            pg.locator('[data-el=magic-item][data-kind=suite] input').evaluate('b => b.click()'); pg.wait_for_timeout(300)
+            p2 = pg.evaluate(PREVIEW)
+            pg.locator('[data-act=magic-apply]').evaluate('b => b.click()')
+            H.wait_for(pg, "!!document.querySelector('[data-act=magic-undo]')", 20)
+            pg.wait_for_timeout(400)
+            parts = [pg.evaluate(PARTS, i) for i in range(4)]
+            print('B)', p0, '\n  ', p1, '\n  ', p2, '\n  ', parts)
+            su = lambda q: [x for x in q['items'] if x[0] == 'suite']
+            n = lambda q: int(''.join(c for c in q['btn'] if c.isdigit()) or 0)
+            results.append(bool(p0) and len(su(p0)) == 1 and 'suite “Trisect”' in su(p0)[0][1] and su(p0)[0][2] is True and su(p1)[0][2] is False and n(p1) == n(p0) - 1
+                           and n(p2) == n(p0) and parts[1] == [['', 'Trisect: Phase 1']] and parts[2] == [['', 'Trisect: Phase 2 – Coda I–II']] and not any('Trisect' in x[1] for x in parts[3]))
+            pg.locator('[data-act=magic-undo]').evaluate('b => b.click()'); pg.wait_for_timeout(500)
+            pg.click('[data-el=works] [data-act=suite-no]'); pg.wait_for_timeout(400)
+            st = pg.evaluate("localStorage.getItem('dci-suite-no')")
+            pg.reload(); pg.add_script_tag(content=H.MAIN)
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1500)
+            c0 = pg.evaluate(ASK)
+            pg.click('[data-el=works] [data-act=suite-undo]'); pg.wait_for_timeout(400)
+            c1 = [pg.evaluate(ASK), pg.evaluate("localStorage.getItem('dci-suite-no')")]
+            print('C)', st, c0, c1)
+            results.append(bool(st) and 'prefix|Trisect|0,1,2' in st and bool(c0) and 'no suite “Trisect”' in c0[0][0] and len(c0[0][1]) == 1
+                           and c1[0][0][0] == 'tracks 1–3: parts of the suite “Trisect”?' and c1[1] is None and not errs)
+            b.close()
+        node = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const tr4 = [{ title: 'a' }, { title: 'b' }, { title: 'c' }, { title: 'd' }];
+console.log(JSON.stringify([['105-2', 'ECM 1064', 'CD 2', 'Side B', 'BWV 1004', 'Symphony 5'].map((x) => m.headingKind(x)),
+  m.suiteOffers({ title: 'X', tracks: tr4, headings: [{ at: 0, title: '105-2' }, { at: 2, title: 'Real Suite' }], companies: [] }).map((o) => o.name),
+  m.suiteOffers({ title: 'X', tracks: tr4, headings: [{ at: 0, title: 'Real Suite' }], companies: [{ catno: 'Real Suite' }] }).map((o) => o.name),
+  m.suiteOffers({ title: 'X', tracks: tr4.map((t, i) => ({ ...t, work: i < 2 ? 'CD 2' : 'Suite Two' })), headings: [], companies: [] }).map((o) => o.name)]));
+"""
+        o = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True)
+        res = json.loads(o.stdout) if o.returncode == 0 else o.stderr[-300:]
+        print('D)', res)
+        results.append(res == [['catno', 'catno', 'medium', 'medium', 'name', 'name'], ['Real Suite'], [], ['Suite Two']])
+        with sync_playwright() as p:
+            b, pg, errs = start(p, off=['S330'])
+            e = pg.evaluate(ASK)
+            print('E)', e)
+            results.append(e == [])
+            b.close()
+    finally:
+        H.TITLES[:] = old
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_rowcolor3189():
+    """Credits Importer 3.189.0 (collected item Z-WORKROWCOLOR, rule S332): the rows of the works matrix by the state of their work.
+    A) Track 1 (its work is in MusicBrainz): "linked", a green stripe; tracks 2–4 without a work: "none", no stripe, no tint.
+    B) Track 2's work chosen from the search: "found" – turquoise; track 3 "＋ New": "new" – amber; the three stripes differ, each row
+       has its tint over the cells, the words "found, will be linked" and "new work" stay.
+    C) ⚙ Settings → Appearance: the tick off (stored) – no stripes, no tint; on again; the colour for "new work" changed (stored): the
+       stripe of track 3 has it.
+    D) Rule S332 off: no colours, no setting."""
+    import json
+    FOUND = H.uid('cccccccc', 3189)
+    WW = H.ARTISTS[3007][0]
+    H.JS_WORKS[FOUND] = (7189, 'Song Two')
+    H.WORK_SEARCH[:] = [{'id': FOUND, 'title': 'Song Two', 'type': 'Song', 'relations': [
+        {'target-type': 'artist', 'type': 'composer', 'direction': 'backward', 'attributes': [], 'artist': {'id': WW, 'name': 'Writer W'}}]}]
+    ROWS = """(() => [...document.querySelectorAll('.dci-matrix tr[data-work]')].map(tr => { const f = tr.querySelector('.dci-mx-front'); const cs = getComputedStyle(f);
+      return [tr.dataset.work, tr.dataset.wstate, cs.boxShadow === 'none' ? '' : (cs.boxShadow.match(/rgba?\\([^)]*\\)/) || [''])[0], cs.backgroundImage !== 'none',
+        (tr.querySelector('.dci-badge') || {textContent: ''}).textContent.trim()]; }))()"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.wait_for(pg, f"!!document.querySelector('tr[data-work=\"1\"] [data-act=work-pick][data-gid=\"{FOUND}\"]')", 30)
+            a = pg.evaluate(ROWS)
+            print('A)', a)
+            results.append(len(a) == 4 and a[0][1] == 'linked' and a[0][2] and a[0][3] and all(x[1] == 'none' and not x[2] and not x[3] for x in a[1:]))
+            pg.locator(f'tr[data-work="1"] [data-act=work-pick][data-gid="{FOUND}"]').first.evaluate('b => b.click()'); pg.wait_for_timeout(400)
+            pg.locator('tr[data-work="2"] [data-act=work-pending]').evaluate('b => b.click()'); pg.wait_for_timeout(400)
+            b1 = pg.evaluate(ROWS)
+            print('B)', b1)
+            results.append(b1[1][1] == 'found' and b1[2][1] == 'new' and len({b1[0][2], b1[1][2], b1[2][2]}) == 3 and all(x[3] for x in b1[:3])
+                           and b1[1][4] == 'found, will be linked' and b1[2][4] == 'new work' and b1[3][1] == 'none')
+            H.open_settings(pg, 'appearance')
+            pg.locator('[data-el=settings] [data-set=workrow-colors]').uncheck(); pg.wait_for_timeout(300)
+            c0 = [pg.evaluate("localStorage.getItem('dci-workrow-colors')"), pg.evaluate(ROWS)]
+            pg.locator('[data-el=settings] [data-set=workrow-colors]').check(); pg.wait_for_timeout(300)
+            pg.locator('[data-el=settings] [data-set=workrow-color][data-state=new]').evaluate("el => { el.value = '#aa00aa'; el.dispatchEvent(new Event('change', { bubbles: true })); }")
+            pg.wait_for_timeout(300)
+            c1 = [pg.evaluate("localStorage.getItem('dci-workrow-colors')"), pg.evaluate("localStorage.getItem('dci-workrow-palette')"), pg.evaluate(ROWS)]
+            print('C)', c0, '\n  ', c1)
+            results.append(c0[0] == 'false' and all(not x[2] and not x[3] for x in c0[1]) and c1[0] is None and c1[1] == '{"new":"#aa00aa"}' and c1[2][2][2] == 'rgb(170, 0, 170)'
+                           and c1[2][1][2] == b1[1][2] and not errs)
+            b.close()
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S332']))")
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(1000)
+            d0 = pg.evaluate(ROWS)
+            H.open_settings(pg, 'appearance')
+            d1 = pg.evaluate("!!document.querySelector('[data-el=settings] [data-set=workrow-colors]')")
+            print('D)', d0, d1)
+            results.append(all(not x[2] and not x[3] for x in d0) and not d1)
+            b.close()
+    finally:
+        H.WORK_SEARCH[:] = []
+        H.JS_WORKS.pop(FOUND, None)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_workfind3189():
+    """Credits Importer 3.189.0 (collected item Z-WORKFIND, rule S333): classical titles compared by what names the work.
+    Heinrich Biber composed tracks 2 and 3, Johann Sebastian Bach track 4.
+    A) "Passacaglia in G minor": no work of that title; offered in yellow "Passacaglia for Violin solo in G minor, C 105" ("similar
+       title – check"), the list says "similar title"; the search asked for the kind of work in several languages; the log names it.
+    B) "Sonata No. 3": "Sonate Nr. 3 F-Dur" (not "Sonate Nr. 4 D-Dur").
+    C) "Chaconne From the D Minor Partita, BWV1004": the movement "… BWV 1004: V. Ciaccona" (by the catalogue number; no yellow).
+    D) "✨ Answer all" (balanced): neither links the similar works nor plans new works for tracks 2 and 3.
+    E) Rule S333 off: nothing for tracks 2 and 3; track 4 the partita itself (as until 3.188.0)."""
+    BIBER, BACH = H.uid('dddddddd', 511), H.uid('dddddddd', 512)
+    H.ARTISTS[3211] = (BIBER, 'Heinrich Ignaz Franz von Biber')
+    H.ARTISTS[3212] = (BACH, 'Johann Sebastian Bach')
+    cb = [{'target-type': 'artist', 'type': 'composer', 'artist': {'id': BIBER, 'name': 'Heinrich Ignaz Franz von Biber'}}]
+    cj = [{'target-type': 'artist', 'type': 'composer', 'artist': {'id': BACH, 'name': 'Johann Sebastian Bach'}}]
+    partita = 'Partita for Violin solo no. 2 in D minor, BWV 1004'
+    PASS = 'Passacaglia for Violin solo in G minor, C 105'
+    names = [(PASS, cb), ('Sonate Nr. 3 F-Dur', cb), ('Sonate Nr. 4 D-Dur', cb), (partita, cj), (f'{partita}: I. Allemanda', cj), (f'{partita}: V. Ciaccona', cj)]
+    works = [{'id': H.uid('eeeeeeee', 520 + n), 'title': ti, 'aliases': [], 'type': '', 'relations': rel} for n, (ti, rel) in enumerate(names)]
+    orig = H.discogs_release
+    old = H.TITLES[:]
+    H.TITLES[:] = ['Song One', 'Passacaglia in G minor', 'Sonata No. 3', 'Chaconne From the D Minor Partita, BWV1004']
+
+    def rel():
+        d = orig()
+        for tk, title in zip(d['tracklist'], H.TITLES):
+            tk['title'] = title
+            tk['extraartists'] = []
+        d['extraartists'] = [{'name': 'Heinrich Ignaz Franz von Biber', 'anv': '', 'role': 'Composed By', 'tracks': '2 to 3', 'id': 3211, 'join': ''},
+                             {'name': 'Johann Sebastian Bach', 'anv': '', 'role': 'Composed By', 'tracks': '4', 'id': 3212, 'join': ''}]
+        d['companies'] = []
+        return d
+    H.discogs_release = rel
+    PICKS = """(i) => [...document.querySelectorAll(`[data-el=works] tr[data-work="${i}"] .dci-same li`)].map(li => [li.querySelector('[data-act=work-pick]').dataset.title, !!li.querySelector('[data-el=work-loose]'), li.classList.contains('dci-mx-wloose')])"""
+    results = []
+
+    def run(off):
+        H.WORK_SEARCH[:] = works
+        H.WORK_QUERIES[:] = []
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            ctx.add_init_script("if (/musicbrainz/.test(location.hostname)) { localStorage.setItem('dci-magic-level', '\"balanced\"');" + (" localStorage.setItem('dci-rules-off', JSON.stringify(['S333']));" if off else '') + " }")
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Checks complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(800)
+            picks = [pg.evaluate(f"({PICKS})({i})") for i in (1, 2, 3)]
+            head = pg.evaluate("(document.querySelector('[data-el=works] tr[data-work=\"1\"] .dci-same strong') || {}).textContent || ''")
+            btn = pg.evaluate("!!document.querySelector('[data-el=works] tr[data-work=\"1\"] .dci-mx-wloosebtn')")
+            log = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'similar by kind' in x]
+            pg.locator('[data-act=magic-open]').evaluate('b => b.click()'); H.wait_for(pg, "!!document.querySelector('[data-act=magic-cancel]')", 30)
+            magic = pg.evaluate("[...document.querySelectorAll('[data-el=magic-preview] [data-el=magic-item]')].map(x => [x.dataset.kind, x.textContent.trim().slice(0, 30)])")
+            b.close()
+            return picks, head, btn, log, magic, [q for q in H.WORK_QUERIES if 'passacaille' in q.lower()], errs
+    try:
+        picks, head, btn, log, magic, qs, errs = run(False)
+        print('A)', picks[0], '|', head, btn, '|', log[:1], '|', qs[:1])
+        results.append(picks[0] == [[PASS, True, True]] and 'similar title' in head and btn and any('1.2' in x and PASS in x for x in log) and any(BIBER in q for q in qs))
+        print('B)', picks[1], '\nC)', picks[2])
+        results.append(picks[1] == [['Sonate Nr. 3 F-Dur', True, True]])
+        results.append(picks[2] == [[f'{partita}: V. Ciaccona', False, False]])
+        print('D)', magic)
+        results.append(not any(k == 'work' and (x.startswith('1.2') or x.startswith('1.3')) for k, x in magic) and not errs)
+        picks2, _h, btn2, _l, _m, qs2, errs2 = run(True)
+        print('E) aus:', picks2, qs2)
+        results.append(picks2[0] == [] and picks2[1] == [] and picks2[2] == [[partita, False, False]] and not qs2 and not errs2)
+    finally:
+        H.discogs_release = orig
+        H.TITLES[:] = old
+        H.WORK_SEARCH[:] = []
+        H.ARTISTS.pop(3211, None); H.ARTISTS.pop(3212, None)
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

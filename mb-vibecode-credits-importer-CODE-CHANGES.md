@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.188.0, Companion 1.6.0 – 1.23.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.189.0, Companion 1.6.0 – 1.23.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,16 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.189.0 · 2026-11-20
+
+- **`runDedications`:** the release's title with `titleKind: 'dedicated'`; **`chipAnswers`:** a dedication's `ded-toggle` (preset); **`EM_LINE_ACTS`:** `ded-toggle` (S329).
+- **New:** `prefixSuites(mbTracks, mediumTitle)`, `partWithoutPrefix`; **`suiteAsks`:** the offers `from: 'prefix'`; **`acceptSuite`:** one part per track for them; **`magicPlan`:** `prefix` on every level (S330).
+- **`headingKind`:** `'catno'`; **`suiteOffers`:** only names that are neither a medium nor a catalogue number; **`magicPopHtml`:** a tick per answer (`data-f="magic-item"`, `S.magicSkip`, `magicKey`); **`magicApply`:** without the unticked; new `suiteNoStored`, `suiteNoStore` (`dci-suite-no`), `S.suiteNoLoaded` (S331).
+- **New:** `classicalGenres`, `classicalKey`, `classicalFit`, `classicalGenreWords`, `classicalFold`; **`runWorkSearch`:** the works of the kind (`loose: true`); **`catalogueWorks`:** the movement by its number and by its folded name; **`workFrontCell`:** `.dci-mx-wloose`, `.dci-mx-wloosebtn`; **`magicPlan`:** no answer for a track with loose works (S333).
+- **New:** `WORKROW_COLORS_KEY`, `WORKROW_PALETTE_KEY`, `WORKROW_PALETTE_DEFAULT`, `workRowPaletteRead`, `saveWorkRowPalette`, `workRowState`, `applyWorkRowColors` (called with `applyKindColors`); the rows `tr.dci-mx-wr[data-wstate]`; settings `workrow-colors`, `workrow-color` (S332).
+- **Rules:** S329, S330, S331, S332, S333 (register); S097's note. **Texts:** `suite.noBtn` (changed), `suite.noTitle`, `suite.from.prefix`, `magic.rule.suite.careful` (changed), `magic.itemTitle`, `settings.workRowColors`, `settings.workRowColorsTitle`, `settings.workRowColor`, `workrow.found/new/linked`, `matrix.sameLoose.one/other`, `matrix.looseTag`, `log.workLoose` (en, de, es, fr).
+- **Tests:** `t_notes_companies.py` `case_dedtitle3189` (`case_dedications` C); `t_works_more.py` `case_suiteprefix3189`, `case_rowcolor3189`, `case_workfind3189`; `register_golden.json`.
 
 ## Import 3.188.0 · Companion 1.23.0 · 2026-11-20
 

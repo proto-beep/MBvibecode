@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-20 | 3.185.0 – 3.188.0 | 1.23.0 |
+| 2026-11-20 | 3.185.0 – 3.189.0 | 1.23.0 |
 | 2026-11-19 | 3.170.0 – 3.184.0 | – |
 | 2026-11-18 | 3.159.0 – 3.169.0 | – |
 | 2026-11-17 | 3.152.0 – 3.158.0 | – |
@@ -134,6 +134,20 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.189.0
+
+**Works and dedications.**
+
+- **A title "… For <name>" is a dedication** (rule S329): "Odes And Meditations For Cecil Taylor" gives "dedicated to" Cecil Taylor on the release group – until now a tribute. The switch "⇄ tribute to" / "⇄ dedicated to" is one click at the row and now also at the chip of the view "by event" (▾).
+- **A suite from MusicBrainz's own titles** (rule S330): tracks in a row (two at least) named "Name: Part" with the same name – "Odes and Meditations for Cecil Taylor: Meditation I" … ": Strange Loops" – are asked as a suite ("from the titles in MusicBrainz"), together with all tracks of a medium that has this title. Each track is one part "Name: Part"; a dash within a part ("Sleeping Furiously – Haiku I–III") opens no suite within the suite. "✨ Answer all" answers it on every level, "careful" too. An offer of the source over the same tracks that has fewer of them gives way – no track below the heading is left out.
+- **What is no suite** (rule S331):
+  - a heading or index title that is a catalogue number – the release's own, or one by its look ("105-2", "ECM 1064"; not a work's number like "BWV 1004") – or a medium ("CD 2", "Disc 2", "LP 1", "Side B") is not offered, whatever it is from;
+  - the preview of "✨ Answer all" has a tick for every answer: unticked, it is not given and its question stays open; the button counts the ticked ones;
+  - the answer "✕ No" is named "✕ No suite" and is kept for the release (in this browser): not asked again with the next import; "↺ ask again" brings it back.
+- **Classical titles are compared by what names the work** (rule S333): no work of the track's title among its composer's, and the title names a kind of work with a key or a number ("Passacaglia in G minor", "Sonata in G minor", "Symphony No. 5"): the composer's works of that kind are looked up in every language and those of the same key ("G minor" / "g-Moll" / "sol mineur"; German "B" is B flat, "H" is B) or number ("No." / "Nr." / "n°") are offered – instruments, the order of the words and punctuation do not count. Such a work is a suggestion in yellow ("similar title – check"): never linked by itself; "✨ Answer all" neither links it nor plans a new work instead. With a catalogue number only the number counts; its movement is now also found by its number ("BWV 1004/5") and by its name in another language ("Chaconne From the D Minor Partita, BWV1004" – "V. Ciaccona").
+- **The rows of the works matrix show the state of their work by colour** (rule S332): found in MusicBrainz, will be linked – turquoise; a new work – amber; linked already – green; without a work – none. A stripe at the left and a faint tint of the row; the words stay. ⚙ Settings → Appearance → Colours: on / off and the three colours; lighter in the dark theme.
+- Not done: a composer taken from a heading or from the track artists alone (the comparison needs a writer credited for the track, a name in brackets or an artist of the release, as before).
 
 ### Import 3.188.0 · COMPANION 1.23.0
 

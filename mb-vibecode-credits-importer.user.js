@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.188.0
+// @version      3.189.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.188.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.188.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.189.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.189.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.188.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.189.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1316,6 +1316,12 @@
       "settings.kindColors": "Colours for the kinds of entries",
       "settings.kindColorsTitle": "The bar and the light background of each entry, and the heads of the works matrix, in the colour of its kind",
       "settings.kindColor": "Colour for {kind}",
+      "settings.workRowColors": "Colours for the rows of the works matrix",
+      "settings.workRowColorsTitle": "A stripe and a faint tint of each row by the state of its work: found in MusicBrainz, new, linked already",
+      "settings.workRowColor": "Colour for {state}",
+      "workrow.found": "found, will be linked",
+      "workrow.new": "new work",
+      "workrow.linked": "linked in MusicBrainz",
       "settings.themeWindow": "Theme as a window",
       "settings.themeWindowTitle": "The dashboard as a window, the log and the rules as windows, the windows of cover art and the small previews",
       "settings.themePage": "Theme in the page",
@@ -1968,11 +1974,14 @@
       "matrix.coverAuto": "Cover – set by itself: the composer ({names}) is none of the performers. A click takes it off",
       "suite.ask": "{tracks}: parts of the suite “{name}”?",
       "suite.yes": "✓ Yes",
-      "suite.noBtn": "✕ No",
+      "suite.noBtn": "✕ No suite",
       "suite.other": "Another name:",
       "suite.yesName": "✓ Yes, with this name",
       "suite.hint": "Only a suggestion: “Yes” makes each part of these tracks a work of its own, named “Suite: Part” (⚙ Settings → Works), linked to its recording in its order; the suite itself only holds them together.",
       "suite.from.heading": "from a heading of the track list",
+      "suite.noTitle": "No suite – kept for this release: it is not asked again",
+      "suite.from.prefix": "from the titles in MusicBrainz, “Name: Part”",
+      "magic.itemTitle": "Unticked: this answer is not given, the question stays open",
       "suite.from.index": "from an index track",
       "suite.from.release": "from the title of the release",
       "suite.add": "Suite …",
@@ -2310,6 +2319,10 @@
       "matrix.sameArtists.other": "{n} works with the same title exist (of the writers, the release's artists or its musicians):",
       "matrix.sameCatalogue.one": "{n} work of these writers with {cat}:",
       "matrix.sameCatalogue.other": "{n} works of these writers with {cat}:",
+      "matrix.sameLoose.one": "{n} work of the composer with a similar title (the same kind of work, key or number) – check before you link it:",
+      "matrix.sameLoose.other": "{n} works of the composer with a similar title (the same kind of work, key or number) – check before you link one:",
+      "matrix.looseTag": "similar title – check",
+      "log.workLoose": "Track {track}: no work of this title; similar by kind, key or number – {list} (a suggestion, to check)",
       "wone.group": "Works to keep",
       "wone.credits": "Writing credits only",
       "wone.creditsTitle": "Keep only the works of tracks with writing credits – the others: no work, their credits skipped (↺ brings them back)",
@@ -2382,7 +2395,7 @@
       "magic.kind.pub": "Publishers",
       "magic.kind.coldate": "Column dates",
       "magic.kind.ded": "Dedications",
-      "magic.rule.suite.careful": "a suite from a heading of the track list",
+      "magic.rule.suite.careful": "a suite from a heading of the track list, or from titles “Name: Part” in MusicBrainz",
       "magic.rule.suite.balanced": "also from an index track",
       "magic.rule.suite.bold": "also from the title of the release",
       "magic.rule.work.careful": "one work of exactly the title with all of the track’s writers",
@@ -5308,7 +5321,7 @@
     { id: 'S094', where: 'matrixColumns, columnHeadHtml (mx-pub-level)', note: 'Works matrix (3.64.0): each publishing row of a label switches in its column between "Work" (label – work publishing) and "Release" (on the release); a row put on the release this way keeps its column, so it can be put back' },
     { id: 'S095', where: 'openCreateDialog (S.statCreate), statTime, statsHeadLine', note: 'Statistics (3.65.0): the time per release and per relationship without the time of creating new entries (artists, labels, places, works – also works via the form): from the click on "Create …" until the new entry is linked, its pauses aside. A switch "Without new entries | With new entries" (Without at first, remembered) for every such time of this browser; records before 3.65.0 hold no such time (counted with it)' },
     { id: 'S096', where: 'runLiveJob, liveNotice, liveTracksText', note: 'Live recordings (3.66.0): the notice on the release page after "Enter edit" tidied up – how many comments were entered, then each comment once with its tracks ("1–3, 5"; with several media "1.1–1.3, 2.1"), then what was not entered, the tracks of the same reason together (before: one long line of all tracks and their comments)' },
-    { id: 'S097', where: 'findDedications, runDedications, addDedicationRow, dedicationHtml (ded-toggle)', note: 'Dedications (3.67.0): "dedicated to", "in memory of", "in memoriam", "for …" (a line of its own), "homage to", "gewidmet", "in Erinnerung an", "Hommage an" give "dedicated to"; "tribute to" gives "tribute to" – in the free texts (Discogs notes, Bandcamp, the text of the cover art) and the release\'s title ("Odes And Meditations For Cecil Taylor": a tribute). Only with a target MusicBrainz has exactly once by that name (an artist; a tribute also a label; on the works level also an area or a place) – "to my mother" is left out. Staged on the release group, or on the work of a track the sentence or the track title names (release group | work by the level of the row); one click switches "dedicated to" ⇄ "tribute to"; the row names the wording of the source' },
+    { id: 'S097', where: 'findDedications, runDedications, addDedicationRow, dedicationHtml (ded-toggle)', note: 'Dedications (3.67.0): "dedicated to", "in memory of", "in memoriam", "for …" (a line of its own), "homage to", "gewidmet", "in Erinnerung an", "Hommage an" give "dedicated to"; "tribute to" gives "tribute to" – in the free texts (Discogs notes, Bandcamp, the text of the cover art) and the release\'s title ("Odes And Meditations For Cecil Taylor": a tribute; since 3.189.0 a dedication, S329). Only with a target MusicBrainz has exactly once by that name (an artist; a tribute also a label; on the works level also an area or a place) – "to my mother" is left out. Staged on the release group, or on the work of a track the sentence or the track title names (release group | work by the level of the row); one click switches "dedicated to" ⇄ "tribute to"; the row names the wording of the source' },
     { id: 'S098', where: 'addColumnHtml, loadPersonalPubs', note: 'Works matrix (3.68.0): "＋ Add a column" lists first the people of the release – writers, composers, lyricists, the release\'s artists and its performers (artists with instruments or vocals) –, set apart then the labels with the personal publishers MusicBrainz has for those people, then the other entries' },
     { id: 'S099', where: 'addColRole', note: 'Works matrix (3.68.0): the role of a column added is set by the rules – a person\'s own writing role (composer, lyricist, writer), else the most common one of the matrix, else the genre\'s (composer or writer); not lyricist when every work has no lyrics; writer or lyricist only when the works are songs (else composer); a label publishing' },
     { id: 'S100', where: 'columnHeadHtml (mx-col-addrole), cellMenuHtml', note: 'Works matrix (3.68.0): a person in several roles (composer and publisher …): "＋ Another role" in the menu of the column adds one on the tracks of its cells; in a cell\'s menu several roles can be ticked (it says so)' },
@@ -5436,6 +5449,11 @@
     { id: 'S326', where: 'compareSupplement (compare), suppWordKey, suppRowWords', note: 'Added sources (3.188.0; collected item Z-SUPPWORDS): first the word – a role of an added source whose word the same person has in the dashboard already ("cracklebox" beside Discogs\'s "Electronics [Cracklebox]", "voice" beside "Voice", "bass" beside "Bass") is confirmed, whatever the rules make of the word in each source ("other instruments" there, "electronic instruments" here), whether a question of the row is still open, and on which level the row stands now (after "on the release" the tracks it had before count). A new role is named by the word of the source. Off: compared by what the rules make of the words, as until 3.187.0' },
     { id: 'S327', where: 'compareSupplement, suppKnownLine, renderSupp (supp-known)', note: 'Added sources (3.188.0; collected item Z-SUPPWORDS – the safety net): a line of an added source the reader cannot read is known all the same when it names only people of the dashboard and every other word of it is a word of a role one of them has there – "Liner Note: Lucía Martínez" beside her "Liner Notes [Spanish]", "Liner Note translation: Sarah Claman" beside "Liner Notes [English Translation]". Such a line counts as confirmed and is not shown as "not recognized"; below the table "n lines recognised as known" lists each with the entry and role it was matched to. A line with an unknown name or an unknown word stays "not recognized". Off: every unread line is shown' },
     { id: 'S328', where: 'dsupHtml, dsupSameOf, typoNear (dsup-same, dsup-notsame), yellItems, companion status "same"', note: 'Compared with MusicBrainz (3.188.0; collected items Z-DSUPASK, Z-COMPMARK): a role only the source has, beside others only MusicBrainz has for the person, is a question with its answers – "The same as “chimes”" (nothing is added) or "Add anyway"; a word a slip of spelling away from a role of MusicBrainz ("chaims" – "chimes") is suggested as the same and is no question ("Not the same" brings it back). The same date for several roles is one line that names them. The footer\'s question leads to the question itself. In the tab of the source such a credit is marked "≈" (on MusicBrainz, written otherwise; Script Companion 1.23.0). Off: the line with "Add anyway" alone, a line per role, as until 3.187.0' },
+    { id: 'S329', where: 'runDedications, chipAnswers (ded-toggle)', note: 'Dedications (3.189.0; collected item Z-DEDTITLE): a release\'s title that ends in "for" and a name – "Odes And Meditations For Cecil Taylor" – is a dedication ("dedicated to", on the release group), no longer a tribute; the switch "⇄ tribute to" / "⇄ dedicated to" is at the chip of the view "by event" as well (▾), one click. Switched off: such a title is a tribute as before, the switch only in the row of the list.' },
+    { id: 'S330', where: 'prefixSuites, suiteAsks, acceptSuite, magicPlan', note: 'Works (3.189.0; collected item Z-SUITEPREFIX): a suite from MusicBrainz\'s own titles – tracks in a row (two at least) named "Name: Part" with the same name ("Odes and Meditations for Cecil Taylor: Meditation I" … ": Strange Loops"), and with them all tracks of a medium whose title is that name. Asked like a suite of a heading ("from the titles in MusicBrainz"); "✨ Answer all" answers it on every level ("careful" too). Each track is one part named "Name: Part" – a dash within a part ("Sleeping Furiously – Haiku I–III") opens no suite within the suite. An offer of the source over the same tracks that has fewer tracks gives way to it (no track below the heading is left out). Switched off: suites only from the source (headings, index tracks, the release\'s title).' },
+    { id: 'S331', where: 'headingKind, suiteOffers, magicPopHtml (magic-item), suiteNoStore', note: 'Works (3.189.0; collected item Z-SUITENO): what is no suite. A heading or index title that is a catalogue number – the release\'s own, or one by its look ("105-2", "ECM 1064"; not a work\'s number, "BWV 1004") – or a medium ("CD 2", "Disc 2", "LP 1", "Side B") is not offered as a suite, whatever it is from. The preview of "✨ Answer all" gives every answer a tick: one unticked is not given, its question stays open. "✕ No suite" at the question is kept for the release (in this browser) – not asked again with the next import; "↺ Ask again" brings it back. Switched off: as before (no ticks, the answer "No" only for the import).' },
+    { id: 'S332', where: 'workRowState, applyWorkRowColors, renderWorks (data-wstate), settings (workrow-colors)', note: 'Works (3.189.0; collected item Z-WORKROWCOLOR): a row of the works matrix shows the state of its work by colour – found in MusicBrainz, will be linked: turquoise; a new work: amber; linked in MusicBrainz already: green; without a work: none. A stripe at the left of the row and a faint tint over it; the words ("found, will be linked", "new work") stay – the colour is never alone. ⚙ Settings → Appearance → Colours: on / off and the three colours; in the dark theme the colours are made lighter. Switched off: no such colours, no setting.' },
+    { id: 'S333', where: 'classicalKey, classicalFit, runWorkSearch, catalogueWorks, workFrontCell (dci-mx-wloose), magicPlan', note: 'Works (3.189.0; collected item Z-WORKFIND): a classical title is compared by what names the work, not by how it is written. No work of the track\'s title among its composer\'s, and the title names a kind of work with a key or a number – "Passacaglia in G minor", "Sonata in G minor", "Symphony No. 5" –: the composer\'s works of that kind are looked up in every language ("Sonata" / "Sonate", "Symphony" / "Sinfonie" / "Symphonie" …) and those of the same key ("G minor" / "g-Moll" / "sol mineur"; German "B" is B flat, "H" is B) or number ("No." / "Nr." / "n°") are offered – the instruments ("for violin and continuo"), the order of the words and the punctuation do not count; a movement is not offered. Such a work is a suggestion in yellow ("similar title – check"): never linked by itself, "✨ Answer all" neither links it nor plans a new work instead. With a catalogue number only the number counts (S224); the movement is found by its number after it ("BWV 1004/5": the fifth) and by its name in another language ("Chaconne from the D minor Partita, BWV1004" – "V. Ciaccona"). Switched off: only titles within one letter, and movements by their own name.' },
     { id: 'S299', where: 'TEXT.parse (shopLines; SHOP_BLOCK_LINES)', note: 'Texts (3.169.0; Z-BCSHOPBLOCK): what a shop writes below an edition is left out as "shop" – the edition\'s name with "(Limited Edition …)" and its format, what the records look like ("2 x 180gsm …", "DiscA/B - Transparent green with gold blob", "Packaged in a standard Sleeve."), the block about shipping ("+++++INTERNATIONAL SHIPPING +++++", "- WE DO NOT SHIP TO PO BOXES", "- ALL ORDERS ARE SENT BY TRACKED COURIER …", "UK: 2-3 days") and the page\'s own details ("published March 29, 2019", "license"). They stood under "not recognized". Every free text' },
     { id: 'S298', where: 'TEXT.parse (hyphenTrackLines; HT_TRACKS, HT_HYPHEN, HT_HEAD, HT_SPLIT)', note: 'Texts (3.169.0; Z-HYPHENTRACKS): a lineup written "Pete Callard-Acoustic Guitar On Tracks 1,2,3, Electric Guitar on Tracks 18,19 Hari-Om- Vocals On Tracks 9,10 …" – a hyphen without spaces between name and role, each role with its tracks, the whole lineup in one paragraph (Beatport and shop texts): the paragraph is cut before each name, the name is what stands before the first hyphen whose right side begins with a role ("Hari-Om- Vocals": Hari-Om), "and Vocals on Tracks …" and a role after a list of tracks are roles of their own, "on all tracks" says nothing new; a heading before the first name ("Musicians In The Studio") is a heading. Only for a line that names tracks that way. Every free text' },
     { id: 'S296', where: 'videoLevelWant, videoLevelFor, VIDEO_RULES, R033 (mapRole), rgIsDjMix, Q022', note: 'Video credits and DJ mixes (3.164.0; proposals F-VIDEOLEVEL, F-DJMIX of review run 2): every credit of a video – video director, camera work, cinematographer and the table of video credits (R076, R110, R119) – is on the recordings when its tracks are videos – from 3.169.0 on the videos only when just some of its tracks are (Z-VIDEOTRACKS; until then such a credit went to the release) – and on the release when none is, where MusicBrainz has the type there (the cinematographer and the camera work were always on the recordings, the others on the release). "Mixed By [DJ Mix]" is the DJ-mix of the release, not the mix engineer; on a release group of the type DJ-mix "Mixed By" asks which of the two (Q022)' },
@@ -16298,7 +16316,7 @@
       workTitleOf: (t) => String(t || '').replace(/\s*\[[^\]]*\]/g, '').trim() || String(t || ''), formatDate, formatDateRange, compareDates, dateSuggestions,
       partFromFields, validateDateFields, fieldsFromDate, formatDateValue, findRelationshipStates, stateHasDate, parseDatePeriod,
       titleWordsOf, titlesFit, trackFit, CONNECTIONS, linkPhraseOf, personCase, titleComposerNames, similarWorkTitle, mediaOfHeading,
-      titleParts, medleySplit, typoQuotes, headingKind, suiteOffers, trackPartsOf,
+      titleParts, medleySplit, typoQuotes, classicalKey, classicalFit, headingKind, suiteOffers, prefixSuites, partWithoutPrefix, trackPartsOf,
       sourceCreditFor, withoutAreaTail, versionOfHeader, // [Z-PCR] [Z-VER] (3.51.0)
       remixParts, // [Z-RMXTITLE] (3.126.0, review)
     };
@@ -18980,6 +18998,7 @@
     // [Z-SU] (3.41.1) the parts of a track as works of their own (track → [part plan]), the answers to the suites offered
     workParts: new Map(),
     suiteAnswers: new Map(),
+    magicSkip: new Set(), // [Z-SUITENO] (3.189.0) the answers of the preview of "✨ Answer all" unticked
     // [Z-SU] (3.41.2) the works of the suites accepted (key of the suite → { gid "pending:s<n>", title, key })
     suiteWorks: new Map(),
     // [Z-SUM] (3.41.11) the suites added by hand ("＋ Suite …"): key → { key, name, from: 'manual', tracks }; the box open
@@ -32942,6 +32961,8 @@
     S.oneWork = null;
     S.workParts.clear(); // [Z-SU] (3.41.1)
     S.suiteAnswers.clear();
+    // [Z-SUITENO] (3.189.0, S331) "✕ No suite" is kept for the release: not asked again
+    S.suiteNoLoaded = false;
     QS_ONCE.clear(); // [Z-QSSCOPE] (3.156.0) the quick switches for the last import only: back to the stored ones
     // [Z-WORKMAGIC] (3.155.0) the answers of "✨ Answer all" belong to the import before
     S.magicMarks.clear();
@@ -34894,6 +34915,11 @@
       return [...g.options.map((x) => instr(x, guessLabel(g, x))), ...(g.other ? [instr(g.other, tr('instrGuess.other', { other: g.other, word: guessCredit(g) }))] : []),
         ...(g.misc ? [{ act: 'instr-misc', attr: '', value: '', text: tr('instrGuess.misc', { word: guessTask(g) }) }] : [])];
     }
+    // [Z-DEDTITLE] (3.189.0, S329) a dedication: "dedicated to" ⇄ "tribute to" at its chip as well (set, no open question)
+    if (r.dedication && ruleOn('S097') && ruleOn('S329')) {
+      const to = dedToggleTarget(r);
+      if (to) return Object.assign([{ act: 'ded-toggle', attr: '', value: '', text: `⇄ ${tr(`ded.kind.${to.kind}`)}` }], { preset: true });
+    }
     const tq = typeQuestionFor(r);
     if (tq && r.typeAnswer == null) return tq.options.map((o, i) => ({ act: 'type-pick', attr: 'opt', value: String(i), text: o.label || o.type }));
     return [];
@@ -35298,6 +35324,7 @@
     'type-pick': (r, btn) => pickType(r, Number(btn.dataset.opt)),
     'instr-pick': (r, btn) => (btn.dataset.instr === '\u0000misc' ? guessMisc(r) : pickInstrument(r, btn.dataset.instr)),
     'instr-misc': (r) => guessMisc(r),
+    'ded-toggle': (r) => { toggleDedication(r); renderWorks(); }, // [Z-DEDTITLE] (3.189.0)
     'instr-typo': (r, btn) => guessTypoSet(r, btn.dataset.typo === '1'), // [164] (3.37.13)
     'voice-credit': (r) => Object.assign(r, { roleCredit: norm(r.base), roleCreditTouched: true }),
     'case-keep': (r, btn) => caseKeep(r, btn.dataset.word || '', true),
@@ -40676,6 +40703,19 @@
         results = catalogueWorks(byCat.filter((w) => w.writerIds.some((id) => people.has(id))), track.title, cat);
         if (results.length) log('info', 'workByCatalogue', { track: trackLabel(track), cat: cat.text, list: results.map((w) => w.title).join(' · ') });
       }
+      // [Z-WORKFIND] (3.189.0, S333) still none, and the title names a kind of work with its key or number ("Sonata in G minor"): the
+      // composer's works of that kind, in whatever language – a suggestion to check, never linked by itself
+      const ck = !results.length && ruleOn('S333') ? classicalKey(workTitleOf(track.title)) : null;
+      if (ck && ck.genre && (ck.key || ck.no)) {
+        let byKind = [];
+        try {
+          byKind = await searchWorks(track.title, [...people.keys()], classicalGenreWords(ck.genre).map((w) => `work:${lucenePhrase(w)}`).join(' OR '));
+        } catch (e) {
+          log('warn', 'error', { text: e.message });
+        }
+        results = byKind.filter((w) => w.writerIds.some((id) => people.has(id)) && [w.title, ...w.aliases].some((x) => classicalFit(track.title, x))).map((w) => ({ ...w, loose: true }));
+        if (results.length) log('info', 'workLoose', { track: trackLabel(track), list: results.map((w) => w.title).join(' · ') });
+      }
       S.workSearch.set(i, { state: 'done', results, writers, sig });
       log('info', 'workSearch', { track: trackLabel(track), n: results.length });
     } catch (e) {
@@ -41291,7 +41331,8 @@
     const found = [];
     const texts = [[S.release.notes, srcName], [S.supp && S.supp.rel && S.supp.rel.notes, tr('ded.src.supp')]];
     texts.forEach(([t, where]) => findDedications(t).forEach((d) => found.push({ ...d, where })));
-    findDedications(S.releaseTitleMb || S.release.title || '', { title: true }).forEach((d) => found.push({ ...d, where: tr('ded.src.title'), fromTitle: true }));
+    // [Z-DEDTITLE] (3.189.0, S329) "Odes And Meditations For Cecil Taylor": a dedication (a tribute by one click, at the row or its chip)
+    findDedications(S.releaseTitleMb || S.release.title || '', { title: true, titleKind: ruleOn('S329') ? 'dedicated' : 'tribute' }).forEach((d) => found.push({ ...d, where: tr('ded.src.title'), fromTitle: true }));
     // ((review) a track's title: only "… For X", an artist, on its work
     S.mbTracks.forEach((t) => findDedications(workTitleOf(t.title), { title: true, titleKind: 'dedicated', phrases: false })
       .forEach((d) => found.push({ ...d, kind: 'dedicated', where: tr('ded.src.track', { pos: trackLabel(t) }), track: t.idx, fromTrackTitle: true })));
@@ -41572,6 +41613,24 @@
 
   /** [Z-DED] (3.67.0, review) What was chosen for the dedications of this release (kept in this browser): key → { kind, x: removed }. */
   const DED_KEY = 'dci-ded';
+  /** [Z-SUITENO] (3.189.0, S331) The suites declined for this release ("✕ No suite"): their keys, kept in the browser. */
+  const SUITE_NO_KEY = 'dci-suite-no';
+  function suiteNoStored() {
+    const all = readJson('localStorage', SUITE_NO_KEY, null) || {};
+    const list = releaseMbid && all[String(releaseMbid).toLowerCase()];
+    return Array.isArray(list) ? list : [];
+  }
+  function suiteNoStore(key, no) {
+    if (!releaseMbid || !key || !ruleOn('S331')) return;
+    const all = readJson('localStorage', SUITE_NO_KEY, null) || {};
+    const rel = String(releaseMbid).toLowerCase();
+    const list = (Array.isArray(all[rel]) ? all[rel] : []).filter((k) => k !== key);
+    if (no) list.push(key);
+    if (list.length) all[rel] = list.slice(-40); else delete all[rel];
+    const keys = Object.keys(all);
+    if (keys.length > 300) delete all[keys[0]];
+    writeJson('localStorage', SUITE_NO_KEY, Object.keys(all).length ? all : null);
+  }
   function dedChoices() {
     const all = readJson('localStorage', DED_KEY, null) || {};
     return (releaseMbid && all[String(releaseMbid).toLowerCase()]) || {};
@@ -45498,6 +45557,10 @@
     // (3.41.4, review) bonus tracks wherever the word stands ("Japan Bonus Tracks")
     if (SUITE_SKIP_HEADINGS.some(word) || /\bbonus\b/i.test(t)) return 'medium';
     if (HEADING_RECORDING.test(String(title || ''))) return 'recording';
+    // [Z-SUITENO] (3.189.0, S331) a catalogue number ("105-2", "ECM 1064", "LP-1234"): digits in groups, a short mark in capitals
+    // before them – not the number of a work ("BWV 1004"), not a year or a count alone ("1984")
+    if (ruleOn('S331') && /^(?:[A-Z]{1,6}[ .-]?\d+(?:[-–/. ]\d+)*|\d+(?:[-–/.]\d+)+)$/.test(String(title || '').trim())
+      && !/^(?:BWV|KV|K|HWV|RV|HOB|OP|D|WOO|SWV|TWV|L|S|M)[ .-]?\d/.test(String(title || '').trim())) return 'catno';
     return 'name';
   }
   /**
@@ -45545,7 +45608,48 @@
       const name = String(mbTitle || (rel && rel.title) || '').trim();
       if (name && named.length >= 2 && named.length * 2 >= tracks.length) out.push({ name, from: 'release', tracks: named });
     }
+    // [Z-SUITENO] (3.189.0, S331) whatever it is from – an index track too –: a medium ("CD 2", "Side B") or a catalogue number (the
+    // release's own, or one by its look: "105-2") names no suite
+    if (ruleOn('S331')) {
+      const own = new Set(((rel && rel.companies) || []).map((c) => norm(c && c.catno)).filter(Boolean));
+      return out.filter((o) => headingKind(o.name) === 'name' && !own.has(norm(o.name)));
+    }
     return out;
+  }
+  /**
+   * [Z-SUITEPREFIX] (3.189.0, S330) The suites MusicBrainz's own titles show: tracks in a row (two at least) named "Name: Part" with
+   * the same name – "Odes and Meditations for Cecil Taylor: Meditation I" … ": Strange Loops" –, and all tracks of a medium whose
+   * title is that name. [{ name, from: 'prefix', tracks }]; a part keeps its own dashes ("Sleeping Furiously – Haiku I–III" is one
+   * part: no suite within a suite).
+   */
+  function prefixSuites(mbTracks, mediumTitle = () => '') {
+    const out = [];
+    const list = (mbTracks || []).filter(Boolean);
+    const head = (t) => {
+      const m = /^(.{3,}?):\s+\S/u.exec(String((t && t.title) || ''));
+      return m ? m[1].trim() : '';
+    };
+    let k = 0;
+    while (k < list.length) {
+      const h = head(list[k]);
+      let e = k + 1;
+      if (h) while (e < list.length && foldWord(head(list[e])) === foldWord(h) && (list[e].medium == null || list[e].medium === list[k].medium)) e++;
+      if (h && e - k >= 2) {
+        const idx = list.slice(k, e).map((t) => t.idx);
+        // (the tracks of the medium named so belong to it, with or without the name before them)
+        const med = list.filter((t) => t.medium != null && t.medium === list[k].medium);
+        const all = med.length > idx.length && foldWord(String(mediumTitle(list[k].medium) || '')) === foldWord(h) ? med.map((t) => t.idx) : idx;
+        out.push({ name: h, from: 'prefix', tracks: all });
+      }
+      k = Math.max(e, k + 1);
+    }
+    return out;
+  }
+  /** [Z-SUITEPREFIX] (3.189.0) A track's title without the name of its suite before it ("Name: Part" – "Part"). */
+  function partWithoutPrefix(title, name) {
+    const t = String(title || '');
+    const m = /^(.{3,}?):\s+(\S.*)$/u.exec(t);
+    return m && foldWord(m[1].trim()) === foldWord(name) ? m[2].trim() : t;
   }
 
   function titleComposerNames(title) {
@@ -45658,10 +45762,26 @@
       return w[0] && w[0].length >= 4 && !MV_SMALL.has(w[0]) && !/^\d/.test(w[0]) ? w[0] : '';
     };
     const ttNo = tt.replace(/ (?:nr|n) (\d)/g, ' no $1');
+    // [Z-WORKFIND] (3.189.0, S333) the movement by its number after the catalogue number ("BWV 1004/5": the fifth), and its name in
+    // another language ("Chaconne" – "V. Ciaccona")
+    const loose = ruleOn('S333');
+    const nth = loose ? Number((new RegExp(`${escRe(cat.text).replace(/\\? /g, '\\s*')}\\s*[/,]\\s*(?:no\\.?\\s*)?(\\d{1,2})(?!\\d)`, 'i').exec(String(title || '')) || [])[1] || 0) : 0;
+    const ordOf = (w) => {
+      const m = /:\s+(?:([IVXLC]+)|(\d+))\s*[.)]\s/.exec(w.title);
+      if (!m) return 0;
+      if (m[2]) return Number(m[2]);
+      const val = { I: 1, V: 5, X: 10, L: 50, C: 100 };
+      return [...m[1]].reduce((s, ch, k, arr) => s + (val[ch] < (val[arr[k + 1]] || 0) ? -val[ch] : val[ch]), 0);
+    };
+    const ttFold = loose ? ` ${classicalFold(normTitle(title))} ` : '';
     const scored = has.map((w) => {
       const mv = mvOf(w);
       const short = mv && mvShort(mv);
-      return { w, mv, score: !mv ? 0 : tt.includes(` ${mv} `) ? 2 : short && ttNo.includes(` ${short} `) ? 1 : -1 };
+      const byName = !mv ? 0 : tt.includes(` ${mv} `) ? 2 : short && ttNo.includes(` ${short} `) ? 1 : -1;
+      if (!loose || !mv || byName === 2) return { w, mv, score: byName };
+      if (nth) return { w, mv, score: ordOf(w) === nth ? 2 : -1 };
+      const fs = short && classicalFold(short);
+      return { w, mv, score: byName === 1 ? 1 : fs && fs !== short && ttFold.includes(` ${fs} `) ? 1 : -1 };
     });
     const best = Math.max(-1, ...scored.map((x) => x.score));
     const parents = scored.filter((x) => !x.mv).map((x) => ({ ...x.w, catalogue: cat.text }));
@@ -45669,6 +45789,70 @@
     // ((review) several movements by their short form alone: the work itself (when MusicBrainz has it)
     if (best === 2 || (best === 1 && (top.length === 1 || !parents.length))) return top;
     return parents;
+  }
+
+  /**
+   * [Z-WORKFIND] (3.189.0, S333) A classical title read for what names the work, however it is written: its kind ("Sonata" / "Sonate" /
+   * "Sonata", "Symphony" / "Sinfonie" …), its number ("No. 3" / "Nr. 3" / "n° 3") and its key ("G minor" / "g-Moll" / "sol mineur" –
+   * German "B" is B flat, "H" is B). { genre, no, key } – each '' when the title has none.
+   */
+  // (a function: reachable in Node before the consts further down)
+  function classicalGenres() {
+    return classicalGenres.map || (classicalGenres.map = {
+    sonata: ['sonata', 'sonate', 'sonatas', 'sonaten', 'sonatina', 'sonatine'], symphony: ['symphony', 'sinfonie', 'symphonie', 'sinfonia', 'sinfonía'],
+      concerto: ['concerto', 'konzert', 'concert', 'concierto', 'concerti'], quartet: ['quartet', 'quartett', 'quatuor', 'quartetto', 'cuarteto'],
+      quintet: ['quintet', 'quintett', 'quintette', 'quintetto', 'quinteto'], trio: ['trio'], partita: ['partita', 'partie', 'parthia'], suite: ['suite'],
+      prelude: ['prelude', 'präludium', 'praeludium', 'prélude', 'preludio', 'preludium'], fugue: ['fugue', 'fuge', 'fuga'],
+      passacaglia: ['passacaglia', 'passacaille', 'passagalia', 'passacalle', 'pasacalle'], chaconne: ['chaconne', 'ciaccona', 'ciacona', 'chacona', 'chacony'],
+      mass: ['mass', 'messe', 'missa', 'misa'], cantata: ['cantata', 'kantate', 'cantate'], variations: ['variations', 'variationen', 'variazioni', 'variaciones'],
+      fantasia: ['fantasia', 'fantasie', 'fantaisie', 'fantasy', 'fantasía'], toccata: ['toccata', 'tokkata'], overture: ['overture', 'ouvertüre', 'ouverture', 'obertura'],
+      requiem: ['requiem'], serenade: ['serenade', 'serenata', 'sérénade'], divertimento: ['divertimento'], nocturne: ['nocturne', 'notturno', 'nocturno'],
+      etude: ['etude', 'étude', 'etüde', 'studio', 'estudio'], rondo: ['rondo', 'rondeau'], motet: ['motet', 'motette', 'mottetto'],
+    });
+  }
+  function classicalKey(title) {
+    const t = String(title || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/♭/g, ' flat').replace(/♯/g, ' sharp');
+    const words = t.replace(/[^\p{L}\p{N}#°]+/gu, ' ').trim().split(' ');
+    const fold = (w) => w.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    let genre = '';
+    for (const w of words) {
+      const g = Object.keys(classicalGenres()).find((k) => classicalGenres()[k].some((x) => fold(x) === w));
+      if (g) { genre = g; break; }
+    }
+    const no = (/(?:^|[^\p{L}])(?:no|nr|num|n°|n|#)\s*\.?\s*(\d+)(?!\d)/u.exec(t) || [])[1] || '';
+    let key = '';
+    const en = /(?:^|[^\p{L}])([a-g])(?:[- ]?(flat|sharp)|(#))?[- ]+(major|minor|maj|min)(?![\p{L}])/u.exec(t);
+    const de = /(?:^|[^\p{L}])([a-h](?:is|es|s)?)[- ]?(dur|moll)(?![\p{L}])/u.exec(t);
+    const ro = /(?:^|[^\p{L}])(do|ut|re|mi|fa|sol|la|si)[- ]?(bemol|bemolle|diese|diesis|sostenido)?[- ]+(majeur|mineur|maggiore|minore|mayor|menor)(?![\p{L}])/u.exec(t);
+    if (en) key = `${en[1]}${en[2] === 'flat' ? 'b' : en[2] === 'sharp' || en[3] ? '#' : ''}-${en[4].startsWith('maj') ? 'maj' : 'min'}`;
+    else if (de) {
+      const n = de[1];
+      const note = n === 'h' ? 'b' : n === 'b' ? 'bb' : n === 'es' ? 'eb' : n === 'as' ? 'ab' : n.endsWith('is') ? `${n[0]}#` : n.endsWith('es') ? `${n[0]}b` : n;
+      key = `${note}-${de[2] === 'dur' ? 'maj' : 'min'}`;
+    } else if (ro) {
+      const note = { do: 'c', ut: 'c', re: 'd', mi: 'e', fa: 'f', sol: 'g', la: 'a', si: 'b' }[ro[1]];
+      key = `${note}${!ro[2] ? '' : ro[2].startsWith('bemol') ? 'b' : '#'}-${/^ma/.test(ro[3]) ? 'maj' : 'min'}`;
+    }
+    return { genre, no, key };
+  }
+  /**
+   * [Z-WORKFIND] (3.189.0, S333) A work of the composer that may be the track's, though written otherwise: the same kind of work; where
+   * both name a number, the same; where both name a key, the same; and one of the two in common – the instruments ("for violin and
+   * continuo"), the order of the words and the punctuation do not count. Not a movement ("…: I. Adagio"). A suggestion, never a match.
+   */
+  function classicalFit(trackTitle, workTitle) {
+    const a = classicalKey(trackTitle);
+    const b = classicalKey(workTitle);
+    if (!a.genre || a.genre !== b.genre || /:\s+(?:[IVXLC]+|\d+)\s*[.)]\s/.test(String(workTitle || ''))) return false;
+    if (a.no && b.no && a.no !== b.no) return false;
+    if (a.key && b.key && a.key !== b.key) return false;
+    return !!((a.no && a.no === b.no) || (a.key && a.key === b.key));
+  }
+  /** [Z-WORKFIND] (3.189.0) The words of a kind of work in every language of the list, for MusicBrainz's search. */
+  const classicalGenreWords = (genre) => classicalGenres()[genre] || [];
+  /** [Z-WORKFIND] (3.189.0) Words that name the same in a title of a movement: "chaconne" – "ciaccona" (normTitle of both sides). */
+  function classicalFold(t) {
+    return String(t || '').split(' ').map((w) => Object.keys(classicalGenres()).find((k) => classicalGenres()[k].some((x) => normTitle(x) === w)) || w).join(' ');
   }
 
   function sameNamed(i) {
@@ -46438,13 +46622,16 @@
       const listId = `dci-mx-wlist-${i}`;
       // ([Z-BWV] 3.138.0) found by a catalogue number
       const byCat = same.find((w) => w.catalogue);
-      const what = byCat ? tr('matrix.sameCatalogue', { n: same.length, cat: byCat.catalogue }) : tr(same.some((w) => w.artistWork) ? 'matrix.sameArtists' : 'matrix.same', { n: same.length });
-      pick = ` <button type="button" class="dci-small dci-mx-wpickbtn" data-act="mx-works" aria-expanded="${open}" aria-controls="${listId}"
+      // ([Z-WORKFIND] 3.189.0, S333) only works of a similar title: yellow, to check
+      const allLoose = same.every((w) => w.loose);
+      const what = byCat ? tr('matrix.sameCatalogue', { n: same.length, cat: byCat.catalogue }) : allLoose ? tr('matrix.sameLoose', { n: same.length })
+        : tr(same.some((w) => w.artistWork) ? 'matrix.sameArtists' : 'matrix.same', { n: same.length });
+      pick = ` <button type="button" class="dci-small dci-mx-wpickbtn${allLoose ? ' dci-mx-wloosebtn' : ''}" data-act="mx-works" aria-expanded="${open}" aria-controls="${listId}"
         title="${esc(what)}">${esc(tr('matrix.worksPick', { n: same.length }))} ${open ? '▴' : '▾'}</button>`;
-      found = `<div class="dci-same dci-mx-wlist" id="${listId}"${open ? '' : ' hidden'}><strong>${esc(what)}</strong><ul class="dci-candidates">${same.map((w) => `<li>
+      found = `<div class="dci-same dci-mx-wlist" id="${listId}"${open ? '' : ' hidden'}><strong>${esc(what)}</strong><ul class="dci-candidates">${same.map((w) => `<li${w.loose ? ' class="dci-mx-wloose"' : ''}>
           <button type="button" data-act="work-pick" data-gid="${esc(w.gid)}" data-title="${esc(w.title)}"${w.composer ? ` data-composer="${esc(w.composer)}" data-composer-name="${esc(w.composerName || '')}"` : ''}>${esc(tr('works.link'))}</button>
           <a class="dci-mblink" href="/work/${esc(w.gid)}" target="_blank" rel="noopener"><span class="dci-src dci-src-mb">MB</span>${esc(w.title)}</a>${w.disambiguation ? ` <span class="dci-disamb">(${esc(w.disambiguation)})</span>` : ''}
-          <span class="dci-sub">${esc([w.type, w.writers.join(', ')].filter(Boolean).join(' – '))}</span></li>`).join('')}</ul></div>`;
+          <span class="dci-sub">${esc([w.type, w.writers.join(', ')].filter(Boolean).join(' – '))}</span>${w.loose ? ` <span class="dci-badge dci-mx-wloosetag" data-el="work-loose">${esc(tr('matrix.looseTag'))}</span>` : ''}</li>`).join('')}</ul></div>`;
     }
     // [Z-SU] (3.41.3) a title of parts ("A / B"): split into works of their own (a medley) – offered, not done by itself (Q-cg)
     // [Z-MDLY2] (3.99.0) a switch: marked, its parts become new works when "＋ New" or "＋ New works" plans them (not before)
@@ -46965,12 +47152,30 @@
    */
   function suiteAsks() {
     if (!S.release || S.worksSkip) return [];
+    // [Z-SUITENO] (3.189.0, S331) "✕ No suite" is kept for the release: read once per import
+    if (ruleOn('S331') && !S.suiteNoLoaded) {
+      S.suiteNoLoaded = true;
+      suiteNoStored().forEach((k) => { if (!S.suiteAnswers.has(k)) S.suiteAnswers.set(k, { yes: false }); });
+    }
     // (3.41.4, review) the key from the offer itself (a medium filter or the media chosen do not change it); an offer whose tracks all
     // have their works in MusicBrainz is not asked; one answered stays (its "↺"); a suite accepted for another source of the release
     // too
     const out = suiteOffers(S.release).map((o) => ({ ...o, key: `${o.from}|${o.name}|${o.tracks.join(',')}` }))
       .map((o) => ({ ...o, tracks: o.tracks.filter((i) => S.mbTracks[i] && matrixTrack(S.mbTracks[i])) }))
       .filter((o) => S.suiteAnswers.has(o.key) || (o.tracks.length && o.tracks.some((i) => !S.mbTracks[i].works.length)));
+    // [Z-SUITEPREFIX] (3.189.0, S330) the suites MusicBrainz's titles show: instead of an offer of the source over the same tracks
+    // that has fewer of them (no track below the heading is left out); beside it when the source's has as many
+    if (ruleOn('S330')) {
+      for (const p0 of prefixSuites(S.mbTracks.filter((t) => matrixTrack(t)), (m) => (S.mediaInfo && S.mediaInfo.get(m) || {}).title || '')) {
+        const p = { ...p0, key: `prefix|${p0.name}|${p0.tracks.join(',')}` };
+        if (!(S.suiteAnswers.has(p.key) || p.tracks.some((i) => !S.mbTracks[i].works.length))) continue;
+        const over = out.filter((o) => o.tracks.some((i) => p.tracks.includes(i)));
+        if (over.some((o) => S.suiteAnswers.has(o.key) || o.tracks.length >= p.tracks.length)) continue;
+        over.forEach((o) => out.splice(out.indexOf(o), 1));
+        out.push(p);
+      }
+      out.sort((a, b) => (a.tracks[0] || 0) - (b.tracks[0] || 0));
+    }
     // [Z-SUM] (3.41.11) the suites added by hand
     for (const o of S.suiteManual.values()) if (!out.some((x) => x.key === o.key)) out.push({ ...o, tracks: [...o.tracks] });
     for (const sw of S.suiteWorks.values()) {
@@ -47024,8 +47229,10 @@
       const had = S.workParts.get(i);
       if (had && had.length && had[0].suite !== o.key) continue;
       const src = (S.srcTracks || [])[i] || null;
-      const parts = trackPartsOf(src && src.title ? src : { title: t.title });
-      const titles = parts.length ? parts : [workTitleOf((src && src.title) || t.title)];
+      // ([Z-SUITEPREFIX] 3.189.0, S330) a suite of MusicBrainz's titles: each track one part, its title without the suite's name
+      const parts = o.from === 'prefix' ? [] : trackPartsOf(src && src.title ? src : { title: t.title });
+      const titles = o.from === 'prefix' ? [partWithoutPrefix(workTitleOf(t.title), o.name)]
+        : parts.length ? parts : [partWithoutPrefix(workTitleOf((src && src.title) || t.title), nm)];
       const before = S.workParts.has(i) ? null : S.workPlan.get(i) || null;
       // (3.41.4, review) a work of MusicBrainz chosen or created for the track is its part (no new work instead of it)
       if (before && before.origin !== 'pending') {
@@ -47140,6 +47347,7 @@
       if (ps[0].before) S.workPlan.set(i, ps[0].before);
     }
     S.suiteAnswers.delete(o.key);
+    suiteNoStore(o.key, false);
     S.suiteWorks.delete(o.key);
     S.suiteManual.delete(o.key); // [Z-SUM] (3.41.11) a suite added by hand goes (nothing to ask again)
     log('info', 'suiteUndone', { name: o.name });
@@ -47310,7 +47518,7 @@
     return `<div class="dci-mx-ask dci-mx-suite" data-suite="${esc(o.key)}" role="group" aria-label="${esc(tr('suite.ask', { tracks, name: o.name }))}">
       <strong>${esc(tr('suite.ask', { tracks, name: o.name }))}</strong>
       <button type="button" class="dci-primary dci-small" data-act="suite-yes">${esc(tr('suite.yes'))}</button>
-      <button type="button" class="dci-small" data-act="suite-no">${esc(tr('suite.noBtn'))}</button>
+      <button type="button" class="dci-small" data-act="suite-no"${ruleOn('S331') ? ` title="${esc(tr('suite.noTitle'))}"` : ''}>${esc(tr('suite.noBtn'))}</button>
       <label class="dci-suite-other">${esc(tr('suite.other'))} <input type="text" data-f="suite-name" value="${esc(o.name)}" size="24"></label>
       <button type="button" class="dci-small" data-act="suite-yes-name">${esc(tr('suite.yesName'))}</button>
       <span class="dci-sub">${esc(from)}</span><p class="dci-sub dci-suite-hint">${esc(tr('suite.hint'))}</p></div>`;
@@ -47535,11 +47743,12 @@
     // suites: from a heading (careful), an index track (balanced), the release's title (bold); never one added by hand
     const taken = new Set();
     if (magicKindOn('suite')) {
-      const from = ['heading', ...(magicAt('balanced') ? ['index'] : []), ...(magicAt('bold') ? ['release'] : [])];
+      // ([Z-SUITEPREFIX] 3.189.0) MusicBrainz's own titles "Name: Part" count like a heading
+      const from = ['heading', 'prefix', ...(magicAt('balanced') ? ['index'] : []), ...(magicAt('bold') ? ['release'] : [])];
       for (const o of suiteAsks()) {
         if (S.suiteAnswers.has(o.key) || !from.includes(o.from) || !o.tracks.length) continue;
         o.tracks.forEach((i) => taken.add(i));
-        out.push({ kind: 'suite', i: o.tracks[0], tracks: [...o.tracks], label: tracksShort({ level: 'recording', tracks: new Set(o.tracks) }),
+        out.push({ kind: 'suite', key: `suite|${o.key}`, i: o.tracks[0], tracks: [...o.tracks], label: tracksShort({ level: 'recording', tracks: new Set(o.tracks) }),
           what: tr('magic.what.suite', { name: o.name, from: tr(`suite.from.${o.from}`) }),
           apply: () => {
             acceptSuite(o, o.name);
@@ -47583,7 +47792,9 @@
         const exact = cands.filter((w) => normTitle(w.title) === title);
         let pick = null;
         let why = '';
-        if (cands.length === 1 && exact.length === 1 && sameWriters(exact[0])) [pick, why] = [exact[0], 'magic.why.exact'];
+        // ([Z-WORKFIND] 3.189.0, S333) a work of a similar title only is for the user to check: neither linked nor a new work instead
+        if (cands.some((w) => w.loose)) pick = null;
+        else if (cands.length === 1 && exact.length === 1 && sameWriters(exact[0])) [pick, why] = [exact[0], 'magic.why.exact'];
         else if (cands.length === 1 && magicAt('balanced')) [pick, why] = [cands[0], 'magic.why.one'];
         else if (cands.length > 1 && magicAt('bold')) {
           // (several: the one of exactly this title with the most of the track's writers – MusicBrainz's numbers of recordings are not loaded)
@@ -47735,8 +47946,11 @@
     writeJson('localStorage', DED_KEY, all);
   }
   /** "✨ Answer all": the answers of the preview given; each marked ✨ at its track, in the log; "↺ Undo magic" takes them all back. */
+  /** [Z-SUITENO] (3.189.0) The key of an answer of the preview (its tick). */
+  const magicKey = (x) => x.key || `${x.kind}|${x.i}`;
   async function magicApply() {
-    const plan = magicPlan();
+    const plan = magicPlan().filter((x) => !S.magicSkip.has(magicKey(x)));
+    S.magicSkip.clear();
     S.magicPreview = false;
     if (!plan.length) return;
     const undos = [];
@@ -47792,12 +48006,18 @@
     const plan = magicPlan();
     const kinds = MAGIC_KINDS.filter((k) => plan.some((x) => x.kind === k));
     const off = MAGIC_KINDS.filter((k) => !magicKindOn(k));
-    const list = kinds.map((k) => `<li><strong>${esc(tr(`magic.kind.${k}`))}</strong> (${plan.filter((x) => x.kind === k).length})<ul>${plan.filter((x) => x.kind === k).slice(0, 40).map((x) => `<li data-el="magic-item" data-kind="${k}">${esc(x.label)} – ${esc(x.what)}</li>`).join('')}</ul></li>`).join('');
+    // [Z-SUITENO] (3.189.0, S331) each answer with its tick: one unticked is not given (the question stays open)
+    const ticks = ruleOn('S331');
+    const item = (x, k) => (ticks
+      ? `<li data-el="magic-item" data-kind="${k}"><label title="${esc(tr('magic.itemTitle'))}"><input type="checkbox" data-f="magic-item" data-key="${esc(magicKey(x))}"${S.magicSkip.has(magicKey(x)) ? '' : ' checked'}> ${esc(x.label)} – ${esc(x.what)}</label></li>`
+      : `<li data-el="magic-item" data-kind="${k}">${esc(x.label)} – ${esc(x.what)}</li>`);
+    const list = kinds.map((k) => `<li><strong>${esc(tr(`magic.kind.${k}`))}</strong> (${plan.filter((x) => x.kind === k).length})<ul>${plan.filter((x) => x.kind === k).slice(0, ticks ? 400 : 40).map((x) => item(x, k)).join('')}</ul></li>`).join('');
+    const nOn = plan.filter((x) => !S.magicSkip.has(magicKey(x))).length;
     return `${menu}${info}<div class="dci-wh-pop dci-mx-magicpop" data-el="magic-preview" role="group" aria-label="${esc(tr('magic.previewTitle'))}">
       <p><strong>${esc(tr('magic.previewHead', { level: tr(`magic.level.${lv}`), n: plan.length }))}</strong></p>
       ${plan.length ? `<ul class="dci-mx-magiclist">${list}</ul>` : `<p class="dci-sub" data-el="magic-none">${esc(tr('magic.none'))}</p>`}
       ${off.length ? `<p class="dci-sub">${esc(tr('magic.kindsOff', { list: off.map((k) => tr(`magic.kind.${k}`)).join(', ') }))}</p>` : ''}
-      <div>${plan.length ? `<button type="button" class="dci-primary dci-small" data-act="magic-apply">✨ ${esc(tr('magic.apply', { n: plan.length }))}</button> ` : ''}<button type="button" class="dci-small" data-act="magic-cancel">${esc(tr('common.cancel'))}</button></div></div>`;
+      <div>${plan.length ? `<button type="button" class="dci-primary dci-small" data-act="magic-apply"${nOn ? '' : ' disabled'}>✨ ${esc(tr('magic.apply', { n: nOn }))}</button> ` : ''}<button type="button" class="dci-small" data-act="magic-cancel">${esc(tr('common.cancel'))}</button></div></div>`;
   }
   /** ✨ at the track of an answer given by "✨ Answer all" (its tooltip: what). */
   const magicMarkHtml = (i) => (S.magicMarks && S.magicMarks.has(i) ? `<span class="dci-mx-magicmark" data-el="magic-mark" title="${esc(tr('magic.markTitle', { list: S.magicMarks.get(i).join(' · ') }))}">✨</span>` : '');
@@ -48568,7 +48788,7 @@
       <button type="button" class="dci-textbtn" data-act="mx-same" aria-expanded="true">${esc(tr('matrix.sameHide'))}</button></td></tr>` : '';
     if (same && !S.mxSameOpen) return `${fold.size ? doneRow : ''}${mxSameRowHtml(models, cols, span)}`;
     return sameBar + mrows.map((m, k) => `${m.key === firstDone ? doneRow : ''}${fold.has(m.key) ? '' : `${(firstOf.get(k) || []).map((o) => `<tr class="dci-mx-suiterow" data-suiterow="${esc(o.key)}"><td colspan="${span}">${suiteAskHtml(o)}</td></tr>`).join('')}
-      <tr data-work="${m.i}" data-mrow="${esc(m.key)}"${inSuite.has(m.i) || creditsSkipped(m.i) ? ` class="${[inSuite.has(m.i) ? 'dci-mx-inpart' : '', creditsSkipped(m.i) ? 'dci-mx-cskiprow' : ''].filter(Boolean).join(' ')}"` : ''}><th scope="row" class="dci-mx-front"><div class="dci-mx-fw">${workFrontCell(m)}${magicMarkHtml(m.i)}</div></th>${cols.map((c) => cellHtml(c, m)).join('')}${skipped ? '' : '<td class="dci-mx-addcell" aria-hidden="true"></td>'}</tr>`}`).join('');
+      <tr data-work="${m.i}" data-mrow="${esc(m.key)}" data-wstate="${workRowState(m)}" class="${['dci-mx-wr', inSuite.has(m.i) ? 'dci-mx-inpart' : '', creditsSkipped(m.i) ? 'dci-mx-cskiprow' : ''].filter(Boolean).join(' ')}"><th scope="row" class="dci-mx-front"><div class="dci-mx-fw">${workFrontCell(m)}${magicMarkHtml(m.i)}</div></th>${cols.map((c) => cellHtml(c, m)).join('')}${skipped ? '' : '<td class="dci-mx-addcell" aria-hidden="true"></td>'}</tr>`}`).join('');
   }
   /** [W-DATES] (3.167.0) The own date of a role in a cell, small in its chip ("writer ⌚ 1974") – until now only the sign said there was one. */
   function ownDateText(r) {
@@ -51680,7 +51900,7 @@
         saveDarkPalette(what);
         log('info', 'settingValue', { what: tr('settings.darkColors'), value: tr('settings.darkColorsReset') });
         if (what === 'level') applyLevelColors();
-        else applyKindColors();
+        else applyKindColors(); applyWorkRowColors();
         if (S.settingsOpen) renderSettings();
         break;
       }
@@ -51735,6 +51955,7 @@
         S.magicMenu = false;
         S.magicInfo = false;
         S.magicPreview = !S.magicPreview;
+        S.magicSkip.clear(); // [Z-SUITENO] (3.189.0) every answer ticked anew
         const focus = (sel) => { const b = S.overlay.querySelector(sel); if (b) b.focus({ preventScroll: true }); };
         if (S.magicPreview && !S.magicBusy) {
           S.magicBusy = true;
@@ -51826,6 +52047,7 @@
         } else if (act === 'suite-undo') undoSuite(o);
         else if (act === 'suite-no') {
           S.suiteAnswers.set(o.key, { yes: false });
+          suiteNoStore(o.key, true);
           log('info', 'suiteNo', { name: o.name });
         } else {
           const field = box.querySelector('[data-f="suite-name"]');
@@ -53823,6 +54045,15 @@
       settingsChange(e.target);
       return;
     }
+    // [Z-SUITENO] (3.189.0, S331) an answer of the preview of "✨ Answer all" ticked or not
+    if (e.target.dataset && e.target.dataset.f === 'magic-item') {
+      const k = e.target.dataset.key || '';
+      if (e.target.checked) S.magicSkip.delete(k); else S.magicSkip.add(k);
+      renderWorks();
+      const again = [...S.overlay.querySelectorAll('[data-f="magic-item"]')].find((x) => x.dataset.key === k);
+      if (again) again.focus({ preventScroll: true });
+      return;
+    }
     // [Z-QSP] (3.75.0) a profile's name, a file of profiles
     if (e.target.dataset && e.target.dataset.f === 'profile-name') {
       renameProfile(e.target.dataset.id, e.target.value);
@@ -54401,7 +54632,7 @@
       if ((what === 'level' ? LEVEL_PALETTE_DEFAULT : KIND_PALETTE_DEFAULT)[k]) {
         (what === 'level' ? S.levelPaletteDark : S.kindPaletteDark)[k] = el.value.toLowerCase();
         if (what === 'level') applyLevelColors();
-        else applyKindColors();
+        else applyKindColors(); applyWorkRowColors();
         // (its tag beside it in the dark colour, also while the dashboard is light)
         const lab = el.closest('label');
         const chip = what === 'level' ? lab && lab.querySelector('.dci-cl-level') : lab;
@@ -54412,7 +54643,7 @@
     // [3.32.4] a colour of a kind shown while it is chosen (stored on "change")
     if (el.dataset && el.dataset.set === 'kind-color' && /^#[0-9a-f]{6}$/i.test(el.value) && KIND_PALETTE_DEFAULT[el.dataset.kind]) {
       S.kindPalette[el.dataset.kind] = el.value.toLowerCase();
-      applyKindColors();
+      applyKindColors(); applyWorkRowColors();
       return;
     }
     // [Z-AK] (3.40.3, review) typing in a block's "credited as": kept as a draft, marked as typed in
@@ -55102,7 +55333,7 @@
     applyScale();
     renderCompactHint(); // [143] (3.34.23)
     applyLevelColors();
-    applyKindColors();
+    applyKindColors(); applyWorkRowColors();
     makeMovable(overlay.querySelector('.dci-panel'), '.dci-head', 'panel');
     applyPlacement();
     // Rows scrolled into view (keyboard, jumps) must not end up under the sticky date pool ([3.18.0] with the line
@@ -55365,6 +55596,9 @@
   // [3.32.4] the colours of the kinds of entries (items 107, 108): on by default; own colours in ⚙ Settings → Appearance
   const KIND_COLORS_KEY = 'dci-kind-colors';
   const KIND_PALETTE_KEY = 'dci-kind-palette';
+  // ([Z-WORKROWCOLOR] 3.189.0)
+  const WORKROW_COLORS_KEY = 'dci-workrow-colors';
+  const WORKROW_PALETTE_KEY = 'dci-workrow-palette';
   // [3.37.8] events their own colour, plum (collected item 158)
   const KIND_PALETTE_DEFAULT = { artist: '#5b6f8c', label: '#237676', place: '#447836', area: '#8a6a3e', event: '#8a4f7d', other: '#8a8799' };
   /** The stored keys of each topic (its "↺" sets them back). */
@@ -55385,7 +55619,7 @@
   const TOPIC_KEYS = {
     general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h', 'dci-log-note-w', LOG_LINES_KEY, DEV_KEY], // ([Z-SETTABS2] 3.137.0) developer mode here again
     profiles: [], // [Z-QSP] (3.75.0) no "↺ Defaults of this topic" – "Standard" is the profile of the defaults
-    appearance: ['dci-insts-common', MX_HEADS_KEY, CHROME_KEY, 'dci-sort-on', 'dci-sort', 'dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY, DED_BOX_KEY, EMOJI_TEXT_KEY,
+    appearance: ['dci-insts-common', MX_HEADS_KEY, CHROME_KEY, 'dci-sort-on', 'dci-sort', 'dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, WORKROW_COLORS_KEY, WORKROW_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY, DED_BOX_KEY, EMOJI_TEXT_KEY,
       'dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark', 'dci-kind-palette-dark',
       // [Z-SETTABS] (3.136.0) the matrix of an entry (from "Staging")
       EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY, EM_ATTR_KEY],
@@ -55450,6 +55684,37 @@
   S.kindPalette = kindPaletteRead();
 
   /** [3.32.4] The stored colours of the kinds of entries (each a "#rrggbb"; the others as by default). */
+  /**
+   * [Z-WORKROWCOLOR] (3.189.0, S332) The colours of a row of the works matrix by the state of its work: found in MusicBrainz (will be
+   * linked) – turquoise; a new work – amber; linked in MusicBrainz already – green; without a work: none. A stripe at the left and a
+   * faint tint of the row; the words stay (never the colour alone). ⚙ Settings → Appearance: on / off, the three colours.
+   */
+  const WORKROW_PALETTE_DEFAULT = { found: '#12857f', new: '#b06f00', linked: '#2e7d32' };
+  function workRowPaletteRead() {
+    const stored = readJson('localStorage', WORKROW_PALETTE_KEY, null) || {};
+    return Object.fromEntries(Object.entries(WORKROW_PALETTE_DEFAULT).map(([k, d]) => [k, /^#[0-9a-f]{6}$/i.test(stored[k] || '') ? stored[k].toLowerCase() : d]));
+  }
+  function saveWorkRowPalette() {
+    const own = Object.fromEntries(Object.entries(S.workRowPalette).filter(([k, v]) => v !== WORKROW_PALETTE_DEFAULT[k]));
+    writeJson('localStorage', WORKROW_PALETTE_KEY, Object.keys(own).length ? own : null);
+  }
+  /** The state of a row of the works matrix: 'linked' | 'found' | 'new' | 'none'. */
+  const workRowState = (m) => (!m || !m.work ? 'none' : !m.work.planned ? 'linked' : isPending(m.work.gid) ? 'new' : 'found');
+  function applyWorkRowColors() {
+    if (!S.overlay) return;
+    const on = !!S.workRowColors && ruleOn('S332');
+    S.overlay.classList.toggle('dci-wrc', on);
+    const dark = overlayDark();
+    Object.keys(WORKROW_PALETTE_DEFAULT).forEach((k) => {
+      const c = dark ? darkToneOf('level', S.workRowPalette[k]) : S.workRowPalette[k];
+      const [r, g, b] = [1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16));
+      S.overlay.style.setProperty(`--dci-wr-${k}`, c);
+      S.overlay.style.setProperty(`--dci-wr-${k}-bg`, `rgba(${r}, ${g}, ${b}, ${dark ? 0.16 : 0.09})`);
+    });
+  }
+  S.workRowColors = readJson('localStorage', WORKROW_COLORS_KEY, true) !== false;
+  S.workRowPalette = workRowPaletteRead();
+
   function kindPaletteRead() {
     const stored = readJson('localStorage', KIND_PALETTE_KEY, null) || {};
     return Object.fromEntries(Object.entries(KIND_PALETTE_DEFAULT).map(([k, d]) => [k, /^#[0-9a-f]{6}$/i.test(stored[k] || '') ? stored[k].toLowerCase() : d]));
@@ -55612,7 +55877,7 @@
     });
     if (changed && S.overlay) {
       applyLevelColors();
-      applyKindColors();
+      applyKindColors(); applyWorkRowColors();
     }
   }
   function setTheme(where, v) {
@@ -57654,6 +57919,11 @@
         right(`<span class="dci-lvl-pick dci-kind-pick">${Object.keys(KIND_PALETTE_DEFAULT).map((kind) => `<label class="dci-kind-${kind}"><input type="color" data-set="kind-color" data-kind="${kind}"
           value="${S.kindPalette[kind]}"${S.kindColors ? '' : ' disabled'} aria-label="${esc(tr('settings.kindColor', { kind: tr(`kind.${kind}`) }))}">
           <span class="dci-kind-tag">${esc(tr(`kind.${kind}`))}</span></label>`).join('')}</span>`, { sub: true, off: !S.kindColors }),
+        // [Z-WORKROWCOLOR] (3.189.0, S332) the rows of the works matrix by the state of their work
+        ...(ruleOn('S332') ? [cb('data-set="workrow-colors"', S.workRowColors, tr('settings.workRowColors'), tr('settings.workRowColorsTitle'), { def: true }),
+          right(`<span class="dci-lvl-pick dci-wr-pick">${Object.keys(WORKROW_PALETTE_DEFAULT).map((k) => `<label><input type="color" data-set="workrow-color" data-state="${k}"
+          value="${S.workRowPalette[k]}"${S.workRowColors ? '' : ' disabled'} aria-label="${esc(tr('settings.workRowColor', { state: tr(`workrow.${k}`) }))}">
+          <span class="dci-wr-tag" data-state="${k}">${esc(tr(`workrow.${k}`))}</span></label>`).join('')}</span>`, { sub: true, off: !S.workRowColors })] : []),
         // [Z-DM] (3.46.0; Q-ee) colours of their own for the dark theme (off: the light ones made lighter; on: those to begin with)
         cb('data-set="dark-colors"', S.darkColors, tr('settings.darkColors'), tr('settings.darkColorsTitle'), { def: false }),
         ...(S.darkColors ? [
@@ -58398,13 +58668,27 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       S.kindColors = el.checked;
       writeJson('localStorage', KIND_COLORS_KEY, el.checked ? null : false);
       log('info', 'settingValue', { what: tr('settings.kindColors'), value: tr(el.checked ? 'common.on' : 'common.off') });
-      applyKindColors();
+      applyKindColors(); applyWorkRowColors();
     } else if (k === 'kind-color') {
       if (/^#[0-9a-f]{6}$/i.test(el.value) && KIND_PALETTE_DEFAULT[el.dataset.kind]) {
         S.kindPalette[el.dataset.kind] = el.value.toLowerCase();
         saveKindPalette();
         log('info', 'settingValue', { what: tr('settings.kindColor', { kind: tr(`kind.${el.dataset.kind}`) }), value: el.value.toLowerCase() });
-        applyKindColors();
+        applyKindColors(); applyWorkRowColors();
+      }
+    }
+    // [Z-WORKROWCOLOR] (3.189.0, S332) the colours of the rows of the works matrix
+    else if (k === 'workrow-colors') {
+      S.workRowColors = el.checked;
+      writeJson('localStorage', WORKROW_COLORS_KEY, el.checked ? null : false);
+      log('info', 'settingValue', { what: tr('settings.workRowColors'), value: tr(el.checked ? 'common.on' : 'common.off') });
+      applyWorkRowColors();
+    } else if (k === 'workrow-color') {
+      if (/^#[0-9a-f]{6}$/i.test(el.value) && WORKROW_PALETTE_DEFAULT[el.dataset.state]) {
+        S.workRowPalette[el.dataset.state] = el.value.toLowerCase();
+        saveWorkRowPalette();
+        log('info', 'settingValue', { what: tr('settings.workRowColor', { state: tr(`workrow.${el.dataset.state}`) }), value: el.value.toLowerCase() });
+        applyWorkRowColors();
       }
     }
     // [Z-DM] (3.46.0) colours of their own for the dark theme
@@ -58413,7 +58697,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       writeJson('localStorage', DARK_COLORS_KEY, el.checked ? true : null);
       log('info', 'settingValue', { what: tr('settings.darkColors'), value: tr(el.checked ? 'common.on' : 'common.off') });
       applyLevelColors();
-      applyKindColors();
+      applyKindColors(); applyWorkRowColors();
       if (S.settingsOpen) renderSettings();
     } else if (k === 'level-color-dark' || k === 'kind-color-dark') {
       const what = k.startsWith('level') ? 'level' : 'kind';
@@ -58426,7 +58710,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
         saveDarkPalette(what);
         log('info', 'settingValue', { what: tr(what === 'level' ? 'settings.levelColorDark' : 'settings.kindColorDark', what === 'level' ? { level: tr(`level.${key}`) } : { kind: tr(`kind.${key}`) }), value: el.value.toLowerCase() });
         if (what === 'level') applyLevelColors();
-        else applyKindColors();
+        else applyKindColors(); applyWorkRowColors();
       }
     }
     else if (k === 'log-place') setLogPlace(el.value);
@@ -58751,11 +59035,13 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       applyLevelColors();
       S.kindColors = true;
       S.kindPalette = { ...KIND_PALETTE_DEFAULT };
+      S.workRowColors = true; // [Z-WORKROWCOLOR] (3.189.0)
+      S.workRowPalette = { ...WORKROW_PALETTE_DEFAULT };
       // [Z-DM] (3.46.0) the themes as by default, no colours of their own for the dark theme
       Object.assign(S, { darkColors: false, levelPaletteDark: {}, kindPaletteDark: {} });
       applyTheme();
       applyLevelColors();
-      applyKindColors();
+      applyKindColors(); applyWorkRowColors();
       S.rulesPlace = 'dashboard';
       S.rulesRowPlace = 'window';
       S.rulesAsWindow = false;
@@ -59023,6 +59309,8 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
     S.levelPalette = levelPaletteRead();
     S.kindColors = readJson('localStorage', KIND_COLORS_KEY, true) !== false;
     S.kindPalette = kindPaletteRead();
+    S.workRowColors = readJson('localStorage', WORKROW_COLORS_KEY, true) !== false;
+    S.workRowPalette = workRowPaletteRead();
     S.darkColors = readJson('localStorage', DARK_COLORS_KEY, false) === true;
     S.levelPaletteDark = paletteOwnRead(LEVEL_PALETTE_DARK_KEY, LEVEL_PALETTE_DEFAULT);
     S.kindPaletteDark = paletteOwnRead(KIND_PALETTE_DARK_KEY, KIND_PALETTE_DEFAULT);
@@ -59071,7 +59359,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       }
       applyTheme();
       applyLevelColors();
-      applyKindColors();
+      applyKindColors(); applyWorkRowColors();
       applyView();
       // ((review) what the setters do beside storing)
       renameSuiteParts();
@@ -59110,7 +59398,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       if (lang !== LANG) setLanguage(lang);
       applyTheme();
       applyLevelColors();
-      applyKindColors();
+      applyKindColors(); applyWorkRowColors();
       applyView();
       for (const r of S.rows) remapRow(r);
     } finally {
@@ -59350,7 +59638,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       qfOn: false, // [Z-QUICKFILL] (3.150.0)
       awOn: true, settingsOpen: false, mxSkipRows: true, webLinksShow: false, settingsTab: 'general', view: 'compact', // ([Z-CPV] 3.73.0)
       levelColors: true, levelPalette: { ...LEVEL_PALETTE_DEFAULT }, rulesPlace: 'dashboard', rulesRowPlace: 'window', rulesAsWindow: false, poolFold: {},
-      kindColors: true, kindPalette: { ...KIND_PALETTE_DEFAULT }, liveCom: false, ocrOn: true, ocrPreload: false, ocrAuto: false, ocrFront: true,
+      kindColors: true, kindPalette: { ...KIND_PALETTE_DEFAULT }, workRowColors: true, workRowPalette: { ...WORKROW_PALETTE_DEFAULT }, liveCom: false, ocrOn: true, ocrPreload: false, ocrAuto: false, ocrFront: true,
       workGroupsOn: true, rememberOn: false, rememberMax: 50, devMode: false, emSide: 'beside',
       // (3.40.17, review) skipped entries in their place again; a fold after "Apply" undone
       skipHide: false, poolsFoldApply: false, suiteNaming: 'colon', editNoteMode: 'full', dedBox: true,
@@ -59373,7 +59661,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
     closeOcr(true);
     ocrStateDropAll();
     renderLauncher();
-    applyKindColors();
+    applyKindColors(); applyWorkRowColors();
     // [3.16.0] the works settings and the stored works of the artists too
     Object.entries(AW_SETTINGS).forEach(([name, d]) => { S[name] = d.def; });
     awClear();
@@ -61799,6 +62087,21 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       .dci-mx-suiterow td { padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); background: var(--soft); text-align: left; }
       .dci-mx-suiterow .dci-mx-ask { margin: 0; }
       .dci-mx-inpart > .dci-mx-front { padding-left: calc(var(--u, 1px) * 22); box-shadow: inset calc(var(--u, 1px) * 4) 0 0 #c8c3e3; }
+      /* [Z-WORKROWCOLOR] (3.189.0, S332) the row by the state of its work: a stripe at the left, a faint tint over what the cells have */
+      .dci-wrc tr.dci-mx-wr[data-wstate="found"] { --wr: var(--dci-wr-found); --wr-bg: var(--dci-wr-found-bg); }
+      .dci-wrc tr.dci-mx-wr[data-wstate="new"] { --wr: var(--dci-wr-new); --wr-bg: var(--dci-wr-new-bg); }
+      .dci-wrc tr.dci-mx-wr[data-wstate="linked"] { --wr: var(--dci-wr-linked); --wr-bg: var(--dci-wr-linked-bg); }
+      .dci-wrc tr.dci-mx-wr:not([data-wstate="none"]) > * { background-image: linear-gradient(var(--wr-bg), var(--wr-bg)); }
+      .dci-wrc tr.dci-mx-wr:not([data-wstate="none"]) > .dci-mx-front { box-shadow: inset calc(var(--u, 1px) * 4) 0 0 var(--wr); }
+      .dci-wrc tr.dci-mx-wr.dci-mx-inpart:not([data-wstate="none"]) > .dci-mx-front { box-shadow: inset calc(var(--u, 1px) * 4) 0 0 #c8c3e3, inset calc(var(--u, 1px) * 8) 0 0 var(--wr); }
+      /* [Z-WORKFIND] (3.189.0, S333) works of a similar title: yellow, to check */
+      .dci-mx-wloosebtn { background: var(--sugg-bg); border-color: var(--sugg-line); color: var(--sugg-ink); }
+      .dci-candidates li.dci-mx-wloose { background: var(--sugg-bg); color: var(--sugg-ink); box-shadow: inset calc(var(--u, 1px) * 3) 0 0 var(--sugg-line); padding-left: calc(var(--u, 1px) * 6); }
+      .dci-mx-wloosetag { background: var(--sugg-bg); color: var(--sugg-ink); border: 1px solid var(--sugg-line); }
+      .dci-wr-tag { padding: 0 calc(var(--u, 1px) * 6); border-left: calc(var(--u, 1px) * 4) solid var(--muted, #5d5a6c); }
+      .dci-wr-tag[data-state="found"] { border-left-color: var(--dci-wr-found); background: var(--dci-wr-found-bg); }
+      .dci-wr-tag[data-state="new"] { border-left-color: var(--dci-wr-new); background: var(--dci-wr-new-bg); }
+      .dci-wr-tag[data-state="linked"] { border-left-color: var(--dci-wr-linked); background: var(--dci-wr-linked-bg); }
       .dci-works-head h3 { margin: 0; }
       .dci-works-head .dci-works-fold { font: inherit; font-weight: 600; color: inherit; padding: 0; text-decoration: none; }
       .dci-works-skipped { padding: 1px calc(var(--u, 1px) * 8); border-radius: 10px; background: #eee; color: #555; font-size: calc(var(--u, 1px) * 12); }
