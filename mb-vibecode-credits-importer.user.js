@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.189.0
+// @version      3.190.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.189.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.189.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.190.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.190.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.189.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.190.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -2287,6 +2287,23 @@
       "dateOrder.keep": "keep {date}",
       "dateOrder.drop": "remove the date",
       "issue.dateOrder": "the date lies before the recording or the mix – keep it or remove it",
+      "evp.head.one": "These recordings have an event already:",
+      "evp.head.other": "These recordings have events already:",
+      "evp.ask": "Link {name} to the recordings as well?",
+      "evp.place": "held at",
+      "evp.placeSame": "held at this very place:",
+      "evp.noPlace": "no place in the event",
+      "evp.editEvent": "add it to the event",
+      "evp.loading": "looking up its place …",
+      "evp.unknown": "its place could not be looked up",
+      "evp.staged": "an event of this import",
+      "evp.skip": "✕ Don’t link the place",
+      "evp.skipTitle": "The event has the place: this row is left out (its level takes it again)",
+      "evp.keep": "Link it anyway",
+      "evp.keepTitle": "The place is linked to the recordings besides their event",
+      "issue.eventPlace": "the recordings have an event already – link the place as well, or not",
+      "log.evpSkipped": "{name}: not linked to the recordings – they have an event ({events})",
+      "log.evpKept": "{name}: linked to the recordings besides their event ({events})",
       "log.dateOrderKept": "{name} ({role}): {date} kept, though before {other}",
       "log.dateOrderDropped": "{name} ({role}): {date} removed (before {other})",
       "log.uncrTaken": "Taken though uncredited: {n} roles ({list})",
@@ -2459,6 +2476,9 @@
       "settings.noteDupTitle": "When you create new works although MusicBrainz has works of the same title, the edit note names those works",
       "yell.must": "● {n}",
       "lc.missing": "Label code: Discogs gives LC {code} – {name} has no label code on MusicBrainz",
+      "lc.extra": "＋ also fills in: {list}",
+      "lc.hq": "headquarters in {area}",
+      "log.lcExtras": "{name}: Discogs’s page of the label also gives – {list} (filled in with ＋ at the label code)",
       "lc.other": "Label code: Discogs gives LC {code} – {name} has LC {other} on MusicBrainz",
       "lc.none": "Label code: Discogs gives LC {code} – no label of this release on MusicBrainz has it (which label it belongs to is not clear)",
       "lc.addTitle": "Edit {name} on MusicBrainz with the label code {code} filled in (you check and save it)",
@@ -5454,6 +5474,8 @@
     { id: 'S331', where: 'headingKind, suiteOffers, magicPopHtml (magic-item), suiteNoStore', note: 'Works (3.189.0; collected item Z-SUITENO): what is no suite. A heading or index title that is a catalogue number – the release\'s own, or one by its look ("105-2", "ECM 1064"; not a work\'s number, "BWV 1004") – or a medium ("CD 2", "Disc 2", "LP 1", "Side B") is not offered as a suite, whatever it is from. The preview of "✨ Answer all" gives every answer a tick: one unticked is not given, its question stays open. "✕ No suite" at the question is kept for the release (in this browser) – not asked again with the next import; "↺ Ask again" brings it back. Switched off: as before (no ticks, the answer "No" only for the import).' },
     { id: 'S332', where: 'workRowState, applyWorkRowColors, renderWorks (data-wstate), settings (workrow-colors)', note: 'Works (3.189.0; collected item Z-WORKROWCOLOR): a row of the works matrix shows the state of its work by colour – found in MusicBrainz, will be linked: turquoise; a new work: amber; linked in MusicBrainz already: green; without a work: none. A stripe at the left of the row and a faint tint over it; the words ("found, will be linked", "new work") stay – the colour is never alone. ⚙ Settings → Appearance → Colours: on / off and the three colours; in the dark theme the colours are made lighter. Switched off: no such colours, no setting.' },
     { id: 'S333', where: 'classicalKey, classicalFit, runWorkSearch, catalogueWorks, workFrontCell (dci-mx-wloose), magicPlan', note: 'Works (3.189.0; collected item Z-WORKFIND): a classical title is compared by what names the work, not by how it is written. No work of the track\'s title among its composer\'s, and the title names a kind of work with a key or a number – "Passacaglia in G minor", "Sonata in G minor", "Symphony No. 5" –: the composer\'s works of that kind are looked up in every language ("Sonata" / "Sonate", "Symphony" / "Sinfonie" / "Symphonie" …) and those of the same key ("G minor" / "g-Moll" / "sol mineur"; German "B" is B flat, "H" is B) or number ("No." / "Nr." / "n°") are offered – the instruments ("for violin and continuo"), the order of the words and the punctuation do not count; a movement is not offered. Such a work is a suggestion in yellow ("similar title – check"): never linked by itself, "✨ Answer all" neither links it nor plans a new work instead. With a catalogue number only the number counts (S224); the movement is found by its number after it ("BWV 1004/5": the fifth) and by its name in another language ("Chaconne from the D minor Partita, BWV1004" – "V. Ciaccona"). Switched off: only titles within one letter, and movements by their own name.' },
+    { id: 'S334', where: 'eventPlaceIssue, eventPlaceHtml, eventPlaceAnswer (evp-skip, evp-keep), yellItems, companyTypes', note: 'Places (3.190.0; collected item Z-EVENTPLACE): a place or an area "recorded at" / "recorded in" on recordings that have an event – linked in MusicBrainz already, or an entry of an event with these tracks in this import – is a question that must be answered: the event has the place. The question names the event (its link and date) and its place – or says "no place in the event" with the link to edit the event, where the place belongs. "✕ Don\'t link the place" (the first answer) leaves the row out; "Link it anyway" stages it; until answered the row is not staged. Asked also when the event has no place. Switched off: the place is linked without a question.' },
+    { id: 'S335', where: 'DISCOGS.labelInfo, lcExtrasOf, addressCity, lcExtraParams, lcNoteHtml', note: 'Labels (3.190.0; collected item Z-LCLINKS): the ＋ of the note on a label code opens the label\'s edit page with more than the code – the web addresses of Discogs\'s page of the label ("Links") that MusicBrainz does not have for it yet, as external links; and the label\'s headquarters: the city of the address in "Contact Info" (after a postal code – "04229 Leipzig" –, or before a state and ZIP code), when MusicBrainz has exactly one city of that name and the label has no headquarters yet, as the relationship "headquartered in" to that area. The note names what is filled in; the editor checks and saves it. Nothing else of the page is taken – no years, no profile. Switched off: the code only.' },
     { id: 'S299', where: 'TEXT.parse (shopLines; SHOP_BLOCK_LINES)', note: 'Texts (3.169.0; Z-BCSHOPBLOCK): what a shop writes below an edition is left out as "shop" – the edition\'s name with "(Limited Edition …)" and its format, what the records look like ("2 x 180gsm …", "DiscA/B - Transparent green with gold blob", "Packaged in a standard Sleeve."), the block about shipping ("+++++INTERNATIONAL SHIPPING +++++", "- WE DO NOT SHIP TO PO BOXES", "- ALL ORDERS ARE SENT BY TRACKED COURIER …", "UK: 2-3 days") and the page\'s own details ("published March 29, 2019", "license"). They stood under "not recognized". Every free text' },
     { id: 'S298', where: 'TEXT.parse (hyphenTrackLines; HT_TRACKS, HT_HYPHEN, HT_HEAD, HT_SPLIT)', note: 'Texts (3.169.0; Z-HYPHENTRACKS): a lineup written "Pete Callard-Acoustic Guitar On Tracks 1,2,3, Electric Guitar on Tracks 18,19 Hari-Om- Vocals On Tracks 9,10 …" – a hyphen without spaces between name and role, each role with its tracks, the whole lineup in one paragraph (Beatport and shop texts): the paragraph is cut before each name, the name is what stands before the first hyphen whose right side begins with a role ("Hari-Om- Vocals": Hari-Om), "and Vocals on Tracks …" and a role after a list of tracks are roles of their own, "on all tracks" says nothing new; a heading before the first name ("Musicians In The Studio") is a heading. Only for a line that names tracks that way. Every free text' },
     { id: 'S296', where: 'videoLevelWant, videoLevelFor, VIDEO_RULES, R033 (mapRole), rgIsDjMix, Q022', note: 'Video credits and DJ mixes (3.164.0; proposals F-VIDEOLEVEL, F-DJMIX of review run 2): every credit of a video – video director, camera work, cinematographer and the table of video credits (R076, R110, R119) – is on the recordings when its tracks are videos – from 3.169.0 on the videos only when just some of its tracks are (Z-VIDEOTRACKS; until then such a credit went to the release) – and on the release when none is, where MusicBrainz has the type there (the cinematographer and the camera work were always on the recordings, the others on the release). "Mixed By [DJ Mix]" is the DJ-mix of the release, not the mix engineer; on a release group of the type DJ-mix "Mixed By" asks which of the two (Q022)' },
@@ -8910,6 +8932,15 @@
           if (!had || size > had.size) found.set(file, { url: u, size });
         }
         return [...found.values()].map((x) => x.url);
+      },
+      /**
+       * [Z-LCLINKS] (3.190.0, S335) What Discogs's page of a label gives besides its name: its "Links" (web addresses) and the text of
+       * "Contact Info" (an address). { urls, contact }; null when the page is not to be had.
+       */
+      async labelInfo(id) {
+        const res = await fetch(`${API}/labels/${id}`);
+        const data = res.ok ? await res.json() : null;
+        return data ? { urls: (data.urls || []).map((u) => String(u || '').trim()).filter((u) => /^https?:\/\//i.test(u)), contact: String(data.contact_info || '') } : null;
       },
       /** The label a series belongs to ("Parent Label"), as "who"; null if none. */
       async seriesParent(id) {
@@ -16316,7 +16347,7 @@
       workTitleOf: (t) => String(t || '').replace(/\s*\[[^\]]*\]/g, '').trim() || String(t || ''), formatDate, formatDateRange, compareDates, dateSuggestions,
       partFromFields, validateDateFields, fieldsFromDate, formatDateValue, findRelationshipStates, stateHasDate, parseDatePeriod,
       titleWordsOf, titlesFit, trackFit, CONNECTIONS, linkPhraseOf, personCase, titleComposerNames, similarWorkTitle, mediaOfHeading,
-      titleParts, medleySplit, typoQuotes, classicalKey, classicalFit, headingKind, suiteOffers, prefixSuites, partWithoutPrefix, trackPartsOf,
+      titleParts, medleySplit, typoQuotes, addressCity, classicalKey, classicalFit, headingKind, suiteOffers, prefixSuites, partWithoutPrefix, trackPartsOf,
       sourceCreditFor, withoutAreaTail, versionOfHeader, // [Z-PCR] [Z-VER] (3.51.0)
       remixParts, // [Z-RMXTITLE] (3.126.0, review)
     };
@@ -20191,6 +20222,7 @@
       if (!lt) info.issues.push(tr('issue.chooseType'));
       if (abbrOpen(row)) info.issues.push(tr(row.abbrAsk.solo ? 'issue.soloistAsk' : 'issue.abbrAsk', { abbr: row.abbrAsk.abbr })); // [Z-ABBR2] (3.102.0); [Z-SOLOIST] (3.140.0)
       if (dateOrderOpen(row)) info.issues.push(tr('issue.dateOrder')); // [Z-DATEORDER] (3.121.0, S190) not staged before the answer
+      if (eventPlaceOpen(row)) info.issues.push(tr('issue.eventPlace')); // [Z-EVENTPLACE] (3.190.0, S334) not staged before the answer
       if (dgLineupOpen(row)) info.issues.push(trSrc('issue.dgLineup')); // [Z-DGLINEUP] (3.130.0, S217) not staged before the answer
       // ((3.100.0, review) a person's or a label's entry: its rows of that kind only (never an artist's type with a label's MBID)
       if (lt && artist && !artist.company && !artist.other && row.entityType !== 'artist') info.issues.push(tr('issue.kindMismatch'));
@@ -22937,6 +22969,7 @@
       if (lt && primaryRootOf(lt) && questionAsks(iq, r) && !keptBase(r, iq) && !(iq.preset && norm(r.primaryText) !== iq.base)) add('can', 'question', `i:${r.id}`, { row: r, a });
       if (r.instrGuess && r.instrGuess.chose !== 'misc' && !(norm(r.primaryText) && primaryIsValid(r))) add('must', 'question', `g:${r.id}`, { row: r, a });
       if (dateOrderOpen(r)) add('must', 'question', `do:${r.id}`, { row: r, a }); // [Z-DATEORDER] (3.121.0, S190)
+      if (eventPlaceOpen(r)) add('must', 'question', `evp:${r.id}`, { row: r, a }); // [Z-EVENTPLACE] (3.190.0, S334)
       // ((review) only while words are written small – "kept as written" is no suggestion any more)
       if (r.level !== 'work' && ((r.creditPhrases || []).length || (r.creditLowered || []).length) && caseNoteHtml(r)) {
         add('can', 'case', `case:${ak}|${norm(r.raw)}|${r.level}`, { row: r, a, ok: true });
@@ -30110,6 +30143,66 @@
     }
     log('info', keep ? 'dateOrderKept' : 'dateOrderDropped', { name: (S.artists.get(row.artistKey) || {}).name || '', role: row.raw || '', date: formatDateValue(q.mine), other: formatDateValue(q.other) });
   }
+  /**
+   * [Z-EVENTPLACE] (3.190.0, S334) A place or an area "recorded at / in" on recordings that have an event – in MusicBrainz, or an entry
+   * of an event with these tracks in this import: the event has the place; twice only when asked for. { sig, events: [{ id, name,
+   * staged }] } or null; open until answered (`row.evpOk` = the signature of the question answered "anyway").
+   */
+  function eventPlaceIssue(row) {
+    if (!ruleOn('S334') || !row || !row.company || row.level !== 'recording' || !['place', 'area'].includes(row.entityType) || !row.tracks) return null;
+    const lt = currentLinkType(row);
+    if (!lt || !['recorded at', 'recorded in'].includes(norm(lt.name))) return null;
+    const sel = selTracks().filter((x) => row.tracks.has(x.idx));
+    if (!sel.length) return null;
+    const evs = new Map();
+    sel.forEach((x) => (x.mbEvents || []).forEach((e) => { if (!evs.has(e.id)) evs.set(e.id, { id: e.id, name: e.name, staged: false }); }));
+    for (const r of S.rows) {
+      if (r.entityType !== 'event' || r.level !== 'recording' || !r.tracks || !sel.some((x) => r.tracks.has(x.idx))) continue;
+      const a = S.artists.get(r.artistKey);
+      if (!a || entrySkipped(a)) continue;
+      const k = a.mbid || `new:${a.key}`;
+      if (!evs.has(k)) evs.set(k, { id: a.mbid || '', name: a.mbName || a.name, staged: true });
+    }
+    if (!evs.size) return null;
+    return { sig: `${[...evs.keys()].sort().join('|')}#${sel.map((x) => x.idx).join(',')}`, events: [...evs.values()] };
+  }
+  const eventPlaceOpen = (row) => {
+    const q = eventPlaceIssue(row);
+    return !!q && row.evpOk !== q.sig;
+  };
+  /** The question: the events with their date, link and place (or "no place in the event" and where to add it), the two answers. */
+  function eventPlaceHtml(row) {
+    if (!eventPlaceOpen(row)) return '';
+    const q = eventPlaceIssue(row);
+    const a = S.artists.get(row.artistKey) || {};
+    S.evpAny = true;
+    const evHtml = q.events.map((e) => {
+      const info = e.id ? eventInfo(e.id) : null;
+      const span = info && info.span ? (info.span.b === info.span.e ? info.span.b : `${info.span.b} – ${info.span.e}`) : '';
+      const name = e.id ? `<a class="dci-mblink" href="/event/${esc(e.id)}" target="_blank" rel="noopener">${esc(e.name)}</a>` : `<strong>${esc(e.name)}</strong>`;
+      let place = '';
+      if (!e.id) place = esc(tr('evp.staged'));
+      else if (!info || (!info.known && !info.failed)) place = esc(tr('evp.loading'));
+      else if (info.failed) place = esc(tr('evp.unknown'));
+      else if (info.places.length) {
+        place = `${esc(tr(info.places.some((p) => p.id === a.mbid) ? 'evp.placeSame' : 'evp.place'))} ${info.places.map((p) => `<a class="dci-mblink" href="/place/${esc(p.id)}" target="_blank" rel="noopener">${esc(p.name)}</a>`).join(', ')}`;
+      } else {
+        place = `<strong>${esc(tr('evp.noPlace'))}</strong> – <a href="/event/${esc(e.id)}/edit" target="_blank" rel="noopener" data-el="evp-edit">${esc(tr('evp.editEvent'))}</a>`;
+      }
+      return `<span class="dci-evp-ev" data-ev="${esc(e.id)}">${name}${span ? ` (${esc(span)})` : ''} – ${place}</span>`;
+    }).join('; ');
+    return `<div class="dci-bass-ask dci-evp-ask" data-el="evp-ask">${esc(tr(q.events.length > 1 ? 'evp.head.other' : 'evp.head.one'))} ${evHtml}. ${esc(tr('evp.ask', { name: a.mbName || a.name || '' }))}
+      <button type="button" class="dci-textbtn dci-evp-no" data-act="evp-skip" data-sig="${esc(q.sig)}" title="${esc(tr('evp.skipTitle'))}">${esc(tr('evp.skip'))}</button> · <button type="button" class="dci-textbtn" data-act="evp-keep" data-sig="${esc(q.sig)}" title="${esc(tr('evp.keepTitle'))}">${esc(tr('evp.keep'))}</button></div>`;
+  }
+  /** The answers: not linked (the row is left out – "↺" or its level takes it again and asks again), or linked anyway. */
+  function eventPlaceAnswer(row, keep) {
+    const q = eventPlaceIssue(row);
+    if (!q || row.evpOk === q.sig) return;
+    const name = (S.artists.get(row.artistKey) || {}).name || '';
+    if (keep) row.evpOk = q.sig;
+    else levelOf(row, 'skip');
+    log('info', keep ? 'evpKept' : 'evpSkipped', { name, events: q.events.map((e) => e.name).join(', ') });
+  }
   /** [Z-UNCR] (3.102.0, S167) [Uncredited] (not named on the release): on Skip until it is taken. */
   function uncrSkip(row) {
     if (!ruleOn('S167') || row.uncrTaken || !(row.notes || []).includes('uncredited') || row.level === 'skip') return;
@@ -31382,6 +31475,7 @@
       }, failed).then(() => {
         S.festSig = null;
         festPlacesRedraw();
+        if (S.evpAny) renderGroups(); // ([Z-EVENTPLACE] 3.190.0) the place of the event in its question
         refresh();
       });
     }
@@ -34622,7 +34716,8 @@
     const r = l.rows.find((x) => x.level !== 'skip') || l.rows[0];
     // ([Z-DATEORDER] 3.121.0) the first row of the line with a date before the recording
     const dq = l.rows.find((x) => x.level !== 'skip' && dateOrderOpen(x));
-    return [unmappedHtml(r), instrumentAskHtml(r), abbrAskHtml(r), instrGuessHtml(r), typeAskHtml(r), r.askVoice ? `<div class="dci-voice-slot">${voiceCreditHtml(r)}</div>` : '', caseNoteHtml(r), dq ? dateOrderHtml(dq) : '', bothAskHtml(l), levelKeptHtml(l)].join('');
+    const eq = l.rows.find((x) => x.level !== 'skip' && eventPlaceOpen(x)); // ([Z-EVENTPLACE] 3.190.0)
+    return [unmappedHtml(r), instrumentAskHtml(r), abbrAskHtml(r), instrGuessHtml(r), typeAskHtml(r), r.askVoice ? `<div class="dci-voice-slot">${voiceCreditHtml(r)}</div>` : '', caseNoteHtml(r), dq ? dateOrderHtml(dq) : '', eq ? eventPlaceHtml(eq) : '', bothAskHtml(l), levelKeptHtml(l)].join('');
   }
 
   /**
@@ -35331,6 +35426,8 @@
     'case-small': (r, btn) => caseKeep(r, btn.dataset.word || '', false),
     'dateorder-keep': (r, btn) => dateOrderAnswer(r, true, btn.dataset.sig), // [Z-DATEORDER] (3.121.0)
     'dateorder-drop': (r, btn) => { dateOrderAnswer(r, false, btn.dataset.sig); renderDates(); },
+    'evp-keep': (r) => eventPlaceAnswer(r, true), // [Z-EVENTPLACE] (3.190.0)
+    'evp-skip': (r) => eventPlaceAnswer(r, false),
   };
 
   /** [E4] The status of the lines and the count of an entry (refresh): what is missing, new, in MusicBrainz, staged. */
@@ -39079,7 +39176,7 @@
     return `
       <tr class="dci-row dci-lv-${row.level}${arhlOn(row) ? ' dci-arhl' : ''}${dsupMark(row) ? ' dci-dsup-mark' : ''}${isUnmapped(row) ? ' dci-unmapped' : ''}${row.aboutHidden || row.notesHidden ? ' dci-about-hidden' : ''}${rowOpen}" data-row="${row.id}">
         <td class="dci-c-cline">${clineHtml(row, S.rowInfo && S.rowInfo.get(row.id))}</td>
-        <td class="dci-c-role"><button type="button" class="dci-textbtn dci-cl-close" data-act="row-open" aria-expanded="true" title="${esc(tr('cl.closeTitle'))}">▴ ${esc(tr('cl.close'))}</button>${roleCell(row)}${unmappedHtml(row)}${instrumentAskHtml(row)}${abbrAskHtml(row)}${instrGuessHtml(row)}${typeAskHtml(row)}${row.askVoice ? `<div class="dci-voice-slot">${voiceCreditHtml(row)}</div>` : ''}${dateOrderHtml(row)}</td>
+        <td class="dci-c-role"><button type="button" class="dci-textbtn dci-cl-close" data-act="row-open" aria-expanded="true" title="${esc(tr('cl.closeTitle'))}">▴ ${esc(tr('cl.close'))}</button>${roleCell(row)}${unmappedHtml(row)}${instrumentAskHtml(row)}${abbrAskHtml(row)}${instrGuessHtml(row)}${typeAskHtml(row)}${row.askVoice ? `<div class="dci-voice-slot">${voiceCreditHtml(row)}</div>` : ''}${dateOrderHtml(row)}${eventPlaceHtml(row)}</td>
         <td class="dci-c-type"><div class="dci-cap">${esc(tr('th.type'))}</div>${typeCell(row)}</td>
         <td class="dci-c-attr"><div class="dci-cap">${esc(tr('th.attrs'))}</div>${attrCell(row)}</td>
         <td class="dci-c-level"><div class="dci-cap">${esc(tr('th.level'))}</div>${levelCell(row)}</td>
@@ -39169,6 +39266,8 @@
       if (abbrOpen(row)) parts.push(clineAskHtml('instr', abbrAskText(row), row.abbrAsk.options.map((x) => ({ value: x, text: x }))));
       // [Z-DATEORDER] (3.121.0, S190) a date before the recording (or the mix): keep or remove it
       if (dateOrderOpen(row)) parts.push(`<span class="dci-cl-flag dci-cl-ask dci-dateorder-ask">${dateOrderHtml(row).replace(/^<div[^>]*>|<\/div>$/g, '')}</span>`);
+      // [Z-EVENTPLACE] (3.190.0, S334) the recordings have an event: the place as well, or not
+      if (eventPlaceOpen(row)) parts.push(`<span class="dci-cl-flag dci-cl-ask dci-evp-ask">${eventPlaceHtml(row).replace(/^<div[^>]*>|<\/div>$/g, '')}</span>`);
       // [137d] (3.34.20) a word MusicBrainz does not know as an instrument, not answered yet
       const g = row.instrGuess;
       if (g && g.options.length && g.chose !== 'misc' && !(primaryIsValid(row) && norm(row.primaryText))) {
@@ -44068,14 +44167,92 @@
     }
     return out;
   }
+  /**
+   * [Z-LCLINKS] (3.190.0, S335) The city of an address ("Contact Info" of Discogs): after a postal code ("04229 Leipzig", "D-10115 Berlin",
+   * "75011 Paris") or before a state and ZIP code ("Brooklyn, NY 11201"); one city only – several different ones: none.
+   */
+  function addressCity(text) {
+    const t = String(text || '');
+    const found = [];
+    for (const m of t.matchAll(/(?:^|[\n,;]|\s)(?:[A-Z]{1,2}-)?\d{4,5}[ \t]+(\p{Lu}[\p{L}.'’-]*(?:[ \t]\p{Lu}[\p{L}.'’-]*){0,2})(?=\s*(?:$|[\n,;]))/gmu)) found.push(m[1].trim());
+    for (const m of t.matchAll(/(?:^|[\n,;])[ \t]*(\p{Lu}[\p{L}.'’-]*(?:[ \t]\p{Lu}[\p{L}.'’-]*){0,2}),[ \t]*[A-Z]{2}[ \t]+\d{5}(?:-\d{4})?(?=\s*(?:$|[\n,;]))/gmu)) found.push(m[1].trim());
+    const names = uniq(found.map((x) => x.replace(/\s+/g, ' ')));
+    return names.length === 1 ? names[0] : '';
+  }
+  /** MusicBrainz's type "headquarters" between an area and a label (the label "is headquartered in" the area), from the page data. */
+  const headquartersLt = () => {
+    try {
+      return [...idx().ltById.values()].find((l) => l.type0 === 'area' && l.type1 === 'label' && /headquarter/.test(norm(l.name))) || null;
+    } catch (e) {
+      return null;
+    }
+  };
+  /**
+   * [Z-LCLINKS] (3.190.0, S335) What the label's edit page is opened with besides the code: the web addresses of Discogs's page of the
+   * label MusicBrainz does not have for it yet, and – the city of its address found exactly once among MusicBrainz's cities, the label
+   * without headquarters there – the area it is headquartered in. Looked up once per label (in the background); { urls, area } or null.
+   */
+  function lcExtrasOf(label) {
+    if (!ruleOn('S335') || !label || !label.mbid || !S.source || !S.source.labelInfo) return null;
+    // (its page at the source: the entry linked to it, else the release's label of that name – the only one, when both sides have one)
+    const a = [...S.artists.values()].find((x) => x.company && x.mbid === label.mbid && x.dId);
+    const ls = ((S.release && S.release.labels) || []).filter((l) => l.id);
+    const same = ls.filter((l) => sameCompanyName(l.name, label.name));
+    const dId = a ? a.dId : same.length === 1 ? same[0].id : ls.length === 1 && (S.releaseLabelList || []).length === 1 ? ls[0].id : 0;
+    if (!dId) return null;
+    S.lcExtras = S.lcExtras || new Map();
+    if (!S.lcExtras.has(label.mbid)) {
+      S.lcExtras.set(label.mbid, null);
+      const seq = importSeq;
+      (async () => {
+        const info = await S.source.labelInfo(dId);
+        if (!info) return;
+        const ws = await mbWs(`label/${label.mbid}?inc=url-rels+area-rels`, { background: true });
+        const have = new Set(((ws && ws.relations) || []).map((r) => missKey(r.url && r.url.resource)).filter(Boolean));
+        const seen = new Set();
+        const urls = info.urls.filter((u) => { const k = missKey(u); if (!k || have.has(k) || seen.has(k) || /discogs\.com\//i.test(u)) return false; seen.add(k); return true; });
+        const hasHq = ((ws && ws.relations) || []).some((r) => r['target-type'] === 'area' && /headquarter/.test(norm(r.type || '')));
+        const city = hasHq ? '' : addressCity(info.contact);
+        let area = null;
+        if (city) {
+          const data = await mbWs(`area?query=${encodeURIComponent(`area:${lucenePhrase(city)} AND type:city`)}&limit=10`, { background: true });
+          const same = ((data && data.areas) || []).filter((x) => foldWord(x.name) === foldWord(city) && norm(x.type || '') === 'city');
+          if (same.length === 1) area = { mbid: same[0].id, name: same[0].name };
+        }
+        if (seq !== importSeq || !S.lcExtras) return;
+        S.lcExtras.set(label.mbid, { urls, area });
+        if (urls.length || area) log('info', 'lcExtras', { name: label.name, list: [...urls.map((u) => missKey(u)), ...(area ? [tr('lc.hq', { area: area.name })] : [])].join(', ') });
+        renderSource();
+      })().catch((e) => console.warn('[Discogs-Credits]', e));
+    }
+    return S.lcExtras.get(label.mbid);
+  }
+  /** [Z-LCLINKS] (3.190.0) The parameters of the edit page for them: "edit-label.url.N.*", "rels.0.*" (the area first, so "backward"). */
+  function lcExtraParams(x) {
+    if (!x) return [];
+    const known = /(?:discogs|bandcamp|soundcloud|spotify|youtube|instagram|facebook|twitter|x|tiktok|wikidata|wikipedia|allmusic|apple|deezer|tidal|last\.fm|songkick|myspace)\.(?:com|org|fm|net|be)\b/i;
+    const q = [];
+    x.urls.slice(0, 12).forEach((u, i) => {
+      q.push([`edit-label.url.${i}.text`, u]);
+      if (!known.test(u) && SITE_LINK_TYPE.label) q.push([`edit-label.url.${i}.link_type_id`, String(SITE_LINK_TYPE.label)]);
+    });
+    const lt = x.area && headquartersLt();
+    if (lt) q.push(['rels.0.target', x.area.mbid], ['rels.0.type', String(lt.id)], ['rels.0.backward', '1']);
+    return q;
+  }
   function lcNoteHtml() {
     const notes = lcNoteOf();
     if (!notes.length) return '';
     return `<div class="dci-lcnote" data-el="lcnote">${notes.map((n) => {
-      const add = n.label ? ` <a class="dci-lc-add" href="/label/${esc(n.label.mbid)}/edit?dci-lc=${esc(n.code)}${esc(editPageNote('label').length ? `&${toQuery(editPageNote('label'))}` : '')}" target="_blank" rel="noopener"
+      // [Z-LCLINKS] (3.190.0, S335) with the label's web addresses and its headquarters, as far as MusicBrainz lacks them
+      const extra = n.label ? lcExtrasOf(n.label) : null;
+      const xq = lcExtraParams(extra);
+      const hq = extra && extra.area && xq.some(([k]) => k === 'rels.0.target');
+      const also = extra && (extra.urls.length || hq) ? ` <span class="dci-sub" data-el="lc-extra">${esc(tr('lc.extra', { list: [...extra.urls.slice(0, 12).map((u) => missKey(u)), ...(hq ? [tr('lc.hq', { area: extra.area.name })] : [])].join(', ') }))}</span>` : '';
+      const add = n.label ? ` <a class="dci-lc-add" href="/label/${esc(n.label.mbid)}/edit?dci-lc=${esc(n.code)}${xq.length ? `&${esc(toQuery(xq))}` : ''}${esc(editPageNote('label').length ? `&${toQuery(editPageNote('label'))}` : '')}" target="_blank" rel="noopener"
         title="${esc(tr('lc.addTitle', { name: n.label.name, code: n.code }))}" aria-label="${esc(tr('lc.addTitle', { name: n.label.name, code: n.code }))}">＋</a>` : '';
       const text = !n.label ? tr('lc.none', { code: n.code }) : n.other ? tr('lc.other', { name: n.label.name, code: n.code, other: n.other }) : tr('lc.missing', { name: n.label.name, code: n.code });
-      return `<p class="dci-sub">${esc(emo('label'))} ${esc(text)}${add}</p>`;
+      return `<p class="dci-sub">${esc(emo('label'))} ${esc(text)}${add}${also}</p>`;
     }).join('')}</div>`;
   }
 
@@ -52835,6 +53012,15 @@
       case 'rd-copy':
         Object.assign(row.date, { ey: row.date.by, em: row.date.bm, ed: row.date.bd, poolId: null, mx: false });
         rerenderRow(row);
+        refresh();
+        break;
+      case 'evp-keep':
+      case 'evp-skip':
+        // [Z-EVENTPLACE] (3.190.0, S334)
+        if (!row) break;
+        eventPlaceAnswer(row, act === 'evp-keep');
+        renderGroups();
+        renderDates();
         refresh();
         break;
       case 'dateorder-keep':
@@ -62098,6 +62284,8 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       .dci-mx-wloosebtn { background: var(--sugg-bg); border-color: var(--sugg-line); color: var(--sugg-ink); }
       .dci-candidates li.dci-mx-wloose { background: var(--sugg-bg); color: var(--sugg-ink); box-shadow: inset calc(var(--u, 1px) * 3) 0 0 var(--sugg-line); padding-left: calc(var(--u, 1px) * 6); }
       .dci-mx-wloosetag { background: var(--sugg-bg); color: var(--sugg-ink); border: 1px solid var(--sugg-line); }
+      /* [Z-EVENTPLACE] (3.190.0, S334) */
+      .dci-evp-ask .dci-evp-no { font-weight: 700; }
       .dci-wr-tag { padding: 0 calc(var(--u, 1px) * 6); border-left: calc(var(--u, 1px) * 4) solid var(--muted, #5d5a6c); }
       .dci-wr-tag[data-state="found"] { border-left-color: var(--dci-wr-found); background: var(--dci-wr-found-bg); }
       .dci-wr-tag[data-state="new"] { border-left-color: var(--dci-wr-new); background: var(--dci-wr-new-bg); }
