@@ -894,7 +894,8 @@ def case_dedications():
        Bass Man – "dedicated to" on the work of track 2 (the sentence names its title); "my mother": nothing (no such entry).
     B) One click "⇄ tribute to": Cecil Taylor's row a tribute (release group); staged: the release group "dedicated to" Bass Man on the
        work … and the tribute to Cecil Taylor.
-    C) The release's title "Odes And Meditations For Cecil Taylor" (no notes): a tribute to Cecil Taylor from the start.
+    C) The release's title "Odes And Meditations For Cecil Taylor" (no notes): dedicated to Cecil Taylor from the start (3.189.0, S329;
+       until then a tribute).
     D) Rule S097 off: no such rows.
     E) (review) The page loaded again after the switch to "tribute to": the row is a tribute again (kept for this release), no
        "remembered change left out"; a change of the rules (S007 off) leaves its type as it is."""
@@ -993,12 +994,86 @@ def case_dedications():
         title['v'] = 'Odes And Meditations For Cecil Taylor'
         o2 = run()
         print('C)', o2['rows'])
-        results.append(len(o2['rows']) == 1 and o2['rows'][0]['name'] == 'Cecil Taylor' and o2['rows'][0]['type'] == 'tribute' and "release's title" in o2['rows'][0]['ded'])
+        # ([Z-DEDTITLE] 3.189.0, S329: a dedication)
+        results.append(len(o2['rows']) == 1 and o2['rows'][0]['name'] == 'Cecil Taylor' and o2['rows'][0]['type'] == 'dedicated to' and "release's title" in o2['rows'][0]['ded'])
         o3 = run(off=True)
         print('D)', o3['rows'])
         results.append(o3['rows'] == [])
     finally:
         H.discogs_release, H.ws_release = orig_dg, orig_ws
+        for i in added_lts:
+            H.LTS.pop(i, None)
+        H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+        H.ARTISTS.pop(3800, None)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_dedtitle3189():
+    """Credits Importer 3.189.0 (collected item Z-DEDTITLE, rule S329): the release's title "Odes And Meditations For Cecil Taylor".
+    A) View "by event": the entry of Cecil Taylor has the chip "dedicated to" with ▾; its list offers "⇄ tribute to"; one click:
+       the row is a tribute; the list then offers "⇄ dedicated to".
+    B) Rule S329 off: the title is a tribute as before."""
+    import json
+    CT = H.uid('dddddddd', 3800)
+    added_lts = {868: ('b41e7530-cde4-459c-b8c5-dfef08fc8295', 'dedicated to', 'artist', 'release_group'),
+                 65: ('5e2907db-49ec-4a48-9f11-dfb99d2603ff', 'tribute', 'artist', 'release_group')}
+    for i, (g, n, t0, t1) in added_lts.items():
+        H.lt(i, g, n, t0, t1, dates=False)
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.ARTISTS[3800] = (CT, 'Cecil Taylor')
+    orig_ws = H.ws_release
+
+    def ws(full=False):
+        d = orig_ws(full)
+        d['title'] = 'Odes And Meditations For Cecil Taylor'
+        return d
+    H.ws_release = ws
+    KIND = """(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => /Cecil Taylor/.test(x.querySelector('.dci-gname strong').textContent));
+      if (!g) return null; return { chips: [...g.querySelectorAll('.dci-em-chipname')].map(x => x.textContent.trim()), q: g.querySelectorAll('.dci-em-chipq').length,
+        ask: g.querySelectorAll('.dci-em-chip-ask').length, menu: [...g.querySelectorAll('.dci-em-chipmenu button')].map(x => x.textContent.trim()) }; })()"""
+    results = []
+
+    def run(off=False):
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            if off:
+                pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['S329']))")
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(2500)
+            pg.evaluate("(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => /Cecil Taylor/.test(x.querySelector('.dci-gname strong').textContent)); const f = g && g.querySelector('[data-act=group-fold][aria-expanded=true]'); if (f) f.click(); })()")
+            pg.wait_for_timeout(400)
+            out = {'a': pg.evaluate(KIND)}
+            if not off and out['a'] and out['a']['q']:
+                pg.evaluate("(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => /Cecil Taylor/.test(x.querySelector('.dci-gname strong').textContent)); g.querySelector('.dci-em-chipq').click(); })()")
+                pg.wait_for_timeout(300)
+                out['open'] = pg.evaluate(KIND)
+                pg.evaluate("(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => /Cecil Taylor/.test(x.querySelector('.dci-gname strong').textContent)); g.querySelector('.dci-em-chipmenu [data-act=ded-toggle]').click(); })()")
+                pg.wait_for_timeout(500)
+                out['b'] = pg.evaluate(KIND)
+                pg.evaluate("(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => /Cecil Taylor/.test(x.querySelector('.dci-gname strong').textContent)); const q = g.querySelector('.dci-em-chipq'); if (q) q.click(); })()")
+                pg.wait_for_timeout(300)
+                out['open2'] = pg.evaluate(KIND)
+            out['errs'] = errs
+            b.close()
+            return out
+
+    try:
+        H.ENTRIES_VIEW = 'matrix'
+        o = run()
+        print('A)', json.dumps(o, ensure_ascii=False))
+        results.append(bool(o['a']) and o['a']['chips'] == ['dedicated to “for”'] and o['a']['q'] == 1 and o['a']['ask'] == 0 and o.get('open', {}).get('menu') == ['⇄ tribute to']
+                       and o['b']['chips'] == ['tribute “for”'] and o['open2']['menu'] == ['⇄ dedicated to'] and not o['errs'])
+        o2 = run(off=True)
+        print('B)', json.dumps(o2, ensure_ascii=False))
+        results.append(bool(o2['a']) and o2['a']['chips'] == ['tribute “for”'] and o2['a']['q'] == 0)
+    finally:
+        H.ENTRIES_VIEW = 'legacy'
+        H.ws_release = orig_ws
         for i in added_lts:
             H.LTS.pop(i, None)
         H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
