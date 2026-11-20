@@ -3702,6 +3702,154 @@ def case_itree3107():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_dsupdates3188():
+    """Credits Importer 3.188.0 (collected item Z-DSUPDATES): MusicBrainz has three instrument relationships of Bass Man on the release
+    without dates; Discogs names the same three without tracks, the notes "Recorded March 1–3, 2001". In the matrix view (instruments of
+    an entry are joined into one relationship) with the instruments on the release and the date matrix applied: the three dates are
+    "Taken ✓", and staged, each of the three relationships of MusicBrainz gets its date (until 3.187.0 the three edits were joined
+    like new relationships and only the first was changed)."""
+    import copy
+    import json as _j
+    orig = H.discogs_release
+    lts0, attrs0, extra0 = copy.deepcopy(H.LTS), copy.deepcopy(H.ATTRS), copy.deepcopy(H.MB_EXTRA)
+    linked0 = copy.deepcopy({k: H.LINKED.get(k) for k in ('link_type', 'link_attribute_type')})
+    H.lt(44, H.uid('1aaa0000', 44), 'instrument', 'artist', 'release', (14, 1, 194, 596))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    H.ARTISTS[3334] = (H.uid('dddddddd', 3334), 'Bass Man')
+    by = {a['name']: i for i, a in H.ATTRS.items()}
+    INST = ['double bass', 'piano', 'guitar']
+    rel_ = lambda attrs: {'target-type': 'artist', 'type': 'instrument', 'type-id': H.LTS[44]['gid'], 'attributes': attrs, 'attribute-values': {},
+                          'artist': {'id': H.ARTISTS[3334][0], 'name': 'Bass Man'}, 'begin': '', 'end': ''}
+    H.MB_EXTRA[H.REL] = H.MB_EXTRA.get(H.REL, []) + [rel_([n]) for n in INST]
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': 'Bass Man', 'anv': '', 'role': 'Double Bass, Piano, Guitar', 'tracks': '', 'id': 3334, 'join': ''}]
+        d['companies'] = []
+        d['notes'] = 'Recorded March 1–3, 2001.'
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = rel
+    results = []
+    try:
+        with sync_playwright() as p:
+            H.ENTRIES_VIEW = 'matrix'
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            sec = sec_sel(pg, 'Bass Man')
+            pg.click(f'{sec} [data-act=insts-set][data-insts=release]')
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            pg.click('[data-act=dm-apply]')
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            taken = pg.evaluate(f"[...document.querySelectorAll('{sec} [data-el=dsup] [data-act=dsup-date]')].map(b => b.getAttribute('aria-pressed'))")
+            at = lambda i: {'type': {'gid': H.ATTRS[i]['gid'], 'id': i, 'name': H.ATTRS[i]['name']}, 'typeID': i, 'typeName': H.ATTRS[i]['name']}
+            ex = [{'id': 9300 + k, 'linkTypeID': 44, 'entity0': {'gid': H.ARTISTS[3334][0], 'entityType': 'artist', 'id': 3334, 'name': 'Bass Man'},
+                   'entity1': {'gid': H.REL, 'entityType': 'release', 'id': 7001, 'name': 'Testalbum'}, 'begin_date': None, 'end_date': None, 'ended': False,
+                   'attributes': {'__tree': [at(by[n])]}, 'entity0_credit': '', 'entity1_credit': '', '_status': 0} for k, n in enumerate(INST)]
+            pg.evaluate(f"(() => {{ const re = MB.relationshipEditor; re.state = {{ ...re.state, existingRels: {_j.dumps(ex)} }}; }})()")
+            H.stage_click(pg, least=2000)
+            edited = sorted(pg.evaluate("""MB.relationshipEditor.state.added.filter((r) => (r.entity0 || {}).name === 'Bass Man' && (r.entity1 || {}).entityType === 'release')
+              .map((r) => [r._status, ((r.attributes && r.attributes.__tree) || []).map((x) => x.typeName || x.type.name).sort().join(','), r.begin_date ? [r.begin_date.year, r.begin_date.month, r.begin_date.day].join('-') : ''])"""))
+            print('A) Taken:', taken, '| im Editor:', edited, '| Fehler:', errs)
+            results.append(taken == ['true'] and edited == sorted([[2, n, '2001-3-1'] for n in INST]) and not errs)
+            b.close()
+    finally:
+        H.discogs_release = orig
+        H.ENTRIES_VIEW = 'legacy'
+        H.LTS.clear(); H.LTS.update(lts0)
+        H.ATTRS.clear(); H.ATTRS.update(attrs0)
+        H.MB_EXTRA.clear(); H.MB_EXTRA.update(extra0)
+        for k, v in linked0.items():
+            H.LINKED[k] = v
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_dsupask3188():
+    """Credits Importer 3.188.0 (collected item Z-DSUPASK; rule S328): MusicBrainz has Chime Guy with chimes and piano on all four
+    recordings; Discogs names him with "Chaims, Guitar".
+    A) "Chaims" is a slip of spelling of "chimes": the box says so ("looks like “chimes” … nothing to add", with "Not the same") – no
+       question. "Guitar" is a question with its answers: "The same as “chimes”", "The same as “piano”", "Add anyway"; the footer
+       counts one question.
+    B) "The same as “piano”" for the guitar: the line says it is the piano of MusicBrainz, the footer has no question.
+    C) "Not the same" for "Chaims": a question again."""
+    import copy
+    orig = H.discogs_release
+    lts0, attrs0, extra0 = copy.deepcopy(H.LTS), copy.deepcopy(H.ATTRS), copy.deepcopy(H.MB_EXTRA)
+    linked0 = copy.deepcopy({k: H.LINKED.get(k) for k in ('link_type', 'link_attribute_type')})
+    H.attr(9150, 'chimes', 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    H.ARTISTS[3335] = (H.uid('dddddddd', 3335), 'Chime Guy')
+    rel_ = lambda attrs: {'target-type': 'artist', 'type': 'instrument', 'type-id': H.LTS[148]['gid'], 'attributes': attrs, 'attribute-values': {},
+                          'artist': {'id': H.ARTISTS[3335][0], 'name': 'Chime Guy'}, 'begin': '', 'end': ''}
+    for rec in H.REC:
+        H.MB_EXTRA[rec] = H.MB_EXTRA.get(rec, []) + [rel_(['chimes']), rel_(['piano'])]
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': 'Chime Guy', 'anv': '', 'role': 'Chaims, Guitar', 'tracks': '', 'id': 3335, 'join': ''}]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = rel
+    BOX = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      const b = g && g.querySelector('[data-el=dsup]');
+      return b ? [...b.querySelectorAll('.dci-dsup-l')].map(l => [l.dataset.dsup, l.textContent.replace(/\\s+/g, ' ').trim(), [...l.querySelectorAll('button')].map(x => x.textContent.trim())]) : []; }"""
+    QUEST = "String(document.querySelectorAll('#dci-overlay [data-el=dsup] .dci-yell-must').length)"
+    results = []
+    try:
+        with sync_playwright() as p:
+            H.ENTRIES_VIEW = 'legacy'
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 400)
+            box = pg.evaluate(BOX, 'Chime Guy')
+            pg.wait_for_timeout(600)
+            q = pg.evaluate(QUEST)
+            print('A)', box, '| Fragen:', q)
+            same = [l for l in box if l[0] == 'same']
+            ask = [l for l in box if l[0] == 'conflict']
+            results.append(len(same) == 1 and 'looks like “chimes”' in same[0][1] and same[0][2] == ['Not the same']
+                           and len(ask) == 1 and ask[0][2] == ['The same as “chimes”', 'The same as “piano”', 'Add anyway'] and q == '1')
+            sec = sec_sel(pg, 'Chime Guy')
+            pg.click(f"{sec} [data-el=dsup] [data-act=dsup-same][data-mb=piano]")
+            H.wait_still(pg, "document.body.innerHTML", 10, 400)
+            box = pg.evaluate(BOX, 'Chime Guy')
+            pg.wait_for_timeout(600)
+            q = pg.evaluate(QUEST)
+            print('B)', [l[:2] for l in box if l[0] in ('same', 'conflict')], '| Fragen:', q)
+            results.append(sum(l[0] == 'same' for l in box) == 2 and not any(l[0] == 'conflict' for l in box) and any('is “piano” on MusicBrainz' in l[1] for l in box) and q == '0')
+            pg.locator(f"{sec} [data-el=dsup] [data-act=dsup-notsame]").first.click()
+            H.wait_still(pg, "document.body.innerHTML", 10, 400)
+            box = pg.evaluate(BOX, 'Chime Guy')
+            pg.wait_for_timeout(600)
+            q = pg.evaluate(QUEST)
+            print('C)', [l[0] for l in box], '| Fragen:', q, '| Fehler:', errs)
+            results.append(sum(l[0] == 'conflict' for l in box) == 1 and q == '1' and not errs)
+            b.close()
+    finally:
+        H.discogs_release = orig
+        H.LTS.clear(); H.LTS.update(lts0)
+        H.ATTRS.clear(); H.ATTRS.update(attrs0)
+        H.MB_EXTRA.clear(); H.MB_EXTRA.update(extra0)
+        for k, v in linked0.items():
+            H.LINKED[k] = v
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_dsup3107():
     """Credits Importer 3.107.0 (collected items Z-DSUP3, Z-DSUP2, Z-DSUPWHY): the dates of the pools for relationships MusicBrainz has.
     MusicBrainz: Wood Man trombone on all four recordings without a date; Same Man double bass on them with 2001-03; Prod Man piano on

@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.187.0, Companion 1.6.0 – 1.22.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.188.0, Companion 1.6.0 – 1.23.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,17 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.188.0 · Companion 1.23.0 · 2026-11-20
+
+- **`joinableKind`:** [Z-DSUPDATES] not an item with `relDate` or `relAttr` (the edits of MusicBrainz's relationships were joined into one item).
+- **New:** `mergeSameCompanies` (in `renderGroupsNow`); **`samePlaceName`:** `PLACE_FILLER` with club, klub, estudi, studi; **`DISCOGS.toRelease`:** `prodFor` compared with `sameCompanyName`; **`withoutAreaTail`:** `place` – the area after a comma goes (S324).
+- **`msynCreditsOf`:** the rows of the credits kept (`msynRow`); new `msynJoinText`, `msynShown`; **`emChipHtml`:** `.dci-em-chipjoin` (S325).
+- **`compareSupplement`:** `compare` – the word first (`wordRow`; new `suppWordKey`, `suppRowWords`), a new role with the source's word (S326); new `suppKnownLine`, `sp.known`, `renderSupp` (`data-el="supp-known"`) (S327).
+- **`dsupHtml`:** the conflict as a question (`.dci-dsup-ask`, `dsup-same`, `dsup-notsame`), the dates grouped over rows; new `typoNear`, `dsupSameOf`; **`yellItems` / `yellEl`:** no question when answered the same, the question itself as the target (S328). Rows: `dsupSame`, `dsupNotSame`.
+- **Companion's status:** `same` (with the note "MusicBrainz: …"), label `dgStatus.same`. **Companion 1.23.0:** `MARK_SYMBOL.same` "≈", `.dci-dg-same`.
+- **Rules:** S324, S325, S326, S327, S328 (register). **Texts:** `log.entryMerged`, `em.chipJoined`, `supp.known.one/other`, `log.suppKnown`, `dsup.ask`, `dsup.sameAs`, `dsup.same`, `dsup.sameTypo`, `dsup.notSame`, `dsup.roles`, `dsup.dates.add/refine/change`, `log.dsupSame`, `log.dsupNotSame`, `dgStatus.same` (en, de, es, fr).
+- **Tests:** `smoke/harness.py` `ASYNC_EDITOR`; `t_entries.py` `case_dsupdates3188`, `case_dsupask3188`; `t_notes_companies.py` `case_placedup3188`; `t_sources.py` `case_suppwords3188`; `t_text_lists.py` `case_samerole3188`; `t_static.py` `case_compmark3188`; `register_golden.json`.
 
 ## Import 3.187.0 · 2026-11-20
 

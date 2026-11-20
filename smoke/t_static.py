@@ -705,6 +705,24 @@ console.log(JSON.stringify({ texts: JSON.parse(process.argv[2]).map(run), offers
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_compmark3188():
+    """Credits Importer 3.188.0 · Companion 1.23.0 (collected item Z-COMPMARK): the status "same" – on MusicBrainz, written otherwise –
+    is sent by the main script (with its label) and drawn by the companion as "≈"; both name the same version of the companion."""
+    import re
+    from pathlib import Path
+    ROOT = Path(__file__).resolve().parent.parent
+    main = (ROOT / 'mb-vibecode-credits-importer.user.js').read_text(encoding='utf-8')
+    comp = (ROOT / 'mb-vibecode-credits-importer-companion.user.js').read_text(encoding='utf-8')
+    ver = re.search(r'// @version\s+(\S+)', comp).group(1)
+    results = [
+        "same: '≈'" in comp and '.dci-dg-same' in comp,
+        "? 'same' : 'skip'" in main and "'removed', 'same']" in main and '"dgStatus.same"' in main,
+        f"COMPANION_VERSION = '{ver}'" in comp and (ROOT / f'mb-vibecode-credits-importer-companion-v{ver}-README.md').exists(),
+    ]
+    print('Companion', ver, results)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_daylist3178():
     """Credits Importer 3.178.0 (Z-DAYLIST – D036, Z-MEDIAHEAD – S312), the date finder and the text reader in Node.
     A) D036: "November 27, 28 & 29, 2016" and "June 16/17 2018" are single days (three and two dates); "November 26, 27, 28 & 29, 2016"

@@ -1607,6 +1607,75 @@ def case_pldup3111():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_placedup3188():
+    """Credits Importer 3.188.0 (collected items Z-PLACEDUP, Z-PLACECREDIT; rule S324): a release of two media (3 + 1 tracks). Discogs:
+    "Recorded At – Alchemia (2)", "Mixed At – Hilversum, Holland" (MusicBrainz: Studio Hilversum), "Mixed At – Jazz Cellar" (the same
+    place as Alchemia in MusicBrainz), "Produced For – Fundacja Słuchaj!", and "Producer [Produced For Fundacja Słuchaj] – Prod Guy";
+    the notes: "CD 1 / Recorded: November 27-29, 2016 at Alchemia Club, Kraków / CD 2 / Recorded November 30, 2016 at Radio Kraków".
+    A) One entry Alchemia (none "Alchemia Club"): recorded at on tracks 1–3 only, credited "Alchemia Club"; Radio Kraków on track 4.
+    B) "Jazz Cellar" – the same place in MusicBrainz – is no entry of its own: its role stands at Alchemia; the log says so.
+    C) One label Fundacja Słuchaj!, not two. D) "Hilversum, Holland" is credited "Hilversum"."""
+    orig, comp0, media0 = H.discogs_release, dict(H.COMPANIES), H.MEDIA
+    H.MEDIA = [3, 1]
+    H.COMPANIES[2681] = ('place', H.uid('eeeeeeee', 2681), 'Alchemia')
+    H.COMPANIES[2682] = ('place', H.uid('eeeeeeee', 2682), 'Studio Hilversum')
+    H.COMPANIES[2684] = ('place', H.uid('eeeeeeee', 2681), 'Alchemia')
+    H.COMPANIES[2683] = ('label', H.uid('eeeeeeee', 2683), 'Fundacja Słuchaj')
+    H.ARTISTS[3395] = (H.uid('dddddddd', 3395), 'Prod Guy')
+
+    def rel():
+        d = orig()
+        d['notes'] = 'CD 1\nRecorded: November 27-29, 2016 at Alchemia Club, Kraków\nCD 2\nRecorded November 30, 2016 at Radio Kraków'
+        d['companies'] = [{'name': 'Alchemia (2)', 'entity_type_name': 'Recorded At', 'id': 2681, 'catno': ''},
+                          {'name': 'Hilversum, Holland', 'entity_type_name': 'Mixed At', 'id': 2682, 'catno': ''},
+                          {'name': 'Jazz Cellar', 'entity_type_name': 'Mixed At', 'id': 2684, 'catno': ''},
+                          {'name': 'Fundacja Słuchaj!', 'entity_type_name': 'Produced For', 'id': 2683, 'catno': ''}]
+        d['extraartists'] = [{'name': 'Prod Guy', 'anv': '', 'role': 'Producer [Produced For Fundacja Słuchaj]', 'tracks': '', 'id': 3395, 'join': ''}]
+        return d
+    H.discogs_release = rel
+    ENT = """[...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+      [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('.dci-drole') || { textContent: '' }).textContent.trim(), (r.querySelector('[data-f=credit]') || {}).value || '',
+        (r.querySelector('[data-tcount]') || { textContent: '' }).textContent.trim(), (r.querySelector('[data-act=level][aria-pressed=true]') || { dataset: {} }).dataset.level || ''])])"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            H.ENTRIES_VIEW = 'legacy'
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 400)
+            if pg.locator('[data-act=dm-apply]').count():
+                pg.click('[data-act=dm-apply]')
+                H.wait_still(pg, "document.body.innerHTML", 10, 400)
+            ent = dict((n, r) for n, r in pg.evaluate(ENT))
+            alch = {k: v for k, v in ent.items() if 'Alchemia' in k or 'Jazz Cellar' in k}
+            print('A)', alch, '| Radio Kraków:', ent.get('Radio Kraków'))
+            rec = [r for r in ent.get('Alchemia (2)', ent.get('Alchemia', [])) if r[0] == 'recorded at' and r[3] != 'skip']
+            results.append(len([k for k in ent if 'Alchemia' in k]) == 1 and len(rec) == 1 and rec[0][1] == 'Alchemia Club' and rec[0][2] == '3 of 4 tracks'
+                           and any(r[0] == 'recorded at' and r[2] == '1 of 4 tracks' for r in ent.get('Radio Kraków', [])))
+            merged = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'is the same entry in MusicBrainz' in x]
+            mast = [r for rows in alch.values() for r in rows if r[0].lower() == 'mixed at']
+            print('B)', merged, mast)
+            results.append('Jazz Cellar' not in ent and len(mast) == 1 and mast[0][1] == 'Jazz Cellar' and bool(merged))
+            fund = [k for k in ent if 'Fundacja' in k]
+            print('C)', fund)
+            results.append(fund == ['Fundacja Słuchaj!'])
+            hv = ent.get('Hilversum, Holland')
+            print('D)', hv, '| Fehler:', errs)
+            results.append(bool(hv) and hv[0][1] == 'Hilversum' and not errs)
+            b.close()
+    finally:
+        H.discogs_release = orig
+        H.MEDIA = media0
+        H.COMPANIES.clear()
+        H.COMPANIES.update(comp0)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_dedplace3129():
     """Credits Importer 3.129.0 (collected item Z-DEDPLACE; rule S214): Discogs notes "Recorded live at Namba Bears, Osaka. Dedicated to
     ~Namba~ ~Bears~." – the tildes read as set-off words.

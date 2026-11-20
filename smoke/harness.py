@@ -698,12 +698,17 @@ def discogs_page():
 
 # --- Pages ---------------------------------------------------------------------------------------
 
+# [3.188.0] (Z-DSUPDATES) the test editor's state follows a dispatch later, as MusicBrainz's does (a case sets it)
+ASYNC_EDITOR = False
+
+
 def mb_edit_page():
     mediums = split_media([
         {'position': i + 1, 'number': str(i + 1), 'name': t,
          'recording': {'entityType': 'recording', 'gid': g, 'id': 5001 + i, 'name': t}} for i, (t, g) in enumerate(zip(TITLES, REC))], 'name')
     entity = {'entityType': 'release', 'gid': REL, 'id': 4001, 'name': 'Testalbum', 'mediums': mediums,
               'releaseGroup': {'entityType': 'release_group', 'gid': RG, 'id': 4101, 'name': 'Testalbum'}}
+    async_js = 'true' if ASYNC_EDITOR else 'false'
     return f"""<!doctype html><html lang="en"><head><title>Edit relationships</title></head><body>
 <div id="content"><h1>Testalbum</h1><div class="tabs"><a href="#">Overview</a></div>
 <div id="editor">relationship editor</div><textarea id="edit-note-text"></textarea></div>
@@ -716,7 +721,14 @@ window.MB = {{
   relationshipEditor: {{
     state: {{ entity: {json.dumps(entity)}, added: [], expandedMediums: new Map(), loadedTracks: new Map() }},
     getRelationshipStateId: () => nextRelId--,
+    // [3.188.0] (Z-DSUPDATES) as MusicBrainz's editor: with ASYNC_EDITOR the state follows a dispatch only later (React reduces the
+    // actions in their order and publishes the new state after the next render), not within the call
     dispatch(a) {{
+      if ({async_js} && !this.__reducing) {{
+        (this.__queue = this.__queue || []).push(a);
+        if (!this.__timer) this.__timer = setTimeout(() => {{ this.__timer = null; const q = this.__queue; this.__queue = []; this.__reducing = true; try {{ q.forEach((x) => this.dispatch(x)); }} finally {{ this.__reducing = false; }} }}, 25);
+        return;
+      }}
       window.__dispatched.push(a);
       const st = this.state;
       if (a.type === 'update-relationship-state') {{

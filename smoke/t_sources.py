@@ -914,6 +914,78 @@ console.log(JSON.stringify([t.name, W.wikiPlain(t.params.recorded), prod, links.
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_suppwords3188():
+    """Credits Importer 3.188.0 (collected item Z-SUPPWORDS; rules S326, S327): Discogs imported – Lucia Guy "Drums, Percussion,
+    Electronics [Cracklebox], Voice" and "Liner Notes [Spanish]", Bass Man "Bass"; her instruments put on the release. Bandcamp added:
+    "Lucia Guy - drums, percussion, cracklebox, voice", "Bass Man - bass", "Spanish liner notes, Lucia Guy" (a line the reader cannot
+    read) and "Great sleeve notes, John Unknown".
+    A) Nothing new: no row "new role" for cracklebox, voice or bass – the same words as Discogs's, whatever the rules make of them and
+       although the rows stand on the release now.
+    B) The safety net: "Spanish liner notes, Lucia Guy" is not "not recognized" – below the table "1 line recognised as known", with
+       the entry and role it was matched to and the rule S327; the line with the unknown name stays "not recognized"."""
+    ALBUM = 'https://testband.bandcamp.com/album/testalbum'
+    BAND = 'https://testband.bandcamp.com/'
+    H.ARTISTS[3040] = (H.uid('dddddddd', 40), 'Test Band')
+    H.BC_ARTISTS[BAND] = H.ARTISTS[3040]
+    H.RELEASE_AC[:] = [(H.ARTISTS[3040][0], 'Test Band', 'Test Band', '')]
+    H.ARTISTS[3401] = (H.uid('dddddddd', 3401), 'Lucia Guy')
+    dg = H.discogs_release()
+    dg['extraartists'] = [{'name': 'Lucia Guy', 'anv': '', 'role': 'Drums, Percussion, Electronics [Cracklebox], Voice', 'tracks': '', 'id': 3401, 'join': ''},
+                          {'name': 'Lucia Guy', 'anv': '', 'role': 'Liner Notes [Spanish]', 'tracks': '', 'id': 3401, 'join': ''},
+                          {'name': 'Bass Man', 'anv': '', 'role': 'Bass', 'tracks': '', 'id': 3003, 'join': ''}]
+    for tr_ in dg['tracklist']:
+        tr_['extraartists'] = []
+    dg['companies'] = []
+    H.DG_API[f'/releases/{H.DISCOGS_ID}'] = dg
+    CREDITS = 'Lucia Guy - drums, percussion, cracklebox, voice\nBass Man - bass\nSpanish liner notes, Lucia Guy\nGreat sleeve notes, John Unknown'
+    H.BC_PAGES[ALBUM] = H.bc_page({'artist': 'Test Band', 'current': {'title': 'Testalbum', 'credits': CREDITS, 'about': ''},
+                                   'trackinfo': [{'track_num': i + 1, 'title': x} for i, x in enumerate(H.TITLES)]})
+    orig_ws = H.ws_release
+
+    def ws():
+        d = orig_ws()
+        d['relations'].append({'target-type': 'url', 'type': 'purchase for download', 'url': {'resource': ALBUM}})
+        return d
+
+    H.ws_release = ws
+    ROWS = """[...document.querySelectorAll('.dci-supp-row')].map(tr => [tr.querySelector('.dci-supp-kind').textContent.trim(),
+      (tr.children[2].querySelector('strong') || tr.children[2]).textContent.trim(), tr.children[5].textContent.replace(/\\s+/g, ' ').trim()])"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(500)
+            key = pg.evaluate("(name) => [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name).dataset.group", 'Lucia Guy')
+            pg.click(f'section[data-group="{key}"] [data-act=insts-set][data-insts=release]')
+            pg.wait_for_timeout(500)
+            H.open_supp(pg)
+            pg.click('[data-act=supp-load]')
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Added source: Bandcamp/.test(li.textContent))", 60)
+            H.wait_for(pg, "!document.querySelector('[data-el=busy]').textContent", 30)
+            pg.wait_for_timeout(500)
+            rows = pg.evaluate(ROWS)
+            summary = pg.locator('.dci-supp-head span').first.inner_text()
+            print('A)', rows, '|', summary)
+            results.append(not any(r[0] in ('new role', 'new entry') for r in rows) and 'new: 0' in summary)
+            known = pg.evaluate("[...document.querySelectorAll('[data-el=supp-known] li')].map(li => li.textContent.replace(/\\s+/g, ' ').trim())")
+            head = pg.evaluate("((document.querySelector('[data-el=supp-known] summary') || {}).textContent || '').replace(/\\s+/g, ' ').trim()")
+            print('B)', known, '|', head, '| Fehler:', errs)
+            results.append(known == ['Spanish liner notes, Lucia Guy → Lucia Guy: Liner Notes [Spanish]'] and head.startswith('1 line recognised as known') and 'S327' in head
+                           and [r[0] for r in rows] == ['not recognized'] and 'John Unknown' in rows[0][2] and not errs)
+            b.close()
+    finally:
+        H.ws_release = orig_ws
+        H.DG_API.pop(f'/releases/{H.DISCOGS_ID}', None)
+        H.BC_PAGES.pop(ALBUM, None)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_wikisemi3187():
     """Credits Importer 3.187.0 (collected item Z-WIKISEMI): Wikipedia's infobox with two periods in "recorded" ("December 11–12, 2015;
     May 26–27, 2016") and a studio, on a release of three media whose Discogs notes give each disc its days.
