@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.190.0, Companion 1.6.0 – 1.23.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.191.0, Companion 1.6.0 – 1.23.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,17 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.191.0 · 2026-11-20
+
+- **`headingKind`:** a line of marks only is `'none'` (mapping `HEADING_DIVIDER_CHARS`); **`suiteAsks`:** an offer of the source of the same name is `sure`, one of another name gives way to MusicBrainz's "Name: Part"; **`magicPlan`:** `o.sure` (S336).
+- **`guessInstrument`:** not for a row with `dedication`; **`addDedicationRow`:** no role credit, no `instrGuess`; one row per entry, kind and level – a further track joins the row of the works (`dedication.tracks`, `dedication.keys`); **`toggleDedication`:** all its tracks back; **`dedTake`:** the entry chosen for the other suggestions of the name; **`acceptSuite`:** the suite's name read for a dedication (`S.dedExtra`, read by `runDedications`); new `suiteDedications`; **`startSuiteCreate`:** with them, and `{ then, cancelled }` (S337).
+- **New:** `suiteGate` (in `apply`), action `suite-drop`; **`suiteAskHtml`:** `.dci-mx-suite-must`, `suite.must`, `suite.waitMust`; **`yellItems` / `yellEl`:** kind `suite` (S338).
+- **`loadRelease`:** `instsSet(a, 'release')` for every entry of the suggestion (S339; `DEFAULT_OFF_RULES`, `QUICK_GROUPS`).
+- **`runWorkSearch`:** `ids` = the writers credited and `track.classicalComposers` (S340).
+- **`promoFacts`:** `read(text, shown)`; headlines in capitals after the others, the known names put back (S341).
+- **Rules:** S336–S341 (register). **Texts:** `ded.src.suite`, `msg.suiteChoose`, `msg.suiteFirst`, `suite.must`, `suite.waitMust`, `log.suiteGate`, `log.suiteGateChoose`, `quick.name.S339`, `quick.S339`, `log.instsAuto.one/other` (en, de, es, fr).
+- **Tests:** `t_works_more.py` `case_suitegate3191`, `case_rowcolor3189` (E: contrast in both themes), `case_workfind3189` (F), `case_suiteadd`; `t_entries.py` `case_insts3103` (G); `t_text_lists.py` `case_capscredit3191`; `rules_off_cases.json` (`suiteask`, `suiteparts` with S338 off: they stage parts without the suite); `register_golden.json`.
 
 ## Import 3.190.0 · 2026-11-20
 

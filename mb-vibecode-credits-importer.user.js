@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.190.0
+// @version      3.191.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.190.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.190.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.191.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.191.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.190.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.191.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1980,6 +1980,13 @@
       "suite.hint": "Only a suggestion: “Yes” makes each part of these tracks a work of its own, named “Suite: Part” (⚙ Settings → Works), linked to its recording in its order; the suite itself only holds them together.",
       "suite.from.heading": "from a heading of the track list",
       "suite.noTitle": "No suite – kept for this release: it is not asked again",
+      "ded.src.suite": "the name of the suite “{name}”",
+      "msg.suiteChoose": "Nothing staged yet: MusicBrainz may have the suite “{name}” already (“{found}”) – link it, create a new one or choose “No suite” at its line in the works matrix, then stage again.",
+      "msg.suiteFirst": "Nothing staged: the suite “{name}” must exist in MusicBrainz before its parts are staged. “Stage” opens its form again; “✕ No suite” at its line gives the suite up.",
+      "suite.must": "The suite “{name}” is not in MusicBrainz yet – create or link it:",
+      "suite.waitMust": "“Stage” opens its form at the latest – its parts are staged once it exists.",
+      "log.suiteGate": "Stage: the suite “{name}” first – its form opens (nothing staged before it exists)",
+      "log.suiteGateChoose": "Stage held: the suite “{name}” – link the one found, create it, or no suite",
       "suite.from.prefix": "from the titles in MusicBrainz, “Name: Part”",
       "magic.itemTitle": "Unticked: this answer is not given, the question stays open",
       "suite.from.index": "from an index track",
@@ -4505,6 +4512,10 @@
       "typeAsk.askDjMix": "“{role}” on a DJ mix: the engineer who mixed the recordings, or the DJ who mixed the tracks into one another? – please choose:",
       "quick.name.S297": "℗ on the release",
       "quick.S297": "Phonographic copyright (℗) on the release instead of the recordings",
+      "quick.name.S339": "Instruments → release",
+      "quick.S339": "After the import: two or more instruments without tracks go on the release, their common level on the recordings (⑃)",
+      "log.instsAuto.one": "Instruments on the release + group by themselves: {n} entry (quick switch “Instruments → release”)",
+      "log.instsAuto.other": "Instruments on the release + group by themselves: {n} entries (quick switch “Instruments → release”)",
       "typeAsk.askVoiceSax": "“{role}” alone: a saxophone or a voice? – please choose:",
       "typeAsk.askBugle": "“{role}”: the bugle or, as in French, the flugelhorn? – please choose:",
       "typeAsk.askLaud": "“{role}”: the Spanish laúd or the lute? – please choose:",
@@ -5476,6 +5487,12 @@
     { id: 'S333', where: 'classicalKey, classicalFit, runWorkSearch, catalogueWorks, workFrontCell (dci-mx-wloose), magicPlan', note: 'Works (3.189.0; collected item Z-WORKFIND): a classical title is compared by what names the work, not by how it is written. No work of the track\'s title among its composer\'s, and the title names a kind of work with a key or a number – "Passacaglia in G minor", "Sonata in G minor", "Symphony No. 5" –: the composer\'s works of that kind are looked up in every language ("Sonata" / "Sonate", "Symphony" / "Sinfonie" / "Symphonie" …) and those of the same key ("G minor" / "g-Moll" / "sol mineur"; German "B" is B flat, "H" is B) or number ("No." / "Nr." / "n°") are offered – the instruments ("for violin and continuo"), the order of the words and the punctuation do not count; a movement is not offered. Such a work is a suggestion in yellow ("similar title – check"): never linked by itself, "✨ Answer all" neither links it nor plans a new work instead. With a catalogue number only the number counts (S224); the movement is found by its number after it ("BWV 1004/5": the fifth) and by its name in another language ("Chaconne from the D minor Partita, BWV1004" – "V. Ciaccona"). Switched off: only titles within one letter, and movements by their own name.' },
     { id: 'S334', where: 'eventPlaceIssue, eventPlaceHtml, eventPlaceAnswer (evp-skip, evp-keep), yellItems, companyTypes', note: 'Places (3.190.0; collected item Z-EVENTPLACE): a place or an area "recorded at" / "recorded in" on recordings that have an event – linked in MusicBrainz already, or an entry of an event with these tracks in this import – is a question that must be answered: the event has the place. The question names the event (its link and date) and its place – or says "no place in the event" with the link to edit the event, where the place belongs. "✕ Don\'t link the place" (the first answer) leaves the row out; "Link it anyway" stages it; until answered the row is not staged. Asked also when the event has no place. Switched off: the place is linked without a question.' },
     { id: 'S335', where: 'DISCOGS.labelInfo, lcExtrasOf, addressCity, lcExtraParams, lcNoteHtml', note: 'Labels (3.190.0; collected item Z-LCLINKS): the ＋ of the note on a label code opens the label\'s edit page with more than the code – the web addresses of Discogs\'s page of the label ("Links") that MusicBrainz does not have for it yet, as external links; and the label\'s headquarters: the city of the address in "Contact Info" (after a postal code – "04229 Leipzig" –, or before a state and ZIP code), when MusicBrainz has exactly one city of that name and the label has no headquarters yet, as the relationship "headquartered in" to that area. The note names what is filled in; the editor checks and saves it. Nothing else of the page is taken – no years, no profile. Switched off: the code only.' },
+    { id: 'S336', where: 'headingKind (HEADING_DIVIDER_CHARS), suiteAsks, magicPlan', note: 'Works (3.191.0; collected item Z-SUITENAMEDASH): a heading of the track list that consists of marks only – "-", "–", "***", "…" (mapping HEADING_DIVIDER_CHARS) – is a divider, not the name of a suite (Discogs: a line "-" above the index track "Odes And Meditations For Cecil Taylor" made a suite "-" with works "-: Meditation I"). The index track below it names the suite. Where MusicBrainz\'s titles carry a name before a colon ("Name: Part"), that name holds – an offer of the source of another name over the same tracks gives way; one of the same name counts as sure as a heading ("✨ Answer all" answers it on every level). Switched off: as until 3.190.0.' },
+    { id: 'S337', where: 'addDedicationRow, dedTake, acceptSuite, suiteDedications, startSuiteCreate', note: 'Dedications (3.191.0; collected item Z-DEDSUITE): a dedication belongs to the works of the tracks it fits. Tracks titled "… For X" and the tracks of a suite named so: one row "dedicated to" on the works of all these tracks (the entry may stand on the release group besides, when the release\'s title names it); several dedications stay apart, each with its tracks. An entry chosen for a name in the box "Dedications & tributes" holds for the other finds of that name – no second choice. The form of a new suite is prefilled with the dedications that hold for all its tracks. Switched off: one dedication a person (the first found), the suite without it.' },
+    { id: 'S338', where: 'suiteGate, startSuiteCreate, suiteAskHtml (dci-mx-suite-must, suite-drop), yellItems', note: 'Works (3.191.0; collected item Z-SUITEPROMPT): a suite accepted ("✓ Yes", "✨ Answer all") must exist in MusicBrainz before its parts are staged – without it there are no "parts" and no order. Its line is a yellow field that must be answered: "＋ Create the suite in MusicBrainz …", "Link …" (a suite of that name MusicBrainz has), "✕ No suite" (its parts are plain works again). "Stage" with such a suite open stages nothing: the form of the suite opens by itself, prefilled (name, type "Suite", the writers and dedications of all its tracks, the edit note with the source); once it is created, staging goes on by itself (the works of the parts are created in the relationship editor as before). The form closed: nothing is staged. Switched off: the parts are staged without the suite, as until 3.190.0.' },
+    { id: 'S339', where: 'loadRelease (instsSet)', note: 'Instruments (3.191.0; collected item Z-INSTSAUTO; a quick switch, off): after every import, each person with two or more instruments or voices the source names without tracks gets "⑃ on the release + group" by itself – the instruments on the release, the level they share on the recordings. Such credits are general: they need not hold for every single track. Not where the source names tracks, not for an entry answered "keep per track", not for one skipped. Off: the suggestion at the entry, one click, as before.' },
+    { id: 'S340', where: 'runWorkSearch (classicalComposers)', note: 'Works (3.191.0; collected item Z-WORKFINDHEAD): on a release credited the classical way – the track to the composer ("H. I. F. Biber"), the recording to who plays (S311) – the composer of the track counts as its writer for the search of works: its works of the track\'s title, of its catalogue number (S224) and of a similar classical title (S333) are found also where the source credits no composer for the track. A composer named in a heading of the track list is a writer of the tracks below it already (S307). Switched off: the search needs a writer credited by the source.' },
+    { id: 'S341', where: 'TEXT.parse (promoFacts)', note: 'Texts (3.191.0; collected item Z-CAPSCREDIT): a headline of a description all in capitals – "… WITH NEW LINER NOTES BY JASON WEISS IN CONVERSATION WITH JAMES QUINLAN" – is read for its credits too. In capitals every word looks like a name; the names the text knows otherwise – of a credit, or written the usual way in another description or a line left out – are found in it, and the credit ("liner notes by Jason Weiss") is a suggestion like those of the other descriptions (S320). A name that stands nowhere else stays unread. Switched off: headlines in capitals are left out unread.' },
     { id: 'S299', where: 'TEXT.parse (shopLines; SHOP_BLOCK_LINES)', note: 'Texts (3.169.0; Z-BCSHOPBLOCK): what a shop writes below an edition is left out as "shop" – the edition\'s name with "(Limited Edition …)" and its format, what the records look like ("2 x 180gsm …", "DiscA/B - Transparent green with gold blob", "Packaged in a standard Sleeve."), the block about shipping ("+++++INTERNATIONAL SHIPPING +++++", "- WE DO NOT SHIP TO PO BOXES", "- ALL ORDERS ARE SENT BY TRACKED COURIER …", "UK: 2-3 days") and the page\'s own details ("published March 29, 2019", "license"). They stood under "not recognized". Every free text' },
     { id: 'S298', where: 'TEXT.parse (hyphenTrackLines; HT_TRACKS, HT_HYPHEN, HT_HEAD, HT_SPLIT)', note: 'Texts (3.169.0; Z-HYPHENTRACKS): a lineup written "Pete Callard-Acoustic Guitar On Tracks 1,2,3, Electric Guitar on Tracks 18,19 Hari-Om- Vocals On Tracks 9,10 …" – a hyphen without spaces between name and role, each role with its tracks, the whole lineup in one paragraph (Beatport and shop texts): the paragraph is cut before each name, the name is what stands before the first hyphen whose right side begins with a role ("Hari-Om- Vocals": Hari-Om), "and Vocals on Tracks …" and a role after a list of tracks are roles of their own, "on all tracks" says nothing new; a heading before the first name ("Musicians In The Studio") is a heading. Only for a line that names tracks that way. Every free text' },
     { id: 'S296', where: 'videoLevelWant, videoLevelFor, VIDEO_RULES, R033 (mapRole), rgIsDjMix, Q022', note: 'Video credits and DJ mixes (3.164.0; proposals F-VIDEOLEVEL, F-DJMIX of review run 2): every credit of a video – video director, camera work, cinematographer and the table of video credits (R076, R110, R119) – is on the recordings when its tracks are videos – from 3.169.0 on the videos only when just some of its tracks are (Z-VIDEOTRACKS; until then such a credit went to the release) – and on the release when none is, where MusicBrainz has the type there (the cinematographer and the camera work were always on the recordings, the others on the release). "Mixed By [DJ Mix]" is the DJ-mix of the release, not the mix engineer; on a release group of the type DJ-mix "Mixed By" asks which of the two (Q022)' },
@@ -6323,6 +6340,8 @@
   const TEXT_SOFTWARE = MAP.TEXT_SOFTWARE;
   // [Z-SU] (3.41.0) headings that name no suite (T061; ✎), and those of the place or date of a recording (built in)
   const SUITE_SKIP_HEADINGS = MAP.SUITE_SKIP_HEADINGS;
+  // [Z-SUITENAMEDASH] (3.191.0, S336) the marks a divider line of a track list consists of ("-", "***")
+  const HEADING_DIVIDER_CHARS = MAP.HEADING_DIVIDER_CHARS;
   const PART_TITLE = /^(?:(?:part|pt\.?|teil|partie|parte|movement|mvt\.?|satz)\s+(?:\d{1,2}|[IVXLC]+|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|eins|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn)|[IVXLC]{1,5})\.?$/i;
   const HEADING_RECORDING = /\b(?:recorded|live\s+(?:at|in|from)|concert|session|sessions)\b|\b(?:1[89]|20)\d\d\b/i;
   // [S062] (3.38.18) the kinds of field recordings (T057; ✎)
@@ -9859,17 +9878,34 @@
      */
     function promoFacts(P) {
       const seen = new Set([...P.credits, ...P.companies].map((c) => `${nameKey(c.who.name)}|${promoFamily(c.role)}`));
-      for (const text of P.promoTexts) {
-        if (text === text.toUpperCase()) continue; // (a headline in capitals: where a name ends is not known)
+      const read = (text, shown) => {
         for (const [re, role, fam] of PROMO_FACTS) {
           const m = re.exec(text);
           if (!m) continue;
           const key = `${nameKey(m[1])}|${fam}`;
           if (seen.has(key) || [...seen].some((k) => k.endsWith(`|${fam}`) && (k.startsWith(`${nameKey(m[1])} `) || nameKey(m[1]).startsWith(`${k.split('|')[0]} `)))) continue;
           seen.add(key);
-          Object.assign(P, { line0: text, part0: m[0], pi0: 0, n0: 0 });
-          addCredit(P, m[1], role, null, { promo: text });
+          Object.assign(P, { line0: shown, part0: m[0], pi0: 0, n0: 0 });
+          addCredit(P, m[1], role, null, { promo: shown });
         }
+      };
+      const caps = (text) => text === text.toUpperCase();
+      // (a headline in capitals: where a name ends is not seen – read after the others, see below)
+      for (const text of P.promoTexts) if (!caps(text)) read(text, text);
+      // [Z-CAPSCREDIT] (3.191.0, S341) a headline all in capitals: every word looks like a name – the names the text knows otherwise (a
+      // credit, a name written the usual way in another description or a line left out) are put back in their own writing, the rest in small letters;
+      // then it is read like any description. A name that stands nowhere else stays unread.
+      if (!ruleOn('S341')) return;
+      const heads = P.promoTexts.filter(caps);
+      if (!heads.length) return;
+      const known = [...P.credits, ...P.companies].map((c) => c.who && c.who.name).filter(Boolean);
+      // (and in what was left out – a line of thanks, a sentence of the story)
+      for (const text of [...P.promoTexts, ...P.ignored.map((x) => String((x && x.text) || ''))]) if (text && !caps(text)) for (const m of text.matchAll(new RegExp(PROMO_NAME, 'gu'))) known.push(m[1]);
+      const names = uniq(known.filter((n) => n.length >= 5 && n !== n.toUpperCase())).sort((x, y) => y.length - x.length);
+      for (const text of heads) {
+        let low = text.toLowerCase();
+        for (const n of names) low = low.replace(new RegExp(`(?<![\\p{L}])${escRe(n.toLowerCase())}(?![\\p{L}])`, 'gu'), n);
+        if (low !== text.toLowerCase()) read(low, text);
       }
     }
 
@@ -22397,7 +22433,7 @@
    */
   const QUICK_SWITCHES = MAP.QUICK_SWITCHES;
   // [Z-QSCAT] (3.105.0) the groups of the quick switches, in this order (a switch of none: at the end)
-  const QUICK_GROUPS = [['dates', ['D022', 'D035', 'D026', 'D023', 'D034', 'S264']], ['performers', ['S046', 'S078', 'S170', 'S155', 'S114']], ['credits', ['S021', 'S031', 'S245', 'S263', 'S313']],
+  const QUICK_GROUPS = [['dates', ['D022', 'D035', 'D026', 'D023', 'D034', 'S264']], ['performers', ['S046', 'S078', 'S170', 'S339', 'S155', 'S114']], ['credits', ['S021', 'S031', 'S245', 'S263', 'S313']],
     ['works', ['S160', 'S045', 'S222']], ['companies', ['S007', 'S297']]];
   /**
    * [Z-VIDEOCREW] (3.147.0, S263) "mappings" at its quick switch: a small window to fold out – every video credit of VIDEO_CREDITS and where
@@ -22998,6 +23034,8 @@
     if (ruleOn('S223') && S.rmdAsk && !S.rmdAsk.done && S.rmdAsk.items.length) add('can', 'rmd', 'rmd'); // [Z-GAPREFRESH2] (3.135.0)
     [...(S.workRels || new Map())].forEach(([i, l]) => l.filter((x) => x.confirm && !x.confirmed && x.kind !== 'based' && arrLive(i, x)).forEach((x) => add('must', 'arr', `arr:${i}:${x.id}`, { i, n: x.id })));
     if (S.workSuggest && !S.worksSkip) add('must', 'wts', 'wts');
+    // [Z-SUITEPROMPT] (3.191.0, S338) a suite accepted that MusicBrainz does not have yet
+    if (ruleOn('S338') && !S.worksSkip) [...S.suiteWorks.values()].filter((sw) => isPending(sw.gid)).forEach((sw) => add('must', 'suite', `suite:${sw.key}`, { sk: sw.key }));
     // [Z-INMEM] (3.124.0, S197) a dedication of the box not sure yet ("In memory of …", MusicBrainz has none or several): may
     if (ruleOn('S197') && dedBoxShown()) (S.dedSugg || []).forEach((x) => add('can', 'ded', `ded:${x.key}`, { dk: x.key }));
     // [Z-LIVEMAY] (3.184.0) "Propose comments" for the live recordings, not answered yet: may
@@ -23053,6 +23091,7 @@
     else if (it.kind === 'livecom') el = ov.querySelector('.dci-livecom-may'); // [Z-LIVEMAY] (3.184.0)
     else if (it.kind === 'arr') el = [...ov.querySelectorAll(`tr[data-work="${it.i}"] [data-act=arr-ok]`)].find((b) => String(b.dataset.n) === String(it.n));
     else if (it.kind === 'wts') el = ov.querySelector('[data-el=works-suggest]');
+    else if (it.kind === 'suite') el = [...ov.querySelectorAll('[data-el=works] [data-suite]')].find((x) => x.dataset.suite === it.sk);
     else if (it.kind === 'ded') el = [...ov.querySelectorAll('[data-el=dedbox] .dci-dedsugg')].find((x) => x.dataset.key === it.dk);
     else if (it.kind === 'date') el = ov.querySelector(`[data-dmcell="${it.cell}"]`);
     if (el && it.kind === 'arr') el = el.closest('.dci-mx-arrsugg') || el;
@@ -28162,6 +28201,8 @@
    * MusicBrainz and without similar ones: miscellaneous support, as before.
    */
   function guessInstrument(row, { word: word0 = '', misc = true } = {}) {
+    // [Z-DEDMUST] (3.191.0) a dedication ("For Cecil Taylor"): its word is no instrument – never asked
+    if (row.dedication) { delete row.instrGuess; return; }
     const word = String(word0 || row.base || row.raw || '').trim();
     const lt = currentLinkType(row);
     const root = lt ? primaryRootOf(lt) : null;
@@ -30691,6 +30732,22 @@
         if (rmdRefresh()) renderSource();
         // [Z-PLAYS] (3.102.0, S168; review: with the rows remembered back) the instruments of "I played …" no one is credited with
         if (playsRefresh()) renderSource();
+        // [Z-INSTSAUTO] (3.191.0, S339; a quick switch, off) every person with two or more instruments the source names without tracks:
+        // "⑃ on the release + group" by itself – the instruments on the release, their common level on the recordings
+        if (ruleOn('S339') && ruleOn('S169')) {
+          let nAuto = 0;
+          for (const a of [...S.artists.values()]) {
+            if (a.insts || a.instsNo || entrySkipped(a) || uniq(instsRows(a).map(lineKeyOf)).length < INSTS_SUGGEST) continue;
+            instsSet(a, 'release');
+            if (a.insts === 'release') nAuto += 1;
+          }
+          if (nAuto) {
+            log('info', 'instsAuto', { n: nAuto });
+            renderGroups();
+            renderWorks();
+            renderDates();
+          }
+        }
         log('ok', 'importDone', { rows: S.rows.length, entries: S.artists.size, existing: S.rows.filter((r) => r.existingAll).length });
         renderSync(); // [Z-NOTABSRC] (3.157.0) the status names the source of this import
         wikiBackground(seq); // [Z-WIKIBG] (3.149.0)
@@ -40777,7 +40834,11 @@
     const people = creditedWritersOf(i);
     // [3.12.1] which writers the search was made with (searched again when they change)
     const sig = writerSig(people);
-    if (!people.size) {
+    // [Z-WORKFINDHEAD] (3.191.0, S340) classical crediting: the composer the track is credited to (the recording to who plays) counts
+    // as its writer for the search, also without a writer's credit of the source
+    const comp = ruleOn('S340') && ruleOn('S311') ? (track.classicalComposers || []).map((c) => c.mbid).filter((id) => id && !isSpecialArtist(id)) : [];
+    const ids = new Set([...people.keys(), ...comp]);
+    if (!ids.size) {
       S.workSearch.set(i, { state: 'noWriters', results: [], writers, sig });
       renderWorkRow(i);
       return;
@@ -40785,9 +40846,9 @@
     S.workSearch.set(i, { state: 'loading', results: [], writers, sig });
     renderWorkRow(i);
     try {
-      const found = await searchWorks(workTitleOf(track.title), [...people.keys()]);
+      const found = await searchWorks(workTitleOf(track.title), [...ids]);
       const title = normTitle(workTitleOf(track.title));
-      let results = found.filter((w) => w.writerIds.some((id) => people.has(id))
+      let results = found.filter((w) => w.writerIds.some((id) => ids.has(id))
         && [w.title, ...w.aliases].some((t) => withinOne(normTitle(t), title)));
       // [Z-BWV] (3.138.0, S224) none of that title: the catalogue number of the title ("… BWV1001") – the movement it names, else the work
       const cat = !results.length && ruleOn('S224') ? catalogueOf(track.title) : null;
@@ -40795,11 +40856,11 @@
         // ((review) a lookup by the number that fails: nothing found (the search itself went well)
         let byCat = [];
         try {
-          byCat = await searchWorks(cat.text, [...people.keys()], `work:${lucenePhrase(cat.key)}`);
+          byCat = await searchWorks(cat.text, [...ids], `work:${lucenePhrase(cat.key)}`);
         } catch (e) {
           log('warn', 'error', { text: e.message });
         }
-        results = catalogueWorks(byCat.filter((w) => w.writerIds.some((id) => people.has(id))), track.title, cat);
+        results = catalogueWorks(byCat.filter((w) => w.writerIds.some((id) => ids.has(id))), track.title, cat);
         if (results.length) log('info', 'workByCatalogue', { track: trackLabel(track), cat: cat.text, list: results.map((w) => w.title).join(' · ') });
       }
       // [Z-WORKFIND] (3.189.0, S333) still none, and the title names a kind of work with its key or number ("Sonata in G minor"): the
@@ -40808,11 +40869,11 @@
       if (ck && ck.genre && (ck.key || ck.no)) {
         let byKind = [];
         try {
-          byKind = await searchWorks(track.title, [...people.keys()], classicalGenreWords(ck.genre).map((w) => `work:${lucenePhrase(w)}`).join(' OR '));
+          byKind = await searchWorks(track.title, [...ids], classicalGenreWords(ck.genre).map((w) => `work:${lucenePhrase(w)}`).join(' OR '));
         } catch (e) {
           log('warn', 'error', { text: e.message });
         }
-        results = byKind.filter((w) => w.writerIds.some((id) => people.has(id)) && [w.title, ...w.aliases].some((x) => classicalFit(track.title, x))).map((w) => ({ ...w, loose: true }));
+        results = byKind.filter((w) => w.writerIds.some((id) => ids.has(id)) && [w.title, ...w.aliases].some((x) => classicalFit(track.title, x))).map((w) => ({ ...w, loose: true }));
         if (results.length) log('info', 'workLoose', { track: trackLabel(track), list: results.map((w) => w.title).join(' · ') });
       }
       S.workSearch.set(i, { state: 'done', results, writers, sig });
@@ -41435,6 +41496,8 @@
     // ((review) a track's title: only "… For X", an artist, on its work
     S.mbTracks.forEach((t) => findDedications(workTitleOf(t.title), { title: true, titleKind: 'dedicated', phrases: false })
       .forEach((d) => found.push({ ...d, kind: 'dedicated', where: tr('ded.src.track', { pos: trackLabel(t) }), track: t.idx, fromTrackTitle: true })));
+    // ([Z-DEDSUITE] 3.191.0, S337) and the names of the suites accepted
+    (S.dedExtra || []).forEach((d) => found.push(d));
     S.dedDone = S.dedDone || new Set();
     const choices = dedChoices();
     // ([Z-DEDQ] 3.74.0, review) what was picked in the box or added by hand comes back with each import (it is no remembered row)
@@ -41705,6 +41768,17 @@
     dedChoose(d.key, { kind, gid: gid0, et, name: e.name, level, track, phrase: d.phrase, where: d.where });
     if (x) S.dedSugg = S.dedSugg.filter((s0) => s0 !== x);
     else S.dedForm = null;
+    // [Z-DEDSUITE] (3.191.0, S337) the entry chosen for a name holds for the name's other finds – the tracks titled so, the works of a
+    // suite named so –: no second choice
+    if (x && ruleOn('S337')) {
+      for (const y of (S.dedSugg || []).filter((s0) => s0.kind === kind && foldWord(s0.name) === foldWord(x.name) && !s0.needTrack)) {
+        const lv2 = y.track != null && kind !== 'tribute' ? 'work' : 'release_group';
+        if (!dedicationLt(kind, lv2, et)) continue;
+        if (!addDedicationRow({ gid: gid0, name: e.name, entityType: et, level: lv2 }, { kind, phrase: y.phrase, name: y.name, where: y.where, sentence: y.sentence, fromTitle: y.fromTitle, key: y.key }, y.track)) continue;
+        dedChoose(y.key, { kind, gid: gid0, et, name: e.name, level: lv2, track: y.track, phrase: y.phrase, where: y.where });
+        S.dedSugg = S.dedSugg.filter((s0) => s0 !== y);
+      }
+    }
     renderGroups();
     renderWorks();
     refresh();
@@ -41757,7 +41831,22 @@
     const company = et === 'label' || et === 'place';
     const other = !company && et !== 'artist';
     let owner = [...S.artists.values()].find((a) => a.mbid === hit.gid && (a.entityType || 'artist') === et);
-    if (owner && S.rows.some((r) => r.artistKey === owner.key && r.dedication)) return false;
+    const had = owner ? S.rows.filter((r) => r.artistKey === owner.key && r.dedication) : [];
+    if (had.length && !ruleOn('S337')) return false;
+    // [Z-DEDSUITE] (3.191.0, S337) the same entry once on the release group and once on the works: a further track joins the row of
+    // the works (the works of a suite named "… For X", of several tracks titled so)
+    if (had.length) {
+      const same = had.find((r) => r.dedication.kind === d.kind && (r.level === 'work') === (hit.level === 'work') && r.level !== 'skip');
+      if (same && hit.level === 'work' && track != null && !same.tracks.has(track)) {
+        same.tracks.add(track);
+        same.suggested = new Set(same.tracks);
+        same.dedication.tracks = [...same.tracks];
+        same.dedication.keys = uniq([...(same.dedication.keys || [same.dedication.key]), d.key || ''].filter(Boolean));
+        refreshRowDetails(same);
+        return true;
+      }
+      if (same || had.some((r) => (r.level === 'work') === (hit.level === 'work'))) return false;
+    }
     if (!owner) {
       owner = {
         key: nextId(company ? 'c' : other ? 'o' : 'a'), dId: 0, name: hit.name, rawName: '', status: 'manual', manual: true, fromDedication: true,
@@ -41772,6 +41861,9 @@
       level: hit.level, defaultLevel: hit.level, work: hit.level === 'work', creditFromRole: '', primaryCands: [], primaryText: '', flags: new Set(), consumed: [], mods: [],
       dedication: { kind: d.kind, phrase: d.phrase, name: d.name, where: d.where, sentence: d.sentence.slice(0, 200), fromTitle: !!d.fromTitle, key: d.key || '',
         level0: hit.level, track: track != null ? track : null } });
+    // ([Z-DEDMUST] 3.191.0) the word of the source ("For") is no role credit and no instrument
+    Object.assign(row, { roleCredit: '', roleCreditTouched: true });
+    delete row.instrGuess;
     // (a tribute chosen before on a dedication of a work: on the release group)
     if (d.kind === 'tribute' && row.level === 'work') Object.assign(row, { level: 'release_group', work: false });
     if (other) row.other = true;
@@ -41806,7 +41898,7 @@
     if (row.level !== to.level) levelOf(row, to.level);
     row.level = to.level;
     row.work = to.level === 'work';
-    if (to.level === 'work' && d.track != null) row.tracks = new Set([d.track]);
+    if (to.level === 'work' && d.track != null) row.tracks = new Set(d.tracks && d.tracks.length ? d.tracks : [d.track]);
     resolveRowType(row);
     refreshRowDetails(row);
     dedChoose(d.key, { kind: to.kind });
@@ -45723,9 +45815,15 @@
    * [Z-SU] (3.41.0) What a heading of a track list is: "medium" (a side, medium or bonus heading – T061), "recording" (the place or
    * date of a recording), "name" (it may name a suite), "none".
    */
+  // ((in Node the const is not reachable before the module ends: the marks of the mapping read directly)
+  function dividerChars() {
+    try { return String(HEADING_DIVIDER_CHARS || '-–—'); } catch (e) { return String(MAP.HEADING_DIVIDER_CHARS || '-–—'); }
+  }
   function headingKind(title) {
     const t = norm(title);
     if (!t) return 'none';
+    // [Z-SUITENAMEDASH] (3.191.0, S336) a line of marks only ("-", "–", "***", "…"): a divider, no name (mapping HEADING_DIVIDER_CHARS)
+    if (ruleOn('S336') && [...String(title || '').trim()].every((ch) => /\s/.test(ch) || dividerChars().includes(ch))) return 'none';
     // the word, alone or followed by no letter ("Side A", "CD1", "Bonus Tracks"; not "Sidewinder")
     const word = (w) => {
       const n = norm(w);
@@ -47347,7 +47445,13 @@
         const p = { ...p0, key: `prefix|${p0.name}|${p0.tracks.join(',')}` };
         if (!(S.suiteAnswers.has(p.key) || p.tracks.some((i) => !S.mbTracks[i].works.length))) continue;
         const over = out.filter((o) => o.tracks.some((i) => p.tracks.includes(i)));
-        if (over.some((o) => S.suiteAnswers.has(o.key) || o.tracks.length >= p.tracks.length)) continue;
+        // ([Z-SUITENAMEDASH] 3.191.0, S336) an offer of the source of the same name over these tracks: as sure as MusicBrainz's titles
+        // ("✨ Answer all" on every level); one of another name gives way unless it has more tracks
+        const sameName = (o) => foldWord(o.name) === foldWord(p.name);
+        if (ruleOn('S336')) {
+          over.filter((o) => sameName(o) && o.tracks.length >= p.tracks.length).forEach((o) => { o.sure = true; });
+          if (over.some((o) => S.suiteAnswers.has(o.key) || (sameName(o) ? o.tracks.length >= p.tracks.length : o.tracks.length > p.tracks.length))) continue;
+        } else if (over.some((o) => S.suiteAnswers.has(o.key) || o.tracks.length >= p.tracks.length)) continue;
         over.forEach((o) => out.splice(out.indexOf(o), 1));
         out.push(p);
       }
@@ -47428,6 +47532,15 @@
       n += titles.length;
     }
     S.suiteAnswers.set(o.key, { yes: true, name: nm });
+    // [Z-DEDSUITE] (3.191.0, S337) a suite named "… For X": a dedication of the works of its tracks (looked up with the others)
+    if (ruleOn('S337') && ruleOn('S097')) {
+      const ds = findDedications(nm, { title: true, titleKind: 'dedicated', phrases: false });
+      if (ds.length) {
+        S.dedExtra = S.dedExtra || [];
+        ds.forEach((d) => o.tracks.forEach((i) => S.dedExtra.push({ ...d, kind: 'dedicated', where: tr('ded.src.suite', { name: nm }), track: i, fromTrackTitle: true })));
+        setTimeout(() => { if (!S.dedRunning) runDedications().catch((e) => console.warn('[Discogs-Credits]', e)); }, 0);
+      }
+    }
     // [Z-SU] (3.41.2) the suite itself: a new work of the type "Suite", with "parts" to each part (Q-bv)
     S.suiteSeq += 1;
     S.suiteWorks.set(o.key, { gid: `pending:s${S.suiteSeq}`, title: nm, key: o.key, tracks: [...o.tracks], origin: 'pending', flags: new Set(), suite: true });
@@ -47437,6 +47550,18 @@
     searchSuite(S.suiteWorks.get(o.key));
   }
 
+  /** [Z-DEDSUITE] (3.191.0, S337) The dedications on the works of every track of a suite: relationships of the suite itself (its form). */
+  function suiteDedications(sw) {
+    if (!ruleOn('S337')) return [];
+    const out = [];
+    for (const r of S.rows) {
+      if (!r.dedication || r.level !== 'work' || r.dedication.kind !== 'dedicated' || !(sw.tracks || []).length || !sw.tracks.every((i) => r.tracks.has(i))) continue;
+      const a = S.artists.get(r.artistKey);
+      const lt = a && a.mbid && dedicationLt('dedicated', 'work', r.entityType || 'artist');
+      if (lt && !out.some((x) => x.mbid === a.mbid)) out.push({ mbid: a.mbid, linkTypeId: lt.id, name: a.mbName || a.name, typeName: tr('ded.kind.dedicated'), dedication: true });
+    }
+    return out;
+  }
   /** [Z-SUW] (3.41.6) The writers credited for every track of a suite (composer, lyricist …): the writers of the suite. */
   function suiteWriters(sw) {
     // ([Z-WSK] 3.64.0, review) not of the tracks whose work credits are left out
@@ -47471,9 +47596,47 @@
    * "parts" only – "unknown Work id"): MusicBrainz's form in the dashboard, prefilled with the name, the type "Suite" and its
    * writers; once it is created, its "parts" are planned (the parts themselves can be staged before).
    */
-  function startSuiteCreate(sw) {
+  /**
+   * [Z-SUITEPROMPT] (3.191.0, S338) "Stage" with a suite accepted that MusicBrainz does not have yet: nothing is staged – the form of
+   * the suite opens by itself (one suite after the other); created, staging goes on by itself. A suite MusicBrainz may have already
+   * ("Link …" offered): the choice at its line first. The form closed: nothing staged; "✕ No suite" at its line gives it up.
+   * true: staging held.
+   */
+  function suiteGate() {
+    if (!ruleOn('S338') || S.worksSkip) return false;
+    const open = [...S.suiteWorks.values()].filter((sw) => isPending(sw.gid) && (sw.tracks || []).some((i) => (S.workParts.get(i) || []).some((p) => p.suite === sw.key)));
+    if (!open.length) return false;
+    const sw = open[0];
+    const show = () => {
+      const el = S.overlay.querySelector(`[data-el="works"] [data-suite="${window.CSS && CSS.escape ? CSS.escape(sw.key) : sw.key}"]`);
+      if (el) {
+        el.scrollIntoView({ block: 'center' });
+        const b = el.querySelector('[data-act="suite-pick"], [data-act="suite-create"]');
+        if (b) b.focus({ preventScroll: true });
+      }
+    };
+    if (sw.offer) {
+      clearMessages();
+      showMessage('info', 'msg.suiteChoose', { name: sw.title, found: sw.offer.title });
+      log('info', 'suiteGateChoose', { name: sw.title });
+      show();
+      return true;
+    }
+    log('info', 'suiteGate', { name: sw.title });
+    startSuiteCreate(sw, {
+      then: () => { if (!suiteGate()) applyPlan(); },
+      cancelled: () => {
+        clearMessages();
+        showMessage('info', 'msg.suiteFirst', { name: sw.title });
+        show();
+      },
+    });
+    return true;
+  }
+  function startSuiteCreate(sw, { then = null, cancelled = null } = {}) {
     const suiteType = (S.workOptions.types || []).find((t) => norm(t.name) === 'suite');
-    const writers = suiteWriters(sw);
+    // ([Z-DEDSUITE] 3.191.0, S337) with the dedications that hold for all its tracks
+    const writers = [...suiteWriters(sw), ...suiteDedications(sw)];
     const sourceUrl = noteSourceUrl();
     const params = buildWorkSeed({
       title: sw.title,
@@ -47511,8 +47674,9 @@
         log('ok', 'suiteCreated', { name: title, mbid });
         renderWorks();
         refresh();
+        if (then) then(); // ([Z-SUITEPROMPT] 3.191.0) staging goes on
       },
-      onCancel: () => log('info', 'formCancelled'),
+      onCancel: () => { log('info', 'formCancelled'); if (cancelled) cancelled(); },
     });
   }
 
@@ -47681,11 +47845,14 @@
       const suite = !sw ? '' : isPending(sw.gid)
         ? `<button type="button" class="dci-primary dci-small" data-act="suite-create" title="${esc(tr('suite.createBtnTitle'))}">＋ ${esc(tr('suite.createBtn'))}</button>
           ${sw.offer ? `<button type="button" class="dci-small" data-act="suite-pick" title="${esc(tr('suite.pickTitle'))}">${esc(tr('suite.partPick', { title: sw.offer.title }))}</button>` : ''}
-          <span class="dci-suite-wait">${esc(tr('suite.wait'))}</span>`
+          <span class="dci-suite-wait">${esc(tr(ruleOn('S338') ? 'suite.waitMust' : 'suite.wait'))}</span>`
         : `<a class="dci-suite-mb" href="/work/${esc(sw.gid)}" target="_blank" rel="noopener">${esc(tr('suite.inMb', { name: sw.title }))}</a>${workLocked({ ...sw, planned: true })
           ? ` <span class="dci-mx-wlock" title="${esc(tr('suite.locked'))}">${LOCK_SVG}<span class="dci-sr">${esc(tr('suite.locked'))}</span></span>` : ''}`;
-      return `<p class="dci-sub dci-mx-suite-done" data-suite="${esc(o.key)}">${esc(tr('suite.done', { tracks, name: a.name, n }))}
+      // [Z-SUITEPROMPT] (3.191.0, S338) not in MusicBrainz yet: a yellow field that must be answered – create, link, or no suite
+      const must = sw && isPending(sw.gid) && ruleOn('S338');
+      return `<p class="dci-sub dci-mx-suite-done${must ? ' dci-mx-suite-must' : ''}" data-suite="${esc(o.key)}">${must ? `<strong>${esc(tr('suite.must', { name: a.name }))}</strong> ` : ''}${esc(tr('suite.done', { tracks, name: a.name, n }))}
         ${suite}
+        ${must ? `<button type="button" class="dci-small" data-act="suite-drop" title="${esc(tr('suite.noTitle'))}">${esc(tr('suite.noBtn'))}</button>` : ''}
         <button type="button" class="dci-textbtn" data-act="suite-undo" title="${esc(tr('suite.undoTitle'))}">↺ ${esc(tr('suite.undo'))}</button></p>`;
     }
     if (a && !a.yes) {
@@ -47923,7 +48090,7 @@
       // ([Z-SUITEPREFIX] 3.189.0) MusicBrainz's own titles "Name: Part" count like a heading
       const from = ['heading', 'prefix', ...(magicAt('balanced') ? ['index'] : []), ...(magicAt('bold') ? ['release'] : [])];
       for (const o of suiteAsks()) {
-        if (S.suiteAnswers.has(o.key) || !from.includes(o.from) || !o.tracks.length) continue;
+        if (S.suiteAnswers.has(o.key) || !(from.includes(o.from) || o.sure) || !o.tracks.length) continue;
         o.tracks.forEach((i) => taken.add(i));
         out.push({ kind: 'suite', key: `suite|${o.key}`, i: o.tracks[0], tracks: [...o.tracks], label: tracksShort({ level: 'recording', tracks: new Set(o.tracks) }),
           what: tr('magic.what.suite', { name: o.name, from: tr(`suite.from.${o.from}`) }),
@@ -53953,8 +54120,23 @@
         renderPreview();
         break;
       case 'apply':
+        // [Z-SUITEPROMPT] (3.191.0, S338) a suite accepted is created (or linked) first
+        if (suiteGate()) break;
         applyPlan();
         break;
+      case 'suite-drop': {
+        // [Z-SUITEPROMPT] (3.191.0) "✕ No suite" at a suite accepted: its parts are plain works again, not asked again
+        const box = btn.closest('[data-suite]');
+        const o = box && suiteAsks().find((x) => x.key === box.dataset.suite);
+        if (!o) break;
+        undoSuite(o);
+        S.suiteAnswers.set(o.key, { yes: false });
+        suiteNoStore(o.key, true);
+        log('info', 'suiteNo', { name: o.name });
+        renderWorks();
+        refresh();
+        break;
+      }
       // [Z-ALIAS] (3.108.0) who is the person – the form opened again with the answer
       case 'alias-dir':
         if (S.aliasForm) {
@@ -62296,6 +62478,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       .dci-works.dci-works-off { border-left-color: #bbb; }
       .dci-works-off .dci-mx-wrap { opacity: .45; }
       /* [Z-SU] (3.41.1) the question of a suite (yellow: a suggestion), a part of it */
+      .dci-mx-suite-must { background: var(--sugg-bg); border: 1px solid var(--sugg-line); color: var(--sugg-ink); border-radius: 4px; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); }
       .dci-mx-ask.dci-mx-suite { background: var(--sugg-bg); border-color: var(--sugg-line); color: var(--sugg-ink); }
       .dci-mx-suite .dci-suite-other input { margin-left: calc(var(--u, 1px) * 4); }
       .dci-mx-suite .dci-suite-hint { flex-basis: 100%; margin: 0; }

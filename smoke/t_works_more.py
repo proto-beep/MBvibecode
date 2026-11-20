@@ -1015,7 +1015,8 @@ def case_suiteadd():
         pg.click('[data-el=suite-add] [data-act=suite-add-yes]'); pg.wait_for_timeout(500)
         b0 = [pg.evaluate(BOX), [pg.evaluate(PARTS, i) for i in range(4)], [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'Suite “Trisect”' in x]]
         print('B)', b0)
-        results.append(b0[0] and b0[0][0][1].startswith('tracks 2–4: parts of the suite “Trisect” – 3 works ＋ Create the suite in MusicBrainz …')
+        # ((3.191.0, S338) the line is a field that must be answered: its words before it)
+        results.append(b0[0] and 'tracks 2–4: parts of the suite “Trisect” – 3 works ＋ Create the suite in MusicBrainz …' in b0[0][0][1]
                        and 'suite-create' in b0[0][0][2] and b0[1][1] == ['Trisect: ' + H.TITLES[1]] and b0[1][3] == ['Trisect: ' + H.TITLES[3]]
                        and b0[1][0] and not b0[1][0][0].startswith('Trisect') and b0[2][:1] == ['Suite “Trisect” added by hand (tracks 2–4)'])
         # (3.41.15, review) tracks of that suite cannot become another one – ([Z-SU2] 3.70.0, S105) only the track 1.1 is free: the box
@@ -1850,7 +1851,9 @@ def case_rowcolor3189():
        has its tint over the cells, the words "found, will be linked" and "new work" stay.
     C) ⚙ Settings → Appearance: the tick off (stored) – no stripes, no tint; on again; the colour for "new work" changed (stored): the
        stripe of track 3 has it.
-    D) Rule S332 off: no colours, no setting."""
+    D) Rule S332 off: no colours, no setting.
+    E) (3.191.0, Z-WORKROWDARK) In the light and in the dark theme: the texts of each coloured row on its tinted ground at least
+       4.5 : 1, its stripe against the ground at least 3 : 1."""
     import json
     FOUND = H.uid('cccccccc', 3189)
     WW = H.ARTISTS[3007][0]
@@ -1907,6 +1910,34 @@ def case_rowcolor3189():
             print('D)', d0, d1)
             results.append(all(not x[2] and not x[3] for x in d0) and not d1)
             b.close()
+        # E) [Z-WORKROWDARK] (3.191.0) light and dark: the text of each coloured row on its tinted ground at least 4.5 : 1 (the title and
+        # the small grey text), the stripe against the ground at least 3 : 1
+        CON = """(() => { const rgb = (s) => (s.match(/[\\d.]+/g) || []).map(Number); const lum = (c) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+            return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]); }; const con = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+          const ground = (el) => { let e = el; while (e) { const c = rgb(getComputedStyle(e).backgroundColor); if (c.length === 3 || (c.length === 4 && c[3] === 1)) return c.slice(0, 3); e = e.parentElement; } return [255, 255, 255]; };
+          return [...document.querySelectorAll('.dci-matrix tr[data-work]')].filter(tr => tr.dataset.wstate !== 'none').map(tr => { const f = tr.querySelector('.dci-mx-front'); const cs = getComputedStyle(f);
+            const g = ground(f); const t = rgb((cs.backgroundImage.match(/rgba?\\([^)]*\\)/) || [''])[0]); const al = t.length === 4 ? t[3] : 0;
+            const bg = g.map((v, k) => v * (1 - al) + (t[k] || 0) * al); const stripe = rgb((cs.boxShadow.match(/rgba?\\([^)]*\\)/) || [''])[0]).slice(0, 3);
+            const texts = [...f.querySelectorAll('strong, a, .dci-sub, .dci-badge, span')].filter(e => e.getClientRects().length && e.textContent.trim() && !e.children.length).map(e => { const c = getComputedStyle(e);
+              const own = rgb(c.backgroundColor); const on = own.length === 3 || (own.length === 4 && own[3] > 0.5) ? own.slice(0, 3) : bg; return con(rgb(c.color).slice(0, 3), on); });
+            return [tr.dataset.wstate, Math.round(Math.min(...texts, 99) * 100) / 100, Math.round(con(stripe, bg) * 100) / 100]; }); })()"""
+        for theme in ('light', 'dark'):
+            with sync_playwright() as p:
+                b = p.chromium.launch(args=H.LAUNCH_ARGS)
+                ctx = H.new_context(b)
+                ctx.add_init_script("if (location.host === 'musicbrainz.org') { localStorage.setItem('dci-theme-window', JSON.stringify('%s')); }" % theme)
+                pg, errs = H.open_mb_edit(ctx, companion=False)
+                pg.on('dialog', lambda d: d.accept())
+                pg.wait_for_selector('#dci-open', timeout=20000)
+                H.open_dashboard(pg)
+                H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+                H.wait_for(pg, f"!!document.querySelector('tr[data-work=\"1\"] [data-act=work-pick][data-gid=\"{FOUND}\"]')", 30)
+                pg.locator(f'tr[data-work="1"] [data-act=work-pick][data-gid="{FOUND}"]').first.evaluate('b => b.click()'); pg.wait_for_timeout(400)
+                pg.locator('tr[data-work="2"] [data-act=work-pending]').evaluate('b => b.click()'); pg.wait_for_timeout(400)
+                e0 = pg.evaluate(CON)
+                print('E)', theme, e0)
+                results.append(len(e0) == 3 and all(x[1] >= 4.5 and x[2] >= 3 for x in e0) and not errs)
+                b.close()
     finally:
         H.WORK_SEARCH[:] = []
         H.JS_WORKS.pop(FOUND, None)
@@ -1921,7 +1952,9 @@ def case_workfind3189():
     B) "Sonata No. 3": "Sonate Nr. 3 F-Dur" (not "Sonate Nr. 4 D-Dur").
     C) "Chaconne From the D Minor Partita, BWV1004": the movement "… BWV 1004: V. Ciaccona" (by the catalogue number; no yellow).
     D) "✨ Answer all" (balanced): neither links the similar works nor plans new works for tracks 2 and 3.
-    E) Rule S333 off: nothing for tracks 2 and 3; track 4 the partita itself (as until 3.188.0)."""
+    E) Rule S333 off: nothing for tracks 2 and 3; track 4 the partita itself (as until 3.188.0).
+    F) (3.191.0, Z-WORKFINDHEAD, S340) The source credits no composer for tracks 2 and 3; MusicBrainz credits track 2 to Biber, its
+       recording to who plays: his Passacaglia is offered all the same."""
     BIBER, BACH = H.uid('dddddddd', 511), H.uid('dddddddd', 512)
     H.ARTISTS[3211] = (BIBER, 'Heinrich Ignaz Franz von Biber')
     H.ARTISTS[3212] = (BACH, 'Johann Sebastian Bach')
@@ -1934,13 +1967,14 @@ def case_workfind3189():
     orig = H.discogs_release
     old = H.TITLES[:]
     H.TITLES[:] = ['Song One', 'Passacaglia in G minor', 'Sonata No. 3', 'Chaconne From the D Minor Partita, BWV1004']
+    state = {'nobiber': False}
 
     def rel():
         d = orig()
         for tk, title in zip(d['tracklist'], H.TITLES):
             tk['title'] = title
             tk['extraartists'] = []
-        d['extraartists'] = [{'name': 'Heinrich Ignaz Franz von Biber', 'anv': '', 'role': 'Composed By', 'tracks': '2 to 3', 'id': 3211, 'join': ''},
+        d['extraartists'] = ([] if state['nobiber'] else [{'name': 'Heinrich Ignaz Franz von Biber', 'anv': '', 'role': 'Composed By', 'tracks': '2 to 3', 'id': 3211, 'join': ''}]) + [
                              {'name': 'Johann Sebastian Bach', 'anv': '', 'role': 'Composed By', 'tracks': '4', 'id': 3212, 'join': ''}]
         d['companies'] = []
         return d
@@ -1982,11 +2016,141 @@ def case_workfind3189():
         picks2, _h, btn2, _l, _m, qs2, errs2 = run(True)
         print('E) aus:', picks2, qs2)
         results.append(picks2[0] == [] and picks2[1] == [] and picks2[2] == [[partita, False, False]] and not qs2 and not errs2)
+        # F) [Z-WORKFINDHEAD] (3.191.0, S340) no composer credited by the source for tracks 2 and 3; MusicBrainz credits track 2 to Biber
+        # and its recording to who plays (classical crediting): his Passacaglia is offered all the same; track 3 (no such credit) nothing
+        state['nobiber'] = True
+        H.TRACK_AC[1] = [(BIBER, 'Heinrich Ignaz Franz von Biber')]
+        H.REC_AC[1] = [(H.ARTISTS[3007][0], 'Writer W')]
+        picks3, _h3, _b3, _l3, _m3, qs3, errs3 = run(False)
+        print('F)', picks3[0], picks3[1], qs3[:1])
+        results.append(picks3[0] == [[PASS, True, True]] and picks3[1] == [] and any(BIBER in q for q in qs3) and not errs3)
     finally:
+        H.TRACK_AC.pop(1, None); H.REC_AC.pop(1, None)
         H.discogs_release = orig
         H.TITLES[:] = old
         H.WORK_SEARCH[:] = []
         H.ARTISTS.pop(3211, None); H.ARTISTS.pop(3212, None)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_suitegate3191():
+    """Credits Importer 3.191.0 (collected items Z-SUITEPROMPT, Z-DEDSUITE, Z-DEDMUST, Z-SUITENAMEDASH; rules S336–S338). MusicBrainz's
+    titles: "Trisect For Cecil Taylor: Introduction" (has a work), "…: Phase 1", "…: Phase 2", "Other"; MusicBrainz has one artist
+    Cecil Taylor.
+    A) The titles "… For Cecil Taylor: …" give one row "dedicated to" on the works of tracks 1–3 (one column of the works matrix, on
+       these three tracks); the entry has no question that must be answered (no instrument asked for "For").
+    B) "✨ Answer all": the suite; its line is a yellow field that must be answered – "＋ Create …", "✕ No suite", "↺".
+    C) "Stage": nothing is staged – the form of the suite opens, prefilled with the name, the type Suite and "dedicated to" Cecil
+       Taylor. The form closed: nothing staged, a message says why.
+    D) "Stage" again, the suite created in the form: staging goes on by itself – the parts are staged, the suite is linked.
+    E) In Node: "-", "–", "***" are no heading of a suite; the index track below such a line names it.
+    F) "✕ No suite" at the field: the parts are plain works, "Stage" stages without a form. Rule S338 off: staged at once."""
+    import json, subprocess, urllib.parse
+    CT = H.uid('dddddddd', 3800)
+    SUITE = H.uid('cccccccc', 191)
+    added_lts = {868: ('b41e7530-cde4-459c-b8c5-dfef08fc8295', 'dedicated to', 'artist', 'release_group'),
+                 846: ('26131498-00e8-4136-b937-22a4be01a63d', 'dedication', 'artist', 'work')}
+    for i, (g, n, t0, t1) in added_lts.items():
+        H.lt(i, g, n, t0, t1, dates=False)
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.ARTISTS[3800] = (CT, 'Cecil Taylor')
+    old = H.TITLES[:]
+    NAME = 'Trisect For Cecil Taylor'
+    H.TITLES[:] = [f'{NAME}: Introduction', f'{NAME}: Phase 1', f'{NAME}: Phase 2', 'Other']
+    LINE = """(() => [...document.querySelectorAll('[data-el=works] [data-suite]')].map(x => [x.className, x.textContent.replace(/\\s+/g, ' ').trim().slice(0, 90),
+      [...x.querySelectorAll('button')].map(y => y.dataset.act), !!x.querySelector('a.dci-suite-mb')]))()"""
+    ADDED = "MB.relationshipEditor.state.added.length"
+    DED = """(() => { const h = [...document.querySelectorAll('.dci-matrix [data-colhead]')].find(x => /Cecil Taylor/.test(x.textContent)); const g = [...document.querySelectorAll('section.dci-group')].find(x => /Cecil Taylor/.test(x.querySelector('.dci-gname strong').textContent));
+      return { cols: [...document.querySelectorAll('.dci-matrix [data-colhead]')].filter(x => /Cecil Taylor/.test(x.textContent)).length,
+        tracks: h ? [...new Set([...document.querySelectorAll(`.dci-matrix td.dci-mx-cell.dci-mx-on[data-col="${h.dataset.colhead}"]`)].map(td => Number(td.dataset.mrow.split(':')[1]) + 1))] : [],
+        must: g ? g.querySelectorAll('.dci-yell-must').length : -1, guess: g ? /is no instrument/.test(g.textContent) : null }; })()"""
+    results = []
+
+    def start(p, off=None):
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        if off:
+            pg.evaluate(f"localStorage.setItem('dci-rules-off', JSON.stringify({json.dumps(off)}))")
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(2500)
+        return b, pg, errs
+
+    def magic(pg):
+        pg.locator('[data-act=magic-open]').evaluate('b => b.click()'); H.wait_for(pg, "!!document.querySelector('[data-act=magic-cancel]')", 30)
+        pg.locator('[data-act=magic-apply]').evaluate('b => b.click()'); H.wait_for(pg, "!!document.querySelector('[data-act=magic-undo]')", 20)
+        pg.wait_for_timeout(1200)
+    try:
+        with sync_playwright() as p:
+            b, pg, errs = start(p)
+            a = pg.evaluate(DED)
+            print('A)', a)
+            results.append(a['cols'] == 1 and sorted(a['tracks']) == [1, 2, 3] and a['must'] == 0 and a['guess'] is False)
+            magic(pg)
+            b0 = pg.evaluate(LINE)
+            print('B)', b0)
+            results.append(len(b0) == 1 and 'dci-mx-suite-must' in b0[0][0] and 'is not in MusicBrainz yet' in b0[0][1] and b0[0][2] == ['suite-create', 'suite-drop', 'suite-undo'])
+            n0 = pg.evaluate(ADDED)
+            pg.click('[data-act=apply]')
+            H.wait_for(pg, "!!document.querySelector('[data-el=sub-frame]') && /work\\/create/.test(document.querySelector('[data-el=sub-frame]').src)", 20)
+            q = urllib.parse.parse_qs(urllib.parse.urlparse(pg.evaluate("document.querySelector('[data-el=sub-frame]').src")).query)
+            rels = [(q.get(f'rels.{k}.target', [''])[0], q.get(f'rels.{k}.type', [''])[0]) for k in range(6) if f'rels.{k}.target' in q]
+            pg.click('[data-act=sub-close]'); pg.wait_for_timeout(600)
+            msg = pg.evaluate("[...document.querySelectorAll('.dci-msg, [data-el=messages] *')].map(x => x.textContent).join(' ')")
+            c0 = [q.get('edit-work.name'), q.get('edit-work.type_id'), rels, pg.evaluate(ADDED) - n0, 'Nothing staged' in msg]
+            print('C)', c0)
+            results.append(c0[0] == [NAME] and c0[1] == ['6'] and (CT, '846') in rels and c0[3] == 0 and c0[4])
+            pg.click('[data-act=apply]')
+            H.wait_for(pg, "!!document.querySelector('[data-el=sub-frame]') && /work\\/create/.test(document.querySelector('[data-el=sub-frame]').src)", 20)
+            H.COMPANIES[7191] = ('work', SUITE, NAME)
+            H.WORK_TITLES[SUITE] = NAME
+            pg.evaluate(f"document.querySelector('[data-el=sub-frame]').src = 'https://musicbrainz.org/work/{SUITE}'")
+            H.wait_for(pg, "!!document.querySelector('[data-el=works] a.dci-suite-mb')", 20)
+            H.wait_for(pg, f"{ADDED} > {n0}", 30)
+            pg.wait_for_timeout(1500)
+            d0 = [pg.evaluate(ADDED) - n0, pg.evaluate(LINE), pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.entity1 && /^Trisect For Cecil Taylor: Phase/.test(r.entity1.name || '')).length")]
+            print('D)', d0, errs)
+            results.append(d0[0] > 0 and d0[1][0][3] and 'dci-mx-suite-must' not in d0[1][0][0] and d0[2] >= 2 and not errs)
+            b.close()
+        node = r"""
+global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const tr4 = [0, 1, 2, 3].map((i) => ({ title: 't' + i, work: i < 3 ? 'Odes For X' : '' }));
+console.log(JSON.stringify([['-', '–', '***', '…', '- A -', 'A'].map((x) => m.headingKind(x)),
+  m.suiteOffers({ title: 'R', tracks: tr4, headings: [{ at: 0, title: '-' }], companies: [] }).map((o) => [o.name, o.from, o.tracks])]));
+"""
+        o = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True)
+        res = json.loads(o.stdout) if o.returncode == 0 else o.stderr[-300:]
+        print('E)', res)
+        results.append(res == [['none', 'none', 'none', 'none', 'name', 'name'], [['Odes For X', 'index', [0, 1, 2]]]])
+        with sync_playwright() as p:
+            b, pg, errs = start(p)
+            magic(pg)
+            n0 = pg.evaluate(ADDED)
+            pg.click('[data-el=works] [data-act=suite-drop]'); pg.wait_for_timeout(500)
+            f0 = pg.evaluate(LINE)
+            H.stage_click(pg, least=3000)
+            f1 = [pg.evaluate(ADDED) - n0, pg.evaluate("(f => !!f && /type_id=6/.test(f.src))(document.querySelector('[data-el=sub-frame]'))")]
+            b.close()
+            b, pg, errs2 = start(p, off=['S338'])
+            magic(pg)
+            n1 = pg.evaluate(ADDED)
+            H.stage_click(pg, least=3000)
+            f2 = [pg.evaluate(ADDED) - n1, pg.evaluate("(f => !!f && /type_id=6/.test(f.src))(document.querySelector('[data-el=sub-frame]'))")]
+            print('F)', f0, f1, f2)
+            results.append('no suite' in f0[0][1] and f1[0] > 0 and not f1[1] and f2[0] > 0 and not f2[1] and not errs and not errs2)
+            b.close()
+    finally:
+        H.TITLES[:] = old
+        for i in added_lts:
+            H.LTS.pop(i, None)
+        H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+        H.ARTISTS.pop(3800, None)
+        H.COMPANIES.pop(7191, None)
+        H.WORK_TITLES.pop(SUITE, None)
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

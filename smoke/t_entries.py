@@ -3071,7 +3071,9 @@ def case_insts3103():
        row, on the release one (with "solo" kept).
     E) Staged (on the release): Jane Roe instrument–release 5 times, instrument–recording 4 times without an instrument ("solo");
        Sax Two's recordings "woodwind" with guest.
-    F) The quick switch S170 off: Jane Roe's … and Sax Two's automatic row "instruments" (no instrument)."""
+    F) The quick switch S170 off: Jane Roe's … and Sax Two's automatic row "instruments" (no instrument).
+    G) (3.191.0, Z-INSTSAUTO) The quick switch S339 on (off by default – A shows the suggestion only): after the import both entries
+       are "on the release + group" by themselves; the log says so."""
     import copy
     orig = H.discogs_release
     lts0, attrs0 = copy.deepcopy(H.LTS), copy.deepcopy(H.ATTRS)
@@ -3179,6 +3181,21 @@ def case_insts3103():
             f = pg2.evaluate(ENT, 'Sax Two')
             print('F)', f)
             results.append(bool(f) and [r[2] for r in f['rows'] if r[1] == 'recording'] == [''] and not errs2)
+            # G) [Z-INSTSAUTO] (3.191.0, S339; a quick switch, off) on: both entries "on the release + group" by themselves after the import
+            ctx3 = H.new_context(b)
+            pg3, errs3 = H.open_mb_edit(ctx3, companion=False)
+            pg3.on('dialog', lambda d: d.accept())
+            pg3.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['+S339']))")
+            pg3.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg3)
+            H.wait_for(pg3, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.wait_still(pg3, "document.body.innerHTML", 10, 300)
+            g1, g2 = pg3.evaluate(ENT, 'Jane Roe'), pg3.evaluate(ENT, 'Sax Two')
+            glog = [x[9:] for x in pg3.locator('#dci-log li').all_inner_texts() if 'by themselves' in x]
+            quick = pg3.evaluate("!!document.querySelector('[data-rule-on=\"S339\"], [data-quick=\"S339\"], [data-rule=\"S339\"]')")
+            print('G)', g1 and [g1['sugg'], g1['seg'], len([r for r in g1['rows'] if r[1] == 'release'])], g2 and [g2['sugg'], g2['seg']], glog, quick)
+            results.append(bool(g1) and not g1['sugg'] and g1['seg'] == ['release'] and len([r for r in g1['rows'] if r[1] == 'release']) == 5
+                           and bool(g2) and g2['seg'] == ['release'] and glog == ['Instruments on the release + group by themselves: 2 entries (quick switch “Instruments → release”)'] and not errs3)
             b.close()
     finally:
         H.discogs_release = orig

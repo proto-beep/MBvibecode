@@ -1066,11 +1066,11 @@ def case_dedtitle3189():
         H.ENTRIES_VIEW = 'matrix'
         o = run()
         print('A)', json.dumps(o, ensure_ascii=False))
-        results.append(bool(o['a']) and o['a']['chips'] == ['dedicated to “for”'] and o['a']['q'] == 1 and o['a']['ask'] == 0 and o.get('open', {}).get('menu') == ['⇄ tribute to']
-                       and o['b']['chips'] == ['tribute “for”'] and o['open2']['menu'] == ['⇄ dedicated to'] and not o['errs'])
+        results.append(bool(o['a']) and o['a']['chips'] == ['dedicated to'] and o['a']['q'] == 1 and o['a']['ask'] == 0 and o.get('open', {}).get('menu') == ['⇄ tribute to']
+                       and o['b']['chips'] == ['tribute'] and o['open2']['menu'] == ['⇄ dedicated to'] and not o['errs'])
         o2 = run(off=True)
         print('B)', json.dumps(o2, ensure_ascii=False))
-        results.append(bool(o2['a']) and o2['a']['chips'] == ['tribute “for”'] and o2['a']['q'] == 0)
+        results.append(bool(o2['a']) and o2['a']['chips'] == ['tribute'] and o2['a']['q'] == 0)
     finally:
         H.ENTRIES_VIEW = 'legacy'
         H.ws_release = orig_ws
