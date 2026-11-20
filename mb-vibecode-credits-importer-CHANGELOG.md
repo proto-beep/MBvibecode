@@ -13,6 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
+| 2026-11-20 | 3.185.0 | – |
 | 2026-11-19 | 3.170.0 – 3.184.0 | – |
 | 2026-11-18 | 3.159.0 – 3.169.0 | – |
 | 2026-11-17 | 3.152.0 – 3.158.0 | – |
@@ -133,6 +134,15 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.185.0
+
+**Tests only: the test run that stood still now and then.**
+
+- Nothing changes in the script, the mapping file or the texts; only the version number.
+- **The cause of the tests that stood still** ("ytview" of the Script Companion on Bandcamp, "cpremoved3131" on Discogs – about one run in five, the full run then waited for its time limit): the test replaces the storage of the userscript manager by synchronous requests to a small server of its own. A page that was just being left for another one (the YouTube tab going to the other video) could send such a request in the moment the test still had to answer the navigation; neither came back, and every later call to that tab waited for ever. In a real browser the storage of the userscript manager is no request, so this cannot happen there.
+- **The correction** (`smoke/harness.py`): a page that is being left asks the test storage nothing more.
+- Checked: 8 of 37 runs of "ytview" stood still before, 0 of 100 after; "cpremoved3131" was not reproduced on its own – it uses the same test storage.
 
 ### Import 3.184.0
 
