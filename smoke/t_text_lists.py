@@ -2006,4 +2006,55 @@ console.log(JSON.stringify({ map, dates, live: r.liveHeads, ignored: r.ignored.m
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+
+def case_texts3194():
+    """Credits Importer 3.194.0 (collected items Z-SHOPMORE, Z-COMMISSIONED, Z-PACKAGEDESIGN, Z-KIRAMEKI, Z-LITTLEINST; rules S345–S348, S350),
+    in Node: A) the shop's lines of gurugurubrain / Castles in Space left out as "shop", the line that goes on below them too; B) Industrial
+    Growth: the commission of the line that names its tracks (all but "Heavy Industry" and "Industrial Unrest"), no date, no "Netherlands",
+    the sentence of the prose left out as the same commission; C) "Glass mastered CD edition … digisleeve designed by Gordon Chapman-Fox" –
+    design by him, no role credit; D) ☆Kirameki Melody☆: "all music is improvised" – both guitarists composers (improvisations), the heading
+    of the group, "recorded live at environment 0g (Osaka ) 5th Aug. 2025" – the place environment 0g; E) "Instruments [Little Instruments]"
+    – the role "Little Instruments"; F) with S345–S348 off as before."""
+    node = r"""
+const OFF = process.argv[2] ? JSON.parse(process.argv[2]) : null;
+global.localStorage = { getItem: (k) => (OFF && k === 'dci-rules-off' ? JSON.stringify(OFF) : null), setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const isRole = (phrase) => { const p = m.parseRoleNotation(phrase)[0]; if (!p || !p.base) return false; const r = m.mapRole(p.base, p.mods); return !!(r.rule && r.rule !== 'R096' && !r.fallback) || /^(?:guitars?|bass|drums|synth|fx)$/i.test(p.base); };
+const isCompanyRole = (role) => /copyright|phonographic|published|recorded at|mixed at|mastered at|commissioned/i.test(role);
+const titles = ['This Machine', 'The Wire', 'Heavy Industry', 'Parkside', 'Industrial Unrest'];
+const resolveTitles = (ts) => { const ix = new Set(); const un = []; ts.forEach((x) => { const i = titles.findIndex((y) => y.toLowerCase() === String(x).toLowerCase()); if (i >= 0) ix.add(i); else un.push(x); }); return { indexes: ix, unresolved: un }; };
+const ctx = { isRole, isCompanyRole, resolveTracks: () => null, resolveTitles, trackTitles: titles, artistNames: [] };
+const parse = (t, c = ctx) => m.SOURCES.text.parse(t, c);
+const shop = parse('Also available on our webstore: gurugurubrain.space\n\nPLEASE SEE OUR SHIPPING POLICY IF YOU ARE NOT LOCATED IN EUROPE, UK OR USA AND WANT TRACKING NUMBER AND INSURANCE : gurugurubrain.bandcamp.com/policies\n\nPlease allow for time taken while we await delivery from the pressing plant.\n\nThis is an exclusive bandcamp edition of 180 copies.\nAnd I\'m keeping two of them for the CiS archive. 🙂');
+const rb = parse("The majority of the album is part of a suite that was commissioned by Roadburn Festival for the 2024 outing in Tilburg, Netherlands. The recorded album version of it has been in gestation since then.\n\nWritten, performed and produced by Gordon Chapman-Fox.\nAll tracks except 'Heavy Industry' and 'Industrial Unrest' were\ncomposed and commissioned for the 2025 Roadburn Festival.");
+const pk = parse('Glass mastered CD edition of "Industrial Growth" housed in our six panel digisleeve designed by Gordon Chapman-Fox.');
+const ki = parse('☆Kirameki Melody☆ (⭐︎きらめきメロディ⭐︎) :\nSUPER ULTRA HYPER ULTIMATE-HAKO- (箱) : guitar\nKawabata Makoto (河端一) : guitar\n\nall music is improvised\nrecorded live at environment 0g (Osaka ) 5th Aug. 2025\nproduced & edited by Kawabata Makoto', { ...ctx, trackTitles: [] });
+const li = m.parseRoleNotation('Instruments [Little Instruments]')[0];
+const out = (r) => ({ credits: r.credits.map((c) => [c.who.name, c.role, c.improv ? 'improv' : '']), companies: r.companies.map((c) => [c.who.name, c.role, c.tracks ? c.tracks.indexes : null, c.date || null]),
+  unrec: r.unrecognized.map((u) => String(u.line || u)), ignored: r.ignored.map((i) => [i.why, String(i.text || '').slice(0, 40)]) });
+console.log(JSON.stringify({ shop: out(shop), rb: out(rb), pk: out(pk), ki: out(ki), li: [li.base, li.mods] }));
+"""
+    outs = []
+    for off in (None, ['S345', 'S346', 'S347', 'S348', 'S350']):
+        js = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')] + ([json.dumps(off)] if off else []), capture_output=True, text=True)
+        if js.returncode:
+            print(js.stderr[-2000:])
+            print('Ergebnis: FEHLER [node]')
+            return
+        outs.append(json.loads(js.stdout))
+    on, off = outs
+    for k in ('shop', 'rb', 'pk', 'ki', 'li'):
+        print(k, on[k], '\n   aus:', off[k])
+    results = [
+        not on['shop']['unrec'] and [w for w, _ in on['shop']['ignored']] == ['shop', 'shop', 'shop', 'edition', 'shop'] and len(off['shop']['unrec']) >= 4,
+        on['rb']['companies'] == [['Roadburn Festival', 'Commissioned By', [0, 1, 3], None]] and not any(c[0] == 'Netherlands' for c in on['rb']['credits'] + on['rb']['companies'])
+        and any(w == 'commissionAgain' for w, _ in on['rb']['ignored']),
+        on['pk']['credits'] == [['Gordon Chapman-Fox', 'Design By', '']] and off['pk']['credits'] != on['pk']['credits'],
+        sorted(c[0] for c in on['ki']['credits'] if c[1] == 'Composed By' and c[2] == 'improv') == ['Kawabata Makoto', 'SUPER ULTRA HYPER ULTIMATE-HAKO-']
+        and any(c[0] == 'environment 0g' and c[1] == 'Recorded At' for c in on['ki']['companies']) and not on['ki']['unrec']
+        and any(w == 'groupHeading' for w, _ in on['ki']['ignored']),
+        on['li'] == ['Little Instruments', []] and off['li'][0] == 'Instruments',
+    ]
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 run_cases(globals())

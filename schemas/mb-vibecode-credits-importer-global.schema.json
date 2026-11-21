@@ -168,6 +168,10 @@
    },
    "description": "From 3.145.0: entries created with the dashboard (their edits open or applied) by entity type"
   },
+  "records": {
+   "description": "[3.195.0, Z-STATTOP] The day with the most relationships added and the most works created at once by one editor (numbers, days).",
+   "type": "object"
+  },
   "per_release": {
    "type": "object"
   },
