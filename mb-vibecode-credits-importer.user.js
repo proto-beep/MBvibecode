@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.195.0
+// @version      3.196.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.195.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.195.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.196.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.196.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.195.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.196.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1977,6 +1977,21 @@
       "matrix.coverOffer": "Cover? The composer ({names}) is none of the performers of this track: a click adds “cover” to the link",
       "matrix.coverAuto": "Cover – set by itself: the composer ({names}) is none of the performers. A click takes it off",
       "suite.ask": "{tracks}: parts of the suite “{name}”?",
+      "suite.createAfterParts": "After you submit, its {n} parts are created, each by its form, as parts of it.",
+      "suite.partsWait": "created at “Stage”",
+      "suite.mustParts": "The suite “{name}” and its parts are not in MusicBrainz yet ({n} works):",
+      "suite.doneParts": "Suite “{name}” with {n} parts",
+      "suite.donePart": "{name} – {tracks}, {n} works",
+      "suite.createNext": "Create the next one in MusicBrainz …",
+      "suite.askParts": "Suite “{name}” with {n} parts ({list})?",
+      "suite.hintParts": "Headings like “Part I” name parts of the release: a suite named as the release, each part a suite of its own (“{name}, Part I”) with the works of its tracks.",
+      "suite.renameLabel": "Name of the suite",
+      "suite.renameOk": "✓",
+      "suite.renameTitle": "Change the name of the suite (its parts follow)",
+      "suite.from.parthead": "from headings of parts of the track list",
+      "magic.what.suiteParts": "suite “{name}” with {n} parts ({from})",
+      "log.suiteRenamed": "Suite renamed: “{name}”",
+      "log.workIdsAgain": "“{title}” was created for this release before – taken again",
       "suite.yes": "✓ Yes",
       "suite.noBtn": "✕ No suite",
       "suite.other": "Another name:",
@@ -2020,6 +2035,7 @@
       "suite.askAgain": "ask again",
       "suite.askAgainTitle": "Ask again whether these tracks are parts of a suite",
       "suite.partOf": "part {k} of {n}",
+      "suite.upRelName": "part of",
       "suite.partTitle": "A part of the suite “{name}”: a work of its own",
       "suite.partPick": "Link “{title}”",
       "suite.partPickTitle": "MusicBrainz has a work of this title by the track's writers – a click links it instead of a new work",
@@ -5572,6 +5588,9 @@
     { id: 'S350', where: 'parseRoleNotation', note: 'Roles (3.194.0; collected item Z-LITTLEINST): Discogs "Instruments [Little Instruments]" – the detail says which instruments: other instruments, credited "little instruments" (R117)' },
     { id: 'S351', where: 'statRecords, statRecordsHtml, statExtras, globalCoreParts, globalRecords, globalStatsClean', note: 'Statistics (3.195.0; collected item Z-STATTOP; the dumps: stats/global_stats.py): a card "Records" – the release with the most relationships, the recording with the most relationships, the release with the most artists, the longest time on a release, the most works created at once, the day with the most relationships; releases and recordings with a link to MusicBrainz. "Global": the same from the dumps where they tell it (no time on a release; the works created by one editor at most 30 minutes apart), no editors' },
     { id: 'S352', where: 'renderLauncher, qfNothingEmpty', note: 'Relationship editor (3.195.0; collected item Z-QFHIDE): "Fill empty recordings" is not shown while every recording of the release has relationships (in MusicBrainz or staged) – looked at again every few seconds; with media not loaded yet it stays' },
+    { id: 'S353', where: 'headingKind (PART_HEAD), suiteOffers, acceptPartSuite, suiteAskHtml, suiteGate, startSuiteCreate, magicPlan', note: 'Works (3.196.0; collected item Z-PARTHEADS): headings of the track list that name parts – "Part I", "Part 2", "Teil 1", "Parte I", "Partie 1", "Book 1", "Act I", "Chapter 3" (two at least) – are no suites of their own: one suite named as the release (MusicBrainz\'s title), its parts suites of their own named "<release>, Part I" over the tracks below each heading, the works of the tracks their parts – three levels. One question for all of it; "✨ Answer all" from "balanced". At "Stage" the suite is created first, then each part by its form with "part of" the suite (its number); the works of the tracks are linked as their parts in the relationship editor' },
+    { id: 'S354', where: 'renameSuite, suiteAskHtml, magicPlan, onKeydown', note: 'Works (3.196.0; collected items Z-SUITERENAME, Z-SUITECLICKS): the name of a suite not created yet can be changed in its line ("✎", Enter takes it) and in the preview of "✨ Answer all" (a field beside it) – its parts\' names follow; "＋ Create the suite …" is no longer the main button (it is not needed: "Stage" opens the forms)' },
+    { id: 'S355', where: 'workIdsKeep, workIdsRead, workIdsRestore, sameWorkOne', note: 'Works (3.196.0; collected item Z-WORKIDS): every work the dashboard created for a release – a suite, the suites of its parts, a work for several tracks – is kept with its MBID, title, the suite above it, its number and its recordings (in this browser, per release): an import of the release later takes them again instead of creating them anew' },
     { id: 'S299', where: 'TEXT.parse (shopLines; SHOP_BLOCK_LINES)', note: 'Texts (3.169.0; Z-BCSHOPBLOCK): what a shop writes below an edition is left out as "shop" – the edition\'s name with "(Limited Edition …)" and its format, what the records look like ("2 x 180gsm …", "DiscA/B - Transparent green with gold blob", "Packaged in a standard Sleeve."), the block about shipping ("+++++INTERNATIONAL SHIPPING +++++", "- WE DO NOT SHIP TO PO BOXES", "- ALL ORDERS ARE SENT BY TRACKED COURIER …", "UK: 2-3 days") and the page\'s own details ("published March 29, 2019", "license"). They stood under "not recognized". Every free text' },
     { id: 'S298', where: 'TEXT.parse (hyphenTrackLines; HT_TRACKS, HT_HYPHEN, HT_HEAD, HT_SPLIT)', note: 'Texts (3.169.0; Z-HYPHENTRACKS): a lineup written "Pete Callard-Acoustic Guitar On Tracks 1,2,3, Electric Guitar on Tracks 18,19 Hari-Om- Vocals On Tracks 9,10 …" – a hyphen without spaces between name and role, each role with its tracks, the whole lineup in one paragraph (Beatport and shop texts): the paragraph is cut before each name, the name is what stands before the first hyphen whose right side begins with a role ("Hari-Om- Vocals": Hari-Om), "and Vocals on Tracks …" and a role after a list of tracks are roles of their own, "on all tracks" says nothing new; a heading before the first name ("Musicians In The Studio") is a heading. Only for a line that names tracks that way. Every free text' },
     { id: 'S296', where: 'videoLevelWant, videoLevelFor, VIDEO_RULES, R033 (mapRole), rgIsDjMix, Q022', note: 'Video credits and DJ mixes (3.164.0; proposals F-VIDEOLEVEL, F-DJMIX of review run 2): every credit of a video – video director, camera work, cinematographer and the table of video credits (R076, R110, R119) – is on the recordings when its tracks are videos – from 3.169.0 on the videos only when just some of its tracks are (Z-VIDEOTRACKS; until then such a credit went to the release) – and on the release when none is, where MusicBrainz has the type there (the cinematographer and the camera work were always on the recordings, the others on the release). "Mixed By [DJ Mix]" is the DJ-mix of the release, not the mix engineer; on a release group of the type DJ-mix "Mixed By" asks which of the two (Q022)' },
@@ -9190,6 +9209,8 @@
   const TRACK_NOTE_INTRO = /^(?:sub-?titles?|annotations?|dedications?|notes?|comments?)\b[^:]{0,80}\bfor\s*:\s*$|^(?:track|song)\s+notes\s*:\s*$/i;
   const TRACK_NOTE_PART = /^(?:([IVXLC]{1,6})|(\d{1,2})|([a-z]))[.)]\s+(\S.*)$/;
 
+  // [Z-PARTHEADS] (3.196.0, S353) a heading that names a part of something (the suite of the release): its word and its number
+  const PART_HEAD = /^(?:part|pt\.?|teil|parte|partie|book|buch|libro|livre|act|akt|acto|acte|chapter|kapitel|cap[ií]tulo|chapitre)\s*(?:[IVXLC]{1,6}|\d{1,2}|one|two|three|four|five|six|seven|eight|nine|ten|eins|zwei|drei|vier|fünf|uno|dos|tres|une?|deux|trois)\b\.?(?:\s*[:–—-]\s*\S.*)?$/i;
   // [Z-BCWHAT] (3.194.0, S349) "… by Frank Diedrich November 2024 - June 2025": a date right after the name of a "by" (no "in" before it)
   // [Z-PACKAGEDESIGN] (3.194.0, S347) "Glass mastered CD edition of "X" housed in our six panel digisleeve designed by Y": what the
   // edition is made of is no role – the design of its package by Y
@@ -19411,6 +19432,8 @@
     // [Z-SU] (3.41.1) the parts of a track as works of their own (track → [part plan]), the answers to the suites offered
     workParts: new Map(),
     suiteAnswers: new Map(),
+    magicNames: new Map(), // [Z-SUITERENAME] (3.196.0) the names of suites changed in the preview of "✨ Answer all"
+    suiteRenaming: '', // [Z-SUITERENAME] (3.196.0) the suite whose name is being changed in its line
     sameWork: new Map(), // [Z-SAMEWORK] (3.192.0) the answers to "one work for these tracks?" (key → { answer, before })
     magicSkip: new Set(), // [Z-SUITENO] (3.189.0) the answers of the preview of "✨ Answer all" unticked
     // [Z-SU] (3.41.2) the works of the suites accepted (key of the suite → { gid "pending:s<n>", title, key })
@@ -46191,6 +46214,8 @@
     // (3.41.4, review) bonus tracks wherever the word stands ("Japan Bonus Tracks")
     if (SUITE_SKIP_HEADINGS.some(word) || /\bbonus\b/i.test(t)) return 'medium';
     if (HEADING_RECORDING.test(String(title || ''))) return 'recording';
+    // [Z-PARTHEADS] (3.196.0, S353) "Part I", "Part 2", "Teil 1", "Parte I", "Partie 1", "Book 1", "Act I", "Chapter 3": a part of something
+    if (ruleOn('S353') && PART_HEAD.test(String(title || '').trim())) return 'part';
     // [Z-SUITENO] (3.189.0, S331) a catalogue number ("105-2", "ECM 1064", "LP-1234"): digits in groups, a short mark in capitals
     // before them – not the number of a work ("BWV 1004"), not a year or a count alone ("1984")
     if (ruleOn('S331') && /^(?:[A-Z]{1,6}[ .-]?\d+(?:[-–/. ]\d+)*|\d+(?:[-–/.]\d+)+)$/.test(String(title || '').trim())
@@ -46271,6 +46296,22 @@
       for (let i = h.at; i < end; i++) idx.push(i);
       if (idx.length > 1 || (idx.length === 1 && trackPartsOf(tracks[idx[0]]).length)) out.push({ name: h.title, from: 'heading', tracks: idx });
     });
+    // [Z-PARTHEADS] (3.196.0, S353) two headings or more that name parts ("Part I", "Part II"): one suite named as the release (the title
+    // of MusicBrainz), the parts its works ("Bosque de Niebla, Part I"), the works of the tracks below each heading theirs
+    const partHeads = heads.filter((h) => headingKind(h.title) === 'part');
+    if (partHeads.length >= 2) {
+      const children = partHeads.map((h) => {
+        const next = heads.find((x) => x.at > h.at);
+        const end = Math.min(next ? next.at : tracks.length, Number.isInteger(h.n) ? h.at + h.n : tracks.length);
+        const idx = [];
+        for (let i = h.at; i < end; i++) idx.push(i);
+        return { label: String(h.title).trim(), tracks: idx };
+      }).filter((c) => c.tracks.length);
+      let mbTitle = '';
+      try { mbTitle = S.releaseTitleMb || ''; } catch { mbTitle = ''; }
+      const name = String(mbTitle || (rel && rel.title) || '').trim();
+      if (name && children.length >= 2) out.push({ name, from: 'parthead', tracks: children.flatMap((c) => c.tracks), children });
+    }
     const byWork = new Map();
     tracks.forEach((t, i) => {
       if (!t || !t.work || taken(i)) return;
@@ -47883,6 +47924,7 @@
     // [Z-SUM] (3.41.11) the suites added by hand
     for (const o of S.suiteManual.values()) if (!out.some((x) => x.key === o.key)) out.push({ ...o, tracks: [...o.tracks] });
     for (const sw of S.suiteWorks.values()) {
+      if (sw.parent && S.suiteWorks.has(sw.parent)) continue; // ([Z-PARTHEADS] 3.196.0) a part's suite: in the line of the suite above it
       if (!out.some((o) => o.key === sw.key)) out.push({ key: sw.key, name: sw.title, from: 'release', tracks: [...(sw.tracks || [])] });
     }
     return out;
@@ -47924,6 +47966,7 @@
    * track before is kept to come back with "↺".
    */
   function acceptSuite(o, name) {
+    if (o.children && ruleOn('S353')) return acceptPartSuite(o, name);
     const nm = String(name || '').trim() || o.name;
     let n = 0;
     for (const i of o.tracks) {
@@ -47971,7 +48014,70 @@
     log('info', 'suiteYes', { name: nm, tracks: tracksShort({ level: 'recording', tracks: new Set(o.tracks) }), n });
     // [Z-SU] (3.41.3) the parts looked up in MusicBrainz; [Z-SUW] (3.41.6) the suite too
     o.tracks.forEach((i) => { if (S.workParts.has(i)) searchParts(i); });
-    searchSuite(S.suiteWorks.get(o.key));
+    workIdsRestore(); // [Z-WORKIDS] (3.196.0, S355)
+    if (isPending((S.suiteWorks.get(o.key) || {}).gid)) searchSuite(S.suiteWorks.get(o.key));
+  }
+
+  /**
+   * [Z-PARTHEADS] (3.196.0, S353) A suite of parts ("Part I", "Part II"): each part a suite of its own named "<suite>, Part I" over the
+   * tracks below its heading (their works its parts), and the suite above them – no track of its own; its parts are the works of the
+   * parts (created after it, by their forms, with "part of" it).
+   */
+  function acceptPartSuite(o, name) {
+    const nm = String(name || '').trim() || o.name;
+    const keys = [];
+    o.children.forEach((c, k) => {
+      const ck = `${o.key}#${k + 1}`;
+      const co = { name: `${nm}, ${c.label}`, from: 'heading', tracks: c.tracks.filter((i) => o.tracks.includes(i)), key: ck };
+      acceptSuite(co, co.name);
+      const sw = S.suiteWorks.get(ck);
+      if (sw) Object.assign(sw, { parent: o.key, partNo: k + 1, label: c.label });
+      keys.push(ck);
+    });
+    S.suiteSeq += 1;
+    S.suiteWorks.set(o.key, { gid: `pending:s${S.suiteSeq}`, title: nm, key: o.key, tracks: [], under: [...o.tracks], children: keys, origin: 'pending', flags: new Set(), suite: true });
+    S.suiteAnswers.set(o.key, { yes: true, name: nm });
+    workIdsRestore(); // [Z-WORKIDS] (3.196.0) a suite created before for this release: its MBID again
+    log('info', 'suiteYes', { name: nm, tracks: tracksShort({ level: 'recording', tracks: new Set(o.tracks) }), n: keys.length });
+  }
+  /** [Z-SUITERENAME] (3.196.0, S354) A suite not created yet gets another name – its parts' names with it (the parts of a part suite too). */
+  function renameSuite(key, name) {
+    const nm = String(name || '').trim();
+    const sw = S.suiteWorks.get(key);
+    if (!nm || !sw || !isPending(sw.gid)) return false;
+    const a = S.suiteAnswers.get(key);
+    if (a) a.name = nm;
+    sw.title = nm;
+    for (const ps of S.workParts.values()) ps.forEach((p) => { if (p.suite === key && p.origin === 'pending') Object.assign(p, { suiteName: nm, title: suitePartName(nm, p.part) }); else if (p.suite === key) p.suiteName = nm; });
+    (sw.children || []).forEach((ck) => { const c = S.suiteWorks.get(ck); if (c) renameSuite(ck, `${nm}, ${c.label || ''}`.replace(/,\s*$/, '')); });
+    log('info', 'suiteRenamed', { name: nm });
+    return true;
+  }
+  // --- [Z-WORKIDS] (3.196.0, S355) the works the dashboard created – suites, their parts' suites, a work for several tracks – kept for
+  // the release (MBID, title, the suite above it, its number, its tracks): an import of the release later links them again
+  const WORK_IDS_KEY = `dci-created-suites:${releaseMbid}`;
+  function workIdsRead() {
+    const v = readJson('localStorage', WORK_IDS_KEY, []);
+    return Array.isArray(v) ? v.filter((x) => x && typeof x === 'object' && /^[0-9a-f-]{36}$/.test(String(x.gid || ''))) : [];
+  }
+  function workIdsKeep(entry) {
+    if (!ruleOn('S355') || !releaseMbid) return;
+    const list = workIdsRead().filter((x) => !(x.kind === entry.kind && x.key === entry.key));
+    list.push({ ...entry, ts: Date.now() });
+    writeJson('localStorage', WORK_IDS_KEY, list.slice(-60));
+  }
+  /** The suites still to create whose work was created before (same kind of key, same title): its MBID. */
+  function workIdsRestore() {
+    if (!ruleOn('S355')) return;
+    const list = workIdsRead();
+    for (const sw of S.suiteWorks.values()) {
+      if (!isPending(sw.gid)) continue;
+      const hit = list.find((x) => x.kind === 'suite' && (x.key === sw.key || foldWord(x.title) === foldWord(sw.title)));
+      if (hit) {
+        Object.assign(sw, { gid: hit.gid, title: hit.title || sw.title, origin: 'created' });
+        log('info', 'workIdsAgain', { title: sw.title });
+      }
+    }
   }
 
   /** [Z-DEDSUITE] (3.191.0, S337) The dedications on the works of every track of a suite: relationships of the suite itself (its form). */
@@ -48028,7 +48134,10 @@
    */
   function suiteGate() {
     if (!ruleOn('S338') || S.worksSkip) return false;
-    const open = [...S.suiteWorks.values()].filter((sw) => isPending(sw.gid) && (sw.tracks || []).some((i) => (S.workParts.get(i) || []).some((p) => p.suite === sw.key)));
+    const open0 = [...S.suiteWorks.values()].filter((sw) => isPending(sw.gid) && (sw.tracks || []).some((i) => (S.workParts.get(i) || []).some((p) => p.suite === sw.key)));
+    // [Z-PARTHEADS] (3.196.0, S353) the suite above the parts first (the parts' forms link them with it)
+    const parents = [...S.suiteWorks.values()].filter((sw) => isPending(sw.gid) && (sw.children || []).some((ck) => open0.some((x) => x.key === ck)));
+    const open = [...parents, ...open0];
     if (!open.length) return false;
     const sw = open[0];
     const show = () => {
@@ -48060,22 +48169,27 @@
   function startSuiteCreate(sw, { then = null, cancelled = null } = {}) {
     const suiteType = (S.workOptions.types || []).find((t) => norm(t.name) === 'suite');
     // ([Z-DEDSUITE] 3.191.0, S337) with the dedications that hold for all its tracks
-    const writers = [...suiteWriters(sw), ...suiteDedications(sw)];
+    const under = { ...sw, tracks: sw.under || sw.tracks || [] };
+    const writers = [...suiteWriters(under), ...suiteDedications(under)];
+    // [Z-PARTHEADS] (3.196.0, S353) a part of a suite: "part of" the suite above it (created first – its MBID), with its number
+    const up = sw.parent ? S.suiteWorks.get(sw.parent) : null;
+    const partsLt = idx().partsLt;
+    const upRel = up && !isPending(up.gid) && partsLt ? [{ mbid: up.gid, linkTypeId: partsLt.id, name: up.title, typeName: tr('suite.upRelName'), partOf: true }] : [];
     const sourceUrl = noteSourceUrl();
     const params = buildWorkSeed({
+      writers: [...writers, ...upRel],
       title: sw.title,
       typeId: suiteType ? suiteType.id : 6, // (6: "Suite" in MusicBrainz)
       languageIds: [],
-      writers,
-      editNote: formEditNote([sourceUrl], `Prefilled by ${EDIT_NOTE_SCRIPT_NAME} v${VERSION} (userscript, ${SCRIPT_URL}); a suite of ${sw.tracks.length} tracks${writers.length ? `, writers from ${S.source.creditsName} credits` : ''}.`),
+      editNote: formEditNote([sourceUrl], `Prefilled by ${EDIT_NOTE_SCRIPT_NAME} v${VERSION} (userscript, ${SCRIPT_URL}); a suite of ${(sw.children || []).length ? `${sw.children.length} parts` : `${sw.tracks.length} tracks`}${upRel.length ? `, part ${sw.partNo} of “${up.title}”` : ''}${writers.length ? `, writers from ${S.source.creditsName} credits` : ''}.`),
     });
-    const tracks = tracksShort({ level: 'recording', tracks: new Set(sw.tracks) });
+    const tracks = tracksShort({ level: 'recording', tracks: new Set(under.tracks) });
     const prefilled = [tr('part.title', { title: sw.title }), tr('part.workType', { name: suiteType ? suiteType.name : 'Suite' })];
-    writers.forEach((w) => prefilled.push(`${w.typeName}: ${w.name}`));
+    [...writers, ...upRel].forEach((w) => prefilled.push(`${w.typeName}: ${w.name}`));
     const info = [
       `<p>${esc(tr('workDlg.prefilled', { list: prefilled.join(', ') }))}</p>`,
       writers.length ? '' : `<p class="dci-muted">${esc(tr('suite.createNoWriters'))}</p>`,
-      `<p>${esc(tr('suite.createAfter', { tracks }))}</p>`,
+      (sw.children || []).length ? `<p>${esc(tr('suite.createAfterParts', { n: sw.children.length }))}</p>` : `<p>${esc(tr('suite.createAfter', { tracks }))}</p>`,
     ].join('');
     log('info', 'suiteForm', { name: sw.title });
     openCreateDialog({
@@ -48094,6 +48208,9 @@
         if (S.suiteWorks.get(sw.key) !== sw) return; // (taken back meanwhile)
         Object.assign(sw, { gid: mbid, title, origin: 'created' });
         delete sw.offer;
+        // [Z-WORKIDS] (3.196.0, S355) kept for the release
+        workIdsKeep({ kind: 'suite', key: sw.key, gid: mbid, title, parent: sw.parent ? (S.suiteWorks.get(sw.parent) || {}).gid || '' : '', partNo: sw.partNo || null,
+          recs: (sw.under || sw.tracks || []).map((i) => (S.mbTracks[i] || {}).recordingGid).filter(Boolean).slice(0, 100) });
         showMessage('ok', 'suite.created', { name: title, tracks });
         log('ok', 'suiteCreated', { name: title, mbid });
         renderWorks();
@@ -48180,7 +48297,9 @@
    */
   function sameWorkOne(g, pick = null) {
     const before = new Map(g.tracks.map((i) => [i, S.workPlan.get(i)]));
-    const ex = pick || sameWorkExisting(g);
+    // ([Z-WORKIDS] 3.196.0, S355) the work created for these tracks before (an import of the release earlier)
+    const kept = ruleOn('S355') ? workIdsRead().find((x) => x.kind === 'same' && (x.key === g.key || foldWord(x.title) === foldWord(g.title))) : null;
+    const ex = pick || sameWorkExisting(g) || (kept ? { gid: kept.gid, title: kept.title || g.title } : null);
     for (const i of g.tracks) {
       if (S.mbTracks[i].works.length) continue;
       const p = S.workPlan.get(i);
@@ -48312,6 +48431,8 @@
         }
         const a = S.sameWork.get(key);
         if (a) a.gid = mbid;
+        // [Z-WORKIDS] (3.196.0, S355) kept for the release
+        workIdsKeep({ kind: 'same', key, gid: mbid, title: t2, recs: tracks.map((i) => (S.mbTracks[i] || {}).recordingGid).filter(Boolean) });
         showMessage('ok', 'samework.created', { title: t2, tracks: label });
         log('ok', 'sameWorkCreated', { title: t2, mbid });
         renderWorks();
@@ -48324,6 +48445,8 @@
 
   /** [Z-SU] (3.41.1) "↺": the parts of the suite go (a work planned before for a track comes back); asked again. */
   function undoSuite(o) {
+    // ([Z-PARTHEADS] 3.196.0) a suite of parts: its parts' suites first
+    ((S.suiteWorks.get(o.key) || {}).children || []).forEach((ck) => undoSuite({ key: ck, name: ck }));
     for (const [i, ps] of [...S.workParts]) {
       if (!ps.length || ps[0].suite !== o.key) continue;
       S.workParts.delete(i);
@@ -48480,12 +48603,51 @@
     const a = S.suiteAnswers.get(o.key);
     const tracks = tracksShort({ level: 'recording', tracks: new Set(o.tracks) });
     const from = tr(`suite.from.${o.from}`);
+    // [Z-SUITERENAME] (3.196.0, S354) the name of a suite not created yet: "✎" makes it a field (Enter takes it, Esc goes back)
+    const nameEdit = (key, name) => {
+      const sw0 = S.suiteWorks.get(key);
+      if (!ruleOn('S354') || !sw0 || !isPending(sw0.gid)) return '';
+      return S.suiteRenaming === key
+        ? `<span class="dci-suite-rename" data-suite-rename="${esc(key)}"><input type="text" data-f="suite-rename" value="${esc(name)}" size="${Math.min(60, Math.max(16, String(name).length + 2))}" aria-label="${esc(tr('suite.renameLabel'))}">
+          <button type="button" class="dci-small" data-act="suite-rename-ok">${esc(tr('suite.renameOk'))}</button></span>`
+        : `<button type="button" class="dci-textbtn" data-act="suite-rename" data-key="${esc(key)}" title="${esc(tr('suite.renameTitle'))}" aria-label="${esc(tr('suite.renameTitle'))}">✎</button>`;
+    };
+    // [Z-PARTHEADS] (3.196.0, S353) a suite of parts: one question for all of it; accepted, its parts' suites in one line each
+    if (o.children && ruleOn('S353')) {
+      const list = o.children.map((c) => `${c.label}: ${tracksShort({ level: 'recording', tracks: new Set(c.tracks) })}`).join(' · ');
+      if (a && a.yes) {
+        const top = S.suiteWorks.get(o.key);
+        const subs = ((top && top.children) || []).map((ck) => S.suiteWorks.get(ck)).filter(Boolean);
+        const pend = [top, ...subs].filter((x) => x && isPending(x.gid));
+        const must = pend.length && ruleOn('S338');
+        const state = (x) => (isPending(x.gid) ? `<span class="dci-suite-wait">${esc(tr('suite.partsWait'))}</span>`
+          : `<a class="dci-suite-mb" href="/work/${esc(x.gid)}" target="_blank" rel="noopener">${esc(tr('suite.inMb', { name: x.title }))}</a>`);
+        return `<div class="dci-sub dci-mx-suite-done${must ? ' dci-mx-suite-must' : ''}" data-suite="${esc(o.key)}">${must ? `<strong>${esc(tr('suite.mustParts', { name: a.name, n: pend.length }))}</strong> ` : ''}
+          <p>${esc(tr('suite.doneParts', { name: a.name, n: subs.length }))} ${nameEdit(o.key, a.name)} ${top ? state(top) : ''}</p>
+          <ul class="dci-suite-parts">${subs.map((x) => `<li>${esc(tr('suite.donePart', { name: x.title, tracks: tracksShort({ level: 'recording', tracks: new Set(x.tracks) }),
+            n: x.tracks.reduce((k, i) => k + (S.workParts.get(i) || []).filter((p) => p.suite === x.key).length, 0) }))} ${state(x)}</li>`).join('')}</ul>
+          ${pend.length ? `<button type="button" class="dci-small" data-act="suite-create" title="${esc(tr('suite.createBtnTitle'))}">＋ ${esc(tr('suite.createNext'))}</button>` : ''}
+          ${must ? `<button type="button" class="dci-small" data-act="suite-drop" title="${esc(tr('suite.noTitle'))}">${esc(tr('suite.noBtn'))}</button>` : ''}
+          <button type="button" class="dci-textbtn" data-act="suite-undo" title="${esc(tr('suite.undoTitle'))}">↺ ${esc(tr('suite.undo'))}</button></div>`;
+      }
+      if (a && !a.yes) {
+        return `<p class="dci-sub dci-mx-suite-done" data-suite="${esc(o.key)}">${esc(tr('suite.no', { tracks, name: o.name }))}
+          <button type="button" class="dci-textbtn" data-act="suite-undo" title="${esc(tr('suite.askAgainTitle'))}">↺ ${esc(tr('suite.askAgain'))}</button></p>`;
+      }
+      return `<div class="dci-mx-ask dci-mx-suite" data-suite="${esc(o.key)}" role="group" aria-label="${esc(tr('suite.askParts', { name: o.name, n: o.children.length, list }))}">
+        <strong>${esc(tr('suite.askParts', { name: o.name, n: o.children.length, list }))}</strong>
+        <button type="button" class="dci-primary dci-small" data-act="suite-yes">${esc(tr('suite.yes'))}</button>
+        <button type="button" class="dci-small" data-act="suite-no"${ruleOn('S331') ? ` title="${esc(tr('suite.noTitle'))}"` : ''}>${esc(tr('suite.noBtn'))}</button>
+        <label class="dci-suite-other">${esc(tr('suite.other'))} <input type="text" data-f="suite-name" value="${esc(o.name)}" size="24"></label>
+        <button type="button" class="dci-small" data-act="suite-yes-name">${esc(tr('suite.yesName'))}</button>
+        <span class="dci-sub">${esc(from)}</span><p class="dci-sub dci-suite-hint">${esc(tr('suite.hintParts'))}</p></div>`;
+    }
     if (a && a.yes) {
       const n = o.tracks.reduce((k, i) => k + (S.workParts.get(i) || []).filter((p) => p.suite === o.key).length, 0);
       // [Z-SUW] (3.41.6) the suite created in MusicBrainz first (or the one found there linked); its "parts" wait until then
       const sw = S.suiteWorks.get(o.key);
       const suite = !sw ? '' : isPending(sw.gid)
-        ? `<button type="button" class="dci-primary dci-small" data-act="suite-create" title="${esc(tr('suite.createBtnTitle'))}">＋ ${esc(tr('suite.createBtn'))}</button>
+        ? `<button type="button" class="${ruleOn('S354') ? '' : 'dci-primary '}dci-small" data-act="suite-create" title="${esc(tr('suite.createBtnTitle'))}">＋ ${esc(tr('suite.createBtn'))}</button>
           ${sw.offer ? `<button type="button" class="dci-small" data-act="suite-pick" title="${esc(tr('suite.pickTitle'))}">${esc(tr('suite.partPick', { title: sw.offer.title }))}</button>` : ''}
           <span class="dci-suite-wait">${esc(tr(ruleOn('S338') ? 'suite.waitMust' : 'suite.wait'))}</span>`
         : `<a class="dci-suite-mb" href="/work/${esc(sw.gid)}" target="_blank" rel="noopener">${esc(tr('suite.inMb', { name: sw.title }))}</a>${workLocked({ ...sw, planned: true })
@@ -48493,6 +48655,7 @@
       // [Z-SUITEPROMPT] (3.191.0, S338) not in MusicBrainz yet: a yellow field that must be answered – create, link, or no suite
       const must = sw && isPending(sw.gid) && ruleOn('S338');
       return `<p class="dci-sub dci-mx-suite-done${must ? ' dci-mx-suite-must' : ''}" data-suite="${esc(o.key)}">${must ? `<strong>${esc(tr('suite.must', { name: a.name }))}</strong> ` : ''}${esc(tr('suite.done', { tracks, name: a.name, n }))}
+        ${nameEdit(o.key, a.name)}
         ${suite}
         ${must ? `<button type="button" class="dci-small" data-act="suite-drop" title="${esc(tr('suite.noTitle'))}">${esc(tr('suite.noBtn'))}</button>` : ''}
         <button type="button" class="dci-textbtn" data-act="suite-undo" title="${esc(tr('suite.undoTitle'))}">↺ ${esc(tr('suite.undo'))}</button></p>`;
@@ -48731,14 +48894,15 @@
     if (magicKindOn('suite')) {
       // ([Z-SUITEPREFIX] 3.189.0) MusicBrainz's own titles "Name: Part" count like a heading
       // ([Z-NOTESPARTS] 3.192.0, S343) the parts the notes list: on "bold" only
-      const from = ['heading', 'prefix', ...(magicAt('balanced') ? ['index'] : []), ...(magicAt('bold') ? ['release', 'notes'] : [])];
+      const from = ['heading', 'prefix', ...(magicAt('balanced') ? ['index', 'parthead'] : []), ...(magicAt('bold') ? ['release', 'notes'] : [])];
       for (const o of suiteAsks()) {
         if (S.suiteAnswers.has(o.key) || !(from.includes(o.from) || o.sure) || !o.tracks.length) continue;
         o.tracks.forEach((i) => taken.add(i));
         out.push({ kind: 'suite', key: `suite|${o.key}`, i: o.tracks[0], tracks: [...o.tracks], label: tracksShort({ level: 'recording', tracks: new Set(o.tracks) }),
-          what: tr('magic.what.suite', { name: o.name, from: tr(`suite.from.${o.from}`) }),
+          what: tr(o.children ? 'magic.what.suiteParts' : 'magic.what.suite', { name: o.name, from: tr(`suite.from.${o.from}`), n: (o.children || []).length }), suiteName: o.name,
           apply: () => {
-            acceptSuite(o, o.name);
+            // ([Z-SUITERENAME] 3.196.0, S354) the name as changed in the preview
+            acceptSuite(o, (ruleOn('S354') && S.magicNames.get(`suite|${o.key}`)) || o.name);
             return () => { const o2 = suiteAsks().find((x) => x.key === o.key); if (o2) undoSuite(o2); S.suiteAnswers.delete(o.key); };
           } });
       }
@@ -49041,8 +49205,10 @@
     const off = MAGIC_KINDS.filter((k) => !magicKindOn(k));
     // [Z-SUITENO] (3.189.0, S331) each answer with its tick: one unticked is not given (the question stays open)
     const ticks = ruleOn('S331');
+    // [Z-SUITERENAME] (3.196.0, S354) the name of a suite to be: changed right here (it is taken with "Apply")
+    const nameField = (x) => (x.kind === 'suite' && x.suiteName && ruleOn('S354') ? ` <input type="text" data-f="magic-suite-name" data-key="${esc(magicKey(x))}" value="${esc(S.magicNames.get(magicKey(x)) || x.suiteName)}" size="${Math.min(48, Math.max(14, String(x.suiteName).length + 2))}" aria-label="${esc(tr('suite.renameLabel'))}" title="${esc(tr('suite.renameTitle'))}">` : '');
     const item = (x, k) => (ticks
-      ? `<li data-el="magic-item" data-kind="${k}"><label title="${esc(tr('magic.itemTitle'))}"><input type="checkbox" data-f="magic-item" data-key="${esc(magicKey(x))}"${S.magicSkip.has(magicKey(x)) ? '' : ' checked'}> ${esc(x.label)} – ${esc(x.what)}</label></li>`
+      ? `<li data-el="magic-item" data-kind="${k}"><label title="${esc(tr('magic.itemTitle'))}"><input type="checkbox" data-f="magic-item" data-key="${esc(magicKey(x))}"${S.magicSkip.has(magicKey(x)) ? '' : ' checked'}> ${esc(x.label)} – ${esc(x.what)}</label>${nameField(x)}</li>`
       : `<li data-el="magic-item" data-kind="${k}">${esc(x.label)} – ${esc(x.what)}</li>`);
     const list = kinds.map((k) => `<li><strong>${esc(tr(`magic.kind.${k}`))}</strong> (${plan.filter((x) => x.kind === k).length})<ul>${plan.filter((x) => x.kind === k).slice(0, ticks ? 400 : 40).map((x) => item(x, k)).join('')}</ul></li>`).join('');
     const nOn = plan.filter((x) => !S.magicSkip.has(magicKey(x))).length;
@@ -53023,6 +53189,7 @@
         S.magicInfo = false;
         S.magicPreview = !S.magicPreview;
         S.magicSkip.clear(); // [Z-SUITENO] (3.189.0) every answer ticked anew
+        S.magicNames.clear(); // [Z-SUITERENAME] (3.196.0)
         const focus = (sel) => { const b = S.overlay.querySelector(sel); if (b) b.focus({ preventScroll: true }); };
         if (S.magicPreview && !S.magicBusy) {
           S.magicBusy = true;
@@ -53098,6 +53265,24 @@
         refresh();
         break;
       }
+      case 'suite-rename':
+      case 'suite-rename-ok': {
+        // [Z-SUITERENAME] (3.196.0, S354) the name of a suite in its line
+        if (act === 'suite-rename') {
+          S.suiteRenaming = btn.dataset.key || '';
+          renderWorks();
+          const f = S.overlay.querySelector('[data-f="suite-rename"]');
+          if (f) { f.focus(); f.select(); }
+          break;
+        }
+        const box = btn.closest('[data-suite-rename]');
+        const f = box && box.querySelector('[data-f="suite-rename"]');
+        if (box && f) renameSuite(box.dataset.suiteRename, f.value);
+        S.suiteRenaming = '';
+        renderWorks();
+        refresh();
+        break;
+      }
       case 'notes-suites': {
         // [Z-NOTESPARTS] (3.192.0, S343) "Read suites from notes": the quick switch on for this import
         QS_ONCE.set('S343', true);
@@ -53123,7 +53308,9 @@
         // [Z-SUW] (3.41.6) the suite created in MusicBrainz's form, or the one found there taken
         const sw = S.suiteWorks.get(o.key);
         if (act === 'suite-create') {
-          if (sw && isPending(sw.gid)) startSuiteCreate(sw);
+          // ([Z-PARTHEADS] 3.196.0) a suite of parts: itself first, then its parts' suites
+          const next = sw && (isPending(sw.gid) ? sw : (sw.children || []).map((ck) => S.suiteWorks.get(ck)).find((x) => x && isPending(x.gid)));
+          if (next) startSuiteCreate(next, { then: () => { renderWorks(); } });
           break;
         }
         if (act === 'suite-pick') {
@@ -55373,6 +55560,11 @@
       dmChanged();
       return;
     }
+    // [Z-SUITERENAME] (3.196.0, S354) a name of a suite typed in the preview of "✨ Answer all": kept (not drawn again)
+    if (f === 'magic-suite-name') {
+      S.magicNames.set(el.dataset.key || '', el.value);
+      return;
+    }
     if ((f.startsWith('mx-') || f.startsWith('cd-') || f.startsWith('xd-') || f === 'work-lang-add') && matrixChange(f, el)) return;
     // [E4] (3.34.30) the matrix of an entry
     if (f.startsWith('em-') && entryMatrixChange(f, el)) return;
@@ -55709,6 +55901,11 @@
   function onInput(e) {
     const el = e.target;
     const f = el.dataset && el.dataset.f;
+    // [Z-SUITERENAME] (3.196.0, S354) the name of a suite typed in the preview of "✨ Answer all": kept while typing
+    if (f === 'magic-suite-name') {
+      S.magicNames.set(el.dataset.key || '', el.value);
+      return;
+    }
     // [Z-APPLYLABEL] (3.128.0) the button beside the field says what it does: "Search" for a name, "Link" for an MBID or an address
     if (f === 'artist-input' && ruleOn('S193')) {
       const b = el.parentElement && el.parentElement.querySelector('[data-act="artist-set"]');
@@ -55926,6 +56123,14 @@
   }
 
   function onKeydown(e) {
+    // [Z-SUITERENAME] (3.196.0, S354) Enter takes the name of a suite, Esc goes back
+    if (e.target && e.target.dataset && e.target.dataset.f === 'suite-rename' && (e.key === 'Enter' || e.key === 'Escape')) {
+      e.preventDefault();
+      if (e.key === 'Enter') { const ok = e.target.closest('[data-suite-rename]').querySelector('[data-act="suite-rename-ok"]'); if (ok) ok.click(); return; }
+      S.suiteRenaming = '';
+      renderWorks();
+      return;
+    }
     // [Z-ARQ] (3.86.0, review) Enter in the search of the question: the first type found
     if (e.key === 'Enter' && e.target && e.target.dataset && e.target.dataset.f === 'arq-q' && S.arq) {
       const first = e.target.closest('[data-el="arq"]').querySelector('[data-act="arq-pick"]');
