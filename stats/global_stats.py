@@ -184,6 +184,7 @@ class Stats:
         self.edit_rel = defaultdict(set)
         self.sub_releases = set()
         self.release_rec_rels = {}  # [3.91.0] release → relationships on its recordings
+        self.record_ids = {}  # [3.195.0, Z-STATTOP] the release and the recording of the records (ids) for the core pass
 
     def edit_row(self, raw):
         # id, editor, type, status, autoedit, open_time, …
@@ -272,11 +273,13 @@ class Stats:
     def result(self, dump):
         out = {'$schema': OUT_SCHEMA, 'format': OUT_FORMAT, 'format_version': 2,
                'script': SCRIPT, 'names': list(NAMES), 'dump': dump, 'generated': dt.datetime.now(dt.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
-               'since': self.since, 'privacy': 'numbers only: no editors, edits, releases or URLs; "editors" is how many different ones'}
+               'since': self.since, 'privacy': 'numbers only: no editors, edits or URLs; "editors" is how many different ones; the records (core) name '
+               'a release and a recording (their MBIDs and titles – public entries of MusicBrainz, no editor)'}
         by_month = defaultdict(lambda: {'edits': 0, 'submissions': 0, 'editors': set()})
         by_version = defaultdict(lambda: {'edits': 0, 'submissions': 0})
         types, status, ltypes, auto = Counter(), Counter(), Counter(), Counter()
         created = Counter()  # [3.145.0, Z-CREATED]
+        work_times = defaultdict(list)  # [3.195.0, Z-STATTOP] editor → the times of the works created
         added_lt = Counter()  # [3.139.0, Z-GSTNEW] the types of the relationships added (90)
         editors = set()
         groups = defaultdict(list)  # (editor, the script's lines) → [(time, month, version, text)]
@@ -292,6 +295,8 @@ class Stats:
             auto['auto-edit' if au else 'voted'] += 1
             if t in CREATE_TYPES and stt in (1, 2):
                 created[CREATE_TYPES[t]] += 1
+                if CREATE_TYPES[t] == 'work':
+                    work_times[editor].append(seconds(post))
             if edit_id in self.ltype:
                 lt = self.ltype[edit_id]
                 name = self.lt_names.get(int(lt[1:]), lt) if lt.startswith('#') else lt
@@ -399,6 +404,57 @@ class Stats:
         out['per_release'] = {'n': len(vals), 'rels': mm([c['all'] for c in vals]),
                               'by_level': {lv: mm([c[lv] for c in vals]) for lv in ('recording', 'release', 'work', 'release group') if any(c[lv] for c in vals)}}
         self.release_rec_rels = {r: c['recording'] for r, c in per_rel.items()}
+        # [3.195.0, Z-STATTOP] the records: the day with the most relationships, the most works created at once (one editor, the works at most
+        # SUBMISSION_GAP apart) – numbers and days; the release with the most relationships, the one with the most artists and the recording
+        # with the most relationships – their ids for the core pass (which names them: MBID, title)
+        by_day = Counter()
+        for k, (tm, _mon, _ver, text) in enumerate(subs):
+            m = DONE_RE.search(text)
+            if m and tm:
+                by_day[dt.datetime.fromtimestamp(tm, dt.timezone.utc).strftime('%Y-%m-%d')] += int(m.group(1))
+        works_once = None
+        for times in work_times.values():
+            times.sort()
+            run, start = 0, None
+            for k, tm in enumerate(times):
+                if k == 0 or tm - times[k - 1] > SUBMISSION_GAP:
+                    run, start = 0, tm
+                run += 1
+                if not works_once or run > works_once['n']:
+                    works_once = {'n': run, 'd': dt.datetime.fromtimestamp(start or tm, dt.timezone.utc).strftime('%Y-%m-%d')}
+        rel_artists = defaultdict(set)
+        rec_rels = Counter()
+        for k, eds in enumerate(sub_edits):
+            for e in eds:
+                if e not in self.facts or self.info(e)[2] not in (1, 2):
+                    continue
+                parts = self.facts[e].split('|')
+                for r in facts_of(self.facts[e])[2]:
+                    rec_rels[r] += 1
+                if sub_rel[k] is not None:
+                    for part in (parts[5:] or [''])[0].split(','):
+                        kind, _, i = part.partition(':')
+                        if kind == 'artist' and i:
+                            rel_artists[sub_rel[k]].add(i)
+        records = {}
+        if by_day:
+            d, n = max(by_day.items(), key=lambda kv: (kv[1], kv[0]))
+            records['day'] = {'d': d, 'n': n}
+        if works_once:
+            records['works'] = works_once
+        out['records'] = records
+        ids = {}
+        if per_rel:
+            r, c = max(per_rel.items(), key=lambda kv: (kv[1]['all'], -kv[0]))
+            if c['all']:
+                ids['rel'] = [r, c['all']]
+        if rel_artists:
+            r, s = max(rel_artists.items(), key=lambda kv: (len(kv[1]), -kv[0]))
+            ids['artists'] = [r, len(s)]
+        if rec_rels:
+            r, n = max(rec_rels.items(), key=lambda kv: (kv[1], -kv[0]))
+            ids['rec'] = [r, n]
+        self.record_ids = ids
         # [3.55.0, Z-ALI] "credited as" of the relationships the script added with an artist, a label or a place
         facts = self.script_facts()
         out['credits'] = {'credited_as': {'n': sum(1 for f in facts if f[4] and f[5]), 'of': sum(1 for f in facts if f[4])}}
@@ -423,7 +479,8 @@ class Stats:
         facts = self.script_facts()
         return {'artists': [[a, f[1]] for f in facts for a in f[0]], 'attrs': [list(map(list, f[3])) for f in facts if f[3]],
                 'releases': sorted(self.sub_releases), 'recordings': sorted({r for f in facts for r in f[2]}),
-                'release_rec_rels': sorted([r, n] for r, n in self.release_rec_rels.items())}
+                'release_rec_rels': sorted([r, n] for r, n in self.release_rec_rels.items()),
+                'record_ids': self.record_ids}  # [3.195.0, Z-STATTOP]
 
 
 # --- [3.55.0, Z-AGS] the core pass: MusicBrainz's mbdump.tar.bz2 (once a week) -------------------------------------------------
@@ -468,6 +525,11 @@ class Core:
         self.attrs = facts.get('attrs', [])
         self.want_rel = set(facts.get('releases', []))
         self.want_rec = set(facts.get('recordings', []))
+        # [3.195.0, Z-STATTOP] the release and the recording of the records: their MBIDs and titles
+        self.record_ids = facts.get('record_ids') or {}
+        self.rec_names = {}  # id → (gid, name) of the releases and recordings of the records
+        self.want_names_rel = {v[0] for k, v in self.record_ids.items() if k in ('rel', 'artists') and isinstance(v, list) and v}
+        self.want_names_rec = {v[0] for k, v in self.record_ids.items() if k == 'rec' and isinstance(v, list) and v}
         # [3.91.0, Z-SRR] the relationships on the recordings of each release; its tracks (not data tracks) as its recordings
         self.rec_rels = {int(r): int(n) for r, n in facts.get('release_rec_rels', [])}
         self.rel_tracks = defaultdict(set)  # release → its recordings (distinct; not data tracks, not a pregap)
@@ -516,12 +578,16 @@ class Core:
                 self.medium_rel[int(f[0])] = r
         elif table == 'recording' and len(f) > 4:
             i = int(f[0])
+            if i in self.want_names_rec:
+                self.rec_names[('rec', i)] = (f[1].decode('ascii', 'replace'), unescape(f[2].decode('utf-8', 'replace')))
             if i in self.want_rec:
                 ln = num(f[4])
                 if ln and ln > 0:
                     self.lengths[i] = ln
         elif table == 'release' and len(f) > 8:
             i = int(f[0])
+            if i in self.want_names_rel:
+                self.rec_names[('rel', i)] = (f[1].decode('ascii', 'replace'), unescape(f[2].decode('utf-8', 'replace')))
             if i in self.want_rel:
                 self.release[i] = (num(f[4]), num(f[7]), num(f[8]))
                 self.want_rg.add(num(f[4]))
@@ -557,6 +623,19 @@ class Core:
             i = num(f[0])
             if i in self.want_link:
                 self.link_type[i] = num(f[1])
+
+    def records(self):
+        """[3.195.0, Z-STATTOP] The release with the most relationships, the one with the most artists and the recording with the most
+        relationships: { rel: {mbid, title, n}, artists: {…}, rec: {gid, title, n} } (those found in the dump)."""
+        out = {}
+        for key, kind in (('rel', 'rel'), ('artists', 'rel'), ('rec', 'rec')):
+            v = self.record_ids.get(key)
+            if not (isinstance(v, list) and len(v) == 2):
+                continue
+            hit = self.rec_names.get((kind, v[0]))
+            if hit:
+                out[key] = {'mbid' if kind == 'rel' else 'gid': hit[0], 'title': hit[1], 'n': v[1]}
+        return out
 
     def itree(self, dump, old=None):
         """[3.107.0, Z-ITREE] The instruments with their "type of" relationships – and what changed since the file of before (`old`)."""
@@ -641,6 +720,8 @@ class Core:
             'lengths': {'recordings': len(lens), 'median_ms': median(lens), 'mean_ms': mean(lens),
                         'releases': len(rel_lens), 'release_median_ms': median(rel_lens), 'release_mean_ms': mean(rel_lens)},
             'role_credits': {'n': cred, 'of': base},
+            # [3.195.0, Z-STATTOP] the records with their MBIDs and titles
+            'records': self.records(),
             # [3.91.0, Z-SRR] per release: its recordings, and the relationships on them per recording (the releases with tracks)
             'per_release': {'n': len(known), 'recordings': {'mean': mean(list(nrec.values())), 'median': median(list(nrec.values()))},
                             'rels_per_recording': {'mean': mean([self.rec_rels[r] / nrec[r] for r in known]),

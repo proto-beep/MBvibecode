@@ -1153,6 +1153,67 @@ def case_stats3192():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+
+def case_records3195():
+    """Credits Importer 3.195.0 (collected item Z-STATTOP, rule S351): seeded submissions of two releases.
+    A) The card "Records": the release with the most relationships "Big Release" (5, a link to it), the recording with the most "Rec Two" (3,
+       a link, its release), the release with the most artists "Big Release" (3), the longest time "Slow Release" (10 min), the most works
+       created at once 4 ("Slow Release"), the day with the most relationships.
+    B) Rule S351 off: no card."""
+    results = []
+    with sync_playwright() as p:
+        for off in (False, True):
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            if off:
+                ctx.add_init_script("if (/musicbrainz/.test(location.hostname)) localStorage.setItem('dci-rules-off', JSON.stringify(['S351']));")
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            now = pg.evaluate("Date.now()")
+            pg.evaluate("() => localStorage.setItem('dci-stats-on', 'false')")
+            R1, R2 = 'aaaaaaaa-1111-4000-8000-000000000001', 'aaaaaaaa-1111-4000-8000-000000000002'
+            REC1, REC2 = 'bbbbbbbb-1111-4000-8000-000000000001', 'bbbbbbbb-1111-4000-8000-000000000002'
+
+            def r4(lt, lv, et, tg, tn, src=None):
+                x = stat_rel('n', lt, lv, et, tg, tn)
+                x.update({'rt': [], 'al': 0, 'dy': None})
+                if src:
+                    x['c'] = {'on': lv, 'src': src, 'lt': 1, 'tgt': tg, 'n0': 0}
+                return x
+            ga = ['cccccccc-0000-4000-8000-0000000001%02d' % k for k in range(1, 5)]
+            rel = lambda title: {'title': title, 'year': 2001, 'country': 'XW', 'formats': ['CD'], 'labels': [], 'before': 0, 'media': 1, 'rgp': 'Album', 'rgs': [], 'lang': 'eng', 'script': 'Latn', 'lens': []}
+            big = [r4('instrument', 'recording', 'artist', ga[0], 'A', REC1), r4('instrument', 'recording', 'artist', ga[1], 'B', REC2), r4('instrument', 'recording', 'artist', ga[2], 'C', REC2),
+                   r4('producer', 'recording', 'artist', ga[0], 'A', REC2), r4('design', 'release', 'artist', ga[1], 'B', R1)]
+            slow = [r4('instrument', 'recording', 'artist', ga[3], 'D', 'bbbbbbbb-1111-4000-8000-000000000009')]
+            recs = [{'v': 3, 'id': f'{R1}:1', 'mbid': R1, 'at': now - 86400000, 'start': now - 86400000 - 120000, 'idle': 0, 'ms': 120000, 'src': 'discogs', 'supp': [], 'rel': rel('Big Release'),
+                     'own': 0, 'ocr': None, 'rels': big, 'x': {'recTitles': {REC2: 'Rec Two', REC1: 'Rec One'}, 'works': {'linked': 1, 'created': 1, 'pending': 0}}},
+                    {'v': 3, 'id': f'{R2}:1', 'mbid': R2, 'at': now, 'start': now - 600000, 'idle': 0, 'ms': 600000, 'src': 'discogs', 'supp': [], 'rel': rel('Slow Release'),
+                     'own': 0, 'ocr': None, 'rels': slow, 'x': {'works': {'linked': 4, 'created': 4, 'pending': 0}}}]
+            pg.evaluate(STAT_SEED, recs)
+            H.open_dashboard(pg)
+            pg.wait_for_timeout(600)
+            H.open_stats(pg)
+            if pg.locator('[data-act=stats-scope][data-scope=local]').count():
+                pg.click('[data-act=stats-scope][data-scope=local]')
+            pg.wait_for_timeout(1500)
+            card = pg.evaluate("""(() => { const c = document.querySelector('[data-el=stats-toprecords]'); return c ? [...c.querySelectorAll('li')].map(li => [li.textContent.replace(/\\s+/g, ' ').trim(),
+              [...li.querySelectorAll('a')].map(a => a.getAttribute('href'))]) : null; })()""")
+            print('B)' if off else 'A)', card, errs)
+            if off:
+                results.append(card is None and not errs)
+            else:
+                c = card or []
+                txt = [x[0] for x in c]
+                results.append(len(c) == 6 and txt[0] == 'Release with the most relationships Big Release 5' and c[0][1] == [f'/release/{R1}']
+                               and txt[1] == 'Recording with the most relationships Rec Two (Big Release) 3' and c[1][1] == [f'/recording/{REC2}', f'/release/{R1}']
+                               and txt[2] == 'Release with the most artists Big Release 3' and txt[3].startswith('Longest time on a release Slow Release 10')
+                               and txt[4] == 'Most works created at once Slow Release 4' and txt[5].startswith('Day with the most relationships ') and txt[5].endswith(' 5')
+                               and not errs)
+            b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_statsbutton():
     """Credits Importer 3.39.3 (collected item 189): the statistics with their own button in the head.
     A) The button (a bar chart, "Statistics") right after ⚙ Settings, not pressed; no tab "Statistics" in ⚙ Settings any more – a tab
@@ -1725,7 +1786,7 @@ def case_statsmore2():
         perf = [it for it in r.get('rels', []) if it.get('k') == 'n' and it.get('lt') == 'performance' and it.get('et') == 'work']
         # ((3.42.6, Z-STG2) and the tags of Bandcamp)
         # ([3.53.0] version 3: the release's media, types, language, script and lengths; role credits and aliases)
-        results.append(len(recs2) == 1 and r.get('v') == 3 and set((r.get('x') or {}).keys()) == {'suites', 'works', 'genres', 'bcTags', 'live', 'gaps', 'decisions', 'out', 'may', 'magic', 'promo', 'dsup', 'lc', 'instsAuto'}  # ([Z-STATNEW] 3.192.0 the five last)
+        results.append(len(recs2) == 1 and r.get('v') == 3 and set((r.get('x') or {}).keys()) == {'suites', 'works', 'genres', 'bcTags', 'live', 'gaps', 'decisions', 'out', 'may', 'magic', 'promo', 'dsup', 'lc', 'instsAuto', 'recTitles'}  # ([Z-STATNEW] 3.192.0 the five last; [Z-STATTOP] 3.195.0 recTitles)
                        and all(isinstance(it.get('a'), list) for it in r.get('rels', []))
                        # (3.41.15, review) the works from what is submitted: the links of the record, those of new works without a gid
                        and (r.get('x') or {}).get('works') == {'linked': len(perf), 'created': 0, 'pending': len([it for it in perf if not it.get('tg')])} and len(perf) >= 1
@@ -3238,7 +3299,8 @@ def case_srr391():
     data = {'script': 'MB x Vibecode: Credits Importer', 'dump': '20261108-002222', 'totals': {'edits': 10, 'submissions': 2, 'editors': 1},
             'by_month': {'2026-11': {'edits': 10, 'submissions': 2, 'editors': 1}}, 'by_version': {'3.91.0': {'edits': 10}}, 'by_source': {'discogs': 2},
             'per_release': {'n': 2, 'rels': {'mean': 2.0, 'median': 2.0}, 'by_level': {'recording': {'mean': 1.5, 'median': 1.5}, 'release': {'mean': 0.5, 'median': 0.5}}},
-            'credits': {'credited_as': {'n': 1, 'of': 4}}, 'core': {
+            'credits': {'credited_as': {'n': 1, 'of': 4}}, 'records': {'day': {'d': '2026-11-03', 'n': 7}, 'works': {'n': 2, 'd': '2026-11-04'}}, 'core': {
+                'records': {'rel': {'mbid': 'aaaaaaaa-2222-4000-8000-000000000001', 'title': 'Top Release', 'n': 9}, 'rec': {'gid': 'bbbbbbbb-2222-4000-8000-000000000001', 'title': 'Top Rec', 'n': 4}},
                 'dump': '20261108-002222', 'artists': {'n': 3, 'of': 4, 'types': {'Person': 2}, 'genders': {}, 'decades': {}, 'countries': {}, 'towns': {}, 'centuries': {}, 'posthumous': {'n': 0, 'of': 0}},
                 'releases': {'n': 2, 'media': {'single': 2}, 'rg_primary': {'Album': 2}, 'rg_secondary': {}, 'languages': {'eng': 2}, 'scripts': {'Latn': 2}},
                 'lengths': {'recordings': 2, 'median_ms': 150000, 'mean_ms': 150000.0}, 'role_credits': {'n': 2, 'of': 5},
@@ -3280,8 +3342,13 @@ def case_srr391():
             pg.click('[data-act=stats-scope][data-scope=global]')
             H.wait_for(pg, "!!document.querySelector('[data-el=stats-global-core]')", 20)
             gl = pg.evaluate(CARD, '[data-el=stats-global-perrelease]')
+            # ([Z-STATTOP] 3.195.0, S351) the records of all users
+            grec = pg.evaluate("(c => c ? [...c.querySelectorAll('li')].map(li => [li.textContent.replace(/\\s+/g, ' ').trim(), [...li.querySelectorAll('a')].map(x => x.getAttribute('href'))]) : null)(document.querySelector('[data-el=stats-global-gtoprecords]'))")
             print('A)', grp, a)
-            print('B)', gl)
+            print('B)', gl, grec)
+            results.append(grec == [['Release with the most relationships Top Release 9', ['/release/aaaaaaaa-2222-4000-8000-000000000001']],
+                                    ['Recording with the most relationships Top Rec 4', ['/recording/bbbbbbbb-2222-4000-8000-000000000001']],
+                                    ['Most works created at once 2026-11-04 2', []], ['Day with the most relationships 2026-11-03 7', []]])
             results.append(grp == 'releases' and a == ['Relationships | 4 | 4', 'on Recording | 3.5 | 3.5', 'on Release | 0.5 | 0.5', 'Recordings | 3 | 3', 'Relationships per recording | 1.3 | 1.3'])
             results.append(gl == ['Relationships | 2 | 2', 'on Recording | 1.5 | 1.5', 'on Release | 0.5 | 0.5', 'Recordings | 2 | 2', 'Relationships per recording | 0.8 | 0.8'])
             results.append(not errs)

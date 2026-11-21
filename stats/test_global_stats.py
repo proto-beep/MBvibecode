@@ -287,6 +287,12 @@ def main():
         ('instruments: an old file not read; no "type of"', [bool(t3) and len(t3['subtype']) == 3 and t3['changes'] == [], os.path.exists(itree4)], [True, False]),
         ('core per release', r2['core']['per_release'], {'n': 2, 'recordings': {'mean': 2.0, 'median': 2.0},
                                                         'rels_per_recording': {'mean': (2 / 3 + 1) / 2, 'median': (2 / 3 + 1) / 2}}),
+        # [3.195.0, Z-STATTOP] the records: the day and the works at once (numbers, days); the release and the recording by their ids for the
+        # core pass, named there (MBID, title)
+        ('records', r.get('records'), {'day': {'d': '2026-10-20', 'n': 3}, 'works': {'n': 1, 'd': '2026-11-02'}}),
+        ('facts of the records', fx.get('record_ids'), {'rel': [701, 3], 'artists': [701, 3], 'rec': [801, 2]}),
+        ('core records', r2['core'].get('records'), {'rel': {'mbid': 'g', 'title': 'A', 'n': 3}, 'artists': {'mbid': 'g', 'title': 'A', 'n': 3},
+                                                     'rec': {'gid': 'g', 'title': 'a', 'n': 2}}),
     ]
     # [3.145.0, Z-STATSJSON] the result as its JSON Schema describes it (where jsonschema is installed)
     try:

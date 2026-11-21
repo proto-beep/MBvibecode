@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-21 | 3.193.0 – 3.194.0 | – |
+| 2026-11-21 | 3.193.0 – 3.195.0 | – |
 | 2026-11-20 | 3.185.0 – 3.192.0 | 1.23.0 |
 | 2026-11-19 | 3.170.0 – 3.184.0 | – |
 | 2026-11-18 | 3.159.0 – 3.169.0 | – |
@@ -135,6 +135,14 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.195.0
+
+**Records in the statistics; "Fill empty recordings" only when there is something to fill.**
+
+- **Records** (rule S351): a card "Records" – the release with the most relationships, the recording with the most relationships, the release with the most artists, the longest time on a release, the most works created at once, the day with the most relationships; releases and recordings linked to MusicBrainz. "Global" shows them too, from the dumps of MusicBrainz (no editors; the time on a release is not in them): the edit pass finds the day and the works created at once by one editor, the core pass names the release and the recording (MBID, title).
+- **"Fill empty recordings"** (S352) is not shown while every recording of the release has relationships – in MusicBrainz or staged; looked at again every few seconds. With media not loaded yet in the editor, the button stays.
+- The card "When you work" keeps its lines "Most in a day", "Most for a release" and "Fastest".
 
 ### Import 3.194.0
 

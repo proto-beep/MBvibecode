@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.194.0
+// @version      3.195.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.194.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.194.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.195.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.195.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.194.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.195.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -3474,6 +3474,16 @@
       "stats.art.noType": "no type",
       "stats.art.gender": "Gender",
       "stats.art.decade": "Born or founded",
+      "stats.more.toprecords": "Records",
+      "stats.more.gtoprecords": "Records",
+      "stats.best.rel": "Release with the most relationships",
+      "stats.best.rec": "Recording with the most relationships",
+      "stats.best.artists": "Release with the most artists",
+      "stats.best.time": "Longest time on a release",
+      "stats.best.works": "Most works created at once",
+      "stats.best.day": "Day with the most relationships",
+      "stats.best.untitled": "(no title)",
+      "stats.best.global": "From the dumps of MusicBrainz – no editors; the time on a release is not in them.",
       "stats.art.born": "Born (people, characters)",
       "stats.art.founded": "Founded (groups, orchestras, choirs)",
       "stats.art.bornNoType": "Begun, type unknown",
@@ -5560,6 +5570,8 @@
     { id: 'S348', where: 'TEXT.parse (improvAll, tidyLines, placeOf, trackListLine)', note: 'Texts (3.194.0; collected item Z-KIRAMEKI): "all music is improvised" without names – the players of the text ("Name : guitar") are the composers of the works, marked as improvisations (S222); a heading with ornaments and its name in another script ("☆Kirameki Melody☆ (⭐︎きらめきメロディ⭐︎) :") is the heading of the group; a place with a digit in its name ("environment 0g", "Studio 54") and a date right after it without "on" ("(Osaka ) 5th Aug. 2025"); a line of a track list with the title in another script or a note in brackets after it ("Dosukoi Alley (どすこい横丁)", "(Remastered)", "(Bonustrack, only on CD)") is left out as such' },
     { id: 'S349', where: 'TEXT.parse (tidyLines; BY_NAME_DATE), shopLines, mergeMoreCredits, labelHintHtml', note: 'Texts and Bandcamp (3.194.0; collected item Z-BCWHAT): "Recorded and mixed by Frank Diedrich November 2024 - June 2025" – the name ends before the date (until 3.193.0 the whole line was not recognized); "Label:" with the label\'s website below it or after it – no credit; the instruments of a person two texts of the page give differently ("bass and fx" in the text of the vinyl edition, "bass and synth" in "about") – those only one of them names are suggestions (held on Skip), and a hint above the entries names every such difference. "fx" is effects, credited as written' },
     { id: 'S350', where: 'parseRoleNotation', note: 'Roles (3.194.0; collected item Z-LITTLEINST): Discogs "Instruments [Little Instruments]" – the detail says which instruments: other instruments, credited "little instruments" (R117)' },
+    { id: 'S351', where: 'statRecords, statRecordsHtml, statExtras, globalCoreParts, globalRecords, globalStatsClean', note: 'Statistics (3.195.0; collected item Z-STATTOP; the dumps: stats/global_stats.py): a card "Records" – the release with the most relationships, the recording with the most relationships, the release with the most artists, the longest time on a release, the most works created at once, the day with the most relationships; releases and recordings with a link to MusicBrainz. "Global": the same from the dumps where they tell it (no time on a release; the works created by one editor at most 30 minutes apart), no editors' },
+    { id: 'S352', where: 'renderLauncher, qfNothingEmpty', note: 'Relationship editor (3.195.0; collected item Z-QFHIDE): "Fill empty recordings" is not shown while every recording of the release has relationships (in MusicBrainz or staged) – looked at again every few seconds; with media not loaded yet it stays' },
     { id: 'S299', where: 'TEXT.parse (shopLines; SHOP_BLOCK_LINES)', note: 'Texts (3.169.0; Z-BCSHOPBLOCK): what a shop writes below an edition is left out as "shop" – the edition\'s name with "(Limited Edition …)" and its format, what the records look like ("2 x 180gsm …", "DiscA/B - Transparent green with gold blob", "Packaged in a standard Sleeve."), the block about shipping ("+++++INTERNATIONAL SHIPPING +++++", "- WE DO NOT SHIP TO PO BOXES", "- ALL ORDERS ARE SENT BY TRACKED COURIER …", "UK: 2-3 days") and the page\'s own details ("published March 29, 2019", "license"). They stood under "not recognized". Every free text' },
     { id: 'S298', where: 'TEXT.parse (hyphenTrackLines; HT_TRACKS, HT_HYPHEN, HT_HEAD, HT_SPLIT)', note: 'Texts (3.169.0; Z-HYPHENTRACKS): a lineup written "Pete Callard-Acoustic Guitar On Tracks 1,2,3, Electric Guitar on Tracks 18,19 Hari-Om- Vocals On Tracks 9,10 …" – a hyphen without spaces between name and role, each role with its tracks, the whole lineup in one paragraph (Beatport and shop texts): the paragraph is cut before each name, the name is what stands before the first hyphen whose right side begins with a role ("Hari-Om- Vocals": Hari-Om), "and Vocals on Tracks …" and a role after a list of tracks are roles of their own, "on all tracks" says nothing new; a heading before the first name ("Musicians In The Studio") is a heading. Only for a line that names tracks that way. Every free text' },
     { id: 'S296', where: 'videoLevelWant, videoLevelFor, VIDEO_RULES, R033 (mapRole), rgIsDjMix, Q022', note: 'Video credits and DJ mixes (3.164.0; proposals F-VIDEOLEVEL, F-DJMIX of review run 2): every credit of a video – video director, camera work, cinematographer and the table of video credits (R076, R110, R119) – is on the recordings when its tracks are videos – from 3.169.0 on the videos only when just some of its tracks are (Z-VIDEOTRACKS; until then such a credit went to the release) – and on the release when none is, where MusicBrainz has the type there (the cinematographer and the camera work were always on the recordings, the others on the release). "Mixed By [DJ Mix]" is the DJ-mix of the release, not the mix engineer; on a release group of the type DJ-mix "Mixed By" asks which of the two (Q022)' },
@@ -57235,6 +57247,13 @@
         medleys: [...S.workParts.values()].filter((ps) => ps.length && ps[0].medley && !ps[0].songs).length,
       },
       works: { linked: links.length, created: links.filter((it) => it.tg && created.has(it.tg)).length, pending: links.filter((it) => !it.tg).length },
+      // [Z-STATTOP] (3.195.0, S351) the titles of the recordings with the most relationships of this submission (for the records)
+      recTitles: (() => {
+        const n = new Map();
+        rels.forEach((it) => { if (it.lv === 'recording' && it.c && it.c.src) n.set(it.c.src, (n.get(it.c.src) || 0) + 1); });
+        return Object.fromEntries([...n].sort((a, b) => b[1] - a[1]).slice(0, 3)
+          .map(([g]) => [g, String(((S.mbTracks || []).find((tk) => tk.recordingGid === g) || {}).title || '').slice(0, 120)]));
+      })(),
       // [Z-STG2] (3.42.6) Discogs's genres and styles and Bandcamp's tags, each of the source read or supplementing it
       genres: uniq(statRels().flatMap((r) => [...(r.genres || []), ...(r.styles || []).map(norm)])).slice(0, 12),
       bcTags: uniq(statRels().flatMap((r) => (r.bcTags || []).map(norm))).slice(0, 12),
@@ -57823,11 +57842,29 @@
       role_credits: pair(c.role_credits),
       // [Z-SRR] (3.91.0) per release: the recordings and the relationships per recording (a core pass before 3.91.0: none)
       per_release: srrClean(c.per_release, ['recordings', 'rels_per_recording']),
+      // [Z-STATTOP] (3.195.0) the release and the recording of the records: an MBID, a title of at most 200 characters, a number
+      records: (() => {
+        const r = obj(c.records);
+        const id = (x) => (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(String(x || '')) ? String(x) : '');
+        const one = (o, k) => (obj(o)[k] && id(obj(o)[k]) ? { [k]: id(obj(o)[k]), title: String(obj(o).title || '').slice(0, 200), n: Number(obj(o).n) || 0 } : null);
+        const out = { rel: one(r.rel, 'mbid'), artists: one(r.artists, 'mbid'), rec: one(r.rec, 'gid') };
+        return Object.values(out).some(Boolean) ? out : null;
+      })(),
     } : null;
     return { dump: String(d.dump || '').slice(0, 40), totals: nums(d.totals), done: nums(d.done), by_month: rows(d.by_month, ['edits', 'submissions', 'editors']),
       by_version: rows(d.by_version, ['edits', 'submissions']), by_status: nums(d.by_status), by_source: nums(d.by_source), by_relationship_type: nums(d.by_relationship_type),
       done_by_level: nums(d.done_by_level), by_edit_type: nums(d.by_edit_type), credits: { credited_as: pair(obj(d.credits).credited_as) }, core,
       per_release: srrClean(d.per_release, ['rels']),
+      // [Z-STATTOP] (3.195.0) the records of the edits: the day with the most relationships, the most works at once (days, numbers)
+      records: (() => {
+        const r = obj(d.records);
+        const day = (x) => (/^\d{4}-\d{2}-\d{2}$/.test(String(x || '')) ? String(x) : '');
+        const out = {
+          day: day(obj(r.day).d) ? { d: day(obj(r.day).d), n: Number(obj(r.day).n) || 0 } : null,
+          works: Number(obj(r.works).n) > 0 ? { n: Number(obj(r.works).n), d: day(obj(r.works).d) } : null,
+        };
+        return out.day || out.works ? out : null;
+      })(),
       // [Z-GSTNEW] (3.139.0) supplemented instead of new, their sources, remixes and commissions (a file of before: none)
       supplements: nums(d.supplements), supplemented: d.supplemented ? pair(d.supplemented) : null, source_mix: d.source_mix ? nums(d.source_mix) : null,
       remixes: d.remixes ? { remixer: Number(obj(d.remixes).remixer) || 0, remix_of: Number(obj(d.remixes).remix_of) || 0, commissioned: Number(obj(d.remixes).commissioned) || 0 } : null,
@@ -57917,7 +57954,7 @@
   }
   /** [Z-GLB] (3.65.0) The groups of "Global" (its cards by their keys). */
   // ([Z-GSTNEW] 3.139.0) What: supplemented instead of new, remixes and commissions; Sources: the sources of the submissions together
-  const GLOBAL_STATS_GROUPS = [['what', ['glevels', 'suppl', 'remixes']], ['who', ['glinked', 'gcreated', 'credits', 'artists']], ['releases', ['perrelease', 'media', 'script', 'lengths']], ['sources', ['gsources', 'gsupp']]];
+  const GLOBAL_STATS_GROUPS = [['what', ['glevels', 'suppl', 'remixes']], ['who', ['glinked', 'gcreated', 'credits', 'artists']], ['releases', ['gtoprecords', 'perrelease', 'media', 'script', 'lengths']], ['sources', ['gsources', 'gsupp']]];
   /** [Z-SRR] (3.91.0) "Per release" of all users: the edits' part (relationships, by level) and the core's (recordings, per recording). */
   function globalPerRelease(d) {
     const e = d && d.per_release;
@@ -57956,6 +57993,8 @@
     // [Z-SRR] (3.91.0, S143) per release
     const pr = ruleOn('S143') ? globalPerRelease(d) : null;
     if (pr) card('perrelease', statPerReleaseHtml(pr));
+    // [Z-STATTOP] (3.195.0, S351) the records of all users' submissions (from the dumps; no editors)
+    if (ruleOn('S351') && globalRecords(d)) card('gtoprecords', statRecordsHtml(globalRecords(d), { global: true }));
     // [Z-GSTNEW] (3.139.0) from every run (the edit dump): supplemented instead of new, remixes and commissions, the sources of the
     // submissions with their supplements – as the cards of this browser (3.131.0); a file of before has none of them
     // ((review) the same label once, its numbers together; "unknown" a label of its own
@@ -58041,7 +58080,7 @@
     ['when', ['when', 'lengths']],
     ['what', ['levels', 'dates', 'attrs', 'works2', 'suites', 'dedications', 'magic', 'helpers', 'live', 'gaps', 'suppl', 'decisions', 'may', 'remixes', 'instruments']],
     ['who', ['linked', 'artists', 'credits', 'labelsplaces', 'found', 'together', 'own']],
-    ['releases', ['perrelease', 'releases', 'media', 'script', 'genres']],
+    ['releases', ['toprecords', 'perrelease', 'releases', 'media', 'script', 'genres']],
     ['sources', ['sources', 'origins', 'leftout', 'ocr']],
   ];
   /** [Z-STL] (3.61.0) The one line of a folded card: the first entry of its body as text ("0 % with a date", "producer 6"). */
@@ -58186,7 +58225,7 @@
       <tbody>${per.map(([k, g]) => `<tr data-period-key="${esc(k)}"><th scope="row">${esc(k)}</th><td>${statNum(g.releases.size)}</td>
         <td><span class="dci-stats-bar" style="width:${Math.max(2, Math.round((60 * g.rels) / max))}px" aria-hidden="true"></span> ${statNum(g.rels)}</td>
         <td>${statPct(g.n, g.n + g.s)} %</td><td>${statPct(g.s, g.n + g.s)} %</td><td>${esc(statDur(g.msRels ? g.msSum / g.msRels : null))}</td></tr>`).join('')}</tbody></table></div>`;
-    const list = (key, items) => `<div class="dci-stats-list" data-el="stats-top-${key}"><h4>${esc(tr(`stats.top.${key}`))}</h4>${items.length
+    const list = (key, items) => `<div class="dci-stats-list" data-el="stats-top-${key}"><h4>${esc(tr(`stats.best.${key}`))}</h4>${items.length
       ? `<ol>${items.map((x) => `<li><span>${esc(x.name)}</span> <span class="dci-sub">${statNum(x.n)}</span></li>`).join('')}</ol>` : `<p class="dci-sub">–</p>`}</div>`;
     // ([Z-STL] 3.61.0, S4) up to ten each, the first three shown ("+ n more")
     const tops = `<div class="dci-stats-lists">${list('artists', statTop(a.artists, 10))}${list('instr', statTop(a.instr, 10))}${list('types', statTop(a.types, 10))}</div>`;
@@ -58825,6 +58864,7 @@
     return `${card('suites', `${kv([['suites', su.n], ['created', su.created], ['found', su.found], ['manual', su.manual], ['parts', su.parts], ['perSuite', perSuite], ['medleys', su.medleys], ['partsRels', su.partsRels]]
       .filter(([k, n]) => n || k === 'suites' || k === 'medleys'), (k) => tr(`stats.suites.${k}`))}${since}`)}
       ${statsMore192Html(m, recs.length, { top, kv, card })}
+      ${ruleOn('S351') ? card('toprecords', statRecordsHtml(statRecords(recs))) : ''}
       ${card('attrs', `${kv(top(m.attrs, 8))}${since}`)}
       ${card('works2', `${kv([['linked', m.works2.linked], ['created', m.works2.created], ['pending', m.works2.pending]], (k) => tr(`stats.works2.${k}`))}${since}`)}
       ${card('genres', `${statGenresHtml(m, { top, kv, cap: titleCase })}${since}`)}
@@ -58839,6 +58879,90 @@
    * [Z-STATNEW] (3.192.0) Three more: dedications and tributes (from every record), "✨ Answer all" and the dashboard's helpers (counted
    * from 3.192.0 on).
    */
+  /**
+   * [Z-STATTOP] (3.195.0, S351) The records of the submissions: the release and the recording with the most relationships, the release
+   * with the most artists, the longest time on a release, the most works created at once, the day with the most relationships.
+   */
+  function statRecords(recs) {
+    const byRel = new Map();
+    const byRec = new Map();
+    const byDay = new Map();
+    let works = null;
+    for (const r of recs || []) {
+      const rels = r.rels || [];
+      const k = r.mbid;
+      if (!k) continue;
+      const title = (r.rel && r.rel.title) || '';
+      const x = byRel.get(k) || { mbid: k, title, rels: 0, artists: new Set(), ms: 0 };
+      x.rels += rels.length;
+      if (!x.title) x.title = title;
+      rels.forEach((it) => { if (it.et === 'artist' && it.tg) x.artists.add(it.tg); });
+      const ms = statTime(r);
+      if (ms != null) x.ms += ms;
+      byRel.set(k, x);
+      const titles = (r.x && r.x.recTitles) || {};
+      rels.forEach((it) => {
+        if (it.lv !== 'recording' || !it.c || !it.c.src) return;
+        const y = byRec.get(it.c.src) || { gid: it.c.src, n: 0, title: '', rel: k, relTitle: title };
+        y.n++;
+        if (!y.title && titles[it.c.src]) y.title = titles[it.c.src];
+        byRec.set(it.c.src, y);
+      });
+      if (r.at && rels.length) {
+        const d = new Date(r.at);
+        const day = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        byDay.set(day, (byDay.get(day) || 0) + rels.length);
+      }
+      const wc = Number(((r.x || {}).works || {}).created) || 0;
+      if (wc && (!works || wc > works.n)) works = { n: wc, mbid: k, title };
+    }
+    const max = (xs, f) => [...xs].reduce((b, x) => (f(x) > 0 && (!b || f(x) > f(b)) ? x : b), null);
+    const rel = max(byRel.values(), (x) => x.rels);
+    const art = max(byRel.values(), (x) => x.artists.size);
+    const time = max(byRel.values(), (x) => x.ms);
+    const rec = max(byRec.values(), (y) => y.n);
+    const day = max([...byDay].map(([d, n]) => ({ d, n })), (z) => z.n);
+    return {
+      rel: rel && { mbid: rel.mbid, title: rel.title, n: rel.rels },
+      rec: rec && { gid: rec.gid, title: rec.title, n: rec.n, rel: rec.rel, relTitle: rec.relTitle },
+      artists: art && { mbid: art.mbid, title: art.title, n: art.artists.size },
+      time: time && { mbid: time.mbid, title: time.title, ms: time.ms },
+      works,
+      day: day && { d: day.d, n: day.n },
+    };
+  }
+  /**
+   * [Z-STATTOP] (3.195.0, S351) The records of all users from the file of the dumps: the day and the works at once from the edits, the
+   * release and the recording (MBID, title) from the core pass; null without any.
+   */
+  function globalRecords(d) {
+    const e = (d && d.records) || {};
+    const c = (d && d.core && d.core.records) || {};
+    const ok = (x) => x && typeof x === 'object';
+    const out = {
+      rel: ok(c.rel) ? { mbid: String(c.rel.mbid || ''), title: String(c.rel.title || ''), n: Number(c.rel.n) || 0 } : null,
+      rec: ok(c.rec) ? { gid: String(c.rec.gid || ''), title: String(c.rec.title || ''), n: Number(c.rec.n) || 0 } : null,
+      artists: ok(c.artists) ? { mbid: String(c.artists.mbid || ''), title: String(c.artists.title || ''), n: Number(c.artists.n) || 0 } : null,
+      time: null,
+      works: ok(e.works) ? { n: Number(e.works.n) || 0, d: String(e.works.d || '') } : null,
+      day: ok(e.day) ? { d: String(e.day.d || ''), n: Number(e.day.n) || 0 } : null,
+    };
+    return Object.values(out).some(Boolean) ? out : null;
+  }
+  /** [Z-STATTOP] (3.195.0, S351) The card of the records: each with a link to MusicBrainz (the release, the recording). */
+  function statRecordsHtml(rc, { global = false } = {}) {
+    if (!rc) return `<p class="dci-sub">–</p>`;
+    const link = (kind, gid, title) => (gid ? `<a href="/${kind}/${esc(gid)}" target="_blank" rel="noopener">${esc(title || tr('stats.best.untitled'))}</a>` : esc(title || '–'));
+    const row = (key, value) => `<li><span>${esc(tr(`stats.best.${key}`))}</span> <span>${value}</span></li>`;
+    const out = [];
+    if (rc.rel) out.push(row('rel', `${link('release', rc.rel.mbid, rc.rel.title)} <span class="dci-sub">${statNum(rc.rel.n)}</span>`));
+    if (rc.rec) out.push(row('rec', `${link('recording', rc.rec.gid, rc.rec.title)}${rc.rec.relTitle ? ` <span class="dci-sub">(${link('release', rc.rec.rel, rc.rec.relTitle)})</span>` : ''} <span class="dci-sub">${statNum(rc.rec.n)}</span>`));
+    if (rc.artists) out.push(row('artists', `${link('release', rc.artists.mbid, rc.artists.title)} <span class="dci-sub">${statNum(rc.artists.n)}</span>`));
+    if (rc.time) out.push(row('time', `${link('release', rc.time.mbid, rc.time.title)} <span class="dci-sub">${esc(statDur(rc.time.ms))}</span>`));
+    if (rc.works) out.push(row('works', `${rc.works.mbid ? link('release', rc.works.mbid, rc.works.title) : esc(rc.works.d || '')} <span class="dci-sub">${statNum(rc.works.n)}</span>`));
+    if (rc.day) out.push(row('day', `${esc(rc.day.d)} <span class="dci-sub">${statNum(rc.day.n)}</span>`));
+    return out.length ? `<ul class="dci-stats-kv dci-stats-records">${out.join('')}</ul>${global ? `<p class="dci-sub">${esc(tr('stats.best.global'))}</p>` : ''}` : `<p class="dci-sub">–</p>`;
+  }
   function statsMore192Html(m, nRecs, { top, kv, card }) {
     const since = m.x192 < nRecs ? `<p class="dci-sub dci-stats-since">${esc(tr('stats.since', { v: '3.192.0' }))}</p>` : '';
     const mg = m.magic;
@@ -61307,7 +61431,16 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
     // [Z-QUICKFILL] (3.150.0) Credit fill: only while switched on (⚙ Settings → Beta), in the relationship editor
     const qfBtn = bar.querySelector('#dci-quickfill');
     if (qfBtn) {
-      qfBtn.hidden = !S.qfOn || !(getMB() && getMB().relationshipEditor);
+      qfBtn.hidden = !S.qfOn || !(getMB() && getMB().relationshipEditor) || (ruleOn('S352') && qfNothingEmpty());
+      // ([Z-QFHIDE] 3.195.0, S352) looked at again while the editor changes (media loaded, relationships staged or taken out)
+      if (S.qfOn && ruleOn('S352') && !S.qfHideTimer) {
+        S.qfHideTimer = setInterval(() => {
+          const b = document.getElementById('dci-quickfill');
+          if (!b) return;
+          const h = !S.qfOn || !(getMB() && getMB().relationshipEditor) || qfNothingEmpty();
+          if (b.hidden !== h) renderLauncher();
+        }, 4000);
+      }
       qfBtn.textContent = tr('qf.button');
       qfBtn.title = tr('qf.buttonTitle');
       if (qfBtn.hidden) (document.getElementById('dci-qf') || { remove() {} }).remove();
@@ -61595,6 +61728,27 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
     return box;
   }
 
+  /**
+   * [Z-QFHIDE] (3.195.0, S352) "Fill empty recordings" has nothing to fill: every recording of the release has relationships (in
+   * MusicBrainz or staged). Only when all its media are loaded in the editor – else unknown (the button stays).
+   */
+  function qfNothingEmpty() {
+    try {
+      const mb = getMB();
+      const re = mb && mb.relationshipEditor;
+      if (!re || !re.state) return false;
+      const meds = pageMediums();
+      if (!meds.length || meds.some((m) => !m.tracks || m.tracks.length < m.count)) return false;
+      const recs = pageRecordings();
+      if (!recs.size) return false;
+      const ent = statExisting(re.state).ent;
+      const staged = qfStagedRecordings();
+      const had = S.qfHad && S.qfHad.rel === releaseMbid ? S.qfHad.recs : new Set();
+      return [...recs.keys()].every((g) => (ent.get(g) || 0) > 0 || staged.has(g) || had.has(g));
+    } catch (e) {
+      return false;
+    }
+  }
   /** "Credit fill": reads the release, says what it would fill – the button fills all of it. */
   async function quickFill() {
     const mb = getMB();
@@ -61607,6 +61761,8 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
     try {
       // ((review) every relationship counts: URLs and other recordings too; and what is staged in the editor
       const ws = await mbWs(`release/${releaseMbid}?inc=recordings+artist-rels+label-rels+place-rels+area-rels+event-rels+series-rels+instrument-rels+work-rels+recording-rels+url-rels+recording-level-rels+release-groups`);
+      // ([Z-QFHIDE] 3.195.0, S352) the recordings MusicBrainz has relationships of (the button goes once every one has some)
+      S.qfHad = { rel: releaseMbid, recs: new Set(qfTracks(ws || {}).filter((x) => x.any).map((x) => x.rec)) };
       plan = await qfPlan(ws || {}, { staged: qfStagedRecordings(), onStep: (k, n) => run === S.qfRun && !!qfShow(`<p class="dci-qf-sub">${esc(tr('qf.readingGroup', { k, n }))}</p>`) });
     } catch (e) {
       S.qfBusy = false;
