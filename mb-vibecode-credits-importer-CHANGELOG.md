@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-21 | 3.193.0 – 3.195.0 | – |
+| 2026-11-21 | 3.193.0 – 3.196.0 | – |
 | 2026-11-20 | 3.185.0 – 3.192.0 | 1.23.0 |
 | 2026-11-19 | 3.170.0 – 3.184.0 | – |
 | 2026-11-18 | 3.159.0 – 3.169.0 | – |
@@ -135,6 +135,15 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.196.0
+
+**Suites of parts, suite names changed in place, the works the dashboard created kept for the release.**
+
+- **"Part I", "Part II" …** (rule S353): headings of the track list that name parts ("Part I", "Part 2", "Teil 1", "Parte I", "Partie 1", "Book 1", "Act I", "Chapter 3"/"Kapitel 3"; two at least) are no suites of their own any more: one suite named as the release (MusicBrainz's title, "Bosque de Niebla"), its parts suites of their own ("Bosque de Niebla, Part I", "…, Part II") with the works of the tracks below each heading – three levels. One question for all of it; "✨ Answer all" from "balanced". At "Stage" the suite is created first, then each part by its form – prefilled with "part of" the suite (its MBID); the works of the tracks are linked as the parts of their part in the relationship editor.
+- **Suite names** (S354): changeable in the line of a suite not created yet ("✎", Enter takes it) and in the preview of "✨ Answer all" (a field beside the suite); the names of its parts follow. "＋ Create the suite …" is no longer the main button – "Stage" opens the forms anyway.
+- **The works the dashboard created are kept** (S355) for the release in this browser – suites, the suites of their parts, a work for several tracks – with their MBIDs, titles, the suite above them, their numbers and recordings: a later import of the release takes them again instead of creating them anew.
+- Not done: the number of a part in the form ("part of" the suite is prefilled without its order – the order of the parts is set at the suite in MusicBrainz).
 
 ### Import 3.195.0
 
