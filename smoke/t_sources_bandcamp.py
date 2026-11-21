@@ -2426,4 +2426,66 @@ def case_about3163():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+
+def case_what3194():
+    """Credits Importer 3.194.0 (collected items Z-BCWHAT, Z-SHOPMORE; rules S345, S349): a Bandcamp album whose vinyl edition repeats the
+    credits of "about" (highestprimzahlonmars, WHAT???).
+    A) "Arun Kumar: guitars" read (guitar); "Recorded and mixed by Frank Diedrich November 2024 - June 2025" read (recording and mix).
+    B) Frank Diedrich: "bass and fx" (vinyl) – "bass and synth" (about): bass one entry; synth and fx (effects) suggestions, held on Skip; the
+       hint above the entries names the difference.
+    C) "2 x 12" Vinyl", "For international orders:", "Label:" with the website, "Some rights reserved …" left out; nothing "not recognized"."""
+    ALBUM = 'https://testband.bandcamp.com/album/what'
+    BODY = ('Arun Kumar: guitars\nUli "Hank" Wagner: guitars\nFrank Diedrich: bass and {x}\nGerd Böhme: drums\n\n\n'
+            'Recorded and mixed by Frank Diedrich November 2024 - June 2025\nMastered by Chris Crescendo\nCover artwork: Meike Kolor\nCover design: Frank Diedrich\n\n'
+            'Label:\nwww.clostridiumrecords.com')
+    PKG = ('2 x 12" Vinyl\nRecord/Vinyl + Digital Album\n\nSHIPPING: GERMANY ONLY!\nFor international orders:\nwww.clostridiumrecords.com\n\n' + BODY.format(x='fx')
+           + '\n\nIncludes unlimited streaming of WHAT??? via the free Bandcamp app, plus high-quality download in MP3, FLAC and more.\nDownload available in 16-bit/44.1kHz.')
+    H.BC_PAGES[ALBUM] = H.bc_page({'artist': 'Test Band', 'current': {
+        'title': 'What', 'credits': '', 'about': BODY.format(x='synth') + '\n\nSome rights reserved. Please refer to individual track pages for license info.'},
+        'packages': [{'type_name': 'Vinyl LP', 'title': '2 x 12" Vinyl', 'description': PKG}],
+        'trackinfo': [{'track_num': i + 1, 'title': t} for i, t in enumerate(H.TITLES)]})
+    orig_ws = H.ws_release
+
+    def ws(full=False):
+        d = orig_ws(full)
+        d['relations'] = [{'target-type': 'url', 'type': 'purchase for download', 'url': {'resource': ALBUM}}]
+        for m in d['media']:
+            m['format'] = 'Vinyl'
+        return d
+    H.ws_release = ws
+    ROWS = """(() => [...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+      [...g.querySelectorAll('tr.dci-row')].map(r => [((r.querySelector('.dci-drole') || {}).dataset || {}).raw || '', ((r.querySelector('[data-act=level][aria-pressed=true]') || {}).dataset || {}).level || (r.textContent.includes('Skipped') ? 'skip' : '')])]))()"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=True, gm_xhr=True)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            pg.click('#dci-open')
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            g = dict((k, v) for k, v in pg.evaluate(ROWS))
+            hint = pg.evaluate("((document.querySelector('[data-el=label-hint]') || {}).textContent || '').replace(/\\s+/g, ' ')")
+            unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent)")
+            ign = pg.evaluate("[...document.querySelectorAll('.dci-ignored li')].map(li => li.textContent.replace(/\\s+/g, ' ').slice(0, 120))")
+            uncr = pg.evaluate("[...document.querySelectorAll('[data-el=uncr]')].map(x => x.textContent.replace(/\\s+/g, ' ').slice(0, 200))")
+            print('A/B)', g, '\n   Hinweis:', hint, '\n   Vorschläge:', uncr)
+            fd = dict(g.get('Frank Diedrich') or [])
+            results.append(any('guitar' in r for r, _ in g.get('Arun Kumar') or []) and any('guitar' in r for r, _ in g.get('Uli "Hank" Wagner') or g.get('Uli “Hank” Wagner') or [])
+                           and any(r.lower().startswith('recorded') for r in fd) and any(r.lower().startswith('mixed') for r in fd))
+            results.append('bass' in fd and fd.get('bass') != 'skip' and any('synth' in r for r in fd) and any(r == 'fx' or 'effects' in r for r in fd)
+                           and all(v == 'skip' for r, v in fd.items() if 'synth' in r or r == 'fx' or 'effects' in r)
+                           and 'Frank Diedrich: “bass, synth” (about) – “bass, fx” (Vinyl LP)' in hint)
+            print('C) ausgelassen:', ign, '| nicht erkannt:', unrec)
+            results.append(not unrec and any('2 x 12' in x for x in ign) and any('international orders' in x for x in ign)
+                           and any('Label:' in x and 'website' in x for x in ign) and uncr and uncr[0].startswith('Two texts of the page differ here'))
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    finally:
+        H.ws_release = orig_ws
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 run_cases(globals())

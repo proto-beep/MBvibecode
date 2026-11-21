@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-21 | 3.193.0 | – |
+| 2026-11-21 | 3.193.0 – 3.194.0 | – |
 | 2026-11-20 | 3.185.0 – 3.192.0 | 1.23.0 |
 | 2026-11-19 | 3.170.0 – 3.184.0 | – |
 | 2026-11-18 | 3.159.0 – 3.169.0 | – |
@@ -135,6 +135,18 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.194.0
+
+**Texts and sources: more shop lines, commissions, the design of a package, improvised music without names, two texts that differ.**
+
+- **More of what a shop writes** (rule S345): another shop of the label, a shipping policy, the wait for the pressing plant, the size of the edition ("an exclusive bandcamp edition of 180 copies", left out as "edition") and the line that goes on below it, a format as the edition's name ("2 x 12" Vinyl"), "For international orders:", "Some rights reserved", how an edition was made ("Uses a recycled 10-minute cassette tape … D.I.Y.") – left out as shop, not "not recognized".
+- **Commissions** (S346): "… commissioned by Roadburn Festival for the 2024 outing in Tilburg, Netherlands" no longer makes "Netherlands" a commissioner; a sentence of the prose gives way to the line that names the tracks ("All tracks except 'Heavy Industry' and 'Industrial Unrest' were composed and commissioned for the 2025 Roadburn Festival"); a year before the name is that of the event – no date.
+- **The design of a package** (S347): "Glass mastered CD edition of … housed in our six panel digisleeve designed by X" – design by X, without the sentence as its role credit.
+- **☆Kirameki Melody☆** (S348): "all music is improvised" without names makes the players of the text the composers (improvisations, S222); a heading with ornaments and its name in another script is the heading of the group; a place with a digit in its name ("environment 0g") and a date after it without "on"; a track list with titles in another script in brackets, "(Remastered)", "(Bonustrack, only on CD)" left out as a track list.
+- **WHAT???** (S349): "Recorded and mixed by X November 2024 - June 2025" is read; "Label:" with the label's website is no credit; instruments two texts of a Bandcamp page give differently (vinyl edition "bass and fx", about "bass and synth") – those only one names are suggestions on Skip, with a hint naming every difference; "fx" is effects.
+- **Little instruments** (S350): Discogs "Instruments [Little Instruments]" – other instruments, credited "little instruments".
+- Also: "In memory of …" already becomes a dedication only when MusicBrainz has exactly one artist of that name (S097) – no new entries.
 
 ### Import 3.193.0
 

@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.193.0, Companion 1.6.0 – 1.23.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.194.0, Companion 1.6.0 – 1.23.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,17 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.194.0 · 2026-11-21
+
+- **`shopLines`:** `SHOP_MORE_LINES`, `SHOP_MADE`, `SHOP_MADE_THING`, the line below a shop line (`prevShop`) (S345); "Label:" with a website (`WEB_ONLY`, `why: 'labelWeb'`) (S349).
+- **`commissionLine`:** the clause "for the …" cut; a sentence of the prose gives way (`why: 'commissionAgain'`); no date from a year before the name (S346).
+- **`tidyLines` (its first rules):** `PKG_DESIGN_LINE` (S347); `BY_NAME_DATE` (S349); a heading with ornaments (S348). **`improvAll`** before `improvSplit` (S348). **`placeOf`:** a date after the place without "on", digits in a name (`dateLike`) (S348). **`trackListLine`:** a title without its other script or note in brackets (S348).
+- **`mergeMoreCredits(into, extra, names)`:** `conflicts` – a person's instruments two texts give differently; `c.textConflict` → row `pkgAsk`/`confAsk` on Skip; `bcPackages[].conflicts`; hint `hint.textConflict`; `uncrHtml` text `conflict.ask` (S349). Mapping `INSTRUMENT_ALIASES` "fx" → effects.
+- **`parseRoleNotation`:** "Instruments [Little Instruments]" (S350).
+- `trackNotesLines` moved above the docblock of the promotion lines (it had come between that docblock and `promoLines`).
+- **Rules:** S345–S350. **Texts:** `ignored.why.labelWeb`, `ignored.why.commissionAgain`, `hint.textConflict`, `conflict.ask`.
+- **Tests:** `t_text_lists.py` `case_texts3194` (Node), `t_sources_bandcamp.py` `case_what3194`; `t_text_places.py` `case_exceptc3125` (the commission without a date now); `register_golden.json`.
 
 ## Import 3.193.0 · 2026-11-21
 
