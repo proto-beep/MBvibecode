@@ -1072,7 +1072,8 @@ def case_quickfill3150():
     B) Switched on: "Credit fill" beside "Import credits …", stored.
     C) Track 1 has Drum Guy (drums) and its work, tracks 2–4 nothing: the window offers drums for tracks 2, 3, 4 ("as tracks 1 have
        them"); "Fill all" adds the three relationships to the editor, the edit note names the recording copied from; the statistics
-       count it only once MusicBrainz has them after "Enter edit" (3.152.0, F-QFSTATS – fable3152 C).
+       count it only once MusicBrainz has them after "Enter edit" (3.152.0, F-QFSTATS – fable3152 C). (3.195.0, Z-QFHIDE, S352) Then
+       every recording has relationships: the button goes.
     D) Track 2 has another credit than track 1: nothing is filled ("do not all have the same (1, 2)").
     E) (Z-QUICKFILL2) No track of the release has a relationship: the recordings of another release of the group with the same title
        give theirs (Bob Producer for "Song One" and "Song Two"); the others stay empty (said).
@@ -1126,6 +1127,14 @@ def case_quickfill3150():
         c2 = [pg.evaluate("document.getElementById('dci-qf').innerText.replace(/\\s+/g, ' ')"), len(pg.evaluate(ADDED)) - before]
         print('C2) nochmal:', c2)
         results.append('staged in the editor' in c2[0] and c2[1] == 3)
+        # C3) ([Z-QFHIDE] 3.195.0, S352) every recording has relationships now (staged): the button goes
+        try:
+            H.wait_for(pg, "document.getElementById('dci-quickfill').hidden === true", 12)
+            c3 = True
+        except Exception:
+            c3 = False
+        print('C3) Knopf weg:', c3)
+        results.append(c3)
         # D) another credit on track 2
         H.MB_EXTRA[H.REC[1]] = [{'target-type': 'artist', 'type': 'producer', 'type-id': H.LTS[141]['gid'], 'attributes': [], 'attribute-values': {},
                                  'artist': {'id': H.ARTISTS[3005][0], 'name': 'Bob Producer'}}]

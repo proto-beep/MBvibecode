@@ -28,7 +28,7 @@ statistics (**This browser | Global**, from Credits Importer 3.47.0).
   names it in `$schema`, with `format` `mb-vibecode-credits-importer-global` and `format_version` 2; `generated` in RFC 3339 (UTC).
   Fields not in the schema may come with newer versions: readers ignore them. `test_global_stats.py` checks its result against the
   schema (with `jsonschema` installed).
-- **Privacy:** only numbers. No editor names or ids, no edits, no releases, no URLs; "editors" is how many different ones.
+- **Privacy:** numbers, no editor names or ids, no edits, no URLs; "editors" is how many different ones. Since 3.195.0 the records (core pass) name one release and one recording – their MBIDs and titles, public entries of MusicBrainz; no editor is named with them.
 - **Safety:** an archive cut off or without the tables is an error – nothing is written or committed.
 - **How:** `global_stats.py` reads the archive as a stream (nothing on disk): the table `edit` (the edits from `--since` on, by
   default 2026-09-01 – the first version is of 2026-09-28), `edit_data` (the relationship type of those edits), `edit_note` (the
