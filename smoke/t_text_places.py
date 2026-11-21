@@ -1547,7 +1547,8 @@ def case_exceptc3125():
     "Heavy Industry", "Industrial Unrest", "This Machine (TVAM Remix)"; the text (a sentence over two lines):
     "All tracks except 'Heavy Industry' and 'Industrial Unrest' were" / "composed and commissioned for the 2025 Roadburn Festival."
     A) An entry "Roadburn Festival" (a label, not left out as a festival): "commissioned" on the works of tracks 1 and 2 – not 3, 4
-       (named), not 5 (a remix) – dated 2025 (until 3.124.0 both lines not recognized); no date of the composition, no festival
+       (named), not 5 (a remix) – without a date (until 3.124.0 both lines not recognized; 3.125.0 – 3.193.0 dated 2025: since 3.194.0,
+       S346, the year before the name is that of the festival, no date of the commission); no date of the composition, no festival
        recording.
     B) MusicBrainz has only "Roadburn Records": suggested (similar, by the name without "Festival"), "Create label …" at hand.
     C) "Composed for the Holland Festival" (no "commissioned"): a commission too (COMMISSIONER_WORDS), no dedication;
@@ -1593,7 +1594,7 @@ Written for Jane Roe."""
         ded = pg.evaluate("[...document.querySelectorAll('[data-el=dedbox]')].map(x => x.textContent.replace(/\\s+/g, ' '))")
         pool = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-pool:{H.REL}') || '[]').map(d => [d.name, d.begin.year])")
         print('A) Matrix:', mx, '| nicht erkannt:', unrec, '| Pool:', pool)
-        ok_a = (mx.get('Roadburn Festival') == [['commissioned'], ['2025'], [1, 2]] and unrec == ['Written for Jane Roe.']
+        ok_a = (mx.get('Roadburn Festival') == [['commissioned'], [], [1, 2]] and unrec == ['Written for Jane Roe.']
                 and not any(y == 2025 for _, y in pool) and not any(re.search('festival', l, re.I) and re.search('Not used|Festival recording', l) for l in log))
         results.append(ok_a)
         print('B) Roadburn Festival:', rb)
