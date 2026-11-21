@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.192.0
+// @version      3.193.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.192.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.192.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.193.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.193.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.192.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.193.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -10012,6 +10012,14 @@
         gone.add(i);
         P.ignored.push({ text: L[i].trim(), why, ...extra });
       };
+      // [F-PARSESTAGES] (3.193.0) in three parts: the lines left out, the lines rewritten, a track named after "on"
+      freeTextMarks(P, L, gone, drop);
+      const out = freeTextRewrite(P, L, gone, drop);
+      freeTextTitleOn(P, out);
+      return out;
+    }
+    /** [F-PARSESTAGES] (3.193.0) freeTextPre, part 1: the lines left out (marked in `gone`) – promotion, addresses, headings, signatures. */
+    function freeTextMarks(P, L, gone, drop) {
       const nextFull = (i) => {
         let j = i + 1;
         while (j < L.length && !L[j].trim()) j++;
@@ -10106,6 +10114,9 @@
           }
         }
       }
+    }
+    /** [F-PARSESTAGES] (3.193.0) freeTextPre, part 2: the lines rewritten – a line as written (rawOf) for one or more lines the reader knows. */
+    function freeTextRewrite(P, L, gone, drop) {
       // the lines rewritten: a line as written (rawOf) for one or more lines the reader knows
       const out = [];
       const put = (orig, ...ls) => {
@@ -10275,6 +10286,10 @@
         }
         put(l, l);
       }
+      return out;
+    }
+    /** [F-PARSESTAGES] (3.193.0) freeTextPre, part 3: "… on change" – a track named after "on" without quotation marks. */
+    function freeTextTitleOn(P, out) {
       // [Z-HELPOF] (S259) "… on change": a track named after "on" without quotation marks – exactly one track of the release by that title
       if (ruleOn('S259') && P.ownTitles.size) {
         for (let k = 0; k < out.length; k++) {
@@ -10302,7 +10317,6 @@
           out[k] = y;
         }
       }
-      return out;
     }
 
     /** Stage 1, the pre-filter: the lines of the text; press quotes (S244), what a shop writes (S287, S299) and the prose of a free text are left out. */
@@ -10515,6 +10529,14 @@
         return t;
       };
       const lines = lines0.map(String);
+      // [F-PARSESTAGES] (3.193.0) in four parts: what is no credit, media as headings, names after •, roles above their names, the lines of names
+      let out = bookletDrop(P, lines, keep);
+      out = bookletMedia(P, lines, out, keep);
+      out = bookletHeadBelow(P, lines, out, keep);
+      return bookletNames(P, lines, out, keep);
+    }
+    /** [F-PARSESTAGES] (3.193.0) bookletLines, part 1: what is no credit – legal notices and codes, the makers of the instruments, the lines of a track list. */
+    function bookletDrop(P, lines, keep) {
       const blank = (i) => i < 0 || i >= lines.length || !lines[i].trim();
       // --- what is no credit: legal notices and codes, the makers of the instruments, the lines of a track list
       let out = [];
@@ -10578,6 +10600,10 @@
         }
         out.push(l);
       }
+      return out;
+    }
+    /** [F-PARSESTAGES] (3.193.0) bookletLines, part 2: a line only of media above lines without tracks; "Name (Instrument) • Name (Instrument)". */
+    function bookletMedia(P, lines, out, keep) {
       // --- [Z-MEDIAHEAD] (3.178.0, S312) a line only of media – "CD#1, CD#2, CD#3, CD#4", "CD 5" – above lines without tracks of their
       // own: they hold for the tracks of those media (until an empty line or the next such heading)
       if (ruleOn('S312') && P.resolveTracks) {
@@ -10636,6 +10662,10 @@
         if (dangling) next.push(dangling.t);
         out = next;
       }
+      return out;
+    }
+    /** [F-PARSESTAGES] (3.193.0) bookletLines, part 3: a role as a line of its own, the names or the place in the lines below. */
+    function bookletHeadBelow(P, lines, out, keep) {
       // --- [Z-HEADBELOW] (S302) a role as a line of its own, the names or the place in the lines below
       if (ruleOn('S302')) {
         const next = [];
@@ -10721,6 +10751,10 @@
         }
         out = next;
       }
+      return out;
+    }
+    /** [F-PARSESTAGES] (3.193.0) bookletLines, part 4: the lines of names – "ROLLE : Name", "Name role", the parts of an opera; the release artist above its lineup. */
+    function bookletNames(P, lines, out, keep) {
       // --- the lines of names: "ROLLE : Name" in German, "Name role" without a sign between them, the parts of an opera
       const done = new Set();
       const nameRoles = ruleOn('S300') ? out.map((l, i) => {
@@ -11029,6 +11063,14 @@
         });
       }
       if (!ruleOn('S144')) return lines;
+      // [F-PARSESTAGES] (3.193.0) then in four parts: one line joined or split, the track lists, paragraphs and broken lines, the names
+      let out = tidyJoin(P, lines, keep);
+      out = tidyTrackLists(P, out, keep);
+      out = tidyParagraphs(P, out, keep);
+      return tidyNames(P, out, keep);
+    }
+    /** [F-PARSESTAGES] (3.193.0) tidyLines, part 1: full-width marks, the heading of a lineup, semicolons, asides between dashes, home studios, the inside cover, a line of publishers. */
+    function tidyJoin(P, lines, keep) {
       // [Z-FWC] the colon and brackets of Japanese and Chinese texts ("Tsutomu Sonoda：Vocal") as ASCII
       let out = lines.map((l) => keep(l.replace(/\s*：\s*/g, ': ').replace(/（/g, ' (').replace(/）/g, ')'), l));
       // [Z-PERSONNELHEAD] (3.153.0, S269) "Personnel: Edgar Froese (guitar); …": the heading before the list is no part of it
@@ -11094,6 +11136,10 @@
           return parts.map((x) => keep(x, raw));
         });
       }
+      return out;
+    }
+    /** [F-PARSESTAGES] (3.193.0) tidyLines, part 2: track lists with lengths, without numbers, with headings of works between them. */
+    function tidyTrackLists(P, out, keep) {
       // [Z-OCRTRACKCHECK] (3.154.0, S281) a track list with lengths ("1. Stratosfear 10:00", "B2 The Big Sleep … (4:50)"): no credits – compared with
       // the tracks in MusicBrainz below (two such lines at least)
       if (ruleOn('S281')) {
@@ -11175,6 +11221,10 @@
           });
         }
       }
+      return out;
+    }
+    /** [F-PARSESTAGES] (3.193.0) tidyLines, part 3: an essay in short lines, a line of roles broken, a line that ends with "by", "All lyrics was written by". */
+    function tidyParagraphs(P, out, keep) {
       // [Z-OCRESSAY] (3.154.0, S280) an essay broken into short lines (a scan of a booklet): its lines one paragraph – a line of six words or more without
       // a colon, not ended by a sentence, and the next one going on in small letters – so that it is read as prose (left out, S203)
       if (ruleOn('S280')) {
@@ -11239,6 +11289,10 @@
           return keep(t.replace(/\b(a)rt\s+work\b/gi, (w, a) => `${a}rtwork`).replace(/\b(s)ampring\b/gi, (w, a) => `${a}ampling`), P.rawOf.get(l) || l);
         });
       }
+      return out;
+    }
+    /** [F-PARSESTAGES] (3.193.0) tidyLines, part 4: the names of "Name: roles" lines, models as roles, a list broken, poetry among the instruments. */
+    function tidyNames(P, out, keep) {
       // [Z-NCL] the names of "Name: roles" lines of this text
       const known = new Map();
       const spellings = new Map();
@@ -13928,6 +13982,16 @@
 
     /** Stage 4, after the reading: what only the whole text tells – marks of lines, lineups, ensembles, initials, the tracks of scans … */
     function stageFinish(P) {
+      // [F-PARSESTAGES] (3.193.0) in five parts, in this order (each reads and changes P; the last may end the reading with the text read the
+      // other way round)
+      finishMarks(P);
+      finishPlayers(P);
+      finishLeftOut(P);
+      finishPlaces(P);
+      return finishTracks(P);
+    }
+    /** [F-PARSESTAGES] (3.193.0) Stage 4, part 1: marks of lines, lines "All … by X except", covers and quotes arranged. */
+    function finishMarks(P) {
       // [Z-THANKSFOR] (S256) [Z-LINEUPHEAD] (S257) (3.146.0) the credits of those lines marked
       // ((review) by the line as written and as read together: another line "John Doe – guitar" of the text is none of them; the same person
       // with the same role elsewhere, or with an instrument elsewhere (a lineup), keeps only that credit
@@ -13965,6 +14029,9 @@
       const arrangedOn = (set) => P.credits.some((c) => /arrang/i.test(c.role) && c.tracks && c.tracks.indexes && c.tracks.indexes.some((i) => set.has(i)));
       P.covers.forEach((c) => { c.arranged = arrangedOn(c.scope.set); c.tracks = [...c.scope.set]; });
       P.quotes.forEach((q) => { q.tracks = [...q.scope.set]; });
+    }
+    /** [F-PARSESTAGES] (3.193.0) Stage 4, part 2: the players of the text: amplifiers, initials, members, "I played …", ensembles, abbreviations. */
+    function finishPlayers(P) {
       // ([Z-SEI2] 3.96.0, review) the players of the text: names with an instrument or a voice
       P.playersOut = () => uniq(P.credits.filter((c) => c.who && c.who.name && !c.who.placeholder && playable(P, c.role)).map((c) => norm(c.who.name)));
       // [Z-AMP] (3.96.0, S151) the amplifiers and effects: the person in brackets, else the one player of the text (guitar; bass; keys),
@@ -14086,6 +14153,9 @@
           if (k >= 0) P.credits.splice(k, 1);
         }
       }
+    }
+    /** [F-PARSESTAGES] (3.193.0) Stage 4, part 3: what is left out as such: studios as art credits, fantasy roles, lines of track lists, prose, asides, promotion, improvisations. */
+    function finishLeftOut(P) {
       // [S058] (3.38.12) blocks whose order was not clear: the text read the other way round too – its credits of those blocks and
       // its lines not recognized; "⇅" swaps them in the dashboard without reading the source again (F-5), the changes made there stay
       // [Z-STUDIO] ((review) S188) a studio this text names as a place too ("Recorded at Foo Studios", "Mixed in …"): its art roles stay
@@ -14249,6 +14319,9 @@
         }
         if (hit && !P.ignored.some((g) => g.text === raw)) P.ignored.push({ text: raw, why: 'improv' });
       });
+    }
+    /** [F-PARSESTAGES] (3.193.0) Stage 4, part 4: places, areas, the tracks of scans, companies of the cover, signatures, names written small, surnames. */
+    function finishPlaces(P) {
       // [Z-HOMESTUDIO] [Z-RECINAREA] (3.153.0, S273) "recorded at the band's home studio in Tampere, Finland": a studio without a name – no place
       // (MusicBrainz has none for it), said above the entries –; the town it is in an area the recordings were recorded in
       if (ruleOn('S273')) {
@@ -14356,6 +14429,9 @@
           c.who = { ...c.who, name: hits[0], rawName: hits[0], surnameOf: n };
         });
       }
+    }
+    /** [F-PARSESTAGES] (3.193.0) Stage 4, part 5: the tracks a credit holds for: bonus tracks, the text read the other way round, the medium of a distributor. */
+    function finishTracks(P) {
       // [Z-BONUSONLY] (3.157.0, S290) the credits of the whole release hold for a bonus track too – not for the last tracks whose titles name
       // another session ("live", "demo", "rehearsal"; not "outtake"): their players, studios and engineers are others (writers stay)
       if (ruleOn('S290') && !P.ctx0.oneTrack) {
@@ -14388,6 +14464,21 @@
     function parse(text, ctx0) {
       // [F-PARSESTAGES] (3.175.0) everything the reading of one text shares – its options, what it collects, its tables – is a field of P;
       // the helpers and the four stages are functions of the module that get P (above parse, in sections by stage: none is defined inside it)
+      // [F-PARSESTAGES] (3.193.0) the state of one reading: what it collects, then its patterns
+      const P = parseState(text, ctx0);
+      parsePatterns(P);
+      // [F-PARSESTAGES] (3.172.0) The text is read in four stages, one after another – each a function of its own (3.175.0: of the module);
+      // what a later stage needs of an earlier one is a field of P (lines0, pre, songRead, allLines, heads, playersOut, playing, lineup, ensOut, at0)
+      stagePrefilter(P);
+      stagePrepare(P);
+      stageRead(P);
+      // (the last stage returns the result itself when the text is read a second time the other way round, S058)
+      const early = stageFinish(P);
+      if (early) return early;
+      return { credits: P.credits, companies: P.companies, unrecognized: P.unrecognized, ignored: P.ignored, stackAlt: [], stackAltUnrec: null, covers: P.covers, quotes: P.quotes, groups: groupsOut(P), songs: P.songRead.songs, players: P.playersOut(), guessedWords: [...P.guessedSet], series: P.series, ensembles: P.ensOut, firstPerson: P.firstPerson, liveHeads: P.liveHeads, headings: P.headings, based: P.based };
+    }
+    /** [F-PARSESTAGES] (3.193.0) The state of one reading: the options, the release, and what the stages collect (lists, sets, maps). */
+    function parseState(text, ctx0) {
       const P = { text, ctx0 };
       ({ isRole: P.isRoleKnown, isCompanyRole: P.isCompanyRoleKnown, resolveTracks: P.resolveTracks, resolveTitles: P.resolveTitles, artistNames: P.artistNames0 = [], stackUp: P.stackUp = false, placeNames: P.placeNames = [], titleNames: P.titleNames = [],
         ownTexts: P.ownTexts = [], trackCount: P.trackCount = 0, oneTrack: P.oneTrack = false, players: P.players = [], guessedWords: P.guessedWords = [], releaseTitle: P.releaseTitle = '' } = P.ctx0);
@@ -14452,6 +14543,10 @@
       P.titleKeys = new Set((P.titleNames || []).map((n) => norm(n)).filter(Boolean));
       P.catKey = (x) => String(x || '').toLowerCase().replace(/[\s.\-–_/]+/g, '');
       P.catKeys = ((P.ctx0 && P.ctx0.catnos) || []).map(P.catKey).filter((k) => k.length >= 3);
+      return P;
+    }
+    /** [F-PARSESTAGES] (3.193.0) The patterns and the tables one reading uses (some built from its options: own rules, titles, catalogue numbers). */
+    function parsePatterns(P) {
       /**
        * "Mixed and mastered" → ["Mixed By", "Mastered By"]; one known role stays one ("Music and lyrics by");
        * "Strings arranged" → "Arranged By [Strings]".
@@ -14605,15 +14700,6 @@
       P.lineupLines = new Set();
       P.liveHeads = []; // [Z-LIVEEVENT] (3.147.0, S264) { song, event, venue, date, line }
       P.labelNames = uniq([...((P.ctx0 && P.ctx0.labelNames) || [])].map((n) => norm(n)).filter(Boolean));
-      // [F-PARSESTAGES] (3.172.0) The text is read in four stages, one after another – each a function of its own (3.175.0: of the module);
-      // what a later stage needs of an earlier one is a field of P (lines0, pre, songRead, allLines, heads, playersOut, playing, lineup, ensOut, at0)
-      stagePrefilter(P);
-      stagePrepare(P);
-      stageRead(P);
-      // (the last stage returns the result itself when the text is read a second time the other way round, S058)
-      const early = stageFinish(P);
-      if (early) return early;
-      return { credits: P.credits, companies: P.companies, unrecognized: P.unrecognized, ignored: P.ignored, stackAlt: [], stackAltUnrec: null, covers: P.covers, quotes: P.quotes, groups: groupsOut(P), songs: P.songRead.songs, players: P.playersOut(), guessedWords: [...P.guessedSet], series: P.series, ensembles: P.ensOut, firstPerson: P.firstPerson, liveHeads: P.liveHeads, headings: P.headings, based: P.based };
     }
 
     /**
