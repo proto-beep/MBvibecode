@@ -13,6 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
+| 2026-11-21 | 3.193.0 | – |
 | 2026-11-20 | 3.185.0 – 3.192.0 | 1.23.0 |
 | 2026-11-19 | 3.170.0 – 3.184.0 | – |
 | 2026-11-18 | 3.159.0 – 3.169.0 | – |
@@ -134,6 +135,13 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.193.0
+
+**The text reader in smaller parts (no change in what it reads).**
+
+- F-PARSESTAGES, step 2: the longest functions of the text reader are split into parts with names of their own – the last stage (`stageFinish`: marks, players, lines left out, places and names, tracks), the preparing of lines (`tidyLines`: joins, track lists, paragraphs, names), the prefilter of free text (`freeTextPre`: lines left out, lines rewritten, a track after "on"), the booklet shapes (`bookletLines`: no credits, media, roles above names, lines of names) and the start of a reading (`parse`: its state and its patterns). The longest function now has 174 lines (before: 457).
+- What the reader makes of a text is unchanged: the 183 texts of the golden test read the same.
 
 ### Import 3.192.0
 
