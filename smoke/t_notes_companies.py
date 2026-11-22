@@ -1186,7 +1186,8 @@ def case_dedbox():
         return d
     H.discogs_release = dg
     BOX = """(() => { const b = document.querySelector('[data-el=dedbox]'); if (!b || b.hidden) return null;
-      return { list: [...b.querySelectorAll('.dci-dedlist li')].map(li => li.textContent.replace(/\\s+/g, ' ').trim()),
+      return { list: [...b.querySelectorAll('.dci-dedlist li')].map(li => { const c = li.cloneNode(true); const sw = c.querySelector('.dci-dedsw');
+        if (sw) sw.replaceWith(((sw.querySelector('.dci-on') || {}).dataset || {}).kind === 'tribute' ? 'tribute to' : 'dedicated to'); return c.textContent.replace(/\\s+/g, ' ').trim(); }),
         sugg: [...b.querySelectorAll('.dci-dedsugg:not(.dci-dedform)')].map(x => [x.querySelector('strong').textContent.trim(), x.querySelector('.dci-sub').textContent.trim(),
           [...x.querySelectorAll('[data-act=ded-pick]')].map(y => y.textContent.replace(/\\s+/g, ' ').trim())]),
         create: [...b.querySelectorAll('.dci-dedsugg')].filter(x => x.querySelector('[data-el=ded-create]')).map(x => x.querySelector('strong').textContent.trim()), err: (b.querySelector('[data-el=ded-err]') || {}).textContent || '' }; })()"""
@@ -2508,7 +2509,8 @@ def case_tribute3206():
         return d
     H.discogs_release = dg
     BOX = """(() => { const b = document.querySelector('[data-el=dedbox]'); if (!b || b.hidden) return null;
-      return { list: [...b.querySelectorAll('.dci-dedlist li')].map(li => li.textContent.replace(/\\s+/g, ' ').trim()),
+      return { list: [...b.querySelectorAll('.dci-dedlist li')].map(li => { const c = li.cloneNode(true); const sw = c.querySelector('.dci-dedsw');
+        if (sw) sw.replaceWith(((sw.querySelector('.dci-on') || {}).dataset || {}).kind === 'tribute' ? 'tribute to' : 'dedicated to'); return c.textContent.replace(/\\s+/g, ' ').trim(); }),
         sugg: [...b.querySelectorAll('.dci-dedsugg')].map(x => [((x.querySelector('strong') || {}).textContent || '').trim(), ((x.querySelector('.dci-sub') || {}).textContent || '').trim(),
           [...x.querySelectorAll('[data-act=ded-pick]')].map(y => y.textContent.replace(/\\s+/g, ' ').trim())]), err: (b.querySelector('[data-el=ded-err]') || {}).textContent || '' }; })()"""
     MSGS = "(document.querySelector('[data-el=msgs]') || {}).textContent || ''"
@@ -2582,6 +2584,102 @@ def case_tribute3206():
     finally:
         H.ws_release, H.js_entity, H.discogs_release = orig_ws, orig_js, orig_dg
         H.WORK_SEARCH[:] = works0
+        H.MB_SEARCH.pop('artist', None)
+        H.RULES_OFF = []
+        for i in added_lts:
+            H.LTS.pop(i, None)
+        H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_tribute3207():
+    """Credits Importer 3.207.0 (collected items Z-TRIBUTETITLE, Z-TRIBUTEWORKS2, Z-DEDKINDSWITCH; S406 – S408): the release "If Ever You
+    Would Leave Us (we play for Rollins)" (the name inside the closing bracket); the question "look works up for n tracks?" open (asked
+    from 2 tracks on). Sonny Rollins wrote works titled as tracks 2 and 3 and recorded one titled as track 4 (a cover).
+    A) The box offers Sonny Rollins (until 3.206.0 the bracket stopped it).
+    B) Picked, with the question still open: his works are read all the same – tracks 2, 3 and 4 get them in yellow
+       ("work of Sonny Rollins – check"), track 4 by his recording.
+    C) "Dedication | Tribute" in the box: the row is a dedication (the title's "for", S329); a click on "Tribute" makes it a tribute.
+    D) S406 off: no offer."""
+    SR = H.uid('dddddddd', 3900)
+    added_lts = {868: ('b41e7530-cde4-459c-b8c5-dfef08fc8295', 'dedicated to', 'artist', 'release_group'),
+                 9440: (H.uid('94409440', 1), 'tribute', 'artist', 'release_group')}
+    for i, (g, n, t0, t1) in added_lts.items():
+        H.lt(i, g, n, t0, t1, dates=False)
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.MB_SEARCH['artist'] = [{'id': SR, 'name': 'Sonny Rollins', 'disambiguation': 'jazz saxophonist', 'type': 'Person', 'score': 100}]
+    rel = lambda: [{'target-type': 'artist', 'type': 'composer', 'direction': 'backward', 'artist': {'id': SR, 'name': 'Sonny Rollins'}}]
+    works0 = list(H.WORK_SEARCH)
+    W = lambda k: H.uid('3a3a3a3a', k)
+    H.WORK_SEARCH[:] = [{'id': W(1), 'title': H.TITLES[1], 'aliases': [], 'type': 'Song', 'relations': rel()},
+                        {'id': W(2), 'title': H.TITLES[2], 'aliases': [], 'type': 'Song', 'relations': rel()}]
+    H.ARTIST_WORKS[SR] = [{'id': W(1), 'title': H.TITLES[1], 'aliases': []}, {'id': W(2), 'title': H.TITLES[2], 'aliases': []}]
+    H.ARTIST_RECORDINGS[SR] = [{'title': H.TITLES[3], 'work': {'id': W(3), 'title': H.TITLES[3]}}]
+    orig_ws, orig_js, orig_dg = H.ws_release, H.js_entity, H.discogs_release
+    H.js_entity = lambda gid: ({'entityType': 'artist', 'id': 3900, 'gid': SR, 'name': 'Sonny Rollins', 'comment': 'jazz saxophonist'} if gid == SR else orig_js(gid))
+
+    def ws(full=False):
+        d = orig_ws(full)
+        d['title'] = 'If Ever You Would Leave Us (we play for Rollins)'
+        return d
+    H.ws_release = ws
+
+    def dg():
+        d = orig_dg()
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = dg
+    BOX = """(() => { const b = document.querySelector('[data-el=dedbox]'); if (!b || b.hidden) return null;
+      return { list: [...b.querySelectorAll('.dci-dedlist li')].map(li => { const c = li.cloneNode(true); const sw = c.querySelector('.dci-dedsw');
+        if (sw) sw.replaceWith(((sw.querySelector('.dci-on') || {}).dataset || {}).kind === 'tribute' ? 'tribute to' : 'dedicated to'); return c.textContent.replace(/\\s+/g, ' ').trim(); }),
+        on: [...b.querySelectorAll('.dci-dedlist [data-act=ded-kind].dci-on')].map(x => x.dataset.kind),
+        sugg: [...b.querySelectorAll('.dci-dedsugg')].map(x => [...x.querySelectorAll('[data-act=ded-pick]')].map(y => y.textContent.replace(/\\s+/g, ' ').trim())) }; })()"""
+    TRIB = "[...document.querySelectorAll('[data-el=work-tribute]')].map(x => x.closest('[data-track], tr, .dci-mx-row, li') ? x.textContent.trim() : x.textContent.trim())"
+    results = []
+
+    def open_page(p, off=()):
+        H.RULES_OFF = list(off)
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        ctx.add_init_script("localStorage.setItem('dci-aw-ask', '2')")
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        pg.click('#dci-open')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(3000)
+        return b, pg, errs
+
+    try:
+        with sync_playwright() as p:
+            b, pg, errs = open_page(p)
+            a = pg.evaluate(BOX)
+            print('A)', a)
+            results.append(bool(a) and a['sugg'] and a['sugg'][0] and a['sugg'][0][0].startswith('Sonny Rollins'))
+            pg.click('[data-el=dedbox] [data-act=ded-pick]')
+            H.wait_ok(pg, f"{TRIB}.length >= 3", 30)
+            t = pg.evaluate(TRIB)
+            ask = pg.evaluate("!!document.querySelector('[data-act=works-lookups-yes], [data-act=aw-ask-yes], [data-el=works-ask]')")
+            print('B)', t, '| Frage offen:', ask)
+            results.append(len(t) >= 3 and all(x == 'work of Sonny Rollins – check' for x in t))
+            c0 = pg.evaluate(BOX)
+            pg.click('[data-el=dedbox] [data-act=ded-kind][data-kind=tribute]')
+            pg.wait_for_timeout(500)
+            c1 = pg.evaluate(BOX)
+            print('C)', c0['on'], '→', c1['on'], c1['list'], errs)
+            results.append(c0['on'] == ['dedicated'] and c1['on'] == ['tribute'] and not errs)
+            b.close()
+            b, pg, errs = open_page(p, off=['S406'])
+            d = pg.evaluate(BOX)
+            print('D)', d)
+            results.append((d is None or not d['sugg']) and not errs)
+            b.close()
+    finally:
+        H.ws_release, H.js_entity, H.discogs_release = orig_ws, orig_js, orig_dg
+        H.WORK_SEARCH[:] = works0
+        H.ARTIST_WORKS.pop(SR, None)
+        H.ARTIST_RECORDINGS.pop(SR, None)
         H.MB_SEARCH.pop('artist', None)
         H.RULES_OFF = []
         for i in added_lts:

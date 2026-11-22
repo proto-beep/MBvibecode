@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.206.0
+// @version      3.207.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.206.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.206.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.207.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.207.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.206.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.207.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -4096,6 +4096,12 @@
       "instrGuess.auto": "“{word}” is no instrument of MusicBrainz – one letter off one of its names, suggested:",
       "settings.instLinks": "Links to MusicBrainz's instrument pages (↗)",
       "settings.instLinksTitle": "A small ↗ after an instrument in an entry opened (not in the compact lines) opens its page on MusicBrainz",
+      "settings.smartQuotes": "Typographic quotes in what is entered (“…”, ‘…’, ’)",
+      "settings.smartQuotesTitle": "Credits, role credits, the names of new entries and works get typographic quotes and apostrophes: Bernhard \"Benne\" Vischer → Bernhard “Benne” Vischer, O'Brien → O’Brien. The edit note keeps the source's writing.",
+      "dedbox.kindGroup": "Dedication or tribute",
+      "dedbox.dedication": "Dedication",
+      "dedbox.kindTo": "Make it “{kind}”",
+      "dedbox.kindNo": "MusicBrainz has no such relationship for this target",
       "instLink.title": "{name} on MusicBrainz (new tab)",
       "instrGuess.other": "{other} “{word}”",
       "instrGuess.none": "“{word}” is no instrument of MusicBrainz, and none is like it: {other}, credited “{credit}”.",
@@ -5696,6 +5702,12 @@
     { id: 'S390', where: 'guessInstrument, similarInstrumentVia, guessOptLabel, instrGuessHtml', note: 'Instruments (3.203.0; collected item Z-ALIASTYPO): a word MusicBrainz does not know ("fluteophone"): each answer of the question says which of MusicBrainz\'s other names it is like ("Tonette – alias “flutophone”"); exactly one answer one letter off (its name or an alias): chosen at once – by an alias credited as written ("Tonette “fluteophone”"), by its own name a slip without a role credit ("Sxaophone": saxophone) – the question stays to change it. Off: a question with the answers only, as before' },
     { id: 'S391', where: 'medleySplit, segueTrimmed, workTitleOf', note: 'Works (3.204.0; collected item Z-SEGUE): a segue of a track list (Grateful Dead, jam bands) – "The Killers > Narragansett", "Dark Star -> St. Stephen", "→", "=>" – in one track splits like "/" (a one-off medley: each piece a work, every link with "medley", in the order of the title); a sign at the end of a title ("China Cat Sunflower >": the next piece follows on its own track) is no part of the work\'s name. Off: only the separators of the release ("/" and those added)' },
     { id: 'S392', where: 'TEXT.parse (tidyLines, fantasy roles)', note: 'Texts (3.204.0; collected item Z-WETTUNA): a line of roles broken after a slash right after the last role ("GUITAR/VOCAL/EFFECTORS/" · "ARP ODYSSEY/…/PROGRAMMING/" · "MULTIPLE INFINITIES") is one line, also when it is broken twice; words of fantasy in a list of instruments ("MULTIPLE INFINITIES", "LOW END THEORY", "VIBRATION" – mapping FANTASY_ROLE_WORDS) are left out even alone. With the mapping: ARP Odyssey, Korg synth – synthesizer; envelope filter, effectors – effects; amplified percussion, rhythm necklace – percussion; Synare – electronic drum set; space drums – drums, each credited as written (several words of one instrument: one relationship with all of them, S325)' },
+    { id: 'S408', where: 'renderDedBox (ded-kind), emChipHtml, toggleDedication', note: 'Dedications (3.207.0; collected item Z-DEDKINDSWITCH): each row of the box "Dedications & tributes" has two buttons "Dedication | Tribute" – the chosen one filled in its colour (dedication old rose, tribute gold), a click switches (as "⇄" at the row and the chip did); the chips of these relationships have the colours too. A kind MusicBrainz has not for this target (a tribute of a place) is greyed out' },
+    { id: 'S407', where: 'artistWorkTargets, runArtistWorks, matchArtistWorks', note: 'Works (3.207.0; collected item Z-TRIBUTEWORKS2): the artist of a tribute or dedication is one of the artists whose works are read – all works of the artist\'s page, those written and those only recorded (covers too) – and compared with the tracks\' titles; a work found through that artist only is a suggestion in yellow ("work of Sonny Rollins – check"). Read also while the question "look works up for n tracks?" is open (only that artist then)' },
+    { id: 'S406', where: 'findDedications (title)', note: 'Dedications (3.207.0; collected item Z-TRIBUTETITLE): the last "for" of a release\'s title may stand inside a bracket at its end – "If Ever You Would Leave Us (we play for Rollins)" names Rollins (until 3.206.0 the closing bracket stopped it)' },
+    { id: 'S405', where: 'autoPlaceFoundDates, poolDateFor', note: 'Dates (3.207.0; collected item Z-DATESTALE): the dates of the notes are placed anew with a new version of the script – until 3.206.0 a release imported before kept what an old version had made of its notes (the same text: no new placing). The dates dragged or removed by hand stay; a date of the pool without a group ("Date 1") gets the group\'s name when it is placed now' },
+    { id: 'S404', where: 'joinByBreak', note: 'Dates (3.207.0; collected item Z-CRLFDATE): lines that end in "\\r\\n" (Bandcamp\'s credits) – a line ending with "by" is joined to the name below it for the dates too: "All music composed and recorded by" / "Stefano Musso in Spring 2023." gives the date to Performance and Composition (until 3.206.0 it stood in the pool without a group)' },
+    { id: 'S403', where: 'smartQuotes, typo, typoQuotes, toQuery, settings (smart-quotes)', note: 'Texts (3.207.0; collected item Z-SMARTQUOTES): what the script writes has typographic quotes – credits and role credits ("credited as"), the names of the forms "Create artist / label / place / work …", the titles of new works: Bernhard "Benne" Vischer → Bernhard “Benne” Vischer, \'…\' → ‘…’, an apostrophe → ’ (O\'Brien → O’Brien, Rock \'n\' Roll → Rock ’n’ Roll). The edit note keeps the source\'s writing. One setting, ⚙ → Appearance, on by default (off: only apostrophes, as before)' },
     { id: 'S402', where: 'tributeArtists, runWorkSearch, workSigOf, tributeCandidates, runDedications, magicPlan', note: 'Works (3.206.0; collected item Z-TRIBUTEWORKS): on a tribute or dedication album – a row of the box "Dedications & tributes" linked to an artist of MusicBrainz (Sonny Rollins) – the works of that artist are searched by the tracks\' titles too: a work found so (none of the track\'s own writers on it) is a suggestion in yellow, "work of Sonny Rollins" (Doxy, Pent-Up House, Blue Seven, Valse Hot); "✨ Answer all" links one of exactly the track\'s title from "balanced", never plans a new work instead. A name without an artist of exactly that name ("… We Play For Rollins": a surname) is looked for by the works: the artists of that name whose works are tracks of the release – two at least, or half of the tracks – are offered in the box, the most first, as many as the hits of the settings; a name of very many artists ("Smith") is said in a message. Never linked by itself' },
     { id: 'S401', where: 'dedTake, dedSearch, dedSuggest', note: 'Dedications (3.206.0; collected item Z-DEDSEARCH): the field of the box "Dedications & tributes" takes a name as well as an MBID or a link – Enter or "Add" searches MusicBrainz\'s artists of that name or alias (as many as the hits of the settings), a click on one links it. A dedication found in a text without an entry of that name has its name in the field already' },
     { id: 'S400', where: 'dmTargetOf (em-ev-tracks), emEventTracks', note: 'Dates & tracks (3.205.0; collected item Z-EVTRACKSDROP): a group of the track pool dropped onto the tracks of an event in the view "by event" ("① Recording · no date · no tracks") gives all rows of that event on the recordings its tracks – added, with ⇧ Shift the other way (as onto the tracks of a row in the list "by role"). Until 3.204.0 there was no drop place for tracks in this view' },
@@ -7108,7 +7120,8 @@
     }
     if (title) {
       // ((review) the last "For" of the title; a part after it in brackets, after ":" or a dash is left out)
-      const m = new RegExp(String.raw`^.*\b(for|For|FOR)[ \t]+(${DED_NAME})[ \t]*(?:[(:\-–—].*)?$`, 'u').exec(src);
+      // ([Z-TRIBUTETITLE] 3.207.0, S406) also inside a bracket at the end: "If Ever You Would Leave Us (we play for Rollins)"
+      const m = new RegExp(String.raw`^.*\b(for|For|FOR)[ \t]+(${DED_NAME})[ \t]*(?:[(:\-–—].*|${ruleOn('S406') ? String.raw`[)\]][ \t]*` : '(?!)'})?$`, 'u').exec(src);
       if (m && !out.length) add(titleKind, m[2], m[1], m.index + m[0].lastIndexOf(m[1]), 2);
       // [Z-TRIBUTEWORKS] (3.206.0, S402) a single word ("We Play For Rollins"): a surname – kept only for its works (runDedications)
       if (m && !out.length && ruleOn('S402') && /^\p{Lu}[\p{L}'’-]+$/u.test(m[2].trim())) {
@@ -7684,7 +7697,20 @@
   const withoutBy = (t) => (ruleOn('S010') ? String(t || '').replace(/[\s-]+by$/i, '').trim() : String(t || '').trim());
 
   // [S012] typewriter apostrophe → typographic apostrophe in credits
-  const typo = (t) => (ruleOn('S012') ? String(t == null ? '' : t).replace(/'/g, '’') : String(t == null ? '' : t));
+  /**
+   * [Z-SMARTQUOTES] (3.207.0, S403) Typewriter quotes in what the script writes – credits, role credits, the names of the forms "Create …":
+   * "…" → “…”, '…' → ‘…’, an apostrophe → ’ (O'Brien → O’Brien, Rock 'n' Roll → Rock ’n’ Roll, '90s → ’90s). One setting (⚙ → Appearance)
+   * switches it all; the edit note keeps the source's writing.
+   */
+  const SMART_QUOTES = { on: true };
+  function smartQuotes(t) {
+    let x = String(t == null ? '' : t);
+    if (!x.includes('"') && !x.includes("'")) return x;
+    if (ruleOn('S403')) x = x.replace(/(^|[\s(\[{\/–—-])"(?=\S)/g, '$1“').replace(/"/g, '”');
+    // single quotes around words and the apostrophes as the titles of new works have them (typoQuotes)
+    return ruleOn('S403') ? typoQuotes(x) : x.replace(/'/g, '’');
+  }
+  const typo = (t) => (!ruleOn('S012') ? String(t == null ? '' : t) : SMART_QUOTES.on ? smartQuotes(t) : String(t == null ? '' : t).replace(/'/g, '’'));
 
   /**
    * Returns a suggestion that can always be overridden in the dashboard:
@@ -8661,7 +8687,9 @@
    * The lines keep their number (the joined ones are left empty).
    */
   function joinByBreak(text) {
-    const src = String(text || '');
+    // ([Z-CRLFDATE] 3.207.0, S404) Bandcamp's credits end their lines with "\r\n": the "\r" a space (the places of the text stay the same –
+    // the finds of the notes are compared with them), so "… recorded by\r\n" is a line that ends with "by" (until 3.206.0 it was not)
+    const src = ruleOn('S404') ? String(text || '').replace(/\r/g, ' ') : String(text || '');
     if (!ruleOn('S316') || !/\s(?:by|von|par|por)[ \t]*\n/i.test(src)) return src;
     const out = src.split('\n');
     for (let i = 0; i < out.length - 1; i++) {
@@ -17151,7 +17179,8 @@
     return params;
   }
 
-  const toQuery = (params) => params.map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join('&');
+  // ([Z-SMARTQUOTES] 3.207.0, S403) the name of a form "Create …" with typographic quotes
+  const toQuery = (params) => params.map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(/^edit-[a-z_-]+\.name$/.test(k) ? typo(v) : v)}`).join('&');
 
   /**
    * [3.25.0] Every site, tool and userscript the script works with (collected item 40) – shown in ⚙ Settings → "ⓘ
@@ -20143,6 +20172,7 @@
     // "Spell out": the attributes with their names instead of the short forms (remembered)
     wattrLong: readJson('localStorage', 'dci-wattr-long', false) === true,
     instLinks: readJson('localStorage', 'dci-inst-links', true) !== false, // [Z-INSTLINK] (3.203.0)
+    smartQuotes: (SMART_QUOTES.on = readJson('localStorage', 'dci-smart-quotes', true) !== false), // [Z-SMARTQUOTES] (3.207.0)
     // [Z-WORKMAGIC] (3.155.0) "✨ Answer all": its level and the kinds switched off (remembered); its answers of this import
     magicLevel: readJson('localStorage', 'dci-magic-level', 'careful'),
     magicOff: readJson('localStorage', 'dci-magic-off', []) || [],
@@ -36561,7 +36591,7 @@
     const note = ask ? '' : chipNoteText(r);
     const info = note ? `<span class="dci-em-chipinfo" role="img" tabindex="0" title="${esc(note)}" aria-label="${esc(note)}">ⓘ</span>` : '';
     const menu = open ? `<span class="dci-em-chipmenu dci-em-ask" data-rows="${ids}" data-ask="${esc(key)}" role="group" aria-label="${esc(tr('em.chipAsk', { name }))}">${answers.map((o) => { const lk = o.act === 'instr-pick' ? instLinkHtml(o.value, lt) : ''; const b = `<button type="button" class="dci-textbtn" data-act="${o.act}"${o.attr ? ` data-${o.attr}="${esc(o.value)}"` : ''}>${esc(o.text)}</button>`; return lk ? `<span class="dci-em-chipopt">${b}${lk}</span>` : b; }).join('')}</span>` : '';
-    return `<span class="dci-em-chip${ask ? ' dci-em-chip-ask' : ''}${open ? ' dci-em-chip-open' : ''}${l.rows.some(dsupMark) ? ' dci-dsup-mark' : ''}" data-rows="${ids}" data-line="${esc(l.id)}"${e && !e.skip ? ` data-drag="em-chip" data-id="${esc(l.id)}" data-ev="${esc(e.key)}" draggable="true"` : e ? ` data-ev="${esc(e.key)}"` : ''}>
+    return `<span class="dci-em-chip${ask ? ' dci-em-chip-ask' : ''}${open ? ' dci-em-chip-open' : ''}${l.rows.some(dsupMark) ? ' dci-dsup-mark' : ''}${r.dedication && ruleOn('S408') ? ` dci-chip-${r.dedication.kind === 'tribute' ? 'tribute' : 'dedicated'}` : ''}" data-rows="${ids}" data-line="${esc(l.id)}"${e && !e.skip ? ` data-drag="em-chip" data-id="${esc(l.id)}" data-ev="${esc(e.key)}" draggable="true"` : e ? ` data-ev="${esc(e.key)}"` : ''}>
       <button type="button" class="dci-em-chipname" data-act="em-chip" title="${esc([tr(ask ? 'em.chipAskTitle' : 'drop.chipTitle'), roleLabel(r).title].filter(Boolean).join('\n'))}">${ask ? '? ' : ''}${esc(name)}${credit ? ` <em>${esc(tr('common.quoted', { text: credit }))}</em>` : ''}${joinedCredit ? ` <span class="dci-em-chipjoin" title="${esc(tr('em.chipJoined', { name, credit: joinedCredit }))}">⧉ ${esc(tr('common.quoted', { text: joinedCredit }))}</span>` : ''}${flags.length ? ` <span class="dci-sub">· ${esc(flags.join(' · '))}</span>` : ''}${as ? ` <span class="dci-em-chipas">${esc(tr('group.creditedAs', { name: tr('common.quoted', { text: as }) }))}</span>` : ''}</button>${!ask && root ? instLinkHtml(r.primaryText, lt) : ''}${ruleOn('S201') ? rowOriginsHtml(l.rows, a || S.artists.get(r.artistKey)) : ''}${info}${q}${e ? `<button type="button" class="dci-em-chipx" data-act="em-chipout" data-ev="${esc(e.key)}" title="${esc(tr('em.chipOut', { name }))}" aria-label="${esc(tr('em.chipOut', { name }))}">✕</button>` : ''}${menu}</span>`;
   }
 
@@ -38925,7 +38955,12 @@
     // ((3.95.0, review) a name of several groups ("Production · Composition 1") is one of each of them
     const same = S.datePool.find((d) => formatDateValue(d) === text && !!d.ended === !!v.ended
       && (d.found === foundKey || String(d.name || '').split(' · ').some((x) => x === label || x.startsWith(`${label} `))));
-    if (same) return same;
+    if (same) {
+      // ([Z-DATESTALE] 3.207.0, S405) placed anew with a group it had not before ("Date 1" → "Performance 1")
+      const plain = tr('datefind.poolName');
+      if (ruleOn('S405') && group && same.found === foundKey && String(same.name || '').startsWith(`${plain} `)) same.name = name || `${label} ${nextGroupNumber({ label })}`;
+      return same;
+    }
     const e = { id: newPoolId(), name: name || `${label} ${nextGroupNumber({ label })}`, begin: v.begin, end: v.end, ended: v.ended, found: foundKey };
     S.datePool.push(e);
     log('info', 'dateSaved', { date: poolLabel(e) });
@@ -39372,7 +39407,9 @@
     const notes = foundDateText(); // ([Z-WIKI] 3.149.0, review) Wikipedia's dates placed too
     const m = dm();
     // (with a media choice, its media are part of the signature: another choice places anew)
-    const sig = `${srcReleaseId() || ''}|${textSig(notes)}${S.mediaSel ? `|m:${formatMediaList(S.mediaSel.media)}` : ''}`;
+    // ([Z-DATESTALE] 3.207.0, S405) and the script's version: a new version (new rules for dates) places the dates of the notes anew – the
+    // dates dragged or removed by hand stay as they are (until 3.206.0 a release imported before kept what an old version had made)
+    const sig = `${srcReleaseId() || ''}|${textSig(notes)}${S.mediaSel ? `|m:${formatMediaList(S.mediaSel.media)}` : ''}${ruleOn('S405') ? `|v:${VERSION}` : ''}`;
     const fromNotes = S.datePool.some((d) => String(d.found || '').startsWith('notes:'));
     if (!notes.trim() || (!force && m.found === sig && fromNotes)) return { placed: 0, pooled: 0 };
     m.found = sig;
@@ -43238,7 +43275,14 @@
     const list = rows.map((r) => {
       const a = S.artists.get(r.artistKey) || {};
       const lv = r.level === 'work' && r.tracks && r.tracks.size ? tr('dedbox.onWork', { pos: trackListLabel([...r.tracks]) }) : tr('dedbox.onRg');
-      return `<li><span class="dci-dedkind">${esc(tr(`ded.kind.${r.dedication.kind}`))}</span> <strong>${esc(a.mbName || a.name || '')}</strong> <span class="dci-sub">${esc(lv)} · ${esc(r.dedication.where || '')}</span>
+      // [Z-DEDKINDSWITCH] (3.207.0, S408) "Dedication | Tribute": two buttons, the chosen one filled in its colour – a click switches
+      const can = !!dedToggleTarget(r);
+      const kindHtml = ruleOn('S408') ? `<span class="dci-dedsw" role="group" aria-label="${esc(tr('dedbox.kindGroup'))}">${['dedicated', 'tribute'].map((k) => {
+        const on = r.dedication.kind === k;
+        return `<button type="button" class="dci-dedsw-${k}${on ? ' dci-on' : ''}" data-act="ded-kind" data-row="${esc(r.id)}" data-kind="${k}" aria-pressed="${on}"${!on && !can ? ' disabled' : ''}
+          title="${esc(on ? tr(`ded.kind.${k}`) : can ? tr('dedbox.kindTo', { kind: tr(`ded.kind.${k}`) }) : tr('dedbox.kindNo'))}">${esc(tr(k === 'tribute' ? 'dedbox.tribute' : 'dedbox.dedication'))}</button>`;
+      }).join('')}</span>` : `<span class="dci-dedkind">${esc(tr(`ded.kind.${r.dedication.kind}`))}</span>`;
+      return `<li>${kindHtml} <strong>${esc(a.mbName || a.name || '')}</strong> <span class="dci-sub">${esc(lv)} · ${esc(r.dedication.where || '')}</span>
         <button type="button" class="dci-textbtn" data-act="ded-goto" data-row="${esc(r.id)}" title="${esc(tr('dedbox.gotoTitle'))}">${esc(tr('dedbox.goto'))}</button></li>`;
     }).join('');
     const hitsHtml = (key, hits) => (hits && hits.length ? `<span class="dci-dedhits">${hits.map((h) => `<span><button type="button" class="dci-small" data-act="ded-pick" data-key="${esc(key)}" data-gid="${esc(h.gid)}"
@@ -47948,6 +47992,12 @@
     for (const t of tracksWithoutWork()) titleComposersOf(t.idx).forEach((c) => add(c.mbid, { name: c.name, why: 'title' }, c.name));
     // [Z-CLASSICCREDIT] (3.177.0, S311) the composer a track is credited to, where the recording is credited to who plays
     if (ruleOn('S311')) for (const t of tracksWithoutWork()) (t.classicalComposers || []).forEach((c) => add(c.mbid, { name: c.name, why: 'trackArtist' }, c.name));
+    // [Z-TRIBUTEWORKS2] (3.207.0, S407) the artist of a tribute or dedication: all works of the artist's page (written, or only recorded –
+    // covers too), compared with the tracks' titles
+    if (ruleOn('S407')) for (const [id, name] of tributeArtists()) {
+      if (out.has(id)) Object.assign(out.get(id), { tribute: true });
+      else add(id, { name, why: 'tribute', tribute: true }, name);
+    }
     out.special = special;
     return out;
   }
@@ -48028,7 +48078,7 @@
     const entry = { name, works: new Map(), recordings: 0, total: 0, linked: 0, linkedRead: 0, capped: false, max };
     for (let offset = 0; offset < max; offset += 100) {
       // [3.18.0] the works matrix skipped (or "Not now"): stopped between two requests
-      if (worksResting()) return Object.assign(entry, { stopped: true });
+      if (awResting()) return Object.assign(entry, { stopped: true });
       const d = await mbWsIdle(`work?artist=${mbid}&inc=aliases&limit=100&offset=${offset}`);
       const list = (d && d.works) || [];
       // ([Z-WTS] 3.52.0: with its lyrics languages, for the suggestion of new works)
@@ -48054,7 +48104,7 @@
         entry.capped = true;
         break;
       }
-      if (worksResting()) return Object.assign(entry, { stopped: true });
+      if (awResting()) return Object.assign(entry, { stopped: true });
       const d = await mbWsIdle(`recording?artist=${mbid}&inc=work-rels&limit=${Math.min(100, rest - offset)}&offset=${offset}`);
       const list = (d && d.recordings) || [];
       entry.total = (d && d['recording-count']) || entry.recordings + list.length;
@@ -48114,6 +48164,10 @@
             : tr(w.via === 'recorded' ? 'works.viaRecorded' : 'works.viaLinked', { name: info.name, recording: w.recording || '' });
           const hit = found.get(w.gid) || { gid: w.gid, title: w.title, type: w.type, disambiguation: w.disambiguation, aliases: w.aliases, writerIds: [], writers: [], artistWork: true };
           if (!hit.writers.includes(via)) hit.writers.push(via);
+          // [Z-TRIBUTEWORKS2] (3.207.0, S407) found only through the artist of a tribute: a suggestion in yellow ("work of Sonny Rollins")
+          if (info.why === 'tribute' && !comp) {
+            if (!found.has(w.gid)) hit.tribute = info.name;
+          } else delete hit.tribute;
           // "co?" only for a work found through its composer: by a similar title of a song, or named in the track's title
           if (comp && !hit.composer && (comp.named || (similar && /^song$/i.test(w.type || '')))) Object.assign(hit, { composer: mbid, composerName: info.name });
           found.set(w.gid, hit);
@@ -48233,6 +48287,9 @@
 
   /** [3.18.0] The work lookups rest: the works matrix skipped, or "Not now" (or the question still open). */
   const worksResting = () => S.worksSkip || S.worksLookups === 'no' || S.worksLookups === 'ask';
+  // ([Z-TRIBUTEWORKS2] 3.207.0, S407) the reading of the artists' works while the question for many tracks is open: only the artist of a
+  // tribute (S.awTribOnly) – resting only when the works are skipped or "Not now" was answered
+  const awResting = () => (S.awTribOnly ? !!S.worksSkip || S.worksLookups === 'no' : worksResting());
 
   /**
    * [3.18.0] Whether the work lookups (same-named works, works of the artists) may run now. With many tracks without a
@@ -48349,19 +48406,24 @@
       }
       return;
     }
-    // [3.18.0] the works matrix skipped, "Not now" or the question for many tracks open: no lookups
-    if (!worksLookupsAllowed()) return;
+    // [3.18.0] the works matrix skipped, "Not now" or the question for many tracks open: no lookups – ([Z-TRIBUTEWORKS2] 3.207.0, S407)
+    // except the works of the artist of a tribute (while the question for many tracks is open)
+    const allowed = worksLookupsAllowed();
+    S.awTribOnly = !allowed;
+    if (!allowed && (awResting() || !ruleOn('S407') || !tributeArtists().size)) return;
     // [179] (3.38.16) the composers the titles name, first – as part of the run (no second run meanwhile)
     S.artistWorksRunning = true;
     await resolveTitleComposers().catch(() => null);
     S.artistWorksRunning = false;
-    if (S.artistWorksAgain || worksResting()) {
+    if (S.artistWorksAgain || awResting()) {
       S.artistWorksAgain = false;
-      if (!worksResting()) runArtistWorks();
+      if (!awResting()) runArtistWorks();
       return;
     }
     tracksWithoutWork().forEach((t) => titleComposersOf(t.idx, { logIt: true }));
     const targets = artistWorkTargets();
+    // ([Z-TRIBUTEWORKS2] 3.207.0, S407) lookups not allowed yet: only the artist of the tribute
+    if (!allowed) for (const [id, info] of [...targets]) if (!info.tribute) targets.delete(id);
     S.artistWorkTargets = targets;
     for (const [id, info] of targets.special || []) {
       if (S.artistWorksSpecialLogged.has(id)) continue;
@@ -48375,7 +48437,7 @@
     S.artistWorksRunning = true;
     try {
       for (const [mbid, info] of targets) {
-        if (S.artistWorksAgain || worksResting()) break;
+        if (S.artistWorksAgain || awResting()) break;
         // [3.16.0] read before (in this browser, within the days of the setting): from the store
         if (!S.artistWorks.has(mbid)) {
           const rec = await awGet(mbid);
@@ -48418,7 +48480,7 @@
     if (matchArtistWorks() || suggestionChanged() || songOffers) renderWorksBackground();
     const n = [...S.artistWorkHits.values()].reduce((sum, list) => sum + list.length, 0);
     const tracks = [...S.artistWorkHits.keys()].sort((a, b) => a - b).map((i) => trackLabel(S.mbTracks[i])).join(', ');
-    if (!S.artistWorksAgain && !worksResting()) log('ok', n ? 'artistWorksDone' : 'artistWorksNone', { n, tracks });
+    if (!S.artistWorksAgain && !awResting()) log('ok', n ? 'artistWorksDone' : 'artistWorksNone', { n, tracks });
     if (S.artistWorksAgain) {
       S.artistWorksAgain = false;
       runArtistWorks();
@@ -49187,6 +49249,8 @@
    */
   function typoQuotes(title) {
     let t = String(title || '');
+    // ([Z-SMARTQUOTES] 3.207.0, S403) double quotes too ("…" → “…”), as long as the setting is on
+    if (ruleOn('S403') && SMART_QUOTES.on && t.includes('"')) t = t.replace(/(^|[\s(\[{\/–—-])"(?=\S)/g, '$1“').replace(/"/g, '”');
     // short elisions between spaces stay apostrophes ('n', 'em)
     // ((review) "'Til the Mornin'": an elision first ('til, 'tis, 'cause …) – apostrophes, no quotation
     t = t.replace(/(^|[\s([“"—–-])'([^'\s]{3,}(?:\s+[^'\s]+)*)'(?=$|[\s)\].,;:!?”"—–-])/g,
@@ -54308,6 +54372,16 @@
         renderDedBox();
         break;
       }
+      case 'ded-kind': {
+        // [Z-DEDKINDSWITCH] (3.207.0, S408)
+        const r = S.rows.find((x) => x.id === btn.dataset.row);
+        if (r && r.dedication && r.dedication.kind !== btn.dataset.kind) {
+          toggleDedication(r);
+          refresh();
+          renderDedBox();
+        }
+        break;
+      }
       case 'ded-goto': {
         const r = S.rows.find((x) => x.id === btn.dataset.row);
         if (r) revealRow(r);
@@ -58452,7 +58526,7 @@
     appearance: ['dci-insts-common', MX_HEADS_KEY, CHROME_KEY, 'dci-sort-on', 'dci-sort', 'dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, WORKROW_COLORS_KEY, WORKROW_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY, DED_BOX_KEY, EMOJI_TEXT_KEY,
       'dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark', 'dci-kind-palette-dark',
       // [Z-SETTABS] (3.136.0) the matrix of an entry (from "Staging")
-      EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY, EM_ATTR_KEY, 'dci-inst-links'],
+      EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY, EM_ATTR_KEY, 'dci-inst-links', 'dci-smart-quotes'],
     sources: ['dci-source-order', SOURCE_TRUST_KEY, 'dci-bc-tracks', WIKI_BG_KEY, AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, GAP_ON_KEY, GAP_NONE_KEY, ALIAS_MAX_KEY, MB_HITS_KEY, FN_YEARS_KEY,
       // [Z-BETAOFF] (3.115.0) the text from cover art (was "Beta"; (review) its frames kept per release are no setting of the topic)
       OCR_ON_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRONT_KEY],
@@ -60937,6 +61011,7 @@
           where === 'page' ? 'light' : 'auto', (v) => tr(`settings.theme.${v}`), { title: tr(where === 'page' ? 'settings.themePageTitle' : 'settings.themeWindowTitle'), segEl: `theme-${where}`, btn: ` data-where="${where}"` })),
         // [Z-INSTLINK] (3.203.0) ↗ to MusicBrainz's page of an instrument (in an entry opened, not in the compact lines)
         cb('data-set="inst-links"', S.instLinks, tr('settings.instLinks'), tr('settings.instLinksTitle'), { def: true }),
+        cb('data-set="smart-quotes"', S.smartQuotes, tr('settings.smartQuotes'), tr('settings.smartQuotesTitle'), { def: true }),
         sh('colours'),
         cb('data-set="level-colors"', S.levelColors, tr('settings.levelColors'), tr('settings.levelColorsTitle'), { def: true }),
         right(`<span class="dci-lvl-pick">${Object.keys(LEVEL_PALETTE_DEFAULT).map((level) => `<label><input type="color" data-set="level-color" data-level="${level}"
@@ -61971,6 +62046,12 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       writeJson('localStorage', 'dci-mx-skiprows', el.checked ? null : false);
       log('info', 'settingValue', { what: tr('settings.mxSkipRows'), value: tr(el.checked ? 'common.on' : 'common.off') });
       renderGroups();
+    } else if (k === 'smart-quotes') {
+      // [Z-SMARTQUOTES] (3.207.0, S403)
+      S.smartQuotes = SMART_QUOTES.on = el.checked;
+      writeJson('localStorage', 'dci-smart-quotes', el.checked ? null : false);
+      log('info', 'settingValue', { what: tr('settings.smartQuotes'), value: tr(el.checked ? 'common.on' : 'common.off') });
+      renderGroups();
     } else if (k === 'inst-links') {
       // [Z-INSTLINK] (3.203.0)
       S.instLinks = el.checked;
@@ -62068,6 +62149,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       Object.assign(S, { sortOn: true, sortMode: 'source', instsCommonOn: true }); // [Z-SORT] (3.112.0, review), [Z-INSTLCA] (3.113.0)
       S.dedBox = true; // ([Z-DEDQ] 3.74.0, review)
       S.instLinks = true; // [Z-INSTLINK] (3.203.0)
+      S.smartQuotes = SMART_QUOTES.on = true; // [Z-SMARTQUOTES] (3.207.0)
       if (S.place !== 'window') setPlace('window');
       // ([Z-CPV] 3.73.0) the compact view is the default
       if (S.view !== 'compact') setView('compact');
@@ -62178,7 +62260,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
   const SETTINGS_KEYS = ['dci-lang', 'dci-scale', 'dci-log-open', 'dci-sync-mode', 'dci-dg-status', 'dci-dg-release', 'dci-dg-artwork',
     'dci-dg-hover', 'dci-dg-jump', 'dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', 'dci-role-codes', 'dci-pools-open', 'dci-pools-keep', 'dci-dm-auto', DM_FOLD_KEY,
     'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-log-note-w', 'dci-media-sel', 'dci-media-load', 'dci-wattr-long', 'dci-work-dates', 'dci-magic-level', 'dci-magic-off', 'dci-qs-perm', 'dci-source-order', 'dci-source-trust', 'dci-wiki-bg', 'dci-beta-qf', 'dci-source-pick', 'dci-bc-tracks',
-    'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, 'dci-mx-skiprows', 'dci-weblinks-show', 'dci-inst-links',
+    'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, 'dci-mx-skiprows', 'dci-weblinks-show', 'dci-inst-links', 'dci-smart-quotes',
     SETTINGS_TAB_KEY, VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, POOL_FOLD_KEY,
     'dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark', 'dci-kind-palette-dark',
     // [3.32.9] the colours of the kinds (were left out in 3.32.4: kept after "Reset all settings" once the page was loaded again) and the live comments
@@ -62319,6 +62401,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
     S.webLinksShow = readJson('localStorage', 'dci-weblinks-show', false) === true;
     S.wattrLong = readJson('localStorage', 'dci-wattr-long', false) === true;
     S.instLinks = readJson('localStorage', 'dci-inst-links', true) !== false; // [Z-INSTLINK] (3.203.0)
+    S.smartQuotes = SMART_QUOTES.on = readJson('localStorage', 'dci-smart-quotes', true) !== false; // [Z-SMARTQUOTES] (3.207.0)
     S.magicLevel = readJson('localStorage', 'dci-magic-level', 'careful'); // [Z-WORKMAGIC] (3.155.0)
     S.magicOff = readJson('localStorage', 'dci-magic-off', []) || [];
     S.workDates = readJson('localStorage', 'dci-work-dates', true) !== false; // [Z-WORKDATE] (3.130.0)
@@ -64028,6 +64111,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
   const DK_OV = 'html.dci-dk-overlay #dci-overlay';
   const DK_SEMANTIC = [
     // ((3.48.0, review) the lines at least 3:1 to their grounds)
+    `${DK_OV} { --ded-bg: #3e2229; --ded-line: #c9798f; --ded-ink: #f4c3d0; --trib-bg: #3a2c10; --trib-line: #c79a3b; --trib-ink: #f3d79c; }`,
     `${DK_OV} { --sugg-bg: #3a3017; --sugg-line: #b8922f; --sugg-ink: #f2d98c; --date-bg: #2b2842; --date-line: #8a83cc; --date-d: #c3bdf2;
       --date-d-dkg: #3a3560; --track-bg: #3b2519; --track-line: #c47a4e; --track-d: #f3b48f; --track-d-dkg: #5a3420; }`,
     // (grounds of a suggestion whose text comes from elsewhere: the label of the pool's chips and of the date matrix's cells, the
@@ -64515,6 +64599,8 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
         --track: var(--orange); --track-d: #a8471a; --track-bg: #fdf0e8; --track-line: #f1bc9f;
         /* Suggestions everywhere: yellow with an amber dashed border (the coloured left edge stays) */
         --sugg-bg: #fff8db; --sugg-line: #e0a526; --sugg-ink: #6b4f00;
+        /* [Z-DEDKINDSWITCH] (3.207.0) dedication old rose, tribute gold */
+        --ded-bg: #f8e4ea; --ded-line: #b4607a; --ded-ink: #74283f; --trib-bg: #f9ebcf; --trib-line: #b9831c; --trib-ink: #5e3f00;
         --role: #3d5f9e;
         /* All sizes follow --dci-fs: the browser's font size setting times the text size control */
         --u: calc(var(--dci-fs, 13px) / 13);
@@ -65062,6 +65148,18 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       .dci-dedlist { margin: calc(var(--u, 1px) * 6) 0 0; padding-left: calc(var(--u, 1px) * 18); }
       .dci-dedlist li { margin: 2px 0; }
       .dci-dedkind { color: var(--muted); }
+      /* [Z-DEDKINDSWITCH] (3.207.0, S408) */
+      .dci-dedsw { display: inline-flex; vertical-align: middle; }
+      .dci-dedsw button { font: inherit; font-size: 0.92em; padding: 0 calc(var(--u, 1px) * 7); cursor: pointer; background: transparent; color: var(--muted); border: 1px solid var(--line, #ccc); }
+      .dci-dedsw button:first-child { border-radius: 4px 0 0 4px; }
+      .dci-dedsw button:last-child { border-radius: 0 4px 4px 0; border-left: none; }
+      .dci-dedsw button:disabled { cursor: default; opacity: 0.6; }
+      .dci-dedsw .dci-dedsw-dedicated.dci-on { background: var(--ded-bg); color: var(--ded-ink); border-color: var(--ded-line); font-weight: 600; }
+      .dci-dedsw .dci-dedsw-tribute.dci-on { background: var(--trib-bg); color: var(--trib-ink); border-color: var(--trib-line); font-weight: 600; }
+      .dci-em-chip.dci-chip-dedicated { background: var(--ded-bg); border-color: var(--ded-line); }
+      .dci-em-chip.dci-chip-dedicated .dci-em-chipname { color: var(--ded-ink); }
+      .dci-em-chip.dci-chip-tribute { background: var(--trib-bg); border-color: var(--trib-line); }
+      .dci-em-chip.dci-chip-tribute .dci-em-chipname { color: var(--trib-ink); }
       .dci-dedsugg { margin-top: calc(var(--u, 1px) * 6); padding: calc(var(--u, 1px) * 5) calc(var(--u, 1px) * 8); border: 1px dashed var(--line); border-radius: 6px; background: var(--soft); }
       .dci-dedrow, .dci-dedfields, .dci-dedhits { display: flex; flex-wrap: wrap; align-items: center; gap: 4px calc(var(--u, 1px) * 8); }
       .dci-dedrow { margin-top: 4px; }

@@ -1446,4 +1446,70 @@ The two first met in March 2018 and toured for a while."""
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_crlfstale3207():
+    """Credits Importer 3.207.0 (collected items Z-CRLFDATE, Z-DATESTALE; S404, S405): the notes as Bandcamp gives them, with "\\r\\n" –
+    "All music composed and recorded by" / "Stefano Musso in Spring 2023." / "Mixed at Lunae studio, Lunigiana, Italy, June 2023.".
+    A) S404 and S405 off (as 3.206.0): 2023 only in the pool ("Date 1"), Performance empty; Mix 2023-06.
+    B) The same browser, S404 on, S405 off: still nothing new (the notes were placed already – the same text).
+    C) The same browser, both on: 2023 placed in Performance and Composition, the pool's date named for its group.
+    D) A browser of its own, the defaults: 2023 in Performance at once."""
+    orig = H.discogs_release
+    NOTES = 'All music composed and recorded by\r\nStefano Musso in Spring 2023.\r\n\r\nMixed at Lunae studio, Lunigiana, Italy, June 2023.\r\n'
+
+    def rel():
+        d = orig()
+        d['notes'] = NOTES
+        d['companies'] = []
+        return d
+    H.discogs_release = rel
+
+    def stage(ctx, off):
+        pg = ctx.new_page()
+        errs = H.errors_of(pg)
+        pg.goto(f'https://musicbrainz.org/release/{H.REL}/edit-relationships')
+        pg.evaluate("(ids) => localStorage.setItem('dci-rules-off', JSON.stringify(ids))", off)
+        pg.evaluate(H.VIEW_PRESET, 'full')
+        pg.evaluate(H.ENTRIES_PRESET, H.ENTRIES_VIEW)
+        pg.evaluate(H.REMEMBER_PRESET, H.REMEMBER)
+        pg.evaluate(H.DM_FOLD_PRESET, H.DM_FOLD)
+        pg.add_script_tag(content=H.MAIN)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(1500)
+        pool = {d['id']: d for d in pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-pool:{H.REL}') || '[]')")}
+        mx = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-matrix:{H.REL}') || '{{}}')")
+        day = lambda d: '-'.join(str(d[k]) for k in ('year', 'month', 'day') if d and d.get(k))
+        cells = sorted((c['col'], day(pool[c['date']]['begin'])) for c in mx.get('cells', []) if c['date'] in pool)
+        names = sorted(f"{d['name']}={day(d['begin'])}" for d in pool.values())
+        pg.close()
+        return cells, names, errs
+
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            a = stage(ctx, ['S404', 'S405'])
+            print('A)', a)
+            results.append(('performance', '2023') not in a[0] and ('mix', '2023-6') in a[0] and any(n.startswith('Date ') and n.endswith('=2023') for n in a[1]) and not a[2])
+            b1 = stage(ctx, ['S405'])
+            print('B)', b1)
+            results.append(('performance', '2023') not in b1[0] and not b1[2])
+            c = stage(ctx, [])
+            print('C)', c)
+            results.append(('performance', '2023') in c[0] and ('composition', '2023') in c[0] and not any(n.startswith('Date ') for n in c[1]) and not c[2])
+            b.close()
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            d = stage(ctx, [])
+            print('D)', d)
+            results.append(('performance', '2023') in d[0] and not d[2])
+            b.close()
+    finally:
+        H.discogs_release = orig
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

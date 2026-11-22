@@ -5630,4 +5630,53 @@ def case_evtracksdrop3205():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_smartquotes3207():
+    """Credits Importer 3.207.0 (collected item Z-SMARTQUOTES, rule S403): Discogs "Producer – Bernhard \"Benne\" Vischer" (the artist's
+    name in MusicBrainz "Bernhard Vischer").
+    A) Staged: credited as Bernhard “Benne” Vischer – typographic quotes.
+    B) The setting off (⚙ → Appearance): "Benne" as written."""
+    orig = H.discogs_release
+    H.ARTISTS[3601] = (H.uid('dddddddd', 3601), 'Bernhard Vischer')
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': 'Bernhard Vischer', 'anv': 'Bernhard "Benne" Vischer', 'role': 'Producer', 'tracks': '', 'id': 3601, 'join': ''}]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    ADDED = """MB.relationshipEditor.state.added.map((r) => [r.entity0_credit || '', r.entity1_credit || '']).flat().filter(Boolean)"""
+
+    def run(p, off=False):
+        H.ENTRIES_VIEW = 'legacy'
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        if off:
+            ctx.add_init_script("localStorage.setItem('dci-smart-quotes', 'false')")
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.wait_still(pg, "document.body.innerHTML", 10, 400)
+        H.stage(pg)
+        added = pg.evaluate(ADDED)
+        b.close()
+        return added, errs
+
+    results = []
+    H.discogs_release = rel
+    try:
+        with sync_playwright() as p:
+            a, ea = run(p)
+            print('A)', a, ea)
+            results.append('Bernhard “Benne” Vischer' in a and not ea)
+            b_, eb = run(p, off=True)
+            print('B)', b_, eb)
+            results.append('Bernhard "Benne" Vischer' in b_ and not eb)
+    finally:
+        H.discogs_release = orig
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
