@@ -597,6 +597,112 @@ def case_trackartists():
 
 
 
+def case_tarrec3200():
+    """Credits Importer 3.200.0 (collected item Z-TARRECORDING, S381): classical crediting – track 1 is credited to its composer (H. I. F.
+    Biber), its recording to Maya Homburger; track 2 names Percy Pursglove; tracks 3 and 4 the band.
+    A) Maya Homburger's piano (the test's instruments; her violin in the real case) on tracks 1, 3 and 4 (her recording, the band's tracks), not on all four; Percy Pursglove's double bass on 2–4.
+    B) S381 off: Maya Homburger's piano on all four (named on no track's own credit), as until 3.199.0."""
+    BAND, MAYA, PERCY, BIBER = H.uid('7c7c7c7c', 1), H.uid('7c7c7c7c', 2), H.uid('7c7c7c7c', 3), H.uid('7c7c7c7c', 4)
+    H.RELEASE_AC[:] = [(BAND, 'Blue Shroud Collective', 'Blue Shroud Collective', '')]
+    H.TRACK_AC.update({0: [(BIBER, 'H. I. F. Biber')], 1: [(PERCY, 'Percy Pursglove')], 2: [(BAND, 'Blue Shroud Collective')], 3: [(BAND, 'Blue Shroud Collective')]})
+    H.REC_AC.update({0: [(MAYA, 'Maya Homburger')]})
+    TEXT = 'Maya Homburger - piano\nPercy Pursglove - double bass'
+    LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
+    ROWS = """(() => [...document.querySelectorAll('section.dci-group')].flatMap(g => [...g.querySelectorAll('tr.dci-row')].map(tr => [
+      (g.querySelector('.dci-gname strong').dataset.name || g.querySelector('.dci-gname strong').textContent.trim()), tr.querySelector('.dci-drole').dataset.raw.trim(),
+      (tr.querySelector('[data-tcount]') || { textContent: '' }).textContent.trim(),
+      (tr.querySelector('.dci-tartracks') || { textContent: '' }).textContent.trim()])))()"""
+    results = []
+
+    def read(p, off=()):
+        H.RULES_OFF = list(off)
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, f"{LOGS}.filter(x => /Import complete/.test(x)).length >= 2", 60)
+        pg.wait_for_timeout(1500)
+        r = pg.evaluate(ROWS)
+        b.close()
+        return {(n, role): (t, note) for n, role, t, note in r}, errs
+
+    try:
+        with sync_playwright() as p:
+            by, errs = read(p)
+            print('A)', by, errs)
+            results.append(by.get(('Maya Homburger', 'piano'), ('', ''))[0] == '3 of 4 tracks' and by.get(('Percy Pursglove', 'double bass'), ('', ''))[0] == '3 of 4 tracks' and not errs)
+            by, errs = read(p, off=['S381'])
+            print('B)', by, errs)
+            results.append(by.get(('Maya Homburger', 'piano'), ('', ''))[0] == '4 of 4 tracks' and not errs)
+    finally:
+        H.RULES_OFF = []
+        H.REC_AC.clear()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_onetrack3200():
+    """Credits Importer 3.200.0 (collected item Z-INSTSONETRACK, S382): "Song Two ( w Makigami )"; the credits
+    "Makigami Koichi -harmonic overtone singing, jaw harp" and "Experimental highland bagpipes (David Watson), with guests Makigami Koichi
+    vocal and jaw harp."; the quick switch S339 ("Instruments → release") on.
+    A) Makigami Koichi on track 2 only, all his instruments there – nothing on the release; "⑃ on the release …" greyed, its tooltip says why.
+    B) One jaw harp, one voice (harmonic overtone singing) – no second jaw harp, no bare "vocal".
+    C) S382 off: on the release by the quick switch (as until 3.199.0). (Two rows of one instrument: case guestdup3200 of t_entries.)"""
+    TEXT = ('Makigami Koichi -harmonic overtone singing, jaw harp\n'
+            'Experimental highland bagpipes (David Watson), with guests Makigami Koichi vocal and jaw harp.')
+    H.attr(9201, 'jaw harp', 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    titles0 = list(H.TITLES)
+    H.TITLES[1] = 'Song Two ( w Makigami )'
+    LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
+    ROWS = """(() => [...document.querySelectorAll('section.dci-group')].flatMap(g => [...g.querySelectorAll('tr.dci-row')].map(tr => [
+      (g.querySelector('.dci-gname strong').dataset.name || g.querySelector('.dci-gname strong').textContent.trim()), tr.querySelector('.dci-drole').dataset.raw.trim(),
+      ((tr.querySelector('[data-act=level][aria-pressed=true]') || { dataset: {} }).dataset.level || ''),
+      (tr.querySelector('[data-tcount]') || { textContent: '' }).textContent.trim()])))()"""
+    BTN = """(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Makigami Koichi');
+      const b = g && g.querySelector('[data-act=insts-set][data-insts=release]'); return b ? [b.disabled, b.title] : null; })()"""
+    results = []
+
+    def read(p, off=()):
+        H.RULES_OFF = list(off)
+        H.ENTRIES_VIEW = 'legacy'
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.evaluate("localStorage.setItem('dci-rules-off', JSON.stringify(['+S339'].concat(JSON.parse(localStorage.getItem('dci-rules-off') || '[]'))))")
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, f"{LOGS}.filter(x => /Import complete/.test(x)).length >= 2", 60)
+        H.wait_still(pg, "document.body.innerHTML", 10, 400)
+        r = [x for x in pg.evaluate(ROWS) if x[0] == 'Makigami Koichi']
+        btn = pg.evaluate(BTN)
+        b.close()
+        return r, btn, errs
+
+    try:
+        with sync_playwright() as p:
+            r, btn, errs = read(p)
+            print('A/B)', r, btn, errs)
+            results.append(bool(r) and all(x[2] == 'recording' and x[3] == '1 of 4 tracks' for x in r) and (btn is None or (btn[0] and 'one track only' in btn[1])))
+            raws = sorted(x[1] for x in r)
+            results.append(len([x for x in raws if 'jaw harp' in x]) == 1 and not any(x.startswith('vocal') for x in raws) and not errs)
+            r, btn, errs = read(p, off=['S382'])
+            print('C)', r, btn, errs)
+            results.append(any(x[2] == 'release' for x in r) and not errs)
+    finally:
+        H.RULES_OFF = []
+        H.TITLES[:] = titles0
+        H.ENTRIES_VIEW = 'legacy'
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 def case_bandtracks3183():
     """Credits Importer 3.183.0 (collected item Z-BANDTRACKS, S078): a release of the "Blue Shroud Collective" whose tracks 1 and 2 name single
     players (Maya Homburger; Maya Homburger & Barry Guy) and whose tracks 3 and 4 are credited to the band.
