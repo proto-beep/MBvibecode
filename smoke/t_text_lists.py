@@ -2057,4 +2057,40 @@ console.log(JSON.stringify({ shop: out(shop), rb: out(rb), pk: out(pk), ki: out(
     ]
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+
+def case_texts3197():
+    """Credits Importer 3.197.0 (collected items Z-COMMISSIONPROSE, Z-PARTSCOPE; rules S346, S361), in Node: A) the sentence of the prose
+    alone ("The majority of the album is part of a suite that was commissioned by Roadburn Festival …") – the commission is read (before,
+    it was left out as the same as itself), marked "The majority of the album"; B) "Most of the songs were mixed by John Smith." – Mixed By,
+    marked, no role credit from the words before it; "Mixed by John Smith." not marked; C) "Saxophon: Jane Doe (teilweise)" marked
+    "teilweise"; "Jane Doe - saxophone (tracks 1, 2)" (its tracks) not; D) S361 off: none marked."""
+    node = r"""
+const OFF = process.argv[2] ? JSON.parse(process.argv[2]) : null;
+global.localStorage = { getItem: (k) => (OFF && k === 'dci-rules-off' ? JSON.stringify(OFF) : null), setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const isRole = (phrase) => { const p = m.parseRoleNotation(phrase)[0]; if (!p || !p.base) return false; const r = m.mapRole(p.base, p.mods); return !!(r.rule && r.rule !== 'R096' && !r.fallback) || /^(?:saxophone|saxophon)$/i.test(p.base); };
+const isCompanyRole = (role) => /commissioned/i.test(role);
+const ctx = { isRole, isCompanyRole, resolveTracks: () => new Set([0, 1]), resolveTitles: () => null, artistNames: [], trackCount: 5 };
+const one = (t) => { const r = m.SOURCES.text.parse(t, ctx); return [...r.credits.map((c) => [c.who.name, c.role, c.partScope || '']), ...r.companies.map((c) => [c.who.name, c.role, c.partScope || ''])]; };
+console.log(JSON.stringify(['The majority of the album is part of a suite that was commissioned by Roadburn Festival for the 2024 outing in Tilburg, Netherlands.',
+  'Most of the songs were mixed by John Smith.', 'Mixed by John Smith.', 'Saxophon: Jane Doe (teilweise)', 'Jane Doe - saxophone (tracks 1, 2)'].map(one)));
+"""
+    outs = []
+    for off in (None, ['S361']):
+        js = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')] + ([json.dumps(off)] if off else []), capture_output=True, text=True)
+        if js.returncode:
+            print(js.stderr[-2000:])
+            print('Ergebnis: FEHLER [node]')
+            return
+        outs.append(json.loads(js.stdout))
+    on, off = outs
+    print('an: ', on, '\naus:', off)
+    results = [
+        on[0] == [['Roadburn Festival', 'Commissioned By', 'The majority of the album']],
+        on[1] == [['John Smith', 'Mixed By', 'Most of the songs']] and on[2] == [['John Smith', 'Mixed By', '']],
+        on[3] == [['Jane Doe', 'Saxophon', 'teilweise']] and on[4] == [['Jane Doe', 'saxophone', '']],
+        all(x[2] == '' for r in off for x in r),
+    ]
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 run_cases(globals())

@@ -13,6 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
+| 2026-11-22 | 3.197.0 | – |
 | 2026-11-21 | 3.193.0 – 3.196.0 | – |
 | 2026-11-20 | 3.185.0 – 3.192.0 | 1.23.0 |
 | 2026-11-19 | 3.170.0 – 3.184.0 | – |
@@ -135,6 +136,18 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.197.0
+
+**Suites without doubles and as MusicBrainz writes them, the attribute of their parts, credits for part of the album.**
+
+- **One form per suite** (rule S357): while the form of a suite is open there is no second one (its line says "Its form is open …"); the suite created counts at once (before, it waited for the lookup of its title behind the searches of the dashboard – meanwhile "Stage" or "＋ Create" opened its form again, and "Part I" was created twice); "＋ Create" at a suite of parts goes through all its works one after the other, as "Stage" does.
+- **What you start goes first** (S356): your requests to MusicBrainz no longer wait behind the dashboard's searches, which hold back while a form is open; the parts of a suite MusicBrainz does not have are no longer looked up one by one (only once the suite is found).
+- **As MusicBrainz writes it** (S360): a suite's name with the letters of the release's title, a medium's title or the start of its tracks' titles is written that way ("Odes and Meditations for Cecil Taylor"); the works of whole tracks are named by MusicBrainz's titles ("Entre helechos", not "Entre Helechos").
+- **Names of the parts** (S358): "Suite: Part" stays the default; a click at the suite's line names the works by the part alone and back; ⚙ Settings → Works has "Part only" for all suites.
+- **The attribute of the parts** (S359): movement, part of collection, act, number or none – chosen at the suite's line; a suite of parts has a second choice for its parts' suites (none by default; filled into their forms).
+- **Credits for part of the album** (S361): "The majority of the album …", "Most of the songs were mixed by …", "on some of the tracks", "teilweise" – such a credit without tracks is a suggestion on the works or held on Skip ("Take", then its tracks chosen), not taken for every track.
+- **A commission only in the prose** (S346): the sentence "… was commissioned by Roadburn Festival for the 2024 outing …" alone was left out as the same as itself – it is read now (a suggestion, as above).
 
 ### Import 3.196.0
 
