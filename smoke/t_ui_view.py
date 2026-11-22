@@ -392,6 +392,8 @@ def case_ui301():
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
         ctx = H.new_context(b)
         pg, errs = H.open_mb_edit(ctx, companion=False)
+        # ([Z-COMPSETTINGS] 3.201.0) the companion seen before: its switches in ⚙ → Source pages
+        pg.evaluate("localStorage.setItem('dci-companion-seen', JSON.stringify({ version: '1.23.0', at: Date.now() }))")
         pg.set_viewport_size({'width': 1300, 'height': 900})
         pg.on('dialog', lambda d: d.accept())
         pg.wait_for_selector('#dci-open', timeout=20000)

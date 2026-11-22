@@ -122,6 +122,59 @@ def case_settabs():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_compsettings3201():
+    """Credits Importer 3.201.0 (collected items Z-COMPSETTINGS, Z-INSTSWORD).
+    A) No companion seen in this browser: ⚙ → "Source pages" shows only the line "The Script Companion has not been seen …" with the
+       link to install it – none of its switches.
+    B) The companion reports itself: its switches; "Artwork" among them (the import from Discogs or not), with the hint "Only on Discogs".
+    C) The button of an entry with two instruments without tracks: "⑃ on the release + instrument family on the tracks", its tooltip
+       with the example."""
+    orig = H.discogs_release
+    H.ENTRIES_VIEW = 'legacy'
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': 'Jane Roe', 'anv': '', 'role': 'Guitar, Bass', 'tracks': '', 'id': 3301, 'join': ''}]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.ARTISTS[3301] = (H.uid('dddddddd', 3301), 'Jane Roe')
+    H.discogs_release = rel
+    PANE = """(() => { const t = document.querySelector('[data-el=settings] .dci-set-pane'); const n = t.querySelector('[data-el=comp-none]'); const a = t.querySelector('[data-dg-artwork]');
+      return [n ? n.textContent.trim().slice(0, 50) : '', n && n.querySelector('a') ? n.querySelector('a').href.split('/').pop() : '', t.querySelectorAll('[data-dg-status], [data-dg-hover], [data-click-toggle]').length,
+        !!a, a ? a.closest('.dci-set-row').textContent.includes('Only on Discogs') : false]; })()"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            btn = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Jane Roe');
+              const b = g && g.querySelector('.dci-insts-seg [data-act=insts-set][data-insts=release]'); return b ? [b.textContent.trim(), b.title] : null; })()""")
+            H.open_settings(pg, 'discogs')
+            a = pg.evaluate(PANE)
+            print('A)', a)
+            results.append(a[0].startswith('The Script Companion has not been seen') and a[1] == 'mb-vibecode-credits-importer-companion.user.js' and a[2] == 0 and not a[3])
+            pg.evaluate("localStorage.setItem('dci-companion-seen', JSON.stringify({ version: '1.23.0', at: Date.now() }))")
+            pg.click('[data-el=settings] .dci-set-tab[data-topic=general]'); pg.wait_for_timeout(150)
+            pg.click('[data-el=settings] .dci-set-tab[data-topic=discogs]'); pg.wait_for_timeout(150)
+            bb = pg.evaluate(PANE)
+            print('B)', bb)
+            results.append(bb[0] == '' and bb[2] >= 3 and bb[3] and bb[4])
+            print('C)', btn, '| Fehler:', errs)
+            results.append(bool(btn) and btn[0] == '⑃ on the release + instrument family on the tracks' and 'string instruments on the tracks' in btn[1] and not errs)
+            b.close()
+    finally:
+        H.discogs_release = orig
+        H.ENTRIES_VIEW = 'legacy'
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 def case_settings():
     """Import 3.16.0: the menu "Settings" and the stored works of the artists.
     A) "⚙ Settings" in the head opens the menu: [3.25.0] eight tabs, "General" chosen; "Works" shows its defaults (on, 4000 with "= 40 requests,
@@ -172,6 +225,8 @@ def case_settings():
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
         ctx = H.new_context(b)
         pg, errs = H.open_mb_edit(ctx, companion=False)
+        # ([Z-COMPSETTINGS] 3.201.0) the companion seen before: its switches in ⚙ → Source pages
+        pg.evaluate("localStorage.setItem('dci-companion-seen', JSON.stringify({ version: '1.23.0', at: Date.now() }))")
         DIALOGS = []
         pg.on('dialog', lambda d: (DIALOGS.append(d.message), d.accept()))
         pg.wait_for_selector('#dci-open', timeout=20000)
@@ -3521,6 +3576,8 @@ def case_settabs3137():
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
         ctx = H.new_context(b)
         pg, errs = H.open_mb_edit(ctx, companion=False)
+        # ([Z-COMPSETTINGS] 3.201.0) the companion seen before: its switches in ⚙ → Source pages
+        pg.evaluate("localStorage.setItem('dci-companion-seen', JSON.stringify({ version: '1.23.0', at: Date.now() }))")
         pg.on('dialog', lambda d: d.accept())
         pg.wait_for_selector('#dci-open', timeout=20000)
         H.open_dashboard(pg)
