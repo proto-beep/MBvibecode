@@ -1409,7 +1409,8 @@ def case_typonote():
         pg.wait_for_timeout(400)
         a3 = pg.evaluate(Q, 'Sax Man')
         print('A) Sxaophone:', a0, '| saxophone:', a1, '| Log:', log1, '| as written:', a2, '| typo again:', a3)
-        results.append(bool(a0) and 'saxophone' in (a0['opts'] or []) and a0['note'] == ''
+        # ([Z-ALIASTYPO] 3.203.0, S390) one answer one letter off: chosen at once – by its own name a slip, without a role credit
+        results.append(bool(a0) and 'saxophone' in (a0['opts'] or []) and a0['instr'] == 'saxophone' and a0['credit'] == '' and a0['as'] == 'typo'
                        and a1['instr'] == 'saxophone' and a1['credit'] == '' and a1['as'] == 'typo'
                        and a1['note'].startswith('Probably a typo of “saxophone”: no role credit.') and 'credit “sxaophone” as written' in a1['note']
                        and any('“Sxaophone” is probably a typo of saxophone' in t for t in log1)

@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-22 | 3.197.0 – 3.202.0 | – |
+| 2026-11-22 | 3.197.0 – 3.203.0 | – |
 | 2026-11-21 | 3.193.0 – 3.196.0 | – |
 | 2026-11-20 | 3.185.0 – 3.192.0 | 1.23.0 |
 | 2026-11-19 | 3.170.0 – 3.184.0 | – |
@@ -136,6 +136,16 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.203.0
+
+**Bandcamp lines of "Poetics of Frø", instruments by their aliases, links to instrument pages.**
+
+- **"Recorded, January 18, 2024, L'Auditori de Barcelona By Ferran Conangla"** (rule S387): the date and the place between commas, "By" before the name – recorded by Ferran Conangla at L'Auditori de Barcelona; **"Mastered, Mixed Ferran Conangla at FCM Studios,"**: the person too (until 3.202.0 only the studio).
+- **A photo credit written as a file's name** (S388): "Photography : …_(c)_Sabrina Richmann_Ruhrtriennale 2023" – the name after "(c)"/"©" is the photographer; the rest and the year of the photo are no credit and no date.
+- **A line about the package** (S389): "Compact Disc (CD): cardboard gatefold sleeve" is left out ("about the package").
+- **Instruments by their other names** (S390): a word MusicBrainz does not know – "fluteophone" – one letter off one name of an instrument (here the alias "flutophone" of Tonette): suggested at once – credited as written by an alias ("Tonette “fluteophone”"), without a role credit by the instrument's own name (a slip, "Sxaophone"); each answer of the question says which name it is like ("Tonette – alias “flutophone”").
+- **"↗" to MusicBrainz's instrument pages** (collected item Z-INSTLINK): after an instrument in an entry opened (its matrix, a row, the answers of a question) – not in the compact lines; ⚙ → Appearance "Links to MusicBrainz's instrument pages", on.
 
 ### Import 3.202.0
 
