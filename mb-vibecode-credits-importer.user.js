@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.204.0
+// @version      3.205.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.204.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.204.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.205.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.205.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.204.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.205.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -972,7 +972,7 @@
       "ignored.why.commissionAgain": "the same commission as a line that names its tracks",
       "ignored.why.equipment": "the gear used (no credit)",
       "ignored.why.tourCrew": "the crew of the tour (no relationship of the recording)",
-      "ignored.why.sessionSeries": "a session or concert series (an event in MusicBrainz, not linked here)",
+      "ignored.why.sessionSeries": "a session or concert series not in the list of known series (add it to SESSION_SERIES_NAMES of the mapping)",
       "ignored.why.foh": "the sound for the audience at the concert – not the mix of the recording",
       "ignored.why.logo": "the lettering of a logo",
       "ignored.why.title": "the release's title",
@@ -2655,6 +2655,11 @@
       "note.fromSoloist": "From “Soloist”: the instrument with the attribute solo.",
       "note.soloistPick": "“Soloist” without an instrument: choose the instrument.",
       "note.seriesText": "A series named in the text: choose MusicBrainz's series above (or give its MBID) – the release is then part of it with its number.",
+      "note.seriesSessionText": "A session series named in the text (a series of recordings): choose MusicBrainz's series above – the recordings it names are then part of it.",
+      "note.seriesSession": "A series of recordings: the recordings named in the text (else all) are part of it, without a number.",
+      "note.seriesEvent": "A series of events: link it at the event of the session – not added here.",
+      "note.runoutDate": "Date from the matrix / runout next to the plant's name – please check it.",
+      "log.runoutDate": "{n} dates of the pressing plant taken from the matrix / runout (S398)",
       "note.seriesFormat": "A series named in the format of the release (Record Store Day …) without a date that tells which: choose MusicBrainz's series above (or give its MBID).",
       "note.abbrAlt": "“{abbr}” can also be: {list}",
       "note.seriesFromVideo": "Suggested: the video is on this series’ channel with its name in the title (rule S117); the number is the date it was recorded.",
@@ -5677,6 +5682,13 @@
     { id: 'S390', where: 'guessInstrument, similarInstrumentVia, guessOptLabel, instrGuessHtml', note: 'Instruments (3.203.0; collected item Z-ALIASTYPO): a word MusicBrainz does not know ("fluteophone"): each answer of the question says which of MusicBrainz\'s other names it is like ("Tonette – alias “flutophone”"); exactly one answer one letter off (its name or an alias): chosen at once – by an alias credited as written ("Tonette “fluteophone”"), by its own name a slip without a role credit ("Sxaophone": saxophone) – the question stays to change it. Off: a question with the answers only, as before' },
     { id: 'S391', where: 'medleySplit, segueTrimmed, workTitleOf', note: 'Works (3.204.0; collected item Z-SEGUE): a segue of a track list (Grateful Dead, jam bands) – "The Killers > Narragansett", "Dark Star -> St. Stephen", "→", "=>" – in one track splits like "/" (a one-off medley: each piece a work, every link with "medley", in the order of the title); a sign at the end of a title ("China Cat Sunflower >": the next piece follows on its own track) is no part of the work\'s name. Off: only the separators of the release ("/" and those added)' },
     { id: 'S392', where: 'TEXT.parse (tidyLines, fantasy roles)', note: 'Texts (3.204.0; collected item Z-WETTUNA): a line of roles broken after a slash right after the last role ("GUITAR/VOCAL/EFFECTORS/" · "ARP ODYSSEY/…/PROGRAMMING/" · "MULTIPLE INFINITIES") is one line, also when it is broken twice; words of fantasy in a list of instruments ("MULTIPLE INFINITIES", "LOW END THEORY", "VIBRATION" – mapping FANTASY_ROLE_WORDS) are left out even alone. With the mapping: ARP Odyssey, Korg synth – synthesizer; envelope filter, effectors – effects; amplified percussion, rhythm necklace – percussion; Synare – electronic drum set; space drums – drums, each credited as written (several words of one instrument: one relationship with all of them, S325)' },
+    { id: 'S400', where: 'dmTargetOf (em-ev-tracks), emEventTracks', note: 'Dates & tracks (3.205.0; collected item Z-EVTRACKSDROP): a group of the track pool dropped onto the tracks of an event in the view "by event" ("① Recording · no date · no tracks") gives all rows of that event on the recordings its tracks – added, with ⇧ Shift the other way (as onto the tracks of a row in the list "by role"). Until 3.204.0 there was no drop place for tracks in this view' },
+    { id: 'S399', where: 'DISCOGS.parseTrackSpec', note: 'Discogs (3.205.0; collected item Z-DGHYPHENRANGE): tracks written as a range with a hyphen or dash ("Drums – Marcus Gilmore (tracks: A3-B5)", "1-3–1-7") are that range – before, only "A3 to B5" was one and the credit stayed without tracks. The cut is taken where both sides are positions of the track list (a hyphen can belong to a position like "1-3"); is there no such cut or more than one, the part stays unresolved as before' },
+    { id: 'S398', where: 'runoutDates (DISCOGS release runouts)', note: 'Discogs (3.205.0; collected item Z-RUNOUTDATE): a date in the matrix / runout next to the name of the pressing plant ("0007197 MonotypePressing 5/20/2026" with "Made By – Monotype Pressing") becomes the date of the plant\'s "manufactured" (pressed, glass mastered), with a note to check it. Only when the plant\'s name stands in the matrix and the date is clear – the year first, or day and month told apart by a day over 12 (US or European order); "5/6/2026" gives no date' },
+    { id: 'S397', where: 'pickPrimary (similarInstruments, similarInstrumentVia)', note: 'Discogs (3.205.0; collected item Z-DGBRACKETINSTR): a bracket after a role that names an instrument, or is one letter off one or one of its aliases, wins over the role – "Reeds [Fluteophone]" is the Tonette (alias flutophone) with the role credit "fluteophone"; MusicBrainz is more exact than Discogs here' },
+    { id: 'S396', where: 'TEXT.parse (bookletMore; S249 block), looksLikeName', note: 'Texts (3.205.0; collected item Z-POETICS2): "Cover art; sPl@t!" – a semicolon after a role at the start reads as its colon, and a name with an @ (not an e-mail address) is a name, taken as written: artwork with the role credit "cover art". A label with its catalogue number without a separator ("RELATIVE PITCH RECORDS RPRI285", the release has RPR1285) is left out with its reason, OCR slips I/1 and O/0 allowed. Every free text' },
+    { id: 'S395', where: 'TEXT.parse (bookletMore; societyNames, mapping AUTHOR_SOCIETIES, PERFORMER_SOCIETIES)', note: 'Texts (3.205.0; collected item Z-PROSOCIETY): "Mats Gustafsson (STIM / NcB), Barry Guy (PRS, PPL), Jordina Milla (GEMA)" – names with their collecting societies in brackets are the authors: composer of the works of all tracks. Only when every name has such a bracket and at least one authors\' society is among them (PPL or GVL alone are societies of performers – the line stays), and no name is a company\'s ("X Music (BMI)" under "Publishers:" is a publisher); the society itself is never entered. Every free text' },
+    { id: 'S394', where: 'TEXT.parse (bookletMore; sessionSeriesName, mapping SESSION_SERIES_NAMES), textSeriesOf, loadSeries, seriesLinked', note: 'Texts (3.205.0; collected item Z-SESSIONSERIES, corrects S393): a session series (Lagniappe Sessions, Tiny Desk Concerts, Live on KEXP, Peel Sessions …) is a series of recordings: offered as a series by its full name from the mapping (searched in MusicBrainz, a choice among several hits). A series of recordings: the recordings the text names (else all) part of it, without a number; a series of events: a note only (linked at the event). Series not in the list are left out as before; the list can be extended in the mapping. Every free text' },
     { id: 'S393', where: 'TEXT.parse (bookletMore; mapping SESSION_SERIES_LINE)', note: 'Texts (3.204.0; collected item Z-WETTUNA): a line naming a session or concert series of a magazine or a station without a credit of its own – "digital version of our lagniappe session...much obliged aquarium drunkard" (Aquarium Drunkard\'s Lagniappe Sessions), Tiny Desk, Daytrotter, Audiotree, KEXP, Peel or Maida Vale sessions – is left out with its reason: such a series is linked at the level of an event in MusicBrainz' },
     { id: 'S299', where: 'TEXT.parse (shopLines; SHOP_BLOCK_LINES)', note: 'Texts (3.169.0; Z-BCSHOPBLOCK): what a shop writes below an edition is left out as "shop" – the edition\'s name with "(Limited Edition …)" and its format, what the records look like ("2 x 180gsm …", "DiscA/B - Transparent green with gold blob", "Packaged in a standard Sleeve."), the block about shipping ("+++++INTERNATIONAL SHIPPING +++++", "- WE DO NOT SHIP TO PO BOXES", "- ALL ORDERS ARE SENT BY TRACKED COURIER …", "UK: 2-3 days") and the page\'s own details ("published March 29, 2019", "license"). They stood under "not recognized". Every free text' },
     { id: 'S298', where: 'TEXT.parse (hyphenTrackLines; HT_TRACKS, HT_HYPHEN, HT_HEAD, HT_SPLIT)', note: 'Texts (3.169.0; Z-HYPHENTRACKS): a lineup written "Pete Callard-Acoustic Guitar On Tracks 1,2,3, Electric Guitar on Tracks 18,19 Hari-Om- Vocals On Tracks 9,10 …" – a hyphen without spaces between name and role, each role with its tracks, the whole lineup in one paragraph (Beatport and shop texts): the paragraph is cut before each name, the name is what stands before the first hyphen whose right side begins with a role ("Hari-Om- Vocals": Hari-Om), "and Vocals on Tracks …" and a role after a list of tracks are roles of their own, "on all tracks" says nothing new; a heading before the first name ("Musicians In The Studio") is a heading. Only for a line that names tracks that way. Every free text' },
@@ -6556,6 +6568,37 @@
   const FANTASY_ROLE_WORDS = MAP.FANTASY_ROLE_WORDS;
   // [Z-WETTUNA] (3.204.0, S393) a session or concert series of a magazine or a station ("lagniappe session … aquarium drunkard"): an event in MusicBrainz
   const SESSION_SERIES_LINE = MAP.SESSION_SERIES_LINE;
+  // [Z-SESSIONSERIES] (3.205.0, S394) the full name of each session series, searched in MusicBrainz: [pattern, name]
+  const SESSION_SERIES_NAMES = MAP.SESSION_SERIES_NAMES;
+  // [Z-PROSOCIETY] (3.205.0, S395) collecting societies of authors (GEMA, STIM, PRS …) and of performers (PPL, GVL …)
+  const AUTHOR_SOCIETIES = MAP.AUTHOR_SOCIETIES;
+  const PERFORMER_SOCIETIES = MAP.PERFORMER_SOCIETIES;
+  /**
+   * [Z-PROSOCIETY] (3.205.0, S395) "Mats Gustafsson (STIM / NcB), Barry Guy (PRS, PPL), Jordina Millà (GEMA)": names, each with collecting
+   * societies in brackets, one of an author's at least – the names (else []).
+   */
+  function societyNames(t) {
+    const parts = String(t || '').trim().replace(/[.;]$/, '').split(/\)\s*(?:,|;|&|\band\b)?\s*/).map((x) => x.trim()).filter(Boolean);
+    if (parts.length < 1) return [];
+    const out = [];
+    let author = false;
+    for (const p of parts) {
+      const m = p.match(/^(\p{Lu}[\p{L}'’.-]*(?:\s+(?:\p{Lu}[\p{L}'’.-]*|de|da|del|van|von|der|di|le|la))*)\s*\(\s*([^()]+)$/u);
+      if (!m) return [];
+      // (a publisher with its society – "X Music (BMI)", "Y Publishing (ASCAP)" – is no author: a company word in the name, none taken)
+      if (/\b(?:music|musik|musique|m[uú]sica|publishing|publishers?|songs|records|recordings|edition|editions|éditions|edizioni|ediciones|verlag|musikverlag|productions?|ltd|llc|inc|gmbh|corp|co)\b/i.test(m[1])) return [];
+      const socs = m[2].split(/\s*(?:\/|,|&|\+)\s*/).map((x) => x.trim().toLowerCase()).filter(Boolean);
+      if (!socs.length || !socs.every((x) => AUTHOR_SOCIETIES.has(x) || PERFORMER_SOCIETIES.has(x))) return [];
+      if (socs.some((x) => AUTHOR_SOCIETIES.has(x))) author = true;
+      out.push(m[1].trim());
+    }
+    return author ? out : [];
+  }
+  /** [Z-SESSIONSERIES] (3.205.0, S394) The full name of the session series a line names ('' without one). */
+  function sessionSeriesName(t) {
+    const hit = (SESSION_SERIES_NAMES || []).find(([re]) => new RegExp(`\\b(?:${re})\\b`, 'i').test(String(t || '')));
+    return hit ? hit[1] : '';
+  }
   /** [Z-SEGUE] (3.204.0, S391) A title without the sign of a segue at its end ("China Cat Sunflower >" → "China Cat Sunflower"). */
   function segueTrimmed(t) {
     return String(t || '').replace(/\s+(?:-{0,2}>|→|=>)\s*$/u, '').trim() || String(t || '');
@@ -8845,6 +8888,25 @@
             (g || [a]).forEach((i) => indexes.add(i));
             continue;
           }
+          // [Z-DGHYPHENRANGE] (3.205.0, S399) "A3-B5", "1-3–1-7": a range written with a hyphen or dash – the one cut where both sides are
+          // positions of the track list (a hyphen can be part of a position, "1-3"); none or more than one: as before
+          if (ruleOn('S399')) {
+            const cuts = [];
+            for (let k = 1; k < part.length - 1; k++) {
+              if (!/[-–—]/.test(part[k])) continue;
+              const l = part.slice(0, k).trim();
+              const r = part.slice(k + 1).trim();
+              const gl = group(l);
+              const gr = group(r);
+              const x = gl ? gl[0] : posMap.get(normPos(l));
+              const y = gr ? gr[gr.length - 1] : posMap.get(normPos(r));
+              if (x !== undefined && y !== undefined && x <= y) cuts.push([x, y]);
+            }
+            if (cuts.length === 1) {
+              for (let i = cuts[0][0]; i <= cuts[0][1]; i++) indexes.add(i);
+              continue;
+            }
+          }
         }
         unresolved.push(part);
       }
@@ -9056,6 +9118,8 @@
         labels,
         // [Z-LCNOTE] (3.111.0, S176) the label codes Discogs gives ("Label Code: LC 12345"), as numbers
         labelCodes: uniq((d.identifiers || []).filter((x) => /label\s*code/i.test(String((x && x.type) || ''))).map((x) => lcNumber(x.value)).filter(Boolean)),
+        // [Z-RUNOUTDATE] (3.205.0, S398) the texts of the matrix / runout ("0007197 MonotypePressing 5/20/2026")
+        runouts: (d.identifiers || []).filter((x) => /matrix|runout/i.test(String((x && x.type) || ''))).map((x) => String((x && x.value) || '')).filter(Boolean),
         series,
       };
     }
@@ -9289,7 +9353,7 @@
   }
 
   /** [Z-CIMP] (3.101.0, S164) A series a text names, as the sources give series (no link: searched by its name). */
-  const textSeriesOf = (x) => ({ id: 0, links: [], name: x.name, number: x.number, fromText: true });
+  const textSeriesOf = (x) => ({ id: 0, links: [], name: x.name, number: x.number, fromText: true, ...(x.session ? { session: true, tracks: x.tracks || null } : {}) });
   /**
    * [S295] (3.163.0; proposals F-NOTESRESULTS, F-BCABOUT of review run 2) What a free text gives besides credits and companies – series,
    * ensembles, live heads, covers and quotes of tracks, headings of groups – joined from several readings (TEXT.parse results) without
@@ -9369,7 +9433,8 @@
     const cap = (s) => String(s || '').replace(/^\s*\S/, (c) => c.toUpperCase());
     const clean = (s) => String(s || '').replace(/^[\s•·*▪◦>–—-]+/, '').replace(/[\s.;:]+$/, '').replace(/\s+/g, ' ').trim();
     /** A name: some words, no sentence, no address. */
-    const looksLikeName = (n) => !!n && n.length <= 60 && n.split(' ').length <= 6 && !/https?:|www\.|\d{3,}|@/.test(n) && /\p{L}/u.test(n);
+    // ([Z-POETICS2] 3.205.0, S396) an "@" in an artist's name ("sPl@t!") – not an address of mail or a handle ("@name")
+    const looksLikeName = (n) => !!n && n.length <= 60 && n.split(' ').length <= 6 && !/https?:|www\.|\d{3,}/.test(n) && (ruleOn('S396') ? !/@[\w-]+\.\w|^@|\s@/.test(n) : !/@/.test(n)) && /\p{L}/u.test(n);
 
     /**
      * [3.7.0] A place and its area: "Loft in Cologne, june 16/17 2018" and "Loft, Cologne" → { name: 'Loft',
@@ -10348,6 +10413,15 @@
             const no = c[2].replace(/\s*([-.])\s*/g, '$1').replace(/\s+/g, ' ');
             const known = P.catKeys.includes(P.catKey(c[2]));
             drop(i, known ? 'catno' : 'catnoNew', { catno: no, mb: ((P.ctx0 && P.ctx0.catnos) || []).join(', ') || '–' });
+            continue;
+          }
+          // [Z-POETICS2] (3.205.0, S396) the label's name and its number without a sign between them, as a logo prints it, the text
+          // recognition reading "I" for "1" or "O" for "0" – "RELATIVE PITCH RECORDS RPRI285" (MusicBrainz: Relative Pitch Records, RPR1285)
+          const c2 = ruleOn('S396') ? t.match(/^(.+?)\s+([A-Z][A-Z0-9]{1,5}[0-9IlO]{2,6}[A-Z]?)\.?$/u) : null;
+          const ocrKey = (x) => P.catKey(x).replace(/[il]/g, '1').replace(/o/g, '0');
+          if (c2 && P.labelNames.some((n) => norm(n) === norm(c2[1]) || norm(n).replace(/\s+(?:llc|ltd|inc|gmbh)\.?$/, '') === norm(c2[1]))
+            && ((P.ctx0 && P.ctx0.catnos) || []).some((c) => ocrKey(c) === ocrKey(c2[2]))) {
+            drop(i, 'catno', { catno: c2[2], mb: ((P.ctx0 && P.ctx0.catnos) || []).join(', ') || '–' });
             continue;
           }
         }
@@ -12318,8 +12392,28 @@
         // ("digital version of our lagniappe session...much obliged aquarium drunkard xoxo ∞"): left out – such a series is linked at the
         // level of an event in MusicBrainz, not by the dashboard
         if (ruleOn('S393') && SESSION_SERIES_LINE.test(x) && !/:|\s(?:by|von|par|por)\s/i.test(x)) {
-          P.ignored.push({ text: t, why: 'sessionSeries' });
+          // [Z-SESSIONSERIES] (3.205.0, S394) a session series is a series of recordings: offered as one (its full name searched in
+          // MusicBrainz), on the tracks the line names – else on all
+          const sname = ruleOn('S394') ? sessionSeriesName(x) : '';
+          if (sname && !P.series.some((y) => y.session && y.name === sname)) {
+            const tm = x.match(/\btracks?\s+([\d\s,&–-]+(?:and\s+\d+)?)/i);
+            const set = tm && P.resolveTracks ? P.resolveTracks(tm[1]) : null;
+            P.series.push({ name: sname, number: '', session: true, ...(set && set.size ? { tracks: [...set] } : {}) });
+          }
+          if (!sname) P.ignored.push({ text: t, why: 'sessionSeries' });
           continue;
+        }
+        // [Z-POETICS2] (3.205.0, S396) "Cover art; sPl@t!": a semicolon after a role at the start as its colon
+        if (ruleOn('S396')) {
+          const sc = x.match(/^([\p{L}][\p{L} &/'’-]{1,40}?)\s*;\s+([^;]+)$/u);
+          if (sc && isRole(P, cap(sc[1].trim()))) x = `${sc[1].trim()}: ${sc[2].trim()}`;
+        }
+        // [Z-PROSOCIETY] (3.205.0, S395) names with their collecting societies in brackets – the authors: their works composed by them
+        if (ruleOn('S395')) {
+          const sn = societyNames(x);
+          if (sn.length) {
+            x = `Composed by ${sn.length > 1 ? `${sn.slice(0, -1).join(', ')} and ${sn[sn.length - 1]}` : sn[0]}`;
+          }
         }
         // [Z-POETICS] (3.203.0, S388) a photo credit written as a file's name – "Photography : Gustafsson_Guy_Millà_MaschinenHausMusik_(c)_Sabrina
         // Richmann_Ruhrtriennale 2023": the name after "(c)" or "©" is the photographer; the rest (who is on the photo, a place, the year
@@ -20722,9 +20816,16 @@
     const lt = currentLinkType(row);
     const root = lt ? primaryRootOf(lt) : null;
     if (root) {
+      const mods = new Set((row.mods || []).map(norm));
       for (const c of row.primaryCands) {
         const a = findChildAttr(root.id, c);
         if (a) return a.name;
+        // [Z-DGBRACKETINSTR] (3.205.0, S397) Discogs's detail one letter off an instrument or one of its other names – "Reeds
+        // [Fluteophone]": Tonette (alias "flutophone"), more exact than "reeds"; credited as written
+        if (ruleOn('S397') && mods.has(norm(c)) && norm(lt.name) === 'instrument') {
+          const near = similarInstruments(c).map((n) => ({ n, ...similarInstrumentVia(c, n) })).filter((x) => x.key && x.d <= 1);
+          if (near.length === 1) return near[0].n;
+        }
       }
     }
     return row.primaryCands[0];
@@ -31756,6 +31857,7 @@
       applyTrackArtistTracks();
       guestDupMerge(); // [Z-GUESTDUP] (3.200.0, S383)
       cjkCaseStart(rel); // [Z-CAPSJP] (3.202.0, S385)
+      runoutDates(rel); // [Z-RUNOUTDATE] (3.205.0, S398)
       soloistResolve(); // [Z-SOLOIST] (3.140.0, S226)
       // Media choice: entries whose credits all belong to media not chosen are not shown
       if (S.mediaSel) [...S.artists.keys()].filter((k) => !S.rows.some((r) => r.artistKey === k)).forEach((k) => S.artists.delete(k));
@@ -35005,6 +35107,42 @@
   const CJK_COUNTRIES = new Set(['JP', 'CN', 'TW', 'HK', 'MO', 'KR', 'KP']);
   const CJK_PLACES = /^(?:japan|tokyo|osaka|kyoto|nagoya|sapporo|fukuoka|kobe|yokohama|china|beijing|shanghai|guangzhou|shenzhen|chengdu|taiwan|taipei|hong kong|korea|south korea|seoul|busan)$/i;
   const CJK_COUNTRY_NAMES = /^(?:japan|china|taiwan|hong kong|south korea|korea|korea \(south\))$/i;
+  /**
+   * [Z-RUNOUTDATE] (3.205.0, S398) A date in the matrix / runout next to the name of the pressing plant ("0007197 MonotypePressing
+   * 5/20/2026", Discogs "Made By – Monotype Pressing"): the plant's date of the job – at its "manufactured" (pressed, glass mastered) as a
+   * date, with a note to check it. Only a date that is clear: day and month told apart by a day over 12 or by the year first.
+   */
+  function runoutDates(rel) {
+    if (!ruleOn('S398') || !rel || !(rel.runouts || []).length) return 0;
+    const compact = (x) => String(x || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '');
+    const dateIn = (t) => {
+      let m = t.match(/\b(\d{4})[-./](\d{1,2})[-./](\d{1,2})\b/);
+      if (m) return { year: +m[1], month: +m[2], day: +m[3] };
+      m = t.match(/\b(\d{1,2})[-./](\d{1,2})[-./](\d{4})\b/);
+      if (!m) return null;
+      const [a, b, y] = [+m[1], +m[2], +m[3]];
+      if (a > 12 && b <= 12) return { year: y, month: b, day: a };
+      if (b > 12 && a <= 12) return { year: y, month: a, day: b };
+      return null;
+    };
+    let n = 0;
+    for (const r of S.rows) {
+      if (!r.company || r.level === 'skip' || r.date && (r.date.by || r.date.ey)) continue;
+      const type = norm(rowTypeName(r) || '');
+      if (!/^(?:manufactured|pressed|glass mastered)$/.test(type)) continue;
+      const a = S.artists.get(r.artistKey);
+      const key = compact(a && (a.rawName || a.name));
+      if (!key || key.length < 4) continue;
+      const hit = rel.runouts.find((x) => compact(x).includes(key));
+      const d = hit && dateIn(hit);
+      if (!d || d.month < 1 || d.month > 12 || d.day < 1 || d.day > 31) continue;
+      r.date = fieldsFromDate({ begin: d, end: d, ended: true });
+      r.notes = uniq([...(r.notes || []), 'runoutDate']);
+      n++;
+    }
+    if (n) log('info', 'runoutDate', { n });
+    return n;
+  }
   function cjkSignals(rel) {
     const out = new Set();
     const mb = S.cjkMb || {};
@@ -42244,6 +42382,7 @@
       };
       owner.dNumber = seriesNumber(x.number);
       if (x.fromVideo) owner.viaMapping = true;
+      if (x.session) Object.assign(owner, { session: true, sessionTracks: x.tracks || null }); // [Z-SESSIONSERIES] (3.205.0, S394)
       S.artists.set(owner.key, owner);
       const row = makeRow(owner.key, { manual: true, company: null });
       Object.assign(row, { other: true, entityType: 'series', types: [], typeOptions: null, notes: [] });
@@ -42267,10 +42406,18 @@
         if (x.fromVideo) row.notes = [x.number ? 'seriesFromVideo' : 'seriesFromVideoNoDate'];
       } else {
         Object.assign(row, { level: 'skip', levelTouched: true, seriesType: hit ? hit.type : '' });
-        row.notes = [hit ? (type === 'release group series' ? 'noReleaseGroup' : 'seriesType') : x.fromFormat ? 'seriesFormat' : x.fromText ? 'seriesText' : 'seriesMissing'];
+        row.notes = [hit ? (type === 'release group series' ? 'noReleaseGroup' : 'seriesType') : x.fromFormat ? 'seriesFormat' : x.session ? 'seriesSessionText' : x.fromText ? 'seriesText' : 'seriesMissing'];
       }
       S.rows.push(row);
       log(hit ? 'info' : 'warn', x.fromVideo ? 'seriesVideo' : 'series', { name: x.name, number: x.number || '–' });
+      // [Z-SESSIONSERIES] (3.205.0, S394) a session series: MusicBrainz searched by its full name – one hit of that very name is taken,
+      // several are offered at the entry to choose from
+      if (!hit && x.session && ruleOn('S394')) {
+        mbsSearch(owner, x.name).then(() => {
+          const same = ((owner.mbs && owner.mbs.hits) || []).filter((h) => norm(h.name) === norm(x.name));
+          if (same.length === 1 && owner.status === 'missing') mbsUse(owner, same[0].mbid);
+        }).catch((e) => console.warn('[Discogs-Credits] session series search failed', e));
+      }
       if (!hit && x.links && x.links.length) await loadSeriesLabel(owner);
       // [Z-CIMP] (3.101.0, S164) a series of a text: MusicBrainz's series of that name suggested
       if (!hit && x.fromText) await suggestByName([owner]);
@@ -46206,8 +46353,21 @@
   // --- [Z-CIMP] (3.101.0, S164) a series named in a text, once linked: the release (or its group) part of it, with its number
   function seriesLinked(owner, typeName = '') {
     if (!owner || !owner.srcSeries) return;
-    for (const r of S.rows.filter((x) => x.artistKey === owner.key && (x.notes || []).some((k) => k === 'seriesText' || k === 'seriesFormat' || k === 'seriesMissing' || k === 'seriesType'))) {
+    for (const r of S.rows.filter((x) => x.artistKey === owner.key && (x.notes || []).some((k) => k === 'seriesText' || k === 'seriesFormat' || k === 'seriesMissing' || k === 'seriesType' || k === 'seriesSessionText'))) {
       // ((review) a series of recordings, works or events: no part of it for the release – on Skip with its note
+      // [Z-SESSIONSERIES] (3.205.0, S394) a session series (Lagniappe Sessions, Tiny Desk, Peel Sessions …): a series of recordings – the
+      // recordings the text names (else all) part of it, without a number; a series of events: on Skip, its note (linked at the event)
+      if (owner.session && ruleOn('S394') && /^recording series$/i.test(String(typeName))) {
+        r.notes = ['seriesSession'];
+        const sel = selIdx();
+        Object.assign(r, { level: 'recording', levelTouched: true, tracks: new Set(owner.sessionTracks && owner.sessionTracks.length ? owner.sessionTracks.filter((i) => sel.includes(i)) : sel) });
+        resolveRowType(r);
+        continue;
+      }
+      if (owner.session && ruleOn('S394') && /^event series$/i.test(String(typeName))) {
+        Object.assign(r, { notes: ['seriesEvent'], seriesType: typeName, level: 'skip', levelTouched: true });
+        continue;
+      }
       if (typeName && !/^release(?: group)? series$/i.test(String(typeName))) {
         Object.assign(r, { notes: ['seriesType'], seriesType: typeName, level: 'skip', levelTouched: true });
         continue;
@@ -53193,6 +53353,17 @@
         const card = t.closest('[data-colhead]:not(.dci-mx-locked) .dci-mx-card');
         if (card) return { el: card, kind: 'mx-col' };
       }
+      // [Z-EVTRACKSDROP] (3.205.0, S400) the view "by event": the tracks of an event's short line or head ("no tracks", "tracks 1–3")
+      // – all rows of that event on the recordings get the group's tracks
+      if (d.kind === 'tg' && ruleOn('S400')) {
+        const ev = t.closest('#dci-overlay .dci-em-cl[data-emev], #dci-overlay th.dci-em-ev[data-evhead]:not(.dci-em-evskip):not(.dci-em-evghost)');
+        const onTracks = ev && (t.closest('.dci-cl-tracks, .dci-em-evtr') || ev.querySelector('.dci-cl-tracks, .dci-em-evtr'));
+        if (ev && onTracks) {
+          const a = artistOf(ev);
+          const key = ev.dataset.emev || ev.dataset.evhead;
+          if (a && key && rowsInEvent(a, key).some((r) => r.level === 'recording')) return { el: ev, kind: 'em-ev-tracks' };
+        }
+      }
       // [3.27.0] also the tracks of the compact line
       const place = t.closest('tr[data-row] .dci-c-tracks, tr[data-tracksrow], tr[data-row] .dci-cl-tracks');
       const row = place && rowOf(place);
@@ -53417,7 +53588,7 @@
     if (t.kind === 'em-order') t.el.classList.toggle('dci-em-after', emAfter(t.el, e));
     // ([Z-DND] 3.78.0) a drop adds (keeps what is there), ⇧ Shift replaces – [Z-DNDS] (3.86.0) or the other way round, by the setting
     // of the place
-    if (['row-tracks', 'mx-col', 'mx-role', 'mx-attr', 'mx-allworks'].includes(t.kind)) {
+    if (['row-tracks', 'em-ev-tracks', 'mx-col', 'mx-role', 'mx-attr', 'mx-allworks'].includes(t.kind)) {
       const add = !dropReplace(DROP_PLACE_OF[t.kind], e.shiftKey);
       t.el.classList.toggle('dci-drop-add', add);
       const card = t.el.closest('.dci-mx-cardover');
@@ -53484,6 +53655,20 @@
       const cell = dm().cells.find((c) => c.id === t.el.dataset.dmcell);
       const date = cell && S.datePool.find((x) => x.id === cell.date);
       if (JSON.stringify(dm().cells) !== before) dropDone(snap, 'drop.tracksOnDate', { group: (S.trackPool.find((g) => g.id === d.id) || {}).name || '', date: date ? poolLabel(date) : '' });
+      return;
+    }
+    // [Z-EVTRACKSDROP] (3.205.0, S400) a track group onto the tracks of an event: its rows get them (added; with ⇧ Shift the other way)
+    if (t.kind === 'em-ev-tracks') {
+      const g = S.trackPool.find((x) => x.id === d.id);
+      const a = artistOf(t.el);
+      const key = t.el.dataset.emev || t.el.dataset.evhead;
+      if (!g || !a || !key) return;
+      const snap = dropSnapshot();
+      const rows = rowsInEvent(a, key).filter((r) => r.level === 'recording');
+      const add = !replace;
+      const next = new Set(add ? [...rows.flatMap((r) => [...r.tracks]), ...g.tracks] : g.tracks);
+      emEventTracks(a, key, next);
+      dropDone(snap, add ? 'drop.tracksAdded' : 'drop.tracksReplaced', { group: g.name, name: a.mbName || a.name });
       return;
     }
     if (t.kind === 'row-tracks' || t.kind === 'mx-col' || t.kind === 'mx-role' || t.kind === 'mx-attr' || t.kind === 'mx-allworks') {
@@ -58089,7 +58274,7 @@
   /** [Z-DNDS] (3.86.0) A drop at a place replaces (true) or adds: its setting, turned round with ⇧ Shift. */
   const dropReplace = (place, shift) => ((S.dropModes || DROP_DEFAULT)[place] === 'replace') !== !!shift;
   /** [Z-DNDS] (3.86.0) The place of a drop target (its setting). */
-  const DROP_PLACE_OF = { 'row-tracks': 'tracks', 'mx-col': 'matrix', 'mx-role': 'matrix', 'mx-attr': 'matrix', 'mx-allworks': 'allworks', 'em-chip-ev': 'chips',
+  const DROP_PLACE_OF = { 'row-tracks': 'tracks', 'em-ev-tracks': 'tracks', 'mx-col': 'matrix', 'mx-role': 'matrix', 'mx-attr': 'matrix', 'mx-allworks': 'allworks', 'em-chip-ev': 'chips',
     'em-ev': 'dates', 'em-line': 'dates', 'em-block': 'dates', row: 'dates' };
 
   const TOPIC_KEYS = {

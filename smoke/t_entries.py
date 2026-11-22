@@ -5404,4 +5404,230 @@ def case_misslinks3157():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_runoutdate3205():
+    """Credits Importer 3.205.0 (collected item Z-RUNOUTDATE, rule S398): Discogs "Made By – Monotype Pressing" and "Matrix / Runout:
+    0007197 MonotypePressing 5/20/2026" (as Discogs 38001372).
+    A) The plant's "manufactured" is staged with the date 2026-05-20 (the day over 12 tells the US order); the row says where it came from.
+    B) "5/6/2026": day and month not told apart – no date.
+    C) The plant's name not in the matrix – no date.
+    D) S398 off: no date."""
+    import copy
+    orig = H.discogs_release
+    lts0, comp0 = copy.deepcopy(H.LTS), dict(H.COMPANIES)
+    H.lt(360, 'a472da6e-0000-4000-8000-000000000360', 'manufactured', 'label', 'release', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.COMPANIES[1006] = ('label', H.uid('eeeeeeee', 6), 'Monotype Pressing')
+
+    def mk(runout):
+        def rel():
+            d = orig()
+            d['companies'] = [{'name': 'Monotype Pressing', 'entity_type_name': 'Made By', 'id': 1006, 'catno': ''}]
+            d['identifiers'] = [{'type': 'Matrix / Runout', 'value': runout}]
+            return d
+        return rel
+    ADDED = """MB.relationshipEditor.state.added.filter((r) => [(r.entity0 || {}).name, (r.entity1 || {}).name].includes('Monotype Pressing')).map((r) =>
+      [(r.linkTypeID || (r.linkType || {}).id || ''), [r.begin_date, r.end_date].map(d => d ? [d.year, d.month, d.day].filter(x => x != null).join('-') : '').join('..')])"""
+    NOTE = "[...document.querySelectorAll('section.dci-group')].filter(g => /Monotype/.test(g.textContent)).map(g => g.textContent).join(' ')"
+
+    def run(p, runout, off=()):
+        H.discogs_release = mk(runout)
+        H.RULES_OFF = list(off)
+        H.ENTRIES_VIEW = 'legacy'
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.wait_still(pg, "document.body.innerHTML", 10, 400)
+        note = pg.evaluate(NOTE)
+        H.stage(pg)
+        added = pg.evaluate(ADDED)
+        b.close()
+        return added, note, errs
+
+    results = []
+    try:
+        with sync_playwright() as p:
+            a, na, ea = run(p, '0007197 MonotypePressing 5/20/2026')
+            print('A)', a, '|', 'matrix' in na, ea)
+            results.append(bool(a) and all(x[1] == '2026-5-20..2026-5-20' for x in a) and 'Date from the matrix' in na and not ea)
+            b_, nb, eb = run(p, '0007197 MonotypePressing 5/6/2026')
+            print('B)', b_)
+            results.append(bool(b_) and all(x[1] == '..' for x in b_) and not eb)
+            c, nc, ec = run(p, '0007197 OtherPlant 5/20/2026')
+            print('C)', c)
+            results.append(bool(c) and all(x[1] == '..' for x in c) and not ec)
+            d, nd, ed = run(p, '0007197 MonotypePressing 5/20/2026', off=['S398'])
+            print('D)', d)
+            results.append(bool(d) and all(x[1] == '..' for x in d) and not ed)
+    finally:
+        H.discogs_release = orig
+        H.LTS.clear(); H.LTS.update(lts0)
+        H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+        H.COMPANIES.clear(); H.COMPANIES.update(comp0)
+        H.RULES_OFF = []
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_bracketinstr3205():
+    """Credits Importer 3.205.0 (collected item Z-DGBRACKETINSTR, rule S397): Discogs "Reeds [Fluteophone]" (as Discogs 38001372);
+    MusicBrainz has reeds and Tonette with the alias "flutophone".
+    A) The bracket wins: Tonette, credited "fluteophone".
+    B) S397 off: not Tonette (as before)."""
+    orig = H.discogs_release
+    H.attr(9401, 'reeds', 14, 14)
+    H.attr(9402, 'Tonette', 14, 14, aliases=['flutophone'])
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    H.ARTISTS[3401] = (H.uid('dddddddd', 3401), 'Mats Gustafsson')
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': 'Mats Gustafsson', 'anv': '', 'role': 'Reeds [Fluteophone]', 'tracks': '', 'id': 3401, 'join': ''}]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    ROWS = """(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Mats Gustafsson');
+      return g ? [...g.querySelectorAll('tr.dci-row')].map(tr => [(tr.querySelector('[data-f=primary]') || {}).value || '', (tr.querySelector('[data-f=role-credit]') || {}).value || '']) : null; })()"""
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        H.ENTRIES_VIEW = 'legacy'
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.wait_still(pg, "document.body.innerHTML", 10, 400)
+        rows = pg.evaluate(ROWS)
+        b.close()
+        return rows, errs
+
+    results = []
+    H.discogs_release = rel
+    try:
+        with sync_playwright() as p:
+            a, ea = run(p)
+            print('A)', a, ea)
+            results.append(bool(a) and a[0] == ['Tonette', 'fluteophone'] and not ea)
+            b_, eb = run(p, off=['S397'])
+            print('B)', b_, eb)
+            results.append(bool(b_) and b_[0][0] != 'Tonette' and not eb)
+    finally:
+        H.discogs_release = orig
+        H.RULES_OFF = []
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_hyphenrange3205():
+    """Credits Importer 3.205.0 (collected item Z-DGHYPHENRANGE, rule S399): Discogs "Drums – Marcus Gilmore (tracks: A2-B2)" on a record
+    with the sides A1, A2, B1, B2 (as Discogs's "tracks: A3-B5").
+    A) Drums on tracks 2–4 (until 3.204.0: no tracks).
+    B) S399 off: no tracks, as before."""
+    orig = H.discogs_release
+    H.ARTISTS[3501] = (H.uid('dddddddd', 3501), 'Marcus Gilmore')
+
+    def rel():
+        d = orig()
+        for t, pos in zip(d['tracklist'], ('A1', 'A2', 'B1', 'B2')):
+            t['position'] = pos
+            t['extraartists'] = []
+        d['extraartists'] = [{'name': 'Marcus Gilmore', 'anv': '', 'role': 'Drums', 'tracks': 'A2-B2', 'id': 3501, 'join': ''}]
+        d['companies'] = []
+        return d
+    main0 = H.MAIN
+    H.MAIN = H.MAIN.replace('  const S = {', '  const S = window.__S = {', 1)
+    ROWS = """() => window.__S.rows.filter(r => (window.__S.artists.get(r.artistKey) || {}).name === 'Marcus Gilmore').map(r => [...(r.tracks || [])].sort())"""
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.wait_still(pg, "document.body.innerHTML", 10, 400)
+        rows = pg.evaluate(ROWS)
+        b.close()
+        return rows, errs
+
+    results = []
+    H.discogs_release = rel
+    try:
+        with sync_playwright() as p:
+            a, ea = run(p)
+            print('A)', a, ea)
+            results.append(a == [[1, 2, 3]] and not ea)
+            b_, eb = run(p, off=['S399'])
+            print('B)', b_, eb)
+            results.append(b_ == [[]] and not eb)
+    finally:
+        H.discogs_release = orig
+        H.MAIN = main0
+        H.RULES_OFF = []
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_evtracksdrop3205():
+    """Credits Importer 3.205.0 (collected item Z-EVTRACKSDROP, rule S400): the view "by event"; a group of the track pool ("Side A":
+    tracks 1, 2) dropped onto the tracks of Drum Guy's event ("① Recording · no date · all 4 tracks").
+    A) With ⇧ Shift: the event's rows get tracks 1, 2 (until 3.204.0 there was no place to drop it).
+    B) S400 off: nothing changes.
+    C) The compact view: its line "① Recording · no date · all 4 tracks" takes the drop the same way."""
+    from common_rows import drag
+    main0 = H.MAIN
+    H.MAIN = H.MAIN.replace('  const S = {', '  const S = window.__S = {', 1)
+    ROWS = """() => window.__S.rows.filter(r => (window.__S.artists.get(r.artistKey) || {}).name === 'Drum Guy' && r.level === 'recording').map(r => [...(r.tracks || [])].sort())"""
+
+    def run(p, off=(), compact=False):
+        H.RULES_OFF = list(off)
+        H.ENTRIES_VIEW = 'matrix'
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False, **({'view': 'compact'} if compact else {}))
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.wait_still(pg, "document.body.innerHTML", 10, 400)
+        pg.click('[data-act=tg-new]')
+        pg.fill('[data-f=tg-name]', 'Side A')
+        pg.check('[data-f=tg-track][data-i="0"]')
+        pg.check('[data-f=tg-track][data-i="1"]')
+        pg.click('[data-act=tg-save]')
+        pg.wait_for_timeout(300)
+        gid = pg.evaluate("[...document.querySelectorAll('.dci-pools-body .dci-pchip-tg')].find(c => c.textContent.includes('Side A')).dataset.id")
+        drum = sec_sel(pg, 'Drum Guy')
+        before = pg.evaluate(ROWS)
+        drag(pg, f'.dci-pools-body .dci-pchip-tg[data-id="{gid}"] .dci-chip-main', f'{drum} .dci-em-cl[data-emev] .dci-cl-tracks' if compact else f'{drum} th.dci-em-ev .dci-em-evtr', shift=True)
+        pg.wait_for_timeout(500)
+        after = pg.evaluate(ROWS)
+        b.close()
+        return before, after, errs
+
+    results = []
+    try:
+        with sync_playwright() as p:
+            b0, a0, ea = run(p)
+            print('A)', b0, '→', a0, ea)
+            results.append(bool(a0) and all(x == [0, 1] for x in a0) and not ea)
+            b1, a1, eb = run(p, off=['S400'])
+            print('B)', b1, '→', a1, eb)
+            results.append(a1 == b1 and not eb)
+            b2, a2, ec = run(p, compact=True)
+            print('C) kompakt:', b2, '→', a2, ec)
+            results.append(bool(a2) and all(x == [0, 1] for x in a2) and not ec)
+    finally:
+        H.MAIN = main0
+        H.RULES_OFF = []
+        H.ENTRIES_VIEW = 'legacy'
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

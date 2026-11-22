@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.204.0",
+  "version": "3.205.0",
   "about": "MB x Vibecode: Credits Importer – the data of its mapping register (role rules, company roles, questions, tables and word lists, the quick switches). Loaded by the script (@resource mapping); the rules with code stay in the script. Regular expressions are {\"$re\": source, \"$flags\": flags}, sets {\"$set\": [...]}, maps {\"$map\": [[key, value], ...]}.",
   "DEFAULT_OFF_RULES": {"$set":["D023","S046","D026","S114","S155","S160","S297","S339","S343"]},
   "CHECKBOX_DETAILS": [
@@ -838,6 +838,20 @@
   "TEXT_PACKAGING_LINE": {"$re":"^(?:(?:limited\\s+edition\\s+)?(?:compact\\s+disc|cd|vinyl|lp|2\\s*x\\s*lp|cassette|tape)(?:\\s*\\([^)]*\\))?\\s*:\\s*)?(?:(?:\\d+[\\s-]?panel|cardboard|paper|card|heavy|matte|glossy|printed|full[\\s-]colou?r|standard|deluxe|eco)\\s+)*(?:gatefold(?:\\s+(?:sleeve|cover|jacket))?|digipak|digipack|digisleeve|digifile|jewel\\s*case|wallet|slipcase|sleeve|o-?card)(?:\\s+with\\s+[^:]*)?\\.?$","$flags":"i"},
   "FANTASY_ROLE_WORDS": {"$set":["vibration","vibrations","good vibes","multiple infinities","infinities","low end theory","cosmic energy","positive energy","bad vibes","the void","the cosmos","magic","love"]},
   "SESSION_SERIES_LINE": {"$re":"\\b(?:lagniappe\\s+sessions?|tiny\\s+desk(?:\\s+(?:concerts?|sessions?))?|daytrotter\\s+sessions?|audiotree\\s+(?:live|sessions?)|kexp\\s+sessions?|peel\\s+sessions?|maida\\s+vale\\s+sessions?|black\\s+cab\\s+sessions?|la\\s+blogoth[eè]que|colors\\s+show)\\b","$flags":"i"},
+  "SESSION_SERIES_NAMES": [
+    ["lagniappe\\s+sessions?","Lagniappe Sessions"],
+    ["tiny\\s+desk","Tiny Desk Concerts"],
+    ["daytrotter","Daytrotter Sessions"],
+    ["audiotree","Audiotree Live"],
+    ["kexp","Live on KEXP"],
+    ["peel\\s+sessions?","Peel Sessions"],
+    ["maida\\s+vale","Maida Vale Sessions"],
+    ["black\\s+cab\\s+sessions?","Black Cab Sessions"],
+    ["la\\s+blogoth[eè]que","La Blogothèque"],
+    ["colors\\s+show","COLORS"]
+  ],
+  "AUTHOR_SOCIETIES": {"$set":["gema","stim","ncb","prs","mcps","sacem","sdrm","suisa","akm","austro-mechana","buma","stemra","buma/stemra","sabam","koda","tono","teosto","stef","siae","sgae","spa","ascap","bmi","sesac","gmr","socan","apra","amcos","apra amcos","jasrac","komca","zaiks","osa","artisjus","ucmr-ada","sazas","hds","sokoj","ipi","imro","samro","sadaic","ubc","abramus","ecad","sayco","acum","rao","musicautor","eaü","laa","akka/laa","copyright aggregator"]},
+  "PERFORMER_SOCIETIES": {"$set":["ppl","gvl","sena","scf","sami","gramex","adami","spedidam","soundexchange","lsg","swissperform","playright","aie","imaie"]},
   "TEXT_MADE_BY": {"$re":"^(.+?)\\s+(?:(?:of|on|for)\\s+(?:this|the)\\s+(?:release|album|record|ep|single|recording)\\s+)?(?:(?:was|were|is|are|has\\s+been|have\\s+been)\\s+)?(?:(?:entirely|all|completely|fully|solely|exclusively)\\s+)?(?:created|made|written|composed|produced|done|performed|designed)$","$flags":"i"},
   "PROSE_ROLE_WORDS": {
     "sounds": "Sounds",

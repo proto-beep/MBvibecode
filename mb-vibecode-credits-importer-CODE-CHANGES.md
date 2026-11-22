@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.204.0, Companion 1.6.0 – 1.23.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.205.0, Companion 1.6.0 – 1.23.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,17 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.205.0 · 2026-11-22
+
+- **`sessionSeriesName(t)`** (S394, mapping `SESSION_SERIES_NAMES`): the S393 block of `bookletMore` pushes `{name, number: '', session: true, tracks?}` to `P.series` (left out only when no name is known); `textSeriesOf`, `loadSeries` (owner `session`, `sessionTracks`; `mbsSearch` by the name, one exact hit → `mbsUse`), `seriesLinked` (recording series → level recording, note `seriesSession`; event series → skip, note `seriesEvent`).
+- **`societyNames(t)`** (S395, mapping `AUTHOR_SOCIETIES`, `PERFORMER_SOCIETIES`): the line rewritten to "Composed by A, B and C" in `bookletMore`.
+- S396: "Role; name" in `bookletMore`; `looksLikeName` lets an @ through (not an e-mail address); label + catalogue number without a separator in the S249 block (OCR key I/l→1, o→0).
+- S397: `pickPrimary` – a modifier one slip off an instrument or alias (`similarInstruments`, `similarInstrumentVia`) is the instrument.
+- S399: `DISCOGS.parseTrackSpec` – a part that is no position is cut at a hyphen or dash where both sides are positions (exactly one such cut). Test: `t_entries.py` `case_hyphenrange3205`.
+- S400: drop target `em-ev-tracks` in `dmTargetOf` (the tracks of an event's head or short line, view "by event") → `emEventTracks`; place "tracks" of the drop settings. Test: `t_entries.py` `case_evtracksdrop3205`.
+- **`runoutDates(rel)`** (S398): the Discogs adapter gives `runouts` (identifiers of type Matrix / Runout); called after `cjkCaseStart`, note `runoutDate`, log `runoutDate`.
+- Tests: `t_text_lists.py` `case_texts3205`, `t_entries.py` `case_runoutdate3205`, `case_bracketinstr3205`; `case_wettuna3204` adapted (the session line is now a series).
 
 ## Import 3.204.0 · 2026-11-22
 
