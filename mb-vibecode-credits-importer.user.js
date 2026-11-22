@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.201.0
+// @version      3.202.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.201.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.201.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.202.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.202.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.201.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.202.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -2626,6 +2626,15 @@
       "matrix.empty": "No writing credits yet. They appear here once Discogs is loaded, or add them with “Add entry manually” and a work-level role such as composer.",
       "group.workNote": "The writing credits of this entry are in the works matrix.",
       "aka.note": "“{aka}” in brackets after {name}: the artist name of the same person – MusicBrainz is searched by both. If MusicBrainz has only “{aka}”, it may be cleaner to add {name} as an artist of his or her own (its legal name or “performs as”) than to credit “{aka}” as {name}.",
+      "log.cjkCase": "A Japanese, Chinese or Korean release ({signs}): {n} names keep the source's spelling (↺ normal case at each entry)",
+      "cjk.sign.mbScript": "MusicBrainz's script or language",
+      "cjk.sign.mbCountry": "a country of its release events",
+      "cjk.sign.mbTitles": "titles in MusicBrainz",
+      "cjk.sign.mbLabels": "its labels",
+      "cjk.sign.srcText": "the source's text",
+      "cjk.sign.srcCountry": "the source's country",
+      "cjk.sign.mbArtist": "the release's artist in MusicBrainz",
+      "aka.noteCjk": "“{aka}” in brackets after {name}: the same name in its own script – MusicBrainz is searched by both.",
       "group.workNoteShort": "Writing credits: in the works matrix",
       "group.workOnlyTitle": "Writing credits and arrangements of the works",
       "group.workOnlyExplain": "Entries with relationships of works only – the relationships themselves are in the works matrix below.",
@@ -5654,6 +5663,8 @@
     { id: 'S382', where: 'instsOneTrack, instsSet, instsSegHtml, instsBarHtml', note: 'Instruments (3.200.0; collected item Z-INSTSONETRACK): a person credited for one track only – the source gives no tracks, a title names the person as a guest (S322) or the track\'s artists name the person on just that one (S078) – keeps all the instruments on that track: "⑃ on the release …" is greyed (its tooltip says why), the suggestion is not shown, the quick switch S339 leaves the person out. Off: as until 3.199.0' },
     { id: 'S383', where: 'guestDupMerge', note: 'Guests (3.200.0; collected item Z-GUESTDUP): one person, one instrument or voice, one target – one relationship. Two lines naming the same ("Makigami Koichi -harmonic overtone singing, jaw harp" and "… with guests Makigami Koichi vocal and jaw harp") are one row, "guest" if one of them says so; a bare "vocal" of a guest beside another voice of the person ("harmonic overtone singing") is that voice – unless one line names both ("vocals & harmonic overtone singing"). Off: a row each, as until 3.199.0' },
     { id: 'S384', where: 'dateInRangeOf, dateSpanOf, computePlan, dsupDateOf, dsupInside, dsupHolds', note: 'Dates (3.200.0; collected item Z-DATEINRANGE): a date lying wholly within another of the same relationship (the same entry, type, attributes and target) is not a relationship of its own – on the release the period stays ("from 2016-11-27 until 2016-11-30", not also "on 2016-11-30"), on a recording the more exact date. Periods that only overlap stay both (two sessions). Against MusicBrainz: no date there – added (as before); its date holds the source\'s – nothing new; another date – "＋ Add beside it" (chosen) or "⇄ Replace MusicBrainz\'s" in the box "Compared with MusicBrainz". Off: every date a relationship, other dates as their common part (as until 3.199.0)' },
+    { id: 'S385', where: 'cjkSignals, cjkCaseStart, cjkCaseApply, setCaseUp', note: 'Names (3.202.0; collected item Z-CAPSJP): a Japanese, Chinese or Korean release keeps the names of its persons and groups as the source writes them – MusicBrainz keeps capitals and own spellings there ("SUPER ULTRA HYPER ULTIMATE-HAKO-", "SHelley"): no normal case (S059, S060), also as their "credited as"; "↺ normal case" at each entry. Two signs or more, each from a place of its own: the source\'s text in that script, its country (Discogs) or a place in its tags (Bandcamp), MusicBrainz\'s script or language of the release, a country of its release events, its titles or its labels in that script. One sign only: the release\'s artist asked once (its area or the start of it in Japan, China, Taiwan, Hong Kong or Korea, an alias in that script) – a second sign there counts. Labels, works (MusicBrainz\'s titles, S360) and series keep their spelling anyway. Off: normal case as before' },
+    { id: 'S386', where: 'TEXT.parse (namesScoped, parseState), the name search', note: 'Names (3.202.0; collected item Z-CAPSJP): a name in Japanese, Chinese or Korean script in brackets after a name – "SUPER ULTRA HYPER ULTIMATE-HAKO- (箱)", "Kawabata Makoto (河端一)" – is the same person\'s (or group\'s) name in that script: MusicBrainz is searched by it too (persons and groups of that name or alias), the credit stays the name as written' },
     { id: 'S299', where: 'TEXT.parse (shopLines; SHOP_BLOCK_LINES)', note: 'Texts (3.169.0; Z-BCSHOPBLOCK): what a shop writes below an edition is left out as "shop" – the edition\'s name with "(Limited Edition …)" and its format, what the records look like ("2 x 180gsm …", "DiscA/B - Transparent green with gold blob", "Packaged in a standard Sleeve."), the block about shipping ("+++++INTERNATIONAL SHIPPING +++++", "- WE DO NOT SHIP TO PO BOXES", "- ALL ORDERS ARE SENT BY TRACKED COURIER …", "UK: 2-3 days") and the page\'s own details ("published March 29, 2019", "license"). They stood under "not recognized". Every free text' },
     { id: 'S298', where: 'TEXT.parse (hyphenTrackLines; HT_TRACKS, HT_HYPHEN, HT_HEAD, HT_SPLIT)', note: 'Texts (3.169.0; Z-HYPHENTRACKS): a lineup written "Pete Callard-Acoustic Guitar On Tracks 1,2,3, Electric Guitar on Tracks 18,19 Hari-Om- Vocals On Tracks 9,10 …" – a hyphen without spaces between name and role, each role with its tracks, the whole lineup in one paragraph (Beatport and shop texts): the paragraph is cut before each name, the name is what stands before the first hyphen whose right side begins with a role ("Hari-Om- Vocals": Hari-Om), "and Vocals on Tracks …" and a role after a list of tracks are roles of their own, "on all tracks" says nothing new; a heading before the first name ("Musicians In The Studio") is a heading. Only for a line that names tracks that way. Every free text' },
     { id: 'S296', where: 'videoLevelWant, videoLevelFor, VIDEO_RULES, R033 (mapRole), rgIsDjMix, Q022', note: 'Video credits and DJ mixes (3.164.0; proposals F-VIDEOLEVEL, F-DJMIX of review run 2): every credit of a video – video director, camera work, cinematographer and the table of video credits (R076, R110, R119) – is on the recordings when its tracks are videos – from 3.169.0 on the videos only when just some of its tracks are (Z-VIDEOTRACKS; until then such a credit went to the release) – and on the release when none is, where MusicBrainz has the type there (the cinematographer and the camera work were always on the recordings, the others on the release). "Mixed By [DJ Mix]" is the DJ-mix of the release, not the mix engineer; on a release group of the type DJ-mix "Mixed By" asks which of the two (Q022)' },
@@ -9882,7 +9893,14 @@
           // ((review) no voice, modifier, suffix or note: "(Tenor)", "(Acoustic)", "(Executive)", "(Jr.)", "(II)", "(MBE)", "(Uncredited)",
           // "(Bonus)", "(Original Cast)"; no short word in capitals ("UK", "NYC") – MusicBrainz's answer decides the rest (a person)
           && !AKA_NOT.test(ak[2]) && !/^[\p{Lu}.]{1,4}$/u.test(ak[2]) && !/\d/.test(ak[2]) ? ak[2] : '';
+        // [Z-CAPSJP] (3.202.0, S386) a name in Japanese, Chinese or Korean script in brackets ("SUPER ULTRA HYPER ULTIMATE-HAKO- (箱)",
+        // "Kawabata Makoto (河端一)"): the same person's name in that script – searched too, the credit stays the name as written
+        const akCjk = !aka && ruleOn('S386') && !m ? n.match(/^(.+?)\s*\(\s*([\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}][\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}ー・ 　]{0,24}?)\s*\)$/u) : null;
         const nm = clean(n.replace(/\s*\([^)]*\)$/, ''));
+        if (akCjk && clean(akCjk[1])) {
+          P.akaOf.set(norm(nm), akCjk[2].trim());
+          return { name: nm, scope: set && set.size ? { set, spec: clean(m[1]) } : null, aka: akCjk[2].trim() };
+        }
         // [Z-AFFIL] (3.146.0, S262) a company in brackets after a person ("Saki Ichijo (WWW)", "Soushi Mizuno (StudioMASS)", "(Bias &
         // Relax)"): no part of the name – a note at the entry (and a place of a studio's role, see addCredit)
         const af = ruleOn('S262') && !m ? n.match(/^(.+?)\s*\(\s*([^()]+?)\s*\)$/u) : null;
@@ -15206,6 +15224,14 @@
       P.lineCount = new Map();
       // [Z-WPR] (3.84.0, S127) the artist names found in brackets after a name ("Wojciech Stecko (Mindheal)"): name → artist name
       P.akaOf = new Map();
+      // [Z-CAPSJP] (3.202.0, S386) a name in Japanese, Chinese or Korean script in brackets after a name, wherever it stands ("SUPER ULTRA
+      // HYPER ULTIMATE-HAKO- (箱) : guitar"): the same person's name in that script (searched too, the credit stays as written)
+      if (ruleOn('S386')) {
+        for (const m of String(text || '').matchAll(/([^\n:(),;=–—]+?)\s*\(\s*([\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}][\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}ー・ 　]{0,24}?)\s*\)/gu)) {
+          const k = norm(m[1].replace(/^[\s☆★⭐︎*•·-]+/u, '').trim());
+          if (k && !P.akaOf.has(k)) P.akaOf.set(k, m[2].trim());
+        }
+      }
       P.affilOf = new Map(); // [Z-AFFIL] (3.146.0, S262) name → the company in brackets after it
       // [S041] (3.30.7) the release's artist as the band, or "the band", "we" (collected item 96)
       P.bandNames = new Set(P.artistNames.map((n) => norm(n)).filter(Boolean));
@@ -28221,6 +28247,14 @@
       S.mbReleasePerformers = (ws.relations || []).filter((r) => r['target-type'] === 'artist' && r.artist && PERFORMING_TYPES.includes(norm(r.type))).map((r) => r.artist.id);
       // [3.22.1] the labels of the release (a Bandcamp page of one of them is named so, 46)
       S.releaseLabels = (ws['label-info'] || []).map((li) => li && li.label && li.label.id).filter(Boolean);
+      // [Z-CAPSJP] (3.202.0, S385) what MusicBrainz says of a Japanese, Chinese or Korean release: its script and language, countries,
+      // titles (release, media, tracks) and labels
+      S.cjkMb = {
+        script: String((ws['text-representation'] || {}).script || ''), lang: String((ws['text-representation'] || {}).language || ''),
+        countries: uniq([ws.country, ...(ws['release-events'] || []).map((e) => e && e.area && (e.area['iso-3166-1-codes'] || [])[0])].filter(Boolean)),
+        titles: [ws.title, ...(ws.media || []).flatMap((m) => [m.title, ...(m.tracks || []).map((t) => t.title)])].filter(Boolean).join(' '),
+        labels: (ws['label-info'] || []).map((li) => li && li.label && li.label.name).filter(Boolean).join(' '),
+      };
       // [Z-CATNO] (3.124.0, S196) its catalogue numbers (a line of a text that is one is no credit)
       S.releaseCatnos = uniq((ws['label-info'] || []).map((li) => li && li.label && li.label.id && String(li['catalog-number'] || '').trim()).filter(Boolean));
       // [Z-ARTL] (3.100.0, S159) with their names (a label credited for the artwork)
@@ -31612,6 +31646,7 @@
       // [S078] (3.50.0; Z-TAR) a musician for the whole release on the tracks that name the musician as their artist
       applyTrackArtistTracks();
       guestDupMerge(); // [Z-GUESTDUP] (3.200.0, S383)
+      cjkCaseStart(rel); // [Z-CAPSJP] (3.202.0, S385)
       soloistResolve(); // [Z-SOLOIST] (3.140.0, S226)
       // Media choice: entries whose credits all belong to media not chosen are not shown
       if (S.mediaSel) [...S.artists.keys()].filter((k) => !S.rows.some((r) => r.artistKey === k)).forEach((k) => S.artists.delete(k));
@@ -32040,9 +32075,11 @@
         // [Z-WPR] (3.84.0, S127) a person with an artist name in brackets ("Wojciech Stecko (Mindheal)"): searched by it too – only similar
         // ((review) only MusicBrainz's persons of exactly that name (or alias) – "(Metallica)", "(Poland)", "(Fender)" are none: no
         // suggestion, no note (akaOk)
-        if (ruleOn('S127') && !a.company && a.aka && type === 'artist') {
+        // ([Z-CAPSJP] 3.202.0, S386) a name in Japanese, Chinese or Korean script: a person or a group of that name or alias
+        const akaCjk = ruleOn('S386') && !!a.aka && CJK_RE.test(a.aka);
+        if ((ruleOn('S127') || akaCjk) && !a.company && a.aka && type === 'artist') {
           const dataA = await mbWs(`artist?query=${encodeURIComponent(`artist:${lucenePhrase(a.aka)}`)}&limit=10`);
-          const person = (x) => !x.type || /^(?:person|character)$/i.test(x.type);
+          const person = (x) => akaCjk || !x.type || /^(?:person|character)$/i.test(x.type);
           const named = (x) => [x.name, ...(x.aliases || []).map((al) => al.name)].some((n) => nameFit(n, a.aka) === 'same');
           const hitsA = ((dataA && dataA.artists) || []).filter((x) => person(x) && named(x));
           a.akaOk = hitsA.length > 0;
@@ -34847,6 +34884,72 @@
   const mbCaps = (a) => !!(a && a.mbName && !/\p{Ll}/u.test(a.mbName) && caseSpellingOf(a));
   /** [S060] (3.38.12) Whether an entry has a name or a spelling the dashboard wrote in normal case (the source's in capitals). */
   const caseSpellingOf = (a) => !!(a && !a.company && (a.caseFrom || S.rows.some((r) => r.artistKey === a.key && r.anvFrom)));
+  /**
+   * [Z-CAPSJP] (3.202.0, S385) A Japanese, Chinese or Korean release keeps its names as written – MusicBrainz keeps capitals and own
+   * spellings there ("SUPER ULTRA HYPER ULTIMATE-HAKO-"). The signs, each from a place of its own: the source's text in that script
+   * (titles, names in brackets, headings), the source's country (Discogs) or a place in its tags (Bandcamp), MusicBrainz's script or
+   * language of the release, a country of its release events, its titles (release, media, tracks) and its labels in that script.
+   */
+  const CJK_RE = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u;
+  const CJK_SCRIPTS = new Set(['Jpan', 'Hira', 'Kana', 'Hrkt', 'Hani', 'Hans', 'Hant', 'Hang', 'Kore']);
+  const CJK_LANGS = new Set(['jpn', 'zho', 'kor', 'yue', 'cmn']);
+  const CJK_COUNTRIES = new Set(['JP', 'CN', 'TW', 'HK', 'MO', 'KR', 'KP']);
+  const CJK_PLACES = /^(?:japan|tokyo|osaka|kyoto|nagoya|sapporo|fukuoka|kobe|yokohama|china|beijing|shanghai|guangzhou|shenzhen|chengdu|taiwan|taipei|hong kong|korea|south korea|seoul|busan)$/i;
+  const CJK_COUNTRY_NAMES = /^(?:japan|china|taiwan|hong kong|south korea|korea|korea \(south\))$/i;
+  function cjkSignals(rel) {
+    const out = new Set();
+    const mb = S.cjkMb || {};
+    if (CJK_SCRIPTS.has(mb.script) || CJK_LANGS.has(mb.lang)) out.add('mbScript');
+    if ((mb.countries || []).some((c) => CJK_COUNTRIES.has(c))) out.add('mbCountry');
+    if (CJK_RE.test(mb.titles || '')) out.add('mbTitles');
+    if (CJK_RE.test(mb.labels || '')) out.add('mbLabels');
+    if (rel) {
+      const text = [rel.title, rel.notes, ...(rel.tracks || []).map((t) => t && t.title), ...(rel.credits || []).map((c) => (c && (c.name || (c.who && c.who.name))) || '')].filter(Boolean).join(' ');
+      if (CJK_RE.test(text)) out.add('srcText');
+      if (CJK_COUNTRY_NAMES.test(String(rel.country || '').trim()) || (rel.bcTags || []).some((t) => CJK_PLACES.test(String((t && t.name) || t || '').trim()))) out.add('srcCountry');
+    }
+    return out;
+  }
+  /**
+   * [Z-CAPSJP] (3.202.0, S385) After the entries are made: two signs or more – the names keep the source's spelling (as "↺ in capitals"
+   * would; "↺ normal case" stays at each entry); exactly one – the release's artist asked once in the background (its area, the start
+   * of its area, an alias in that script): a second sign there, and the names keep it too.
+   */
+  function cjkCaseStart(rel) {
+    S.cjkCase = null;
+    if (!ruleOn('S385')) return;
+    const signs = cjkSignals(rel);
+    if (signs.size >= 2) {
+      cjkCaseApply([...signs]);
+      return;
+    }
+    if (signs.size !== 1) return;
+    const seq = importSeq;
+    const ids = (S.releaseCredit || []).map((p) => p.mbid).filter((id) => id && !isSpecialArtist(id)).slice(0, 2);
+    (async () => {
+      for (const id of ids) {
+        const x = await mbWs(`artist/${id}?inc=aliases`, { background: true }).catch(() => null);
+        if (!x || seq !== importSeq) return;
+        const codes = [x.area, x['begin-area']].flatMap((ar) => (ar && ar['iso-3166-1-codes']) || []);
+        if (CJK_COUNTRIES.has(x.country) || codes.some((c) => CJK_COUNTRIES.has(c)) || (x.aliases || []).some((al) => CJK_RE.test(al.name || '')) || CJK_RE.test(x.name || '')) {
+          cjkCaseApply([...signs, 'mbArtist']);
+          renderGroups();
+          return;
+        }
+      }
+    })();
+  }
+  function cjkCaseApply(signs) {
+    S.cjkCase = signs;
+    let n = 0;
+    for (const a of S.artists.values()) {
+      if (a.company || a.caseUp || a.caseTouched || !caseSpellingOf(a) || mbCaps(a)) continue;
+      setCaseUp(a, true);
+      a.cjkCase = true;
+      n++;
+    }
+    log('info', 'cjkCase', { n, signs: signs.map((x) => tr(`cjk.sign.${x}`)).join(', ') });
+  }
   /** [S060] (3.38.12) "↺ in capitals" at a name the dashboard wrote in normal case ("↺ normal case" once taken). */
   function caseBackHtml(a) {
     if (!caseSpellingOf(a) || mbCaps(a)) return '';
@@ -34888,6 +34991,7 @@
   }
   function toggleCase(a) {
     if (!caseSpellingOf(a)) return;
+    a.caseTouched = true; // ([Z-CAPSJP] 3.202.0) a choice by hand stays
     setCaseUp(a, !a.caseUp);
     log('info', a.caseUp ? 'caseUp' : 'caseDown', { name: a.name });
     rerenderGroup(a);
@@ -37001,7 +37105,7 @@
         ${a.company || a.other ? '' : instsBarHtml(a)}
         ${a.other ? '' : dsupBoxHtml(a)}
         ${isPlaceEntry(a) ? festPlaceHtml(a) : ''}
-        ${a.aka && a.akaOk && !a.company && !a.mbid && ruleOn('S127') ? `<p class="dci-sub dci-aka-note" data-el="aka-note">${esc(tr('aka.note', { name: a.rawName || a.name, aka: a.aka }))}</p>` : ''}
+        ${a.aka && a.akaOk && !a.company && !a.mbid && (ruleOn('S127') || ruleOn('S386')) ? `<p class="dci-sub dci-aka-note" data-el="aka-note">${esc(tr(CJK_RE.test(a.aka) ? 'aka.noteCjk' : 'aka.note', { name: a.rawName || a.name, aka: a.aka }))}</p>` : ''}
         ${a.affil && !a.company && ruleOn('S262') ? `<p class="dci-sub dci-affil-note" data-el="affil-note">${esc(tr('affil.note', { name: a.rawName || a.name, org: a.affil }))}</p>` : ''}
         ${coverFromEntryHtml(a, rows)}
         ${stackNoteHtml(rows)}

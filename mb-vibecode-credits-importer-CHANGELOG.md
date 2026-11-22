@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-22 | 3.197.0 – 3.201.0 | – |
+| 2026-11-22 | 3.197.0 – 3.202.0 | – |
 | 2026-11-21 | 3.193.0 – 3.196.0 | – |
 | 2026-11-20 | 3.185.0 – 3.192.0 | 1.23.0 |
 | 2026-11-19 | 3.170.0 – 3.184.0 | – |
@@ -136,6 +136,13 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.202.0
+
+**Japanese, Chinese and Korean releases keep their spellings.**
+
+- **Names as written** (rule S385): on such a release MusicBrainz keeps capitals and own spellings ("SUPER ULTRA HYPER ULTIMATE-HAKO-") – the dashboard no longer writes them in normal case, also not as "credited as"; "↺ normal case" stays at each entry. It counts as such a release with two signs from different places: text of the source in that script, the source's country (Discogs) or a place in its tags (Bandcamp), MusicBrainz's script or language of the release, a country of its release events, its titles or labels in that script. With one sign only the release's artist is asked once (its area, an alias in that script). Labels, works (titles from MusicBrainz) and series keep their spelling anyway.
+- **The name in its own script** (S386): "SUPER ULTRA HYPER ULTIMATE-HAKO- (箱)", "Kawabata Makoto (河端一)" – the bracketed name is searched too (persons and groups), the credit stays as written.
 
 ### Import 3.201.0
 
