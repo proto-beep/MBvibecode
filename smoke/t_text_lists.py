@@ -703,6 +703,89 @@ def case_onetrack3200():
         H.ENTRIES_VIEW = 'legacy'
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+def case_poetics3203():
+    """Credits Importer 3.203.0 (collected items Z-POETICS, Z-ALIASTYPO, Z-INSTLINK; rules S387–S390): the credits of "Poetics of Frø"
+    (Bandcamp, pasted) – "Mats Gustafsson - fluteophone, piano", "Recorded, January 18, 2024, L’Auditori de Barcelona By Ferran Conangla",
+    "Mastered, Mixed Ferran Conangla at FCM Studios,", "Photography : Gustafsson_Guy_(c)_Sabrina Richmann_Ruhrtriennale 2023",
+    "Compact Disc (CD): cardboard gatefold sleeve"; MusicBrainz has Tonette with the alias "flutophone".
+    A) Entries: Ferran Conangla (recorded, mastered, mixed by), Sabrina Richmann (photography), L’Auditori de Barcelona and FCM Studios;
+       none of these lines "not recognized"; the package line left out; no date 2023 in the pool.
+    B) "fluteophone": Tonette suggested at once, credited "fluteophone"; the question names the alias ("Tonette – alias “flutophone”").
+    C) "↗" after Tonette and piano in the row (MusicBrainz's instrument page, new tab); ⚙ → Appearance "Links to MusicBrainz's
+       instrument pages" off: none.
+    D) The matrix of the entry: the chip "Tonette “fluteophone”" (no "?"), with its ↗."""
+    TEXT = ('Mats Gustafsson - fluteophone, piano\n'
+            'Recorded, January 18, 2024, L’Auditori de Barcelona By Ferran Conangla\n'
+            'Mastered, Mixed Ferran Conangla at FCM Studios,\n'
+            'Photography : Gustafsson_Guy_(c)_Sabrina Richmann_Ruhrtriennale 2023\n'
+            'Compact Disc (CD): cardboard gatefold sleeve')
+    H.attr(9301, 'Tonette', 14, 14, aliases=['flutophone'])
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
+    MATS = """(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Mats Gustafsson');
+      return g ? [...g.querySelectorAll('tr.dci-row')].map(tr => [(tr.querySelector('[data-f=primary]') || {}).value || '', (tr.querySelector('[data-f=role-credit]') || {}).value || '',
+        (tr.querySelector('.dci-instr-guess') || { textContent: '' }).textContent.replace(/\\s+/g, ' ').trim(),
+        [...tr.querySelectorAll('a.dci-instlink')].map(a => a.href.split('/').pop())]) : null; })()"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            H.ENTRIES_VIEW = 'legacy'
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.src_menu(pg, 'text-open')
+            pg.fill('[data-f=text-src]', TEXT)
+            pg.click('[data-act=text-load]')
+            H.wait_for(pg, f"{LOGS}.filter(x => /Import complete/.test(x)).length >= 2", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 400)
+            names = pg.evaluate("[...document.querySelectorAll('section.dci-group .dci-gname strong')].map(s => s.textContent.trim())")
+            un = pg.evaluate("[...document.querySelectorAll('[data-el=unrec] li, .dci-unrec li')].map(li => li.textContent.trim().slice(0, 40))")
+            page = pg.evaluate("document.getElementById('dci-overlay').textContent")
+            pool = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-pool:{H.REL}') || '[]').map(d => JSON.stringify(d.begin))")
+            print('A)', names, '| nicht erkannt:', un, '| Pool:', pool)
+            results.append(all(n in names for n in ('Ferran Conangla', 'Sabrina Richmann', 'FCM Studios')) and any('Auditori' in n for n in names)
+                           and not any(w in ' '.join(un) for w in ('Recorded', 'Mastered', 'Photography', 'Compact Disc')) and 'cardboard gatefold sleeve' in page
+                           and not any('2023' in x for x in pool))
+            m = pg.evaluate(MATS)
+            print('B/C)', m, '| Fehler:', errs)
+            tone = [r for r in (m or []) if r[0] == 'Tonette']
+            results.append(bool(tone) and tone[0][1] == 'fluteophone' and 'alias “flutophone”' in tone[0][2])
+            results.append(bool(tone) and tone[0][3] == [H.ATTRS[9301]['gid']] or (bool(tone) and H.ATTRS[9301]['gid'] in tone[0][3]))
+            H.open_settings(pg, 'appearance')
+            pg.locator('[data-el=settings] [data-set=inst-links]').evaluate('b => b.click()')
+            pg.wait_for_timeout(300)
+            off = pg.evaluate("document.querySelectorAll('section.dci-group a.dci-instlink').length")
+            print('   Links aus:', off)
+            results.append(off == 0 and not errs)
+            b.close()
+            # D) the matrix of the entry: the chip "Tonette “fluteophone”" without "?", its ▾ with the other answers
+            H.ENTRIES_VIEW = 'matrix'
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.src_menu(pg, 'text-open')
+            pg.fill('[data-f=text-src]', TEXT)
+            pg.click('[data-act=text-load]')
+            H.wait_for(pg, f"{LOGS}.filter(x => /Import complete/.test(x)).length >= 2", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 400)
+            pg.click('.dci-head [data-act=view-toggle]')
+            H.wait_still(pg, "document.body.innerHTML", 10, 400)
+            chips = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Mats Gustafsson');
+              return g ? [...g.querySelectorAll('.dci-em-chip')].map(c => [c.querySelector('.dci-em-chipname').textContent.replace(/\\s+/g, ' ').trim(), !!c.querySelector('[data-act=em-chipask]'), !!c.querySelector('a.dci-instlink')]) : null; })()""")
+            print('D)', chips, errs)
+            t = [c for c in (chips or []) if c[0].startswith('Tonette')]
+            results.append(bool(t) and t[0][0] == 'Tonette “fluteophone”' and t[0][2] and not errs)
+            b.close()
+    finally:
+        H.ENTRIES_VIEW = 'legacy'
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 def case_bandtracks3183():
     """Credits Importer 3.183.0 (collected item Z-BANDTRACKS, S078): a release of the "Blue Shroud Collective" whose tracks 1 and 2 name single
     players (Maya Homburger; Maya Homburger & Barry Guy) and whose tracks 3 and 4 are credited to the band.

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.202.0
+// @version      3.203.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.202.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.202.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.203.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.203.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.202.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.203.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -4072,6 +4072,11 @@
       "instrAsk.ask": "Discogs only says “{name}”. Do you know which one it is?",
       "instrGuess.ask": "“{word}” is no instrument of MusicBrainz – did you mean:",
       "instrGuess.chosen": "“{word}” is no instrument of MusicBrainz – chosen:",
+      "instrGuess.via": "alias “{alias}”",
+      "instrGuess.auto": "“{word}” is no instrument of MusicBrainz – one letter off one of its names, suggested:",
+      "settings.instLinks": "Links to MusicBrainz's instrument pages (↗)",
+      "settings.instLinksTitle": "A small ↗ after an instrument in an entry opened (not in the compact lines) opens its page on MusicBrainz",
+      "instLink.title": "{name} on MusicBrainz (new tab)",
       "instrGuess.other": "{other} “{word}”",
       "instrGuess.none": "“{word}” is no instrument of MusicBrainz, and none is like it: {other}, credited “{credit}”.",
       "instrGuess.misc": "miscellaneous support (task “{word}”)",
@@ -5665,6 +5670,10 @@
     { id: 'S384', where: 'dateInRangeOf, dateSpanOf, computePlan, dsupDateOf, dsupInside, dsupHolds', note: 'Dates (3.200.0; collected item Z-DATEINRANGE): a date lying wholly within another of the same relationship (the same entry, type, attributes and target) is not a relationship of its own – on the release the period stays ("from 2016-11-27 until 2016-11-30", not also "on 2016-11-30"), on a recording the more exact date. Periods that only overlap stay both (two sessions). Against MusicBrainz: no date there – added (as before); its date holds the source\'s – nothing new; another date – "＋ Add beside it" (chosen) or "⇄ Replace MusicBrainz\'s" in the box "Compared with MusicBrainz". Off: every date a relationship, other dates as their common part (as until 3.199.0)' },
     { id: 'S385', where: 'cjkSignals, cjkCaseStart, cjkCaseApply, setCaseUp', note: 'Names (3.202.0; collected item Z-CAPSJP): a Japanese, Chinese or Korean release keeps the names of its persons and groups as the source writes them – MusicBrainz keeps capitals and own spellings there ("SUPER ULTRA HYPER ULTIMATE-HAKO-", "SHelley"): no normal case (S059, S060), also as their "credited as"; "↺ normal case" at each entry. Two signs or more, each from a place of its own: the source\'s text in that script, its country (Discogs) or a place in its tags (Bandcamp), MusicBrainz\'s script or language of the release, a country of its release events, its titles or its labels in that script. One sign only: the release\'s artist asked once (its area or the start of it in Japan, China, Taiwan, Hong Kong or Korea, an alias in that script) – a second sign there counts. Labels, works (MusicBrainz\'s titles, S360) and series keep their spelling anyway. Off: normal case as before' },
     { id: 'S386', where: 'TEXT.parse (namesScoped, parseState), the name search', note: 'Names (3.202.0; collected item Z-CAPSJP): a name in Japanese, Chinese or Korean script in brackets after a name – "SUPER ULTRA HYPER ULTIMATE-HAKO- (箱)", "Kawabata Makoto (河端一)" – is the same person\'s (or group\'s) name in that script: MusicBrainz is searched by it too (persons and groups of that name or alias), the credit stays the name as written' },
+    { id: 'S387', where: 'TEXT.parse (bookletMore)', note: 'Texts (3.203.0; collected item Z-POETICS): "Recorded, January 18, 2024, L\'Auditori de Barcelona By Ferran Conangla" – the date and the place between commas, "By" before the name – read as "Recorded January 18, 2024 at L\'Auditori de Barcelona by Ferran Conangla"; roles without "by" before a name ("Mastered, Mixed Ferran Conangla at FCM Studios,") – the person too, not the studio only. A name: each word with a capital, no month, no "Live" or "Digitally"' },
+    { id: 'S388', where: 'TEXT.parse (bookletMore, photoFileCredit), findDates', note: 'Texts (3.203.0; collected item Z-POETICS): a photo credit written as a file\'s name – "Photography : Gustafsson_Guy_Millà_MaschinenHausMusik_(c)_Sabrina Richmann_Ruhrtriennale 2023": the name after "(c)" or "©" is the photographer; who is on the photo, a place and the year of the photo are no credit and no date. Without "(c)"/"©": not read' },
+    { id: 'S389', where: 'TEXT.parse (readUnit; mapping TEXT_PACKAGING_LINE)', note: 'Texts (3.203.0; collected item Z-POETICS): a line that only describes the package – "Compact Disc (CD): cardboard gatefold sleeve", "6-panel digipak", "jewel case" – is left out ("about the package")' },
+    { id: 'S390', where: 'guessInstrument, similarInstrumentVia, guessOptLabel, instrGuessHtml', note: 'Instruments (3.203.0; collected item Z-ALIASTYPO): a word MusicBrainz does not know ("fluteophone"): each answer of the question says which of MusicBrainz\'s other names it is like ("Tonette – alias “flutophone”"); exactly one answer one letter off (its name or an alias): chosen at once – by an alias credited as written ("Tonette “fluteophone”"), by its own name a slip without a role credit ("Sxaophone": saxophone) – the question stays to change it. Off: a question with the answers only, as before' },
     { id: 'S299', where: 'TEXT.parse (shopLines; SHOP_BLOCK_LINES)', note: 'Texts (3.169.0; Z-BCSHOPBLOCK): what a shop writes below an edition is left out as "shop" – the edition\'s name with "(Limited Edition …)" and its format, what the records look like ("2 x 180gsm …", "DiscA/B - Transparent green with gold blob", "Packaged in a standard Sleeve."), the block about shipping ("+++++INTERNATIONAL SHIPPING +++++", "- WE DO NOT SHIP TO PO BOXES", "- ALL ORDERS ARE SENT BY TRACKED COURIER …", "UK: 2-3 days") and the page\'s own details ("published March 29, 2019", "license"). They stood under "not recognized". Every free text' },
     { id: 'S298', where: 'TEXT.parse (hyphenTrackLines; HT_TRACKS, HT_HYPHEN, HT_HEAD, HT_SPLIT)', note: 'Texts (3.169.0; Z-HYPHENTRACKS): a lineup written "Pete Callard-Acoustic Guitar On Tracks 1,2,3, Electric Guitar on Tracks 18,19 Hari-Om- Vocals On Tracks 9,10 …" – a hyphen without spaces between name and role, each role with its tracks, the whole lineup in one paragraph (Beatport and shop texts): the paragraph is cut before each name, the name is what stands before the first hyphen whose right side begins with a role ("Hari-Om- Vocals": Hari-Om), "and Vocals on Tracks …" and a role after a list of tracks are roles of their own, "on all tracks" says nothing new; a heading before the first name ("Musicians In The Studio") is a heading. Only for a line that names tracks that way. Every free text' },
     { id: 'S296', where: 'videoLevelWant, videoLevelFor, VIDEO_RULES, R033 (mapRole), rgIsDjMix, Q022', note: 'Video credits and DJ mixes (3.164.0; proposals F-VIDEOLEVEL, F-DJMIX of review run 2): every credit of a video – video director, camera work, cinematographer and the table of video credits (R076, R110, R119) – is on the recordings when its tracks are videos – from 3.169.0 on the videos only when just some of its tracks are (Z-VIDEOTRACKS; until then such a credit went to the release) – and on the release when none is, where MusicBrainz has the type there (the cinematographer and the camera work were always on the recordings, the others on the release). "Mixed By [DJ Mix]" is the DJ-mix of the release, not the mix engineer; on a release group of the type DJ-mix "Mixed By" asks which of the two (Q022)' },
@@ -6537,6 +6546,8 @@
   // at X by Y", "Compositions arranged by X"; no "made", "done", "shot", "drawn" (no role of their own)
   // [3.30.8] about the package: "Including a 52 p. booklet." – left out on purpose (T030)
   const TEXT_PACKAGE = MAP.TEXT_PACKAGE;
+  // [Z-POETICS] (3.203.0, S389) a line that only describes the package: "Compact Disc (CD): cardboard gatefold sleeve"
+  const TEXT_PACKAGING_LINE = MAP.TEXT_PACKAGING_LINE;
 
   // [T022] Texts (3.14.0): roles named before a verb of making – "Music and artwork of this release were entirely
   // created by …": the roles are the words before "of this …" and the verb
@@ -8596,6 +8607,10 @@
     // [Z-RELDATE] (3.132.0, D034) the dates relative ones are reckoned from (found once, when the first is met)
     let relRef = null;
     const relOpt = { usOrder, relRef: (i) => (relRef || (relRef = relRefFinder(src, usOrder)))(i) };
+    // [Z-POETICS] (3.203.0, S388) a photo credit written as a file's name: its year is the photo's ("…_Ruhrtriennale 2023") – no date
+    if (ruleOn('S388')) {
+      for (const m of src.matchAll(/^[ \t]*(?:photo(?:graphy|graphs|s)?|pictures?)\s*(?:by)?\s*:?\s*\S*_[^\n]*(?:\(c\)|©)[^\n]*$/gim)) taken.push([m.index, m.index + m[0].length]);
+    }
     for (const mt of DATE_MATCHERS) {
       if (!ruleOn(mt.id) || (noRel && mt.id === 'D034')) continue;
       mt.rx.lastIndex = 0;
@@ -12282,9 +12297,43 @@
           const lq = x.match(/^(recorded\s+live)\s+on\s+(.+?)\s+at\s+the\s+["“„]([^"”“]{3,60})["”“]\s+in\s+(?:the\s+(?:city|town)\s+of\s+)?(\p{Lu}[\p{L}-]+)(?:\s+in\s+(\p{Lu}[\p{L} -]+?))?(?:\s+during\b.*)?\.?$/iu);
           if (lq) x = `${cap(lq[1])} at ${lq[3]}, ${lq[4]}${lq[5] ? `, ${lq[5]}` : ''} on ${lq[2]}.`;
         }
+        // [Z-POETICS] (3.203.0, S388) a photo credit written as a file's name – "Photography : Gustafsson_Guy_Millà_MaschinenHausMusik_(c)_Sabrina
+        // Richmann_Ruhrtriennale 2023": the name after "(c)" or "©" is the photographer; the rest (who is on the photo, a place, the year
+        // of the photo) is no credit
+        if (ruleOn('S388')) {
+          const pf = photoFileCredit(x);
+          if (pf) x = `Photography by ${pf}`;
+        }
+        // [Z-POETICS] (3.203.0, S387) "Recorded, January 18, 2024, L'Auditori de Barcelona By Ferran Conangla": the date and the place
+        // between commas, "By" before the name – "Recorded January 18, 2024 at L'Auditori de Barcelona by Ferran Conangla"; "Mastered,
+        // Mixed Ferran Conangla at FCM Studios,": roles without "by" before a name – "Mastered, Mixed by Ferran Conangla at FCM Studios"
+        if (ruleOn('S387')) {
+          const VERB = '(?:re-?)?(?:recorded|mixed|mastered|engineered|produced|edited)';
+          const DATE = '(?:(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\\.?\\s+\\d{1,2}(?:st|nd|rd|th)?,?\\s+\\d{4}|\\d{1,2}(?:st|nd|rd|th)?\\.?\\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\\.?,?\\s+\\d{4})';
+          const rd = x.match(new RegExp(`^(${VERB})\\s*,\\s*(${DATE})\\s*,\\s*([^,]+?(?:,\\s*[^,]+?)?)\\s*,?\\s+by\\s+(\\p{Lu}[^,]+?)[.,]?$`, 'iu'));
+          if (rd && /^\p{Lu}/u.test(rd[4])) x = `${cap(rd[1].toLowerCase())} ${rd[2]} at ${rd[3]} by ${rd[4]}`;
+          const nb = !/\bby\b/i.test(x) && x.match(new RegExp(`^(${VERB}(?:\\s*(?:,|&|\\band\\b)\\s*${VERB})*)\\s+(\\p{Lu}[\\p{L}'’.-]+(?:\\s+\\p{Lu}[\\p{L}'’.-]+){1,3})((?:\\s+(?:at|in)\\s+.+?)?)[.,]?$`, 'iu'));
+          // (a name: each word with a capital as written – the pattern is matched regardless of case – no month, no "Live", "Digitally" …)
+          const nbWords = nb ? nb[2].split(/\s+/) : [];
+          if (nb && nbWords.every((w) => /^\p{Lu}/u.test(w) && !/^(?:live|digitally|analog(?:ue)?|remotely|together|here|there|again)$/i.test(w)) && !TEXT_MONTH_WORD.test(nbWords[0])) x = `${nb[1]} by ${nb[2]}${nb[3]}`;
+        }
         out.push(x === t ? l0 : keep(x, l0));
       }
       return out;
+    }
+
+    /**
+     * [Z-POETICS] (3.203.0, S388) The photographer of a photo credit written as a file's name ("Photography : A_B_(c)_Sabrina Richmann_Festival
+     * 2023"): the part after "(c)" / "©" when it is a name of two to four words – else ''.
+     */
+    function photoFileCredit(t) {
+      const m = String(t || '').match(/^(?:photo(?:graphy|graphs|s)?|pictures?|(?:cover\s+)?photo(?:graphy)?)\s*(?:by)?\s*:?\s*(\S*_.*)$/i);
+      if (!m) return '';
+      const parts = m[1].split('_').map((x) => x.trim()).filter(Boolean);
+      const at = parts.findIndex((x) => /^(?:\(c\)|©|\(©\))/i.test(x));
+      if (at < 0) return '';
+      const name = (parts[at].replace(/^(?:\(c\)|©|\(©\))\s*/i, '') || parts[at + 1] || '').trim();
+      return /^\p{Lu}[\p{L}'’.-]*(?:\s+\p{Lu}[\p{L}'’.-]*){1,3}$/u.test(name) ? name : '';
     }
 
     /**
@@ -14336,7 +14385,7 @@
           continue;
         }
         // [3.30.8] about the package ("Including a 52 p. booklet.")
-        if (TEXT_PACKAGE.test(clean(unit))) {
+        if (TEXT_PACKAGE.test(clean(unit)) || (ruleOn('S389') && (TEXT_PACKAGING_LINE.test(clean(unit)) || TEXT_PACKAGING_LINE.test(clean(whole))))) {
           P.ignored.push({ text: whole, why: 'package' });
           continue;
         }
@@ -19953,6 +20002,7 @@
     wattrOpenAll: false,
     // "Spell out": the attributes with their names instead of the short forms (remembered)
     wattrLong: readJson('localStorage', 'dci-wattr-long', false) === true,
+    instLinks: readJson('localStorage', 'dci-inst-links', true) !== false, // [Z-INSTLINK] (3.203.0)
     // [Z-WORKMAGIC] (3.155.0) "✨ Answer all": its level and the kinds switched off (remembered); its answers of this import
     magicLevel: readJson('localStorage', 'dci-magic-level', 'careful'),
     magicOff: readJson('localStorage', 'dci-magic-off', []) || [],
@@ -29243,8 +29293,42 @@
     // [137d] (3.34.26) "miscellaneous support (task “…”)" as the last answer; the level kept for an instrument chosen after it
     row.instrGuess = { word, options, other: other ? other.name : '', misc, level: row.level, chose: '', ...(offered.length ? { offered } : {}) };
     if (!options.length) Object.assign(row, { primaryText: other.name, primaryTouched: true });
+    // [Z-ALIASTYPO] (3.203.0, S390) which name of each answer is like the word – one of MusicBrainz's other names ("fluteophone":
+    // Tonette by its alias "flutophone") is named at the answer; exactly one answer a letter off: it is suggested at once (yellow),
+    // credited as written ("Tonette “fluteophone”")
+    if (ruleOn('S390') && options.length) {
+      const near = options.map((n) => ({ n, ...similarInstrumentVia(word, n) })).filter((x) => x.key);
+      const via = Object.fromEntries(near.filter((x) => x.key !== norm(x.n)).map((x) => [x.n, x.key]));
+      if (Object.keys(via).length) row.instrGuess.via = via;
+      const one = near.filter((x) => x.d <= 1);
+      if (!offered.length && one.length === 1 && options.length >= 1) {
+        Object.assign(row, { primaryText: one[0].n, primaryTouched: true });
+        // (by another name of MusicBrainz – an alias: credited as written; by the instrument's own name – a slip: no role credit, as until now)
+        Object.assign(row.instrGuess, { auto: one[0].n, typoAs: { name: one[0].n, typo: one[0].key === norm(one[0].n) } });
+      }
+    }
     refreshRowDetails(row);
   }
+  /**
+   * [Z-ALIASTYPO] (3.203.0, S390) The name of an instrument (its own or another of MusicBrainz's names) closest to a word, with its
+   * distance in slips: { key, d } – {} without one two slips off at most.
+   */
+  function similarInstrumentVia(word, name) {
+    const lt = typesFor('recording').find((l) => norm(l.name) === 'instrument');
+    const root = lt ? primaryRootOf(lt) : null;
+    const kids = root ? idx().children.get(root.id) : null;
+    if (!kids) return {};
+    const w = foldWord(word);
+    let best = {};
+    for (const [key, a] of kids) {
+      if (norm(a.name) !== norm(name)) continue;
+      const d = slipDistance(w, foldWord(key));
+      if (d <= 2 && (best.d == null || d < best.d || (d === best.d && key === norm(name)))) best = { key, d };
+    }
+    return best;
+  }
+  /** [Z-ALIASTYPO] (3.203.0, S390) An answer of the question with the other name of MusicBrainz it is like: "Tonette – alias “flutophone”". */
+  const guessOptLabel = (g, name) => guessLabel(g, name) + (g && g.via && g.via[name] ? ` – ${tr('instrGuess.via', { alias: g.via[name] })}` : '');
 
   /** [S052] (3.34.27) The role credit of "other instruments" for a word MusicBrainz does not know: in lower case ("chaims"). */
   function guessCredit(g) {
@@ -36190,8 +36274,13 @@
     // [Z-ABBR2] (3.102.0, S166; review) an abbreviation of two readings: its readings at the chip
     if (abbrOpen(r)) return r.abbrAsk.options.map((x) => instr(x));
     const g = r.instrGuess;
+    // [Z-ALIASTYPO] (3.203.0, S390) an answer suggested at once: the others to choose at the chip, no open question ("?")
+    if (g && g.auto && g.chose !== 'misc' && norm(r.primaryText) === norm(g.auto)) {
+      return Object.assign([...g.options.filter((x) => norm(x) !== norm(g.auto)).map((x) => instr(x, guessOptLabel(g, x))), ...(g.other ? [instr(g.other, tr('instrGuess.other', { other: g.other, word: guessCredit(g) }))] : []),
+        ...(g.misc ? [{ act: 'instr-misc', attr: '', value: '', text: tr('instrGuess.misc', { word: guessTask(g) }) }] : [])], { preset: true });
+    }
     if (g && g.options.length && g.chose !== 'misc' && !(primaryIsValid(r) && norm(r.primaryText))) {
-      return [...g.options.map((x) => instr(x, guessLabel(g, x))), ...(g.other ? [instr(g.other, tr('instrGuess.other', { other: g.other, word: guessCredit(g) }))] : []),
+      return [...g.options.map((x) => instr(x, guessOptLabel(g, x))), ...(g.other ? [instr(g.other, tr('instrGuess.other', { other: g.other, word: guessCredit(g) }))] : []),
         ...(g.misc ? [{ act: 'instr-misc', attr: '', value: '', text: tr('instrGuess.misc', { word: guessTask(g) }) }] : [])];
     }
     // [Z-DEDTITLE] (3.189.0, S329) a dedication: "dedicated to" ⇄ "tribute to" at its chip as well (set, no open question)
@@ -36253,6 +36342,18 @@
    * [163] (3.37.14) A question with fixed answers has ▾ at the chip: its answers below it, chosen for all rows of the line; the
    * "?" only while a question is open (chipAnswers, chipNotesOpen) – until 3.37.13 as long as the full matrix showed any note.
    */
+  /**
+   * [Z-INSTLINK] (3.203.0) "↗" to MusicBrainz's page of an instrument (its attribute shares the instrument's MBID) – in an entry opened
+   * (its matrix, a row, the answers of a question), not in the compact lines; ⚙ → Appearance switches it off.
+   */
+  function instLinkHtml(name, lt) {
+    if (!S.instLinks || !name || !lt || norm(lt.name) !== 'instrument') return '';
+    const root = primaryRootOf(lt);
+    const at = root ? findChildAttr(root.id, name) : null;
+    if (!at || !at.gid || norm(at.name) === 'other instruments') return '';
+    const t = tr('instLink.title', { name: at.name });
+    return ` <a class="dci-instlink" href="${esc(`${location.origin}/instrument/${at.gid}`)}" target="_blank" rel="noopener" title="${esc(t)}" aria-label="${esc(t)}">↗</a>`;
+  }
   function emChipHtml(l, e, a = null) {
     const r = l.rows.find((x) => x.level !== 'skip') || l.rows[0];
     const lt = ltOf(r);
@@ -36275,9 +36376,9 @@
     // [163b] (3.38.6) the notes whose answer is applied: ⓘ with them as tooltip
     const note = ask ? '' : chipNoteText(r);
     const info = note ? `<span class="dci-em-chipinfo" role="img" tabindex="0" title="${esc(note)}" aria-label="${esc(note)}">ⓘ</span>` : '';
-    const menu = open ? `<span class="dci-em-chipmenu dci-em-ask" data-rows="${ids}" data-ask="${esc(key)}" role="group" aria-label="${esc(tr('em.chipAsk', { name }))}">${answers.map((o) => `<button type="button" class="dci-textbtn" data-act="${o.act}"${o.attr ? ` data-${o.attr}="${esc(o.value)}"` : ''}>${esc(o.text)}</button>`).join('')}</span>` : '';
+    const menu = open ? `<span class="dci-em-chipmenu dci-em-ask" data-rows="${ids}" data-ask="${esc(key)}" role="group" aria-label="${esc(tr('em.chipAsk', { name }))}">${answers.map((o) => { const lk = o.act === 'instr-pick' ? instLinkHtml(o.value, lt) : ''; const b = `<button type="button" class="dci-textbtn" data-act="${o.act}"${o.attr ? ` data-${o.attr}="${esc(o.value)}"` : ''}>${esc(o.text)}</button>`; return lk ? `<span class="dci-em-chipopt">${b}${lk}</span>` : b; }).join('')}</span>` : '';
     return `<span class="dci-em-chip${ask ? ' dci-em-chip-ask' : ''}${open ? ' dci-em-chip-open' : ''}${l.rows.some(dsupMark) ? ' dci-dsup-mark' : ''}" data-rows="${ids}" data-line="${esc(l.id)}"${e && !e.skip ? ` data-drag="em-chip" data-id="${esc(l.id)}" data-ev="${esc(e.key)}" draggable="true"` : e ? ` data-ev="${esc(e.key)}"` : ''}>
-      <button type="button" class="dci-em-chipname" data-act="em-chip" title="${esc([tr(ask ? 'em.chipAskTitle' : 'drop.chipTitle'), roleLabel(r).title].filter(Boolean).join('\n'))}">${ask ? '? ' : ''}${esc(name)}${credit ? ` <em>${esc(tr('common.quoted', { text: credit }))}</em>` : ''}${joinedCredit ? ` <span class="dci-em-chipjoin" title="${esc(tr('em.chipJoined', { name, credit: joinedCredit }))}">⧉ ${esc(tr('common.quoted', { text: joinedCredit }))}</span>` : ''}${flags.length ? ` <span class="dci-sub">· ${esc(flags.join(' · '))}</span>` : ''}${as ? ` <span class="dci-em-chipas">${esc(tr('group.creditedAs', { name: tr('common.quoted', { text: as }) }))}</span>` : ''}</button>${ruleOn('S201') ? rowOriginsHtml(l.rows, a || S.artists.get(r.artistKey)) : ''}${info}${q}${e ? `<button type="button" class="dci-em-chipx" data-act="em-chipout" data-ev="${esc(e.key)}" title="${esc(tr('em.chipOut', { name }))}" aria-label="${esc(tr('em.chipOut', { name }))}">✕</button>` : ''}${menu}</span>`;
+      <button type="button" class="dci-em-chipname" data-act="em-chip" title="${esc([tr(ask ? 'em.chipAskTitle' : 'drop.chipTitle'), roleLabel(r).title].filter(Boolean).join('\n'))}">${ask ? '? ' : ''}${esc(name)}${credit ? ` <em>${esc(tr('common.quoted', { text: credit }))}</em>` : ''}${joinedCredit ? ` <span class="dci-em-chipjoin" title="${esc(tr('em.chipJoined', { name, credit: joinedCredit }))}">⧉ ${esc(tr('common.quoted', { text: joinedCredit }))}</span>` : ''}${flags.length ? ` <span class="dci-sub">· ${esc(flags.join(' · '))}</span>` : ''}${as ? ` <span class="dci-em-chipas">${esc(tr('group.creditedAs', { name: tr('common.quoted', { text: as }) }))}</span>` : ''}</button>${!ask && root ? instLinkHtml(r.primaryText, lt) : ''}${ruleOn('S201') ? rowOriginsHtml(l.rows, a || S.artists.get(r.artistKey)) : ''}${info}${q}${e ? `<button type="button" class="dci-em-chipx" data-act="em-chipout" data-ev="${esc(e.key)}" title="${esc(tr('em.chipOut', { name }))}" aria-label="${esc(tr('em.chipOut', { name }))}">✕</button>` : ''}${menu}</span>`;
   }
 
   /**
@@ -37396,7 +37497,7 @@
       parts.push(`<div class="dci-primary">
         <input type="text" data-f="primary" list="dci-dl-${root.id}" value="${esc(row.primaryText)}"
           class="${valid ? '' : 'dci-invalid'}" placeholder="${esc(tr('attr.optional', { name: root.name }))}" aria-label="${esc(root.name)}">
-        <span class="dci-mark ${valid ? 'dci-ok' : 'dci-bad'}" data-mark="${row.id}" aria-live="polite">${esc(markText(row))}</span>
+        <span class="dci-mark ${valid ? 'dci-ok' : 'dci-bad'}" data-mark="${row.id}" aria-live="polite">${esc(markText(row))}</span>${valid ? instLinkHtml(row.primaryText, lt) : ''}
       </div>`);
     }
     const flags = allowedRoots(lt).filter((r) => !r.hasChildren && !r.attr.free_text);
@@ -40133,7 +40234,7 @@
     const misc = g.chose === 'misc';
     // [137d] (3.34.26) and "miscellaneous support (task “…”)" as the last answer
     const miscBtn = g.misc ? `<button type="button" class="dci-textbtn" data-act="instr-misc" aria-pressed="${misc}">${esc(tr('instrGuess.misc', { word: guessTask(g) }))}</button>` : '';
-    const pick = (name, label) => `<button type="button" class="dci-textbtn" data-act="instr-pick" data-instr="${esc(name)}" aria-pressed="${!misc && norm(row.primaryText) === norm(name)}">${esc(label)}</button>`;
+    const pick = (name, label) => `<button type="button" class="dci-textbtn" data-act="instr-pick" data-instr="${esc(name)}" aria-pressed="${!misc && norm(row.primaryText) === norm(name)}">${esc(label)}</button>${instLinkHtml(name, currentLinkType(row))}`;
     // [S052] (3.34.27) the buttons name the role credit and the task as they are set (in lower case); the question the word as written
     const otherBtn = g.other ? [pick(g.other, tr('instrGuess.other', { other: g.other, word: guessCredit(g) }))] : [];
     if (!g.options.length) {
@@ -40141,9 +40242,9 @@
       return `<div class="dci-bass-ask dci-instr-guess" data-guess="none">${esc(tr('instrGuess.noneOr', { word: g.word }))} ${[...otherBtn, miscBtn].join(' · ')}</div>`;
     }
     const chosen = misc || (primaryIsValid(row) && !!norm(row.primaryText));
-    const opts = [...g.options.map((n) => pick(n, guessLabel(g, n))), ...otherBtn, ...(miscBtn ? [miscBtn] : [])];
+    const opts = [...g.options.map((n) => pick(n, guessOptLabel(g, n))), ...otherBtn, ...(miscBtn ? [miscBtn] : [])];
     // [T058] (3.39.2) with instruments offered for the word: "as which instrument?" (not "did you mean")
-    const ask = chosen ? 'instrGuess.chosen' : g.offered ? 'instrGuess.askAs' : 'instrGuess.ask';
+    const ask = chosen && g.auto && norm(row.primaryText) === norm(g.auto) ? 'instrGuess.auto' : chosen ? 'instrGuess.chosen' : g.offered ? 'instrGuess.askAs' : 'instrGuess.ask';
     return `<div class="dci-bass-ask dci-instr-guess" data-guess="ask">${esc(tr(ask, { word: g.word }))} ${opts.join(' · ')}${chosen && !misc ? guessNoteHtml(row) : ''}</div>`;
   }
 
@@ -40461,7 +40562,7 @@
       // [137d] (3.34.20) a word MusicBrainz does not know as an instrument, not answered yet
       const g = row.instrGuess;
       if (g && g.options.length && g.chose !== 'misc' && !(primaryIsValid(row) && norm(row.primaryText))) {
-        parts.push(clineAskHtml('instr', tr(g.offered ? 'cl.instrGuessAs' : 'cl.instrGuess', { word: g.word }), [...g.options.map((x) => ({ value: x, text: guessLabel(g, x) })), ...(g.other ? [{ value: g.other, text: tr('instrGuess.other', { other: g.other, word: guessCredit(g) }) }] : []),
+        parts.push(clineAskHtml('instr', tr(g.offered ? 'cl.instrGuessAs' : 'cl.instrGuess', { word: g.word }), [...g.options.map((x) => ({ value: x, text: guessOptLabel(g, x) })), ...(g.other ? [{ value: g.other, text: tr('instrGuess.other', { other: g.other, word: guessCredit(g) }) }] : []),
           ...(g.misc ? [{ value: '\u0000misc', text: tr('instrGuess.misc', { word: guessTask(g) }) }] : [])]));
       }
       // [S052] (3.34.28) words of the role credit written small that MusicBrainz does not know
@@ -57969,7 +58070,7 @@
     appearance: ['dci-insts-common', MX_HEADS_KEY, CHROME_KEY, 'dci-sort-on', 'dci-sort', 'dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, WORKROW_COLORS_KEY, WORKROW_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY, DED_BOX_KEY, EMOJI_TEXT_KEY,
       'dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark', 'dci-kind-palette-dark',
       // [Z-SETTABS] (3.136.0) the matrix of an entry (from "Staging")
-      EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY, EM_ATTR_KEY],
+      EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY, EM_ATTR_KEY, 'dci-inst-links'],
     sources: ['dci-source-order', SOURCE_TRUST_KEY, 'dci-bc-tracks', WIKI_BG_KEY, AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, GAP_ON_KEY, GAP_NONE_KEY, ALIAS_MAX_KEY, MB_HITS_KEY, FN_YEARS_KEY,
       // [Z-BETAOFF] (3.115.0) the text from cover art (was "Beta"; (review) its frames kept per release are no setting of the topic)
       OCR_ON_KEY, OCR_PRELOAD_KEY, OCR_AUTO_KEY, OCR_FRONT_KEY],
@@ -60452,6 +60553,8 @@
         // [Z-DM] (3.46.0) the theme as a window and in the page: Auto | Light | Dark
         ...['window', 'page'].map((where) => segField(tr(where === 'page' ? 'settings.themePage' : 'settings.themeWindow'), 'theme-set', 'theme', THEMES, themeSetting(where),
           where === 'page' ? 'light' : 'auto', (v) => tr(`settings.theme.${v}`), { title: tr(where === 'page' ? 'settings.themePageTitle' : 'settings.themeWindowTitle'), segEl: `theme-${where}`, btn: ` data-where="${where}"` })),
+        // [Z-INSTLINK] (3.203.0) ↗ to MusicBrainz's page of an instrument (in an entry opened, not in the compact lines)
+        cb('data-set="inst-links"', S.instLinks, tr('settings.instLinks'), tr('settings.instLinksTitle'), { def: true }),
         sh('colours'),
         cb('data-set="level-colors"', S.levelColors, tr('settings.levelColors'), tr('settings.levelColorsTitle'), { def: true }),
         right(`<span class="dci-lvl-pick">${Object.keys(LEVEL_PALETTE_DEFAULT).map((level) => `<label><input type="color" data-set="level-color" data-level="${level}"
@@ -61486,6 +61589,12 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       writeJson('localStorage', 'dci-mx-skiprows', el.checked ? null : false);
       log('info', 'settingValue', { what: tr('settings.mxSkipRows'), value: tr(el.checked ? 'common.on' : 'common.off') });
       renderGroups();
+    } else if (k === 'inst-links') {
+      // [Z-INSTLINK] (3.203.0)
+      S.instLinks = el.checked;
+      writeJson('localStorage', 'dci-inst-links', el.checked ? null : false);
+      log('info', 'settingValue', { what: tr('settings.instLinks'), value: tr(el.checked ? 'common.on' : 'common.off') });
+      renderGroups();
     } else if (k === 'wattr-long') {
       S.wattrLong = el.checked;
       writeJson('localStorage', 'dci-wattr-long', S.wattrLong || null);
@@ -61576,6 +61685,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       setScale(1);
       Object.assign(S, { sortOn: true, sortMode: 'source', instsCommonOn: true }); // [Z-SORT] (3.112.0, review), [Z-INSTLCA] (3.113.0)
       S.dedBox = true; // ([Z-DEDQ] 3.74.0, review)
+      S.instLinks = true; // [Z-INSTLINK] (3.203.0)
       if (S.place !== 'window') setPlace('window');
       // ([Z-CPV] 3.73.0) the compact view is the default
       if (S.view !== 'compact') setView('compact');
@@ -61686,7 +61796,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
   const SETTINGS_KEYS = ['dci-lang', 'dci-scale', 'dci-log-open', 'dci-sync-mode', 'dci-dg-status', 'dci-dg-release', 'dci-dg-artwork',
     'dci-dg-hover', 'dci-dg-jump', 'dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', 'dci-role-codes', 'dci-pools-open', 'dci-pools-keep', 'dci-dm-auto', DM_FOLD_KEY,
     'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-log-note-w', 'dci-media-sel', 'dci-media-load', 'dci-wattr-long', 'dci-work-dates', 'dci-magic-level', 'dci-magic-off', 'dci-qs-perm', 'dci-source-order', 'dci-source-trust', 'dci-wiki-bg', 'dci-beta-qf', 'dci-source-pick', 'dci-bc-tracks',
-    'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, 'dci-mx-skiprows', 'dci-weblinks-show',
+    'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, 'dci-mx-skiprows', 'dci-weblinks-show', 'dci-inst-links',
     SETTINGS_TAB_KEY, VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, POOL_FOLD_KEY,
     'dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark', 'dci-kind-palette-dark',
     // [3.32.9] the colours of the kinds (were left out in 3.32.4: kept after "Reset all settings" once the page was loaded again) and the live comments
@@ -61826,6 +61936,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
     S.mxSkipRows = readJson('localStorage', 'dci-mx-skiprows', true) !== false;
     S.webLinksShow = readJson('localStorage', 'dci-weblinks-show', false) === true;
     S.wattrLong = readJson('localStorage', 'dci-wattr-long', false) === true;
+    S.instLinks = readJson('localStorage', 'dci-inst-links', true) !== false; // [Z-INSTLINK] (3.203.0)
     S.magicLevel = readJson('localStorage', 'dci-magic-level', 'careful'); // [Z-WORKMAGIC] (3.155.0)
     S.magicOff = readJson('localStorage', 'dci-magic-off', []) || [];
     S.workDates = readJson('localStorage', 'dci-work-dates', true) !== false; // [Z-WORKDATE] (3.130.0)
@@ -65333,6 +65444,9 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       .dci-em-flaggrid .dci-em-flagl { margin-right: 0; }
       .dci-em-grid th.dci-em-evghost, .dci-em-grid td.dci-em-c-ghost { background: #ecebf0; color: #77748a; }
       .dci-em-ghostx { margin-left: calc(var(--u, 1px) * 4); }
+      /* [Z-INSTLINK] (3.203.0) ↗ to MusicBrainz's page of an instrument */
+      #dci-overlay a.dci-instlink { text-decoration: none; color: var(--purple-d, #4b4585); font-size: calc(var(--u, 1px) * 12); padding: 0 2px; }
+      #dci-overlay a.dci-instlink:hover { text-decoration: underline; }
       .dci-em-cl.dci-em-clghost { background: #f1f0f4; color: #77748a; }
       .dci-insts-bar { display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 8); align-items: center; margin: calc(var(--u, 1px) * 4) 0; }
       .dci-insts-sugg { display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 8); align-items: center; padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8);
@@ -65484,6 +65598,10 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
         margin-top: 2px; padding: calc(var(--u, 1px) * 3) 0; border: 1px solid var(--sugg-line); border-radius: 4px; background: #fff; box-shadow: 0 4px 12px rgba(38, 36, 48, 0.16); cursor: default; }
       .dci-em-chipmenu .dci-textbtn { text-align: left; white-space: nowrap; padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 10); font-size: calc(var(--u, 1px) * 12); color: var(--sugg-ink); }
       .dci-em-chipmenu .dci-textbtn:hover, .dci-em-chipmenu .dci-textbtn:focus-visible { background: var(--sugg-bg); }
+      /* [Z-INSTLINK] (3.203.0) an answer with its ↗ in one line of the list */
+      .dci-em-chipopt { display: flex; align-items: center; }
+      .dci-em-chipopt .dci-textbtn { flex: 1; }
+      .dci-em-chipopt .dci-instlink { padding: 0 calc(var(--u, 1px) * 8); }
       .dci-em-evchip { display: inline-flex; gap: calc(var(--u, 1px) * 4); align-items: center; }
       .dci-em-cl .dci-status:empty { display: none; }
       .dci-em-cl .dci-status { margin-left: auto; }
