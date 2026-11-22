@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.198.0
+// @version      3.199.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.198.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.198.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.199.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.199.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.198.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.199.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -965,6 +965,11 @@
       "ignored.why.labelWeb": "the label’s website (no credit)",
       "ignored.why.commissionAgain": "the same commission as a line that names its tracks",
       "ignored.why.equipment": "the gear used (no credit)",
+      "ignored.why.tourCrew": "the crew of the tour (no relationship of the recording)",
+      "ignored.why.foh": "the sound for the audience at the concert – not the mix of the recording",
+      "ignored.why.logo": "the lettering of a logo",
+      "ignored.why.title": "the release's title",
+      "ignored.why.sculpture": "something made for the release – no credit of MusicBrainz",
       "hint.textConflict": "Two texts of the page give these instruments differently – those only one of them names are suggestions (on Skip, “Take” takes them): {list}",
       "hint.scanDiffers": "The track list of the text differs from the release in MusicBrainz: {list}. Check that it is the right release.",
       "hint.scanTitle": "{pos} “{title}” – MusicBrainz: “{mb}”",
@@ -5618,6 +5623,16 @@
     { id: 'S368', where: 'TEXT.parse (readClause)', note: 'Texts (3.198.0; collected item Z-FORLABEL): "Produced by Edgar Froese for Virgin Records" inside a paragraph (with semicolons) as in a line of its own (S321): the producer, and the label it was produced for – a name with a word of a label (Records, Music, Productions …)' },
     { id: 'S369', where: 'TEXT.parse (readUnit, readClause)', note: 'Texts (3.198.0; collected item Z-PCLICENSE): "P&C 2026 Water Damage under license to 12XU and Cardinal Fuzz." – ℗ and © of Water Damage, licensed to 12XU and Cardinal Fuzz; "Published by Water Damage the band from Texas LLC." – a company\'s name with its form at the end, as written; "… written by A and B ©BMG Rights Management, Warner Chappell Music, Inc." – the © ends the names, the companies after it publish these works (until 3.197.0 they were writers)' },
     { id: 'S370', where: 'TEXT.parse (bookletLines, readUnit; BK_LEGAL_MORE, legalMore)', note: 'Texts (3.198.0; collected item Z-LEGALMORE): more of what a booklet prints for the trade is left out as such – the barcode ("Barcode: 630883005627"), the label code with a leading zero or a full stop ("LC 02112."), catalogue numbers per country ("UK: TAND 5", "F: PM 527"), "The copyright in this recording is owned by …"; a catalogue number after a company\'s form is no part of its name ("©2013 Twisted Records Ltd. TWSCD45")' },
+    { id: 'S371', where: 'TEXT.parse (lineupColumns)', note: 'Texts (3.199.0; collected item Z-COLUMNLINEUP): a lineup printed in two columns without a sign between them – "Edgar Froese   Keyboards & Electronic Instruments", "Zlatko "Z-Man" Perica   Electric & Acoustic Guitar" (two lines one below the other at least; a name of two to four words with capitals, a nickname in quotation marks inside; roles only after it): each read as "Name: roles" ("Electric & Acoustic Guitar": both guitars; "™" left out)' },
+    { id: 'S372', where: 'TEXT.parse (bookletMore)', note: 'Texts (3.199.0; collected item Z-SIDEHEAD): "SIDE A" alone is a heading; "Side C: Reel 43: Down on the Street" – a side and a title of the release – a line of the track list; both left out with their reason' },
+    { id: 'S373', where: 'tidyLines (TN, HEAD)', note: 'Texts (3.199.0; collected item Z-TRACKDOTTIME): a track list without numbers whose title is broken over two lines ("Mysterious Semblance At The Strand" / "Of Nightmares 10.35") – one line when the whole is a title of MusicBrainz\'s; with S288 the list is compared ("Phaedra 16.45")' },
+    { id: 'S374', where: 'TEXT.parse (sharedTitleTracks), tracksByTitles', note: 'Texts (3.199.0; collected item Z-REELTRACKS): tracks named by titles that share their word – "Electronics on Reel 45, 38 and 41" (titles "Reel 45", "Reel 38", "Reel 43: Down on the Street", "Reel 41") – are those tracks; a line of roles without a name right below ("Electric Bass on Reel 43.") is the person\'s above; a title that is the part after a colon of a track\'s title ("Down on the Street") names that track' },
+    { id: 'S375', where: 'TEXT.parse (initialWriterLines)', note: 'Texts (3.199.0; collected item Z-INITIALWRITERS): a line of the track list with its writers by their initials and its publishers – "Flashflood (J.Froese/E.Froese) TDI /Warner/Chappel" –: the writers of that track (the names of the text with that initial and surname, "Jerome Froese"; else as printed and found by MusicBrainz\'s search), its publishers TDI and Warner/Chappel (a "/" with a space beside it separates them; big publishers as the quick switch says), each once with all its tracks' },
+    { id: 'S376', where: 'TEXT.parse (bookletMore)', note: 'Texts (3.199.0; collected item Z-ARTWORKMORE): "CD Label image by X" – artwork credited "CD label image"; "CD Front Cover by X ( from the "…" Series)" – the cover (the series left out); "Sleeve Booklet Photography by A and B" – photography; "Original Mask Sculpture and various other instruments designed and created by X" – left out with its reason' },
+    { id: 'S377', where: 'TEXT.parse (bookletMore)', note: 'Texts (3.199.0; collected item Z-REMASTERPREFIX): words of a technique before mastering – "High definition digital remastering by Simon Heyworth at Chop \'Em Out", "DQC™ Mastering by Jerome Froese at Eastgate Studios" – are no part of it: the (re)mastering, its studio' },
+    { id: 'S378', where: 'TEXT.parse (bookletMore)', note: 'Texts (3.199.0; collected item Z-LIVEQUOTEPLACE): "Recorded live on April 23th 1997 at the "Dome Muziki i Tanca" in the city of Zabrze in Poland during …" – recorded live at the place in quotation marks, in its town (the date from the dates of the text)' },
+    { id: 'S379', where: 'TEXT.parse (bookletMore)', note: 'Texts (3.199.0; collected item Z-TOURCREW): the crew of a tour below its heading ("Tangerine Dream Crew on the European Tour 1997") is left out with its reason, until an empty line – stage monitoring, technicians, light, catering, drivers, booking, agents, promoters, merchandising, PR; "Recording engineer and FOH Mix: Dave Dixon" – the recording engineer, "FOH Mix" (the sound for the audience) left out with its reason' },
+    { id: 'S380', where: 'TEXT.parse (bookletMore)', note: 'Texts (3.199.0; collected item Z-LOGOTEXT): what a booklet prints besides credits is left out with its reason – a logo\'s lettering (a label of the release in capitals, "CARDINAL FUZZ"; "TDI International Production" of the company of ℗/©), the release\'s title alone ("REPAIR"), a heading of a lineup or performance ("The concert music performance:", "Tangerine Dream\'s lineup on this live recording:", "… LIVE Recording "Tournado""), "Please visit the official … homepage: …", "This Live set runs without breaks or pauses.", what software was used' },
     { id: 'S299', where: 'TEXT.parse (shopLines; SHOP_BLOCK_LINES)', note: 'Texts (3.169.0; Z-BCSHOPBLOCK): what a shop writes below an edition is left out as "shop" – the edition\'s name with "(Limited Edition …)" and its format, what the records look like ("2 x 180gsm …", "DiscA/B - Transparent green with gold blob", "Packaged in a standard Sleeve."), the block about shipping ("+++++INTERNATIONAL SHIPPING +++++", "- WE DO NOT SHIP TO PO BOXES", "- ALL ORDERS ARE SENT BY TRACKED COURIER …", "UK: 2-3 days") and the page\'s own details ("published March 29, 2019", "license"). They stood under "not recognized". Every free text' },
     { id: 'S298', where: 'TEXT.parse (hyphenTrackLines; HT_TRACKS, HT_HYPHEN, HT_HEAD, HT_SPLIT)', note: 'Texts (3.169.0; Z-HYPHENTRACKS): a lineup written "Pete Callard-Acoustic Guitar On Tracks 1,2,3, Electric Guitar on Tracks 18,19 Hari-Om- Vocals On Tracks 9,10 …" – a hyphen without spaces between name and role, each role with its tracks, the whole lineup in one paragraph (Beatport and shop texts): the paragraph is cut before each name, the name is what stands before the first hyphen whose right side begins with a role ("Hari-Om- Vocals": Hari-Om), "and Vocals on Tracks …" and a role after a list of tracks are roles of their own, "on all tracks" says nothing new; a heading before the first name ("Musicians In The Studio") is a heading. Only for a line that names tracks that way. Every free text' },
     { id: 'S296', where: 'videoLevelWant, videoLevelFor, VIDEO_RULES, R033 (mapRole), rgIsDjMix, Q022', note: 'Video credits and DJ mixes (3.164.0; proposals F-VIDEOLEVEL, F-DJMIX of review run 2): every credit of a video – video director, camera work, cinematographer and the table of video credits (R076, R110, R119) – is on the recordings when its tracks are videos – from 3.169.0 on the videos only when just some of its tracks are (Z-VIDEOTRACKS; until then such a credit went to the release) – and on the release when none is, where MusicBrainz has the type there (the cinematographer and the camera work were always on the recordings, the others on the release). "Mixed By [DJ Mix]" is the DJ-mix of the release, not the mix engineer; on a release group of the type DJ-mix "Mixed By" asks which of the two (Q022)' },
@@ -11210,6 +11225,17 @@
       if (ruleOn('S307')) lines = classicalLines(P, lines);
       // [Z-HYPHENTRACKS] (3.169.0, S298) "Pete Callard-Acoustic Guitar On Tracks 1,2,3, Electric Guitar on Tracks 18,19": a hyphen without
       // spaces between name and role, each role with its tracks – and a whole lineup in one paragraph
+      // [Z-COLUMNLINEUP] (3.199.0, S371) a lineup in two columns without a sign between them – "Edgar Froese   Keyboards & Electronic
+      // Instruments", "Zlatko "Z-Man" Perica   Electric & Acoustic Guitar" (two lines at least, one below the other): "Name: roles"
+      if (ruleOn('S371')) lines = lineupColumns(P, lines, keep);
+      // [Z-SIDEHEAD] [Z-ARTWORKMORE] [Z-REMASTERPREFIX] [Z-LIVEQUOTEPLACE] [Z-TOURCREW] [Z-LOGOTEXT] (3.199.0, S372, S376–S380) more lines of booklets
+      lines = bookletMore(P, lines, keep);
+      // [Z-INITIALWRITERS] (3.199.0, S375) "Flashflood (J.Froese/E.Froese) TDI /Warner/Chappel": the writers of the track by their initials,
+      // its publishers after them
+      if (ruleOn('S375')) lines = initialWriterLines(P, lines, keep);
+      // [Z-REELTRACKS] (3.199.0, S374) "Electronics on Reel 45, 38 and 41." – tracks named by titles that share their word ("Reel 45", "Reel
+      // 38" …): their positions; a line below without a name ("Electric Bass on Reel 43.") goes on with the person above
+      if (ruleOn('S374')) lines = sharedTitleTracks(P, lines, keep);
       // [Z-NAMEDASHTRACKS] (3.198.0, S366) "Pete Callard - Electric Guitar on tracks 3, 5. Acoustic guitar on tracks 2, 3": a full stop after
       // a track's number before another role with its tracks goes on the same person's list (as a comma)
       if (ruleOn('S366')) lines = lines.map((l) => { const t = String(l); const t2 = HT_TRACKS.test(t) ? t.replace(/(\d)\.\s+(?=\p{Lu}\p{Ll}[^.:–—]*?\bon\s+(?:all\s+)?tracks?\b)/gu, '$1, ') : t; return t2 === t ? l : keep(t2, l); });
@@ -11360,6 +11386,21 @@
         const HEAD = /^\s*(?:(?:side|seite|face|lado)\s+)?([A-H])\s*$|^\s*(?:cd|disc|disk|lp)\s*(\d{1,2})\s*$/i;
         const mbKeys = (Array.isArray(P.ctx0.tracks) ? P.ctx0.tracks : []).map((t) => nameKey(t.title || '')).filter(Boolean);
         const isTn = (l) => { const m = l.match(TN); return m && !/[()]/.test(m[1].replace(VERSION_BR, '')) && !/\bby\b|\s[–—-]\s.*\p{L}.*\s[–—-]\s/iu.test(m[1]) && m[1].split(/\s+/).length <= 10 && !isRole(P, roleWord(P, m[1])) ? m : null; };
+        // [Z-TRACKDOTTIME] (3.199.0, S373) a title broken over two lines – "Mysterious Semblance At The Strand" / "Of Nightmares 10.35" –: one
+        // line, when the whole is a title of MusicBrainz's
+        if (ruleOn('S373')) {
+          const knownT = (t) => { const a = nameKey(t); return !!a && mbKeys.some((b) => a === b); };
+          for (let k = 0; k < out.length - 1; k++) {
+            const a = String(out[k] || '').trim();
+            const b = String(out[k + 1] || '').trim();
+            if (!a || !b || isTn(a) || !isTn(b)) continue;
+            const j = isTn(`${a} ${b}`);
+            if (j && knownT(j[1])) {
+              out[k] = keep(`${a} ${b}`, out[k]);
+              out[k + 1] = '';
+            }
+          }
+        }
         const at = out.map((l, k) => (isTn(l) ? k : -1)).filter((k) => k >= 0);
         const between = at.length ? out.slice(at[0], at[at.length - 1] + 1).filter((l) => l.trim() && !isTn(l) && !HEAD.test(l)).length : 0;
         const known = at.some((k) => { const a = nameKey(isTn(out[k])[1]); return mbKeys.some((b) => a === b || (a.length > 3 && b.includes(a)) || (b.length > 3 && a.includes(b))); });
@@ -12007,6 +12048,244 @@
       const res = (P.resolveTitles && P.resolveTitles(titles)) || { indexes: new Set(), unresolved: titles.map((t) => `“${t}”`) };
       return { rest: clean(m[1]), scope: { set: res.indexes, spec: titles.map((t) => `“${t}”`).join(', '), unresolved: res.unresolved } };
     };
+
+    /**
+     * [Z-REELTRACKS] (3.199.0, S374) Tracks named by titles of one word and a number – "on Reel 45, 38 and 41" (the release's titles "Reel 45",
+     * "Reel 38", "Reel 43: Down on the Street", "Reel 41") – as "on tracks 1, 2, 4"; a line of roles without a name right below a line
+     * "Name: …" of this kind is that person's ("Electric Bass on Reel 43." → "Ricardo Dias Gomes: Electric Bass on track 3").
+     */
+    function sharedTitleTracks(P, lines, keep) {
+      const titles = ctxTitles(P).map(foldWord);
+      if (!titles.length) return lines;
+      const pos = (w, n) => { const k = titles.findIndex((x) => x === foldWord(`${w} ${n}`) || x.startsWith(`${foldWord(`${w} ${n}`)}:`)); return k; };
+      const out = [];
+      let lastName = '';
+      for (const l0 of lines) {
+        const t = String(l0 == null ? '' : l0).trim();
+        if (!t) {
+          lastName = '';
+          out.push(l0);
+          continue;
+        }
+        const m = t.match(/\bon\s+(\p{Lu}\p{L}+)\s+(\d{1,4}(?:\s*(?:,|&|\band\b)\s*\d{1,4})*)(?=\s*[.;,]?\s*(?:$|\p{Lu}))/u);
+        const nums = m ? m[2].split(/\s*(?:,|&|\band\b)\s*/).filter(Boolean) : [];
+        const ks = nums.map((n) => pos(m[1], n));
+        if (!m || !ks.length || ks.some((k) => k < 0)) {
+          lastName = (t.match(/^(\p{Lu}[\p{L}.'’-]*(?:\s+\p{Lu}[\p{L}.'’-]*){1,3})\s*:/u) || [])[1] || '';
+          out.push(l0);
+          continue;
+        }
+        let x = t.replace(m[0], `on ${ks.length > 1 ? 'tracks' : 'track'} ${ks.map((k) => k + 1).join(', ')}`);
+        const nm = (x.match(/^(\p{Lu}[\p{L}.'’-]*(?:\s+\p{Lu}[\p{L}.'’-]*){1,3})\s*:/u) || [])[1] || '';
+        if (nm) lastName = nm;
+        else if (lastName && !/:/.test(x)) x = `${lastName}: ${x}`;
+        out.push(keep(x, l0));
+      }
+      return out;
+    }
+    /** (3.199.0) The titles of the release's tracks the reader was given (none: []). */
+    const ctxTitles = (P) => (Array.isArray(P.ctx0 && P.ctx0.trackTitles) ? P.ctx0.trackTitles : Array.isArray(P.ctx0 && P.ctx0.tracks) ? P.ctx0.tracks.map((x) => x && x.title) : []).filter(Boolean);
+    /**
+     * [Z-INITIALWRITERS] (3.199.0, S375) A line of the track list with its writers by their initials and its publishers – "Flashflood
+     * (J.Froese/E.Froese) TDI /Warner/Chappel" (the title one of the release's): "“Flashflood” written by Jerome Froese and Edgar Froese" –
+     * each the name of the text with that initial and surname ("Jerome Froese"), else as printed ("J. Froese") –, and TDI and Warner/Chappel
+     * the publishers of its work (a "/" with a space beside it separates them, one without is part of a name).
+     */
+    function initialWriterLines(P, lines, keep) {
+      const titles = ctxTitles(P).map(foldWord);
+      const INI = String.raw`(?:\p{Lu}\.\s?){1,3}\p{Lu}[\p{L}'’-]+`;
+      const re = new RegExp(String.raw`^(.+?)\s*\((${INI}(?:\s*/\s*${INI})*)\)\s*(.*)$`, 'u');
+      const full = (w) => {
+        const m = w.trim().match(/^((?:\p{Lu}\.\s?){1,3})(\p{Lu}[\p{L}'’-]+)$/u);
+        if (!m) return clean(w);
+        const first = m[1].replace(/[.\s]/g, '');
+        const hit = String(P.text || '').match(new RegExp(String.raw`(?<![\p{L}])(${first[0]}\p{Ll}+)\s+${m[2]}(?![\p{L}])`, 'u'));
+        return hit ? `${hit[1]} ${m[2]}` : `${m[1].replace(/\s+/g, '')} ${m[2]}`;
+      };
+      // (one entry per publisher with all its tracks: the roles of an entry are kept once each)
+      const pubOf = new Map();
+      const res0 = lines.flatMap((l0) => {
+        const t = String(l0 == null ? '' : l0).trim();
+        const m = t && t.match(re);
+        if (!m || !titles.includes(foldWord(m[1]))) return [l0];
+        const writers = m[2].split(/\s*\/\s*/).map(full);
+        const out = [keep(`“${clean(m[1])}” written by ${writers.join(' and ')}`, l0)];
+        const pubs = m[3].split(/\s+\/\s*|\s*\/\s+|\s*,\s*/).map(clean).filter((x) => x && /^\p{Lu}/u.test(x));
+        const res = pubs.length && P.resolveTitles ? P.resolveTitles([clean(m[1])]) : null;
+        if (res && res.indexes && res.indexes.size) {
+          pubs.forEach((n) => {
+            const k = norm(n);
+            if (!pubOf.has(k)) pubOf.set(k, { name: n, idx: new Set(), specs: [], line: t });
+            const e = pubOf.get(k);
+            res.indexes.forEach((i) => e.idx.add(i));
+            e.specs.push(`“${clean(m[1])}”`);
+          });
+        }
+        return out;
+      });
+      for (const e of pubOf.values()) {
+        P.companies.push({ who: who(P, e.name), role: 'Published By', catno: '', tracks: { indexes: [...e.idx].sort((a, b) => a - b), spec: e.specs.join(', ') },
+          line: e.line, part: e.line, pi: 0, n: 0 });
+      }
+      return res0;
+    }
+
+    /**
+     * (3.199.0) More lines of booklets, each by its rule:
+     * - [Z-SIDEHEAD] (S372) "SIDE A" – a heading of a side; "Side C: Reel 43: Down on the Street" – a line of the track list (its title one of
+     *   the release's);
+     * - [Z-ARTWORKMORE] (S376) "CD Label image by X" – artwork, credited "CD label image"; "CD Front Cover by X ( from the "…" Series)" – the
+     *   cover, the series left out; "Sleeve Booklet Photography by A and B" – photography; "Original Mask Sculpture and various other
+     *   instruments designed and created by X" – left out (no credit);
+     * - [Z-REMASTERPREFIX] (S377) "High definition digital remastering by X", "DQC™ Mastering by X" – the words before it are no part of it;
+     * - [Z-LIVEQUOTEPLACE] (S378) "Recorded live on April 23th 1997 at the "Dome Muziki i Tanca" in the city of Zabrze in Poland during …" –
+     *   recorded live at Dome Muziki i Tanca, Zabrze (the date from the dates of the text);
+     * - [Z-TOURCREW] (S379) the crew of a tour below its heading ("Tangerine Dream Crew on the European Tour 1997") left out, until an empty
+     *   line – "Recording engineer and FOH Mix: Dave Dixon" the recording engineer only ("FOH Mix" – the sound for the audience – left out);
+     * - [Z-LOGOTEXT] (S380) a logo's lettering (a label of the release, in capitals), the release's title alone, a heading of a lineup or
+     *   performance, "Please visit the … homepage: …" left out with their reasons.
+     */
+    function bookletMore(P, lines, keep) {
+      const out = [];
+      const relT = P.releaseTitle ? foldWord(P.releaseTitle) : '';
+      const labels = (P.labelNames || []).map(foldWord);
+      const titles = [...ctxTitles(P), ...(P.titleNames || [])].map(foldWord);
+      let crew = false;
+      for (const l0 of lines) {
+        const l = String(l0 == null ? '' : l0);
+        const t = l.trim();
+        if (!t) {
+          crew = false;
+          out.push(l0);
+          continue;
+        }
+        if (ruleOn('S379')) {
+          if (/\bcrew\b/i.test(t) && /\btour\b|\btournee\b/i.test(t) && t.split(/\s+/).length <= 12 && !/:\s*\S/.test(t)) {
+            P.ignored.push({ text: t, why: 'tourCrew' });
+            crew = true;
+            continue;
+          }
+          if (crew) {
+            const rec = t.match(/^(recording\s+engineer)\s+(?:and|&)\s+FOH\s+mix\s*:\s*([^.(]+)/i);
+            if (rec) {
+              out.push(keep(`Recording engineer: ${clean(rec[2])}`, l0));
+              P.ignored.push({ text: 'FOH Mix', why: 'foh' });
+              continue;
+            }
+            if (/^recording\s+engineer\s*:/i.test(t)) {
+              out.push(l0);
+              continue;
+            }
+            P.ignored.push({ text: t, why: 'tourCrew' });
+            continue;
+          }
+        }
+        if (ruleOn('S372')) {
+          if (/^(?:side|seite|face|lado)\s+(?:[A-H]|\d{1,2})\.?$/i.test(t)) {
+            P.ignored.push({ text: t, why: 'heading' });
+            continue;
+          }
+          const sd = t.match(/^(?:side|seite|face|lado)\s+(?:[A-H]|\d{1,2})\s*[:.–-]\s*(.+)$/i);
+          if (sd && titles.includes(foldWord(sd[1]))) {
+            P.ignored.push({ text: t, why: 'tracklist' });
+            continue;
+          }
+        }
+        if (ruleOn('S380')) {
+          const f = foldWord(t.replace(/[.:]$/, ''));
+          if (t === t.toUpperCase() && /\p{Lu}{2}/u.test(t) && labels.includes(f)) {
+            P.ignored.push({ text: t, why: 'logo' });
+            continue;
+          }
+          if (relT && f === relT && t.split(/\s+/).length <= 8) {
+            P.ignored.push({ text: t, why: 'title' });
+            continue;
+          }
+          if (/^(?:the\s+)?(?:concert\s+)?(?:music\s+)?performance\s*:$|\b(?:line-?up|personnel|besetzung)\b[^:]{0,60}:$/i.test(t)) {
+            P.ignored.push({ text: t, why: 'heading' });
+            continue;
+          }
+          const lv = t.match(/^(.+?)\s+live\s+recording\s+["“„]([^"”“]+)["”“]\.?$/i);
+          if (lv && relT && foldWord(lv[2]) === relT) {
+            P.ignored.push({ text: t, why: 'heading' });
+            continue;
+          }
+          if (/\b(?:runs|plays|is\s+played)\s+without\s+(?:any\s+)?(?:breaks|pauses|gaps)\b/i.test(t) && t.split(/\s+/).length <= 14) {
+            P.ignored.push({ text: t, why: 'prose' });
+            continue;
+          }
+          const pr = t.match(/^(\p{Lu}[\p{L}\d&.-]*)\s+(?:international\s+)?productions?$/iu);
+          if (pr && new RegExp(String.raw`(?:℗|©|\([pc]\))\s*(?:(?:19|20)\d{2}\s*)?${pr[1].replace(/[.*+?^$()|[\]{}\\]/g, '\\$&')}\b`, 'i').test(String(P.text || ''))) {
+            P.ignored.push({ text: t, why: 'logo' });
+            continue;
+          }
+          if (/\bhas\s+been\s+used\s+for\b|\bhave\s+been\s+used\s+for\b/i.test(t) && !/\bby\b/i.test(t)) {
+            P.ignored.push({ text: t, why: 'promo' });
+            continue;
+          }
+          if (/^please\s+visit\b.*\b(?:homepage|home\s+page|website|web\s+site|site)\b/i.test(t)) {
+            P.ignored.push({ text: t, why: 'website' });
+            continue;
+          }
+        }
+        let x = t;
+        if (ruleOn('S376')) {
+          if (/^original\s+(?:mask\s+)?sculpture\b.*\bdesigned\s+and\s+created\s+by\b/i.test(x)) {
+            P.ignored.push({ text: t, why: 'sculpture' });
+            continue;
+          }
+          x = x.replace(/^(cd|disc|vinyl|lp)\s+label\s+(image|art(?:work)?|design)\s+by\s+(.+)$/i, (m0, m1, w, who0) => `Artwork [${m1.toUpperCase() === 'CD' || m1.toUpperCase() === 'LP' ? m1.toUpperCase() : m1.toLowerCase()} label ${w.toLowerCase()}]: ${who0}`)
+            .replace(/^(?:cd\s+|lp\s+)?front\s+cover\s+by\s+(.+?)\s*\(\s*from\s+the\b[^)]*\)\s*$/i, 'Cover by $1')
+            .replace(/^sleeve\s+booklet\s+photography\s+by\b/i, 'Photography by');
+        }
+        if (ruleOn('S377')) x = x.replace(/^(?:(?:high[\s-]+definition|hd|digital|analog(?:ue)?|24[\s-]?bit|dqc|sbm|direct\s+metal)[™®]?\s+)+((?:re-?)?master(?:ing|ed)\s+(?:by|at)\b)/i, (m0, w) => cap(w));
+        if (ruleOn('S378')) {
+          const lq = x.match(/^(recorded\s+live)\s+on\s+(.+?)\s+at\s+the\s+["“„]([^"”“]{3,60})["”“]\s+in\s+(?:the\s+(?:city|town)\s+of\s+)?(\p{Lu}[\p{L}-]+)(?:\s+in\s+(\p{Lu}[\p{L} -]+?))?(?:\s+during\b.*)?\.?$/iu);
+          if (lq) x = `${cap(lq[1])} at ${lq[3]}, ${lq[4]}${lq[5] ? `, ${lq[5]}` : ''} on ${lq[2]}.`;
+        }
+        out.push(x === t ? l0 : keep(x, l0));
+      }
+      return out;
+    }
+
+    /**
+     * [Z-COLUMNLINEUP] (3.199.0, S371) Lines of a lineup printed in two columns ("Edgar Froese   Keyboards & Electronic Instruments"): a name
+     * of two to four words with capitals (a nickname in quotation marks inside), then roles the reader knows only ("Electric & Acoustic
+     * Guitar": the guitar of both); two such lines one below the other at least – each "Name: roles" (the line as written kept).
+     */
+    function lineupColumns(P, lines, keep) {
+      const ADJ = /^(?:electric|acoustic|bass|lead|rhythm|classical|steel|slide|fretless|upright|tenor|alto|baritone|soprano|additional|backing)$/i;
+      const known = (r) => { const x = clean(r.replace(/[™®]/g, '')); return !!x && (isRole(P, cap(x)) || playable(P, x.toLowerCase()) || ADJ.test(x)); };
+      const split = (t) => {
+        const ws = t.trim().split(/\s+/);
+        for (let k = 2; k <= Math.min(5, ws.length - 1); k++) {
+          const nm = ws.slice(0, k).join(' ');
+          const rest = ws.slice(k).join(' ');
+          if (!/^\p{Lu}[\p{L}.'’-]*(?:\s+(?:["“„][^"”“]+["”“]|\p{Lu}[\p{L}.'’-]*)){1,3}$/u.test(nm) || /["“„]$/.test(nm)) continue;
+          const roles = rest.split(/\s*(?:&|,|\/|\band\b|\+)\s*/i).map(clean).filter(Boolean);
+          if (!roles.length || /:/.test(rest) || !/^\p{Lu}/u.test(rest)) continue;
+          if (roles.every(known) && !ADJ.test(roles[roles.length - 1]) && (isRole(P, cap(clean(roles[roles.length - 1].replace(/[™®]/g, '')))) || playable(P, clean(roles[roles.length - 1].replace(/[™®]/g, '')).toLowerCase()) || roles.some((r) => isRole(P, cap(r)) || playable(P, r.toLowerCase()))))
+            return { nm, rest: rest.replace(/[™®]/g, '') };
+        }
+        return null;
+      };
+      const out = [...lines];
+      for (let i = 0; i < out.length; i++) {
+        let j = i;
+        const found = [];
+        while (j < out.length && String(out[j]).trim() && !/:/.test(String(out[j]))) {
+          const sp = split(String(out[j]));
+          if (!sp) break;
+          found.push([j, sp]);
+          j++;
+        }
+        if (found.length >= 2) {
+          found.forEach(([k, sp]) => { out[k] = keep(`${sp.nm}: ${sp.rest}`, out[k]); });
+          i = j;
+        }
+      }
+      return out;
+    }
 
     /**
      * [Z-TITLEWRITTEN] (3.198.0, S365) Tracks named by their titles before the role: "'Brain In A Fish Tank' written by …", "“A” and “B”
@@ -37366,6 +37645,12 @@
       if (!hits.length && k && prefix && !exact && ruleOn('S086') && (k.split(' ').length >= 2 || k.length >= 6)) {
         const pre = keys.flatMap((x, i) => (x && x.startsWith(`${k} `) ? [i] : []));
         if (pre.length === 1) hits = pre;
+      }
+      // ([Z-REELTRACKS] 3.199.0, S374) the part after a colon of the track's title ("Down on the Street" – "Reel 43: Down on the Street"):
+      // its one track
+      if (!hits.length && k && ruleOn('S374')) {
+        const suf = (srcTracks || []).flatMap((t, j) => { const m = String((t && t.title) || '').match(/:\s+(.+)$/); return m && key(m[1]) === k ? [j] : []; });
+        if (suf.length === 1) hits = suf;
       }
       if (hits.length) hits.forEach((i) => indexes.add(i));
       else unresolved.push(`“${title}”`);

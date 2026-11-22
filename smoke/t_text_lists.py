@@ -2162,4 +2162,74 @@ console.log(JSON.stringify({
     ]
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+
+def case_booklets3199():
+    """Credits Importer 3.199.0 (collected items Z-COLUMNLINEUP, Z-SIDEHEAD, Z-TRACKDOTTIME, Z-REELTRACKS, Z-INITIALWRITERS, Z-ARTWORKMORE,
+    Z-REMASTERPREFIX, Z-LIVEQUOTEPLACE, Z-TOURCREW, Z-LOGOTEXT; rules S371–S380), in Node – lines of booklets:
+    A) a lineup in two columns ("Edgar Froese Keyboards & Electronic Instruments", "Zlatko "Z-Man" Perica Electric & Acoustic Guitar").
+    B) "SIDE A" a heading, "Side C: Reel 43: Down on the Street" a line of the track list; "Electronics on Reel 45, 38 and 41." / "Electric
+       Bass on Reel 43." – tracks 1, 2, 4 and track 3 of the same person; "“Down on the Street” written by …" – track 3.
+    C) "Phaedra 16.45", "Mysterious Semblance At The Strand" / "Of Nightmares 10.35" – a track list (nothing not recognized).
+    D) "Flashflood (J.Froese/E.Froese) TDI /Warner/Chappel" – Jerome and Edgar Froese writers of that track; TDI publisher of both tracks once.
+    E) "CD Label image by X", "CD Front Cover by X ( from the … Series)", "Sleeve Booklet Photography by A and B", "Original Mask Sculpture …".
+    F) "High definition digital remastering by X at Y", "DQC™ Mastering by X at Y", "Recorded live on April 23th 1997 at the "Dome …" in the
+       city of Zabrze in Poland during …".
+    G) A tour's crew left out, its recording engineer kept ("FOH Mix" left out); "CARDINAL FUZZ" (a label), "REPAIR" (the title), headings,
+       the homepage, "This Live set runs without breaks or pauses." left out.
+    H) S371–S380 off: the lineup and the crew not read as before."""
+    node = r"""
+const OFF = process.argv[2] ? JSON.parse(process.argv[2]) : null;
+global.localStorage = { getItem: (k) => (OFF && k === 'dci-rules-off' ? JSON.stringify(OFF) : null), setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const WORDS = /^(?:keyboards|electronic instruments|electric guitar|acoustic guitar|percussion|electronics|electric bass)$/i;
+const isRole = (phrase) => { const p = m.parseRoleNotation(phrase)[0]; if (!p || !p.base || /\d/.test(p.base)) return false; const r = m.mapRole(p.base, p.mods); return !!(r.rule && r.rule !== 'R096' && !r.fallback) || WORDS.test(p.base); };
+const isCompanyRole = (role) => /copyright|phonographic|published|recorded at|mastered at|remastered at|licensed/i.test(role);
+const mk = (titles, extra = {}) => ({ isRole, isCompanyRole, artistNames: ['Test Band'], trackCount: titles.length, trackTitles: titles, tracks: titles.map((title, i) => ({ title, pos: String(i + 1), length: (extra.lengths || [])[i] || 200000 })),
+  resolveTracks: (s) => { const set = new Set(); String(s).replace(/\b(?:tracks?)\b/gi, '').split(/\s*(?:,|&|\band\b)\s*/).forEach((x) => { const n = Number(x); if (n && n <= titles.length) set.add(n - 1); }); return set.size ? set : null; },
+  resolveTitles: (ts) => { const ix = new Set(); const un = []; ts.forEach((x) => { const k = String(x).toLowerCase(); const i = titles.findIndex((y) => y.toLowerCase() === k || y.toLowerCase().endsWith(': ' + k)); if (i >= 0) ix.add(i); else un.push(x); }); return { indexes: ix, unresolved: un }; },
+  ...extra });
+const read = (t, ctx) => { const r = m.SOURCES.text.parse(t, ctx); return { cr: r.credits.map((c) => [c.who.name, c.role, c.tracks && c.tracks.all ? 'all' : [...((c.tracks && c.tracks.indexes) || c.tracks || [])]]),
+  co: r.companies.map((c) => [c.who.name, c.role, c.tracks ? [...(c.tracks.indexes || [])] : null]), ig: r.ignored.map((i) => i.why), un: r.unrecognized.map(String) }; };
+const reel = ['Reel 45', 'Reel 38', 'Reel 43: Down on the Street', 'Reel 41'];
+console.log(JSON.stringify({
+  a: read('Edgar Froese Keyboards & Electronic Instruments\nZlatko "Z-Man" Perica Electric & Acoustic Guitar', mk(['A', 'B'])),
+  b: read('REPAIR\n\nSide A: Reel 45\nSide C: Reel 43: Down on the Street\n\nRicardo Dias Gomes: Electronics on Reel 45, 38 and 41.\nElectric Bass on Reel 43.\n\n"Down on the Street" written by David Alexander and Scott Asheton', mk(reel, { releaseTitle: 'Repair' })),
+  b2: read('SIDE A\n1) Africa Cup Of Nations (5,51)\n2) Palidena (3,56)\n\nCARDINAL FUZZ', mk(['Africa Cup of Nations', 'Palidena'], { labelNames: ['Cardinal Fuzz'] })),
+  c: read('Phaedra 16.45\nMysterious Semblance At The Strand\nOf Nightmares 10.35', mk(['Phaedra', 'Mysterious Semblance at the Strand of Nightmares'], { lengths: [1005000, 635000] })),
+  d: read('Flashflood (J.Froese/E.Froese) TDI /Warner/Chappel\nFiretongues (J.Froese/E.Froese) TDI/ BMG/UFA\n\nProduced by Edgar Froese\nKeyboards: Jerome Froese', mk(['Flashflood', 'Firetongues'])),
+  e: read('CD Label image by Amygdalah\nCD Front Cover by Edgar Froese ( from the "Le Réveil matin" Series)\nSleeve Booklet Photography by Monika Froese and Jim Rakete\nOriginal Mask Sculpture and various other instruments designed and created by Sat Ram Bradley', mk(['A'])),
+  f: read("High definition digital remastering by Simon Heyworth at Chop 'Em Out, London 1994\nDQC™ Mastering by Jerome Froese at Eastgate Studios Berlin\nRecorded live on April 23th 1997 at the \"Dome Muziki i Tanca\" in the city of Zabrze in Poland during Tangerine Dream's Eurotour 1997.", mk(['A'])),
+  g: read("Tangerine Dream's lineup on this live recording:\n\nTangerine Dream Crew on the European Tour 1997\nRecording engineer and FOH Mix: Dave Dixon. (Equipment: Concert Sound London).\nStage Monitoring: Kerry Lewis. Guitar Technician to Zlatko Perica: John Norris\nTour Promoter: Modern World Agency.\n\nPlease visit the official Tangerine Dream homepage: http://www.example.org/td/\nThis Live set runs without breaks or pauses.", mk(['A'])),
+}));
+"""
+    outs = []
+    for off in (None, ['S371', 'S372', 'S373', 'S374', 'S375', 'S376', 'S377', 'S378', 'S379', 'S380']):
+        js = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')] + ([json.dumps(off)] if off else []), capture_output=True, text=True)
+        if js.returncode:
+            print(js.stderr[-2000:])
+            print('Ergebnis: FEHLER [node]')
+            return
+        outs.append(json.loads(js.stdout))
+    on, off = outs
+    for k in on:
+        print(k, on[k], '\n   aus:', off[k])
+    a, b, b2, c, d, e, f, g = (on[k] for k in ('a', 'b', 'b2', 'c', 'd', 'e', 'f', 'g'))
+    results = [
+        ['Edgar Froese', 'Keyboards', 'all'] in a['cr'] and ['Zlatko "Z-Man" Perica', 'Acoustic Guitar', 'all'] in a['cr'] and not a['un'],
+        ['Ricardo Dias Gomes', 'Electronics', [0, 1, 3]] in b['cr'] and ['Ricardo Dias Gomes', 'Electric Bass', [2]] in b['cr'] and ['David Alexander', 'Written By', [2]] in b['cr']
+        and 'title' in b['ig'] and b['ig'].count('tracklist') == 2 and not b['un'],
+        'heading' in b2['ig'] and 'logo' in b2['ig'] and not b2['un'],
+        not c['un'] and c['ig'].count('scantrack') == 2,
+        ['Jerome Froese', 'Written By', [0]] in d['cr'] and ['Edgar Froese', 'Written By', [1]] in d['cr'] and ['TDI', 'Published By', [0, 1]] in d['co']
+        and ['Warner/Chappel', 'Published By', [0]] in d['co'] and ['BMG/UFA', 'Published By', [1]] in d['co'] and not d['un'],
+        any(x[0] == 'Amygdalah' and 'CD label image' in x[1] for x in e['cr']) and any(x[0] == 'Edgar Froese' and x[1].startswith('Cover') for x in e['cr'])
+        and ['Jim Rakete', 'Photography By', 'all'] in e['cr'] and 'sculpture' in e['ig'] and not e['un'],
+        any(x[0] == 'Simon Heyworth' and 'emaster' in x[1] for x in f['cr']) and any(x[0] == 'Jerome Froese' and 'aster' in x[1] for x in f['cr'])
+        and any(x[0] == 'Dome Muziki i Tanca' and x[1] == 'Recorded At' for x in f['co']) and not f['un'],
+        any(x[0] == 'Dave Dixon' and x[1].lower().startswith('recording engineer') for x in g['cr']) and g['ig'].count('tourCrew') == 3 and 'foh' in g['ig']
+        and 'website' in g['ig'] and 'prose' in g['ig'] and 'heading' in g['ig'] and not g['un'],
+        len(off['a']['un']) == 2 and 'tourCrew' not in off['g']['ig'],
+    ]
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 run_cases(globals())
