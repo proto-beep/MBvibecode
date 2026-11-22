@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.197.0
+// @version      3.198.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.197.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.197.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.198.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.198.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.197.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.198.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -964,6 +964,7 @@
       "conflict.ask": "Two texts of the page differ here ({list}) – on Skip for this release:",
       "ignored.why.labelWeb": "the label’s website (no credit)",
       "ignored.why.commissionAgain": "the same commission as a line that names its tracks",
+      "ignored.why.equipment": "the gear used (no credit)",
       "hint.textConflict": "Two texts of the page give these instruments differently – those only one of them names are suggestions (on Skip, “Take” takes them): {list}",
       "hint.scanDiffers": "The track list of the text differs from the release in MusicBrainz: {list}. Check that it is the right release.",
       "hint.scanTitle": "{pos} “{title}” – MusicBrainz: “{mb}”",
@@ -5608,6 +5609,15 @@
     { id: 'S359', where: 'suitePartAttr, suiteAttrRoot, suiteAttrSelect, computePlan, startSuiteCreate, buildWorkSeed, onChangeInner', note: 'Works (3.197.0; collected item Z-PARTATTR): the attribute of the parts of a suite ("parts": movement, part of collection, act, number, or none) is chosen at the suite\'s line in the works matrix – movement by default, as before. A suite of parts has two choices: its parts\' suites (Part I, Part II – no attribute unless chosen; filled into their forms) and the works of their tracks (movement)' },
     { id: 'S360', where: 'mbCaseName, acceptSuite', note: 'Works (3.197.0; collected item Z-SUITECASE): names as MusicBrainz writes them – a suite whose name has the letters of the release\'s title, a medium\'s title or the part before ": " of its tracks\' titles is written that way ("Odes and Meditations for Cecil Taylor", not the index track\'s "Odes And Meditations For Cecil Taylor"); the new work of a whole track is named by MusicBrainz\'s title of the track ("Entre helechos", not the source\'s "Entre Helechos") – the source only for parts within a track (sub-tracks, a medley, the notes)' },
     { id: 'S361', where: 'TEXT.parse (finishPartScope; PART_SCOPE_WORDS), partScopeAsk, uncrHtml, cellHtml', note: 'Texts (3.197.0; collected item Z-PARTSCOPE): a credit without tracks whose line says it holds for part of the album only – "The majority of the album is part of a suite that was commissioned by …", "Most of the songs were mixed by …", "on some of the tracks", "teilweise", "la mayoría de", "la plupart des" (mapping PART_SCOPE_WORDS) – is not taken for every track: on the works a suggestion on every work with these words (✓ keeps it, × leaves it out), on the recordings and the release held on Skip with them ("Take", then its tracks chosen). A line that names its tracks is not affected; tracks marked live stay live. Every free text' },
+    { id: 'S362', where: 'TEXT.parse (readUnit, finishPlayers; INSTR_HEAD), placeholderCredits', note: 'Texts (3.198.0; collected items Z-INSTRNONAME, Z-SHAREDHEADFIX): "Instrumentation : harmonium, melodica, guitar, bass guitar, …" – instruments without a player – belong to the one member the text names ("BHAJAN BHOY is Ajay Saggar."); without such a sentence to the release\'s artist when it is one person, else they are asked like a credit without a name (the release\'s artists suggested). Until 3.197.0 the instruments themselves became names ("harmonium" playing "Instrumentation", "guitar, bass guitar" one name). Every free text' },
+    { id: 'S363', where: 'TEXT.parse (readUnit, readClause; EQUIP_LINE, EQUIP_PAREN)', note: 'Texts (3.198.0; collected item Z-EQUIPMENT): the gear used – "equipment: farfisa, ems London", "(Equipment: Concert Sound London)" – is no credit: left out with its reason (until 3.197.0 "farfisa" and "ems London" became people)' },
+    { id: 'S364', where: 'TEXT.parse (finishLeftOut)', note: 'Texts (3.198.0; collected item Z-INSTRTYPO): a role that is an instrument\'s name misspelt ("Moog Syntheziser") is no name of fantasy (S212): it stays a row that asks for the instrument – a suggestion, never taken by itself' },
+    { id: 'S365', where: 'TEXT.parse (leadTitleScope, readClause, readLine0; LEAD_POS2), tidyLines', note: 'Texts (3.198.0; collected item Z-TITLEWRITTEN): writers named for their titles before the role – "\'Brain In A Fish Tank\' written by Simon Posford, Raja Ram and Michele Adamson", "“Down on the Street” written by …" – hold for those tracks only (until 3.197.0 for all); "Track 2 written by Edgar Froese.", "Tracks 1 & 3 written by …" are read (a verb not ending in "-ed" after the numbers); a list of names broken after a comma goes on in the next line ("…, Raja Ram," / "Michele Adamson and Sussan Deyhim and Abigail Gorton")' },
+    { id: 'S366', where: 'TEXT.parse (tidyLines)', note: 'Texts (3.198.0; collected item Z-NAMEDASHTRACKS): "Pete Callard - Electric Guitar on tracks 3, 5. Acoustic guitar on tracks 2, 3" – a full stop after the number of a track before another role with its tracks goes on with the same person (until 3.197.0 the electric guitar was on track 3 only, the acoustic guitar not read)' },
+    { id: 'S367', where: 'TEXT.parse (namesScoped, finishProseDetails)', note: 'Texts (3.198.0; collected item Z-SURNAMESHARED): "composed by Edgar and Jerome Froese" – a first name alone before a name of two words takes its surname when the text writes that person so elsewhere ("Produced by Edgar Froese"); the words of a sentence before its verb are no role credit ("The entire music material has been originally composed by …": Composed By)' },
+    { id: 'S368', where: 'TEXT.parse (readClause)', note: 'Texts (3.198.0; collected item Z-FORLABEL): "Produced by Edgar Froese for Virgin Records" inside a paragraph (with semicolons) as in a line of its own (S321): the producer, and the label it was produced for – a name with a word of a label (Records, Music, Productions …)' },
+    { id: 'S369', where: 'TEXT.parse (readUnit, readClause)', note: 'Texts (3.198.0; collected item Z-PCLICENSE): "P&C 2026 Water Damage under license to 12XU and Cardinal Fuzz." – ℗ and © of Water Damage, licensed to 12XU and Cardinal Fuzz; "Published by Water Damage the band from Texas LLC." – a company\'s name with its form at the end, as written; "… written by A and B ©BMG Rights Management, Warner Chappell Music, Inc." – the © ends the names, the companies after it publish these works (until 3.197.0 they were writers)' },
+    { id: 'S370', where: 'TEXT.parse (bookletLines, readUnit; BK_LEGAL_MORE, legalMore)', note: 'Texts (3.198.0; collected item Z-LEGALMORE): more of what a booklet prints for the trade is left out as such – the barcode ("Barcode: 630883005627"), the label code with a leading zero or a full stop ("LC 02112."), catalogue numbers per country ("UK: TAND 5", "F: PM 527"), "The copyright in this recording is owned by …"; a catalogue number after a company\'s form is no part of its name ("©2013 Twisted Records Ltd. TWSCD45")' },
     { id: 'S299', where: 'TEXT.parse (shopLines; SHOP_BLOCK_LINES)', note: 'Texts (3.169.0; Z-BCSHOPBLOCK): what a shop writes below an edition is left out as "shop" – the edition\'s name with "(Limited Edition …)" and its format, what the records look like ("2 x 180gsm …", "DiscA/B - Transparent green with gold blob", "Packaged in a standard Sleeve."), the block about shipping ("+++++INTERNATIONAL SHIPPING +++++", "- WE DO NOT SHIP TO PO BOXES", "- ALL ORDERS ARE SENT BY TRACKED COURIER …", "UK: 2-3 days") and the page\'s own details ("published March 29, 2019", "license"). They stood under "not recognized". Every free text' },
     { id: 'S298', where: 'TEXT.parse (hyphenTrackLines; HT_TRACKS, HT_HYPHEN, HT_HEAD, HT_SPLIT)', note: 'Texts (3.169.0; Z-HYPHENTRACKS): a lineup written "Pete Callard-Acoustic Guitar On Tracks 1,2,3, Electric Guitar on Tracks 18,19 Hari-Om- Vocals On Tracks 9,10 …" – a hyphen without spaces between name and role, each role with its tracks, the whole lineup in one paragraph (Beatport and shop texts): the paragraph is cut before each name, the name is what stands before the first hyphen whose right side begins with a role ("Hari-Om- Vocals": Hari-Om), "and Vocals on Tracks …" and a role after a list of tracks are roles of their own, "on all tracks" says nothing new; a heading before the first name ("Musicians In The Studio") is a heading. Only for a line that names tracks that way. Every free text' },
     { id: 'S296', where: 'videoLevelWant, videoLevelFor, VIDEO_RULES, R033 (mapRole), rgIsDjMix, Q022', note: 'Video credits and DJ mixes (3.164.0; proposals F-VIDEOLEVEL, F-DJMIX of review run 2): every credit of a video – video director, camera work, cinematographer and the table of video credits (R076, R110, R119) – is on the recordings when its tracks are videos – from 3.169.0 on the videos only when just some of its tracks are (Z-VIDEOTRACKS; until then such a credit went to the release) – and on the release when none is, where MusicBrainz has the type there (the cinematographer and the camera work were always on the recordings, the others on the release). "Mixed By [DJ Mix]" is the DJ-mix of the release, not the mix engineer; on a release group of the type DJ-mix "Mixed By" asks which of the two (Q022)' },
@@ -7081,6 +7091,15 @@
     /^(?:DDD|ADD|AAD|DAD)$/,
     /^(?:TT|total(?:\s+playing)?\s+time|gesamt(?:spiel)?zeit)\s*:?\s*\d{1,3}\s?[:.'’]\s?\d{2}\b.{0,12}$/i,
   ];
+  // [Z-LEGALMORE] (3.198.0, S370) more of what a booklet prints for the trade: the barcode, the label code with a leading zero or a full
+  // stop, catalogue numbers per country ("UK: TAND 5", "F: PM 527"), "The copyright in this recording is owned by …"
+  const BK_LEGAL_MORE = [
+    /^(?:barcode|bar\s+code|ean|upc)\s*:?\s*[\d\s]{8,16}\.?$/i,
+    /^LC\s?-?\s?\d{4,5}\.?$/,
+    /^(?:UK|US|USA|D|F|E|I|NL|J|JP|EU|CAN|AUS|GER)\s*:\s*[A-Z]{1,6}[\s-]?\d{1,6}[A-Z]?\.?$/,
+    /^the\s+copyright\s+in\s+this\s+(?:sound\s+)?recording\s+is\s+owned\s+by\b/i,
+  ];
+  const legalMore = (t) => ruleOn('S370') && BK_LEGAL_MORE.some((re) => re.test(String(t || '').trim()));
   // [Z-ARTWORKLINE] (3.183.0, S317)
   const BK_ORIG_ART = /^(original\s+(?:art\s*work|cover\s+art|painting|image)|cover\s+painting|painting)\s*[-–—:]\s*(\p{Lu}.+)$/iu;
   const BK_ART_TECH = /^(?:screen\s*print|silk\s*screen|wood\s*block|woodcut|linocut|lithograph|etching|aquatint|monotype|oil\s+on|acrylic\s+on|gouache|watercolou?r|tempera|mixed\s+media|collage|pencil\s+on|ink\s+on|charcoal)\b|\bedition\s+of\s+\d+\b|\b\d+(?:[.,]\d+)?\s*[x×]\s*\d+(?:[.,]\d+)?\s*(?:cm|mm|in\b)/i;
@@ -9266,6 +9285,8 @@
     // 1981 in live concert at Goldsmith's College, London", "C1 to D recorded …" – D a whole side; collected item 150)
     const LEAD_POS_ONE = '(?:[A-Z]{1,2}\\d{0,3}|\\d{1,3}(?:\\.\\d{1,3})?)';
     const LEAD_POS = new RegExp(`^(${LEAD_POS_ONE}(?:\\s*(?:,|&|-|–|—|\\bto\\b|\\band\\b)\\s*${LEAD_POS_ONE})*)\\s+(\\p{L}+ed\\b.*)$`, 'u');
+    // [Z-TITLEWRITTEN] (3.198.0, S365) … and the verbs not ending in "-ed": "Track 2 written by Edgar Froese", "Tracks 1 & 3 sung by …"
+    const LEAD_POS2 = new RegExp(`^(${LEAD_POS_ONE}(?:\\s*(?:,|&|-|–|—|\\bto\\b|\\band\\b)\\s*${LEAD_POS_ONE})*)\\s+((?:\\p{L}+ed|written|co-written|sung|done|made|drawn|taken|shot|cut|geschrieben|komponiert)\\b.*)$`, 'iu');
     // [3.37.7] … also after a word for tracks: "Track B recorded on 12 November 1985 in Tokyo, Zojoji Hall" (collected item 157)
     const LEAD_TRACK_WORD = new RegExp(`^${TEXT_TRACK_WORDS}\\s+(?=\\S)`, 'i');
 
@@ -9793,6 +9814,21 @@
         return ws.length >= 2 && ws.length <= 4 && ws.every((w) => /^\p{Lu}[\p{L}'’.-]*$/u.test(w)) && !TEXT_PLACE_WORDS.test(x) && !isRole(P, cap(clean(x)))
           && !/^the$/i.test(ws[0]) && !/\b(?:orchestra|orchester|band|ensemble|quartet|quintet|sextet|trio|choir|chorus|group|symphony|philharmonic|big band|collective)s?\b/i.test(x);
       };
+      // [Z-SURNAMESHARED] (3.198.0, S367) "Edgar and Jerome Froese": a first name alone before a name of two words takes its surname –
+      // only when the text writes the person so elsewhere ("Produced by Edgar Froese")
+      if (ruleOn('S367') && parts.length >= 2) {
+        const last = clean(parts[parts.length - 1]).replace(/\s*\([^)]*\)$/, '');
+        const lw = last.split(/\s+/);
+        const sur = lw.length === 2 && /^\p{Lu}[\p{L}'’-]+$/u.test(lw[1]) ? lw[1] : '';
+        if (sur) {
+          for (let k = 0; k < parts.length - 1; k++) {
+            const one = clean(parts[k]);
+            if (!/^\p{Lu}[\p{L}'’-]+$/u.test(one) || P.bandNames.has(norm(one))) continue;
+            const full = `${one} ${sur}`;
+            if (new RegExp(`(?<![\\p{L}])${full.replace(/[.*+?^$()|[\]{}\\]/g, '\\$&')}(?![\\p{L}])`, 'iu').test(String(P.text || ''))) parts[k] = full;
+          }
+        }
+      }
       const split = ruleOn('S116') ? parts.flatMap((n) => {
         const w = n.match(/^(.+?)\s+with\s+(.+)$/u);
         const w2 = w ? w[2].replace(/\s*\([^)]*\)$/, '') : '';
@@ -10682,7 +10718,7 @@
               continue;
             }
           }
-          if (BK_LEGAL_LINE.some((re) => re.test(t))) {
+          if (BK_LEGAL_LINE.some((re) => re.test(t)) || legalMore(t)) {
             P.ignored.push({ text: l, why: 'legal' });
             continue;
           }
@@ -11174,6 +11210,9 @@
       if (ruleOn('S307')) lines = classicalLines(P, lines);
       // [Z-HYPHENTRACKS] (3.169.0, S298) "Pete Callard-Acoustic Guitar On Tracks 1,2,3, Electric Guitar on Tracks 18,19": a hyphen without
       // spaces between name and role, each role with its tracks – and a whole lineup in one paragraph
+      // [Z-NAMEDASHTRACKS] (3.198.0, S366) "Pete Callard - Electric Guitar on tracks 3, 5. Acoustic guitar on tracks 2, 3": a full stop after
+      // a track's number before another role with its tracks goes on the same person's list (as a comma)
+      if (ruleOn('S366')) lines = lines.map((l) => { const t = String(l); const t2 = HT_TRACKS.test(t) ? t.replace(/(\d)\.\s+(?=\p{Lu}\p{Ll}[^.:–—]*?\bon\s+(?:all\s+)?tracks?\b)/gu, '$1, ') : t; return t2 === t ? l : keep(t2, l); });
       if (ruleOn('S298')) lines = lines.flatMap((l) => hyphenTrackLines(P, String(l)).map((t) => keep(t, l)));
       // [Z-KIRAMEKI] (3.194.0, S348) a heading with ornaments and its name in another script – "☆Kirameki Melody☆ (⭐︎きらめきメロディ⭐︎) :" –
       // the heading "Kirameki Melody:" (a group above its members, S087)
@@ -11402,6 +11441,20 @@
           const raw = P.rawOf.get(out[i]) || out[i];
           out[i] = keep(`${out[i].replace(/\s+$/, '')} ${next}`, raw);
           for (let k = i + 1; k <= j; k++) out[k] = '';
+        }
+      }
+      // [Z-TITLEWRITTEN] (3.198.0, S365) a list of names broken after a comma – "'X' written by Simon Posford, Raja Ram," above "Michele Adamson
+      // and Sussan Deyhim and Abigail Gorton" –: one line (the next line only names – no role, colon or dash of its own)
+      if (ruleOn('S365')) {
+        for (let i = 0; i < out.length - 1; i++) {
+          if (!/\s(?:by|von|par|por)\s.+,\s*$/iu.test(out[i])) continue;
+          const next = String(out[i + 1] || '').trim();
+          if (!next || /[:–—]|\s-\s|\sby\s/i.test(next) || next.split(/\s+/).length > 12) continue;
+          const parts = next.replace(/[.]$/, '').split(/\s*,\s*|\s+(?:and|&)\s+/i);
+          if (!parts.every((x) => /^\p{Lu}[\p{L}.'’-]*(?:\s+\p{Lu}[\p{L}.'’-]*){0,3}$/u.test(x.trim()))) continue;
+          const raw = P.rawOf.get(out[i]) || out[i];
+          out[i] = keep(`${out[i].replace(/\s+$/, '')} ${next}`, raw);
+          out[i + 1] = '';
         }
       }
       // [Z-BYBREAK] (3.183.0, S316) a line that ends with "by" – "All music composed and recorded by" above (an empty line and)
@@ -11956,6 +12009,19 @@
     };
 
     /**
+     * [Z-TITLEWRITTEN] (3.198.0, S365) Tracks named by their titles before the role: "'Brain In A Fish Tank' written by …", "“A” and “B”
+     * composed by …" → { rest: 'written', scope } (a title not found is "not matched"), null if none.
+     */
+    const leadTitleScope = (P, phrase) => {
+      const m = String(phrase || '').match(new RegExp(`^\\s*((?:${TEXT_TITLE_Q}\\s*(?:,|&|\\band\\b)?\\s*)+)(\\p{L}.*)$`, 'u'));
+      if (!m || !/^(?:(?:were|was|is|are)\s+)?(?:\p{L}+ed|written|co-written|sung)\b/iu.test(clean(m[2]))) return null;
+      const titles = [...m[1].matchAll(new RegExp(TEXT_TITLE_Q, 'gu'))].map((x) => clean(x[0].slice(1, -1))).filter(Boolean);
+      if (!titles.length) return null;
+      const res = (P.resolveTitles && P.resolveTitles(titles)) || { indexes: new Set(), unresolved: titles.map((t) => `“${t}”`) };
+      return { rest: clean(m[2]).replace(/^(?:were|was|is|are)\s+/i, ''), scope: { set: res.indexes, spec: titles.map((t) => `“${t}”`).join(', '), unresolved: res.unresolved } };
+    };
+
+    /**
      * [Z-EXCEPTC] (3.125.0, S199) A sentence of a commission: "commissioned for/by X", or "composed/written for X" with a word of
      * COMMISSIONER_WORDS in X ("Festival", "Radio" …; for a person it stays a dedication) – its tracks: "All tracks (except 'A' and
      * 'B')", or the scope of the line; remixes left out (their work is the original's); a year before X its date.
@@ -12246,9 +12312,50 @@
       return out.length ? { credits: out, lead: restText } : null;
     };
 
-    const readUnit = (P, unit, scope, pi) => {
+    // [Z-INSTRNONAME] (3.198.0, S362) "Instrumentation : harmonium, melodica, guitar, …" – instruments without a player
+    const INSTR_HEAD = /^(?:instrumentation|instruments?|instrumente|instrumentierung|instrumentaci[óo]n|instrumentos|instrumentarium|besetzung)\s*:\s*(.+?)\.?$/i;
+    // [Z-EQUIPMENT] (3.198.0, S363) the gear used – "equipment: farfisa, ems London", "(Equipment: Concert Sound London)" –: no credit
+    const EQUIP_LINE = /^(?:equipment|gear|backline|ausrüstung|equipo|équipement)\s*:/i;
+    const EQUIP_PAREN = /\s*\((?:equipment|gear|backline|ausrüstung)\s*:[^)]*\)/gi;
+    const readUnit = (P, unit0, scope, pi) => {
+      // [Z-LEGALMORE] (3.198.0, S370) a part of a sentence that is a code or a notice ("… TWSCD45. LC 02112.")
+      if (legalMore(clean(unit0))) {
+        P.ignored.push({ text: clean(unit0), why: 'legal' });
+        return { found: 1, unknown: [], parts: 1 };
+      }
+      if (ruleOn('S363') && EQUIP_LINE.test(clean(unit0))) {
+        P.ignored.push({ text: clean(unit0), why: 'equipment' });
+        return { found: 1, unknown: [], parts: 1 };
+      }
+      let unit = ruleOn('S363') && EQUIP_PAREN.test(unit0) ? unit0.replace(EQUIP_PAREN, '') : unit0;
+      // [Z-PCLICENSE] (3.198.0, S369) "P&C 2026 Water Damage under license to 12XU and Cardinal Fuzz.": ℗ and © of the first, licensed to the
+      // others; "Published by Water Damage the band from Texas LLC." – the name of a company with its form at the end, as written
+      if (ruleOn('S369')) {
+        unit = unit.replace(/^\s*P\s*(?:&|\+|and)\s*C(?=\s)/i, '℗ & ©');
+        const lic = unit.match(/^(\s*(?:℗|©).*?\S)\s+(?:under\s+licen[cs]e|licen[cs]ed)\s+to\s+(.+?)\.?\s*$/iu);
+        if (lic) {
+          lic[2].split(/\s*,\s*|\s+(?:and|&)\s+/i).map(clean).filter(looksLikeName).forEach((n) => {
+            P.companies.push({ who: who(P, n), role: 'Licensed To', catno: '', tracks: null, line: P.line0, part: P.part0, pi: P.pi0, n: P.n0 });
+          });
+          unit = lic[1];
+        }
+        const pub = unit.match(/^\s*published\s+by\s+(\p{Lu}.*?\s(?:LLC|L\.L\.C\.|Ltd\.?|Limited|Inc\.?|GmbH|Corp\.?))\.?\s*$/iu);
+        if (pub) {
+          P.companies.push({ who: who(P, clean(pub[1])), role: 'Published By', catno: '', tracks: scope ? tracksOf(P, scope) : null, line: P.line0, part: P.part0, pi: P.pi0, n: P.n0 });
+          return { found: 1, unknown: [], parts: 1 };
+        }
+      }
       const line = unit;
       let found = 0;
+      // [Z-INSTRNONAME] (3.198.0, S362) the instruments of a line without a name: given to a player at the end (finishPlayers)
+      const ih = ruleOn('S362') && line.match(INSTR_HEAD);
+      if (ih) {
+        const items = ih[1].split(/\s*,\s*|\s+(?:and|&|und|y|et)\s+/i).map((x) => clean(x)).filter(Boolean);
+        if (items.length && items.filter((x) => playable(P, x) || maybePlayable(P, x)).length * 2 > items.length) {
+          P.instrNoName.push({ items, scope, line, pi });
+          return { found: 1, unknown: [], parts: 1 };
+        }
+      }
       let lastByRoles = []; // [Z-LJTEXT] (3.140.0, S232) the roles of the last "… by" clause (for "assisted by")
       let m;
       const unknownParts = [];
@@ -12257,7 +12364,9 @@
       // ℗ / © with a year: the label of the copyright; [3.21.0] both at once ("P + © 2023 X", "℗ & ©", "(P) & (C)"), and
       // after the name no code ("DDD"), catalogue number ("· MCD 2301") or "All rights reserved" (T033)
       if ((m = line.match(TEXT_PC_SIGNS))) {
-        const name = clean(m[2].replace(TEXT_PC_STRIP, ''));
+        // ([Z-LEGALMORE] 3.198.0, S370) a catalogue number after the company's form is no part of it ("Twisted Records Ltd. TWSCD45")
+        const name0 = clean(m[2].replace(TEXT_PC_STRIP, ''));
+        const name = ruleOn('S370') ? name0.replace(/(\b(?:Ltd|Inc|LLC|GmbH|Limited|Corp)\.?)\s+[A-Z]{2,}[\s-]?\d+[A-Z]?\.?$/u, '$1') : name0;
         const roles = [/℗|Ⓟ|\(p\)|^p|©\s*©/i.test(m[1]) && 'Phonographic Copyright (p)', /©|\(c\)/i.test(m[1]) && 'Copyright (c)'].filter(Boolean);
         if (looksLikeName(name)) {
           roles.forEach((role) => P.companies.push({ who: who(P, name), role, catno: '', tracks: null, ...at(P) }));
@@ -12287,6 +12396,12 @@
       const parts = found ? [] : clauses(line);
       // [S050] (3.32.5) one clause; read again in typo mode when it gave nothing (see typoMode)
       const readClause = (clause0, ci) => {
+        // [Z-EQUIPMENT] (3.198.0, S363) one clause of a paragraph: "…; equipment: farfisa, ems London."
+        if (ruleOn('S363') && EQUIP_LINE.test(clean(clause0))) {
+          P.ignored.push({ text: clean(clause0), why: 'equipment' });
+          found++;
+          return;
+        }
         // [Z-RAD] (3.81.0, S121) "This was recorded by …", "It was mixed by …", "These tracks were recorded live by …": the words before
         // the verb are no part of the credit (until 3.80.0 "This was" became its credit)
         // [Z-CAPSTITLE] (3.153.0, S270) the release's title as the subject – "FRAG NICHT NACH SONNENSCHEIN was recorded at …", written in capitals
@@ -12438,7 +12553,7 @@
           // [3.22.0] "… is a contribution by X", "… was played by X"; tracks named by their titles ("Piano in ‘A' and
           // 'B'", T036)
           let leftRaw = clause.slice(0, m[1].length).replace(TEXT_CONTRIBUTION, '');
-          const ts = titleScope(P, leftRaw);
+          const ts = titleScope(P, leftRaw) || (ruleOn('S365') ? leadTitleScope(P, leftRaw) : null);
           if (ts) {
             cScope = ts.scope;
             leftRaw = ts.rest;
@@ -12502,6 +12617,14 @@
           // [3.21.0] "…, courtesy of the X Estate" is no name (T031)
           const courtesy = right.search(TEXT_COURTESY);
           if (courtesy >= 0) right = right.slice(0, courtesy);
+          // [Z-PCLICENSE] (3.198.0, S369) "… written by A, B and C ©BMG Rights Management, Warner Chappell Music, Inc.": the © ends the names –
+          // the companies after it are the publishers of these works (", Inc." part of a name)
+          const pcAt = ruleOn('S369') ? right.search(/\s*(?:©|\(c\))\s*\p{Lu}/u) : -1;
+          if (pcAt > 0) {
+            const pubs = right.slice(pcAt).replace(/^\s*(?:©|\(c\))\s*/u, '').replace(/\.$/, '').split(/\s*,(?!\s*(?:inc|ltd|llc|gmbh|corp)\b)\s*/i).map(clean).filter(Boolean);
+            pubs.forEach((n) => { if (looksLikeName(n)) { P.companies.push({ who: who(P, n), role: 'Published By', catno: '', tracks: cScope ? tracksOf(P, cScope) : null, line: P.line0, part: P.part0, pi: P.pi0, n: P.n0 }); found++; } });
+            right = right.slice(0, pcAt);
+          }
           // [S051] (3.34.19) "Electric guitar, drums and piano are played (, mixed and produced) by X", "All instruments played
           // by X": each instrument a row of X, the other verbs roles of their own, "played" none (T049, T050)
           // (the phrase as written: "are played" is no "contribution" here, T031; not with tracks named by their titles)
@@ -12585,6 +12708,16 @@
             if (prep && looksLikeName(prep[1]) && (/^\p{Ll}/u.test(tail) || /^(?:vinyl|cd|cassette|digital|dolby|atmos|stereo|mono|surround|pro\s+tools|logic|ableton|lp|tape)\b/i.test(tail))) {
               unknownParts.push(prep[2]);
               nm = prep[1];
+            }
+            // [Z-FORLABEL] (3.198.0, S368) "Produced by Edgar Froese for Virgin Records" inside a paragraph too: the person, and the label it was
+            // produced for (a name of a label's words: Records, Music, Productions …)
+            const fl = ruleOn('S368') && !P.bandNames.has(norm(nm)) ? nm.match(/^(.+?)\s+for\s+(\p{Lu}[^,;]{1,60}?)\.?$/u) : null;
+            if (fl && looksLikeName(clean(fl[1])) && /\b(?:records|recordings|music|musik|label|productions|entertainment|ltd|inc|gmbh)\b/i.test(fl[2])) {
+              nm = clean(fl[1]);
+              if (rolesM.some((r) => /^(?:co-?\s*|executive\s+)?produced\s+by$/i.test(r))) {
+                P.companies.push({ who: who(P, clean(fl[2])), role: 'Produced For', catno: '', tracks: cScope ? tracksOf(P, cScope) : null, line: P.line0, part: P.part0, pi: P.pi0, n: P.n0 });
+                found++;
+              }
             }
             // [Z-PROSE] (3.128.0, S203) a sentence of prose: no name in lower case ("… to be replaced by newer tracks more in keeping with …")
             // ((review) only a name of prose words or of three words or more – "sophie", "billy woods", "van Dyke Parks" stay)
@@ -13770,7 +13903,7 @@
         if (!((m = line.match(SUFFIX)) && m[1] && useScope(m[2], m[1]))) {
           if (!((m = line.match(NUMBERS)) && m[1] && useScope(m[2], m[1]))
             && !(ruleOn('S070') && (m = line.match(BULLET)) && useScope(m[2], m[1])) && ruleOn('S053')
-            && ((m = line.match(LEAD_POS)) || (m = line.replace(LEAD_TRACK_WORD, '').match(LEAD_POS)))) useScope(m[1], m[2]);
+            && ((m = line.match(ruleOn('S365') ? LEAD_POS2 : LEAD_POS)) || (m = line.replace(LEAD_TRACK_WORD, '').match(ruleOn('S365') ? LEAD_POS2 : LEAD_POS)))) useScope(m[1], m[2]);
         }
       }
       // [Z-EXC] (3.49.0) in the block of a track: its track
@@ -14174,7 +14307,21 @@
       finishLeftOut(P);
       finishPlaces(P);
       finishPartScope(P);
+      finishProseDetails(P);
       return finishTracks(P);
+    }
+    /**
+     * [Z-SURNAMESHARED] (3.198.0, S367) The words of a sentence before its verb are no role credit: "The entire music material has been
+     * originally composed by …" → Composed By (not "Composed By [The entire music material has been originally]").
+     */
+    function finishProseDetails(P) {
+      if (!ruleOn('S367')) return;
+      const PROSE_DETAIL = /\b(?:has|have|had)\s+been\b|\b(?:was|were)\b|\b(?:entire|whole|originally|material)\b/i;
+      for (const c of P.credits) {
+        if (!Array.isArray(c.details) || !c.details.some((d) => PROSE_DETAIL.test(d) && String(d).split(/\s+/).length >= 3)) continue;
+        c.details = c.details.filter((d) => !(PROSE_DETAIL.test(d) && String(d).split(/\s+/).length >= 3));
+        if (c.base) c.role = c.details.length ? `${c.base} [${c.details.join(', ')}]` : c.base;
+      }
     }
     /**
      * [Z-PARTSCOPE] (3.197.0, S361) A credit for every track whose line says it holds for part of the album only – "Most of the songs were
@@ -14239,6 +14386,18 @@
     }
     /** [F-PARSESTAGES] (3.193.0) Stage 4, part 2: the players of the text: amplifiers, initials, members, "I played …", ensembles, abbreviations. */
     function finishPlayers(P) {
+      // [Z-INSTRNONAME] (3.198.0, S362) instruments without a player: the one member the text names ("BHAJAN BHOY is Ajay Saggar."), else
+      // a credit without a name – the dashboard gives it to the release's artist when that is a person and asks otherwise
+      for (const x of P.instrNoName || []) {
+        const members = uniq(P.credits.filter((c) => c.members && c.who && c.who.name && !c.who.placeholder).map((c) => c.who.name));
+        P.part0 = x.line;
+        P.pi0 = x.pi;
+        const head = clean(x.line.split(':')[0]);
+        x.items.forEach((it) => {
+          if (members.length === 1) addCredit(P, members[0], it, x.scope);
+          else if (addPlaceholder(P, head, it, x.scope)) P.credits[P.credits.length - 1].instrNoName = true;
+        });
+      }
       // ([Z-SEI2] 3.96.0, review) the players of the text: names with an instrument or a voice
       P.playersOut = () => uniq(P.credits.filter((c) => c.who && c.who.name && !c.who.placeholder && playable(P, c.role)).map((c) => norm(c.who.name)));
       // [Z-AMP] (3.96.0, S151) the amplifiers and effects: the person in brackets, else the one player of the text (guitar; bass; keys),
@@ -14383,7 +14542,11 @@
         const fant = [];
         // ((review) no word of a sound maker ("Buddha machine", "shruti box", "ondes Martenot"), no model with a number ("Juno 101")
         const SOUNDISH = /\b(?:machines?|box(?:es)?|bowls?|loops?|tapes?|cassettes?|devices?|objects?|toys?|electronics|effects|pedals?|feedback|noises?|sounds?|samples?|sampler|radios?|turntables?|organs?|pipes?|bells?|chimes?|gongs?|whistles?|horns?|harps?|flutes?|strings?|drums?|percussion|sticks?|saws?|bows?|synths?|keys|keyboards?|voices?|field|recordings?|ondes|martenot|shruti|sruti|tanpura|tambura|theremin|kalimba|mbira|zither|lute|oud|kora|sitar|tabla)\b/i;
-        const fantasy = (r) => { const ws = clean(r).split(/\s+/); return ws.length >= 2 && ws.length <= 4 && !/\d/.test(r) && !SOUNDISH.test(r) && !ws.some((w) => playable(P, w.toLowerCase()) || P.isRoleKnown(cap(w))) && !P.isRoleKnown(cap(r)); };
+        // ([Z-INSTRTYPO] 3.198.0, S364) a word an instrument's name misspelt ("Moog Syntheziser") is no fantasy: asked like a word not known
+        const TYPO_OF = ['synthesizer', 'synthesiser', 'keyboards', 'guitar', 'piano', 'organ', 'drums', 'percussion', 'saxophone', 'trumpet', 'trombone', 'violin',
+          'viola', 'cello', 'mellotron', 'clarinet', 'flute', 'harmonica', 'accordion', 'vibraphone', 'marimba', 'xylophone', 'harpsichord', 'vocals', 'sequencer'];
+        const typoWord = (w) => ruleOn('S364') && w.length >= 5 && TYPO_OF.some((x) => Math.abs(x.length - w.length) <= 2 && editDistance(w.toLowerCase(), x, 2) <= 2);
+        const fantasy = (r) => { const ws = clean(r).split(/\s+/); return ws.length >= 2 && ws.length <= 4 && !/\d/.test(r) && !SOUNDISH.test(r) && !ws.some((w) => playable(P, w.toLowerCase()) || P.isRoleKnown(cap(w)) || typoWord(w)) && !P.isRoleKnown(cap(r)); };
         // ((review) the odd one among known roles: one such name at most per name and line
         const knownN = new Map();
         P.credits.filter((c) => !c.guess && c.line != null).forEach((c) => { const k = `${c.line}|${norm(c.who.name)}`; knownN.set(k, (knownN.get(k) || 0) + 1); });
@@ -14800,6 +14963,7 @@
       // ((3.49.0, review) several headers – "All music by A except: …", "All lyrics by B except: …" – each with its blocks)
       P.exceptHead = null;
       P.exceptHeads = [];
+      P.instrNoName = []; // [Z-INSTRNONAME] (3.198.0, S362)
       P.titleBlock = null;
       P.exceptBlocks = [];
       // [Z-TBL] (3.92.0, S145) a track's title alone ("A1" / "”Vanishing Waves” (3:19)", "\"Approach\""): the lines below are its credits,
@@ -31370,8 +31534,11 @@
    */
   function placeholderCredits(credits) {
     const artists = (S.releaseCredit || []).filter((p) => p.mbid && p.name);
+    // ([Z-INSTRNONAME] 3.198.0, S362) instruments without a player: the release's one artist when it is a person – no question
+    const person = artists.length === 1 && norm(artists[0].type) === 'person' && ruleOn('S362');
     return (credits || []).flatMap((c) => (!c.who || !c.who.placeholder ? [c]
-      : artists.map((p) => ({ ...c, who: { id: 0, name: p.name, rawName: p.name, links: [], placeholder: c.who.placeholder, releaseMbid: p.mbid } }))));
+      : c.instrNoName && person ? [{ ...c, who: { id: 0, name: artists[0].name, rawName: artists[0].name, links: [], releaseMbid: artists[0].mbid } }]
+        : artists.map((p) => ({ ...c, who: { id: 0, name: p.name, rawName: p.name, links: [], placeholder: c.who.placeholder, releaseMbid: p.mbid } }))));
   }
 
   /** [3.21.0] A web address shortened for the dashboard: "instagram.com/name". */

@@ -2093,4 +2093,73 @@ console.log(JSON.stringify(['The majority of the album is part of a suite that w
     ]
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+
+def case_booklets3198():
+    """Credits Importer 3.198.0 (collected items Z-INSTRNONAME, Z-SHAREDHEADFIX, Z-EQUIPMENT, Z-INSTRTYPO, Z-TITLEWRITTEN, Z-NAMEDASHTRACKS,
+    Z-SURNAMESHARED, Z-FORLABEL, Z-PCLICENSE, Z-LEGALMORE; rules S362–S370), in Node – lines of five booklets:
+    A) "BHAJAN BHOY is Ajay Saggar." + "Instrumentation : harmonium, guitar, bass guitar, piano, thumb piano." – Ajay Saggar plays each (not
+       "guitar" a name, not "bass guitar" credited "guitar"); without the sentence: credits without a name (asked).
+    B) "…; equipment: farfisa, ems London." left out as equipment; "Moog Syntheziser" a row that asks (no fantasy).
+    C) "'Brain In A Fish Tank' written by Simon Posford, Raja Ram," / "Michele Adamson and Abigail Gorton" – four writers of track 1 only;
+       "Track 2 written by Edgar Froese." – track 2.
+    D) "Pete Callard - Electric Guitar on tracks 3, 5. Acoustic guitar on tracks 2, 3" – both, with their tracks.
+    E) "Produced by Edgar Froese" + "…composed by Edgar and Jerome Froese." – Edgar Froese and Jerome Froese, no role credit;
+       "Produced by Edgar Froese for Virgin Records;" in a paragraph – Produced For Virgin Records.
+    F) "P&C 2026 Water Damage under license to 12XU and Cardinal Fuzz." – ℗ and © Water Damage, licensed to both; "Published by Water Damage
+       the band from Texas LLC."; "… written by Scott Asheton ©BMG Rights Management, Warner Chappell Music, Inc." – publishers, not writers.
+    G) "Barcode: 630883005627", "LC 02112", "UK: TAND 5", "The copyright in this recording is owned by …" left out as legal;
+       "℗2013 Twisted Records Ltd. TWSCD45" – Twisted Records Ltd.
+    H) S362–S370 off: as before (A: the line not recognized)."""
+    node = r"""
+const OFF = process.argv[2] ? JSON.parse(process.argv[2]) : null;
+global.localStorage = { getItem: (k) => (OFF && k === 'dci-rules-off' ? JSON.stringify(OFF) : null), setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const WORDS = /^(?:harmonium|guitar|bass guitar|piano|thumb piano|organ|keyboards|electric guitar|acoustic guitar|drums|vocals|flute)$/i;
+const isRole = (phrase) => { const p = m.parseRoleNotation(phrase)[0]; if (!p || !p.base || /\d/.test(p.base)) return false; const r = m.mapRole(p.base, p.mods); return !!(r.rule && r.rule !== 'R096' && !r.fallback) || WORDS.test(p.base); };
+const isCompanyRole = (role) => /copyright|phonographic|published|recorded at|licensed|produced for/i.test(role);
+const titles = ['Brain in a Fish Tank', 'Second', 'Third', 'Fourth', 'Fifth'];
+const resolveTitles = (ts) => { const ix = new Set(); const un = []; ts.forEach((x) => { const i = titles.findIndex((y) => y.toLowerCase() === String(x).toLowerCase()); if (i >= 0) ix.add(i); else un.push(x); }); return { indexes: ix, unresolved: un }; };
+const resolveTracks = (s) => { const set = new Set(); String(s).replace(/\b(?:tracks?)\b/gi, '').split(/\s*(?:,|&|\band\b)\s*/).forEach((x) => { const n = Number(x); if (n) set.add(n - 1); }); return set.size ? set : null; };
+const ctx = { isRole, isCompanyRole, resolveTracks, resolveTitles, trackTitles: titles, artistNames: ['Bhajan Bhoy'], trackCount: 5 };
+const read = (t) => { const r = m.SOURCES.text.parse(t, ctx); return { cr: r.credits.map((c) => [c.who.name, c.role, c.tracks && c.tracks.all ? 'all' : [...((c.tracks && c.tracks.indexes) || c.tracks || [])], c.guess ? 'guess' : '']),
+  co: r.companies.map((c) => [c.who.name, c.role]), ig: r.ignored.map((i) => i.why), un: r.unrecognized.length }; };
+console.log(JSON.stringify({
+  a: read('BHAJAN BHOY is Ajay Saggar.\n\nInstrumentation : harmonium, guitar, bass guitar, piano, thumb piano.'),
+  a2: read('Instrumentation : harmonium, guitar, piano.'),
+  b: read('Produced by Tangerine Dream; Engineer: Phil Becque; equipment: farfisa, ems London.\nChris Franke: Moog Syntheziser, Keyboards'),
+  c: read("'Brain In A Fish Tank' written by Simon Posford, Raja Ram,\nMichele Adamson and Abigail Gorton\nTrack 2 written by Edgar Froese."),
+  d: read('Pete Callard - Electric Guitar on tracks 3, 5. Acoustic guitar on tracks 2, 3'),
+  e: read('Produced by Edgar Froese\nThe entire music material has been originally composed by Edgar and Jerome Froese.\nRecorded in December 1973 at the Manor; Produced by Edgar Froese for Virgin Records; Engineer: Phil Becque'),
+  f: read('P&C 2026 Water Damage under license to 12XU and Cardinal Fuzz.\nPublished by Water Damage the band from Texas LLC.\n"Brain in a Fish Tank" written by Scott Asheton ©BMG Rights Management, Warner Chappell Music, Inc.'),
+  g: read('Barcode: 630883005627\nLC 02112\nUK: TAND 5\nThe copyright in this recording is owned by Virgin Records Ltd ℗ 1974 Virgin Records Ltd\n℗2013 Twisted Records Ltd. TWSCD45'),
+}));
+"""
+    outs = []
+    for off in (None, ['S362', 'S363', 'S364', 'S365', 'S366', 'S367', 'S368', 'S369', 'S370']):
+        js = subprocess.run(['node', '-e', node, str(H.ROOT / 'mb-vibecode-credits-importer.user.js')] + ([json.dumps(off)] if off else []), capture_output=True, text=True)
+        if js.returncode:
+            print(js.stderr[-2000:])
+            print('Ergebnis: FEHLER [node]')
+            return
+        outs.append(json.loads(js.stdout))
+    on, off = outs
+    for k in on:
+        print(k, on[k], '\n   aus:', off[k])
+    a, b, c, d, e, f, g = (on[k] for k in 'abcdefg')
+    results = [
+        sorted(x[1] for x in a['cr'] if x[0] == 'Ajay Saggar') == sorted(['Performer', 'harmonium', 'guitar', 'bass guitar', 'piano', 'thumb piano']) and not a['un']
+        and all(x[0] == '' for x in on['a2']['cr']) and len(on['a2']['cr']) == 3,
+        'equipment' in b['ig'] and not any(x[0] in ('farfisa', 'ems London') for x in b['cr']) and any(x[0] == 'Chris Franke' and 'Syntheziser' in x[1] for x in b['cr']),
+        sorted(x[0] for x in c['cr'] if x[2] == [0]) == ['Abigail Gorton', 'Michele Adamson', 'Raja Ram', 'Simon Posford'] and ['Edgar Froese', 'Written By', [1], ''] in c['cr'] and not c['un'],
+        ['Pete Callard', 'Electric Guitar', [2, 4], ''] in d['cr'] and ['Pete Callard', 'Acoustic guitar', [1, 2], ''] in d['cr'],
+        ['Edgar Froese', 'Composed By', 'all', ''] in e['cr'] and ['Jerome Froese', 'Composed By', 'all', ''] in e['cr'] and ['Virgin Records', 'Produced For'] in e['co']
+        and not any('for Virgin' in x[0] for x in e['cr']),
+        ['Water Damage', 'Phonographic Copyright (p)'] in f['co'] and ['12XU', 'Licensed To'] in f['co'] and ['Cardinal Fuzz', 'Licensed To'] in f['co']
+        and ['Water Damage the band from Texas LLC', 'Published By'] in f['co'] and ['BMG Rights Management', 'Published By'] in f['co']
+        and not any('BMG' in x[0] or x[0] == 'Inc' for x in f['cr']),
+        g['ig'].count('legal') >= 4 and any(x[0].rstrip('.') == 'Twisted Records Ltd' and x[1] == 'Phonographic Copyright (p)' for x in g['co']) and not g['un'],
+        off['a']['un'] == 1 and not any(x[1] == 'harmonium' for x in off['a']['cr']),
+    ]
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 run_cases(globals())
