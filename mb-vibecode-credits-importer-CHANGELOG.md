@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-22 | 3.197.0 – 3.200.0 | – |
+| 2026-11-22 | 3.197.0 – 3.201.0 | – |
 | 2026-11-21 | 3.193.0 – 3.196.0 | – |
 | 2026-11-20 | 3.185.0 – 3.192.0 | 1.23.0 |
 | 2026-11-19 | 3.170.0 – 3.184.0 | – |
@@ -136,6 +136,14 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.201.0
+
+**Clearer questions and words.**
+
+- **"Repeat the import?"** (collected item Z-REPEATLOOK) looks like the other questions of the dashboard: a coloured field with its heading, the two ways as cards to pick ("Keep my changes", chosen, and "Start afresh", each with a sentence on what happens), one big button that names the way chosen ("↻ Repeat, keeping my changes" / "↻ Repeat afresh"), Cancel beside it; Enter repeats, Esc cancels.
+- **"⑃ on the release + instrument family on the tracks"** (Z-INSTSWORD) – was "on the release + group", which sounded like the release group; its tooltip has an example (guitar and bass on the release, string instruments on the tracks). The quick switch keeps its name "Instruments → release".
+- **⚙ → Source pages** (Z-COMPSETTINGS): the switches of the Script Companion only once it has been seen in this browser – before, a line with the link to install it; "Artwork" (the small cover on Discogs, which can be dragged and enlarges the artwork) always among them, with the hint "Only on Discogs".
 
 ### Import 3.200.0
 

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.200.0
+// @version      3.201.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.200.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.200.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.201.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.201.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.200.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.201.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -187,12 +187,18 @@
       "repeat.button": "Repeat import",
       "repeat.title": "Read the source again and look up its entries in MusicBrainz anew – for example after a change of the mapping rules",
       "repeat.ask": "Repeat the import?",
-      "repeat.what": "The source is read again and every entry is looked up in MusicBrainz anew, so changed mapping rules apply.",
+      "repeat.what": "The source is read again and every entry looked up in MusicBrainz anew –",
       "repeat.keep": "Keep my changes",
       "repeat.keepTitle": "What you changed in this import is put onto the new one",
       "repeat.fresh": "Start afresh",
       "repeat.freshTitle": "The rows as the source and the mapping rules give them now: the changes of this import are dropped",
       "repeat.do": "↻ Repeat import",
+      "repeat.whatRules": "changed mapping rules apply.",
+      "repeat.keepWhat": "Levels, roles, credits, rows, entries and works stay as you set them.",
+      "repeat.freshWhat": "The rows as the source and the rules give them now – your changes of this import are dropped.",
+      "repeat.doKeep": "↻ Repeat, keeping my changes",
+      "repeat.doFresh": "↻ Repeat afresh",
+      "repeat.keys": "Enter repeats · Esc cancels",
       "log.repeatKeep": "Import repeated – your changes are kept",
       "log.repeatFresh": "Import repeated afresh – your changes are dropped",
       "about.off": "Leave out the “about” text",
@@ -1471,7 +1477,7 @@
       "case.backTitle.more": "The source writes “{name}”; the dashboard in normal case (rule S060). A click takes the capitals – also as the “credited as” of its roles.",
       "matrix.songAuto.more": "Preselected (rule S020) because {src} names music and lyrics in one credit (e.g. “Music And Lyrics By”); a type you choose stays",
       "rmx.takeTitle.more": "The title names this artist as the remixer: the role is staged (with “remix of” the original track, when it is on this release)",
-      "insts.releaseTitle.more": "Each instrument on the release (with the release's date); on the recordings one row of the group the instruments share (MusicBrainz's instrument tree), with the date of the recordings – switch back and forth as often as you like",
+      "insts.releaseTitle.more": "Each instrument on the release (with the release's date); on the recordings one row of the instrument family they share (MusicBrainz's instrument tree), with the date of the recordings – e.g. guitar and bass on the release, string instruments on the tracks; switch back and forth as often as you like",
       "dgl.preciseTitle.more": "Each one of the lineup on all tracks except those the track credits give to others only; the more precise instrument of the two on all of them; the track credits joined into it (no second row, no abbreviated spelling)",
       "dgl.trackTitle.more": "The lineup's rows on the tracks without track credits; the tracks with credits as Discogs gives them there (instrument per track; an abbreviated spelling of the full name is no artist credit)",
       "magic.btnTitle.more": "Answers the open questions of the works matrix by the level “{level}” – a preview first; nothing is entered in MusicBrainz, each answer can be changed",
@@ -2233,11 +2239,11 @@
       "log.instsCommon": "{name}: the common level of the instruments added – {what}",
       "log.instsCommonOff": "{name}: the row of the common level removed",
       "insts.track": "all tracks",
-      "insts.release": "on the release + group",
+      "insts.release": "on the release + instrument family on the tracks",
       "insts.trackTitle": "Each instrument on all recordings (as the source names them without tracks)",
-      "insts.releaseTitle": "Each instrument on the release (with the release's date)",
+      "insts.releaseTitle": "Each instrument on the release, their instrument family on the tracks – e.g. guitar and bass on the release, string instruments on the tracks",
       "insts.hint": "would be: release – {list} · recordings – {group}",
-      "insts.hintTitle": "What “on the release + group” would enter – only a preview, nothing set",
+      "insts.hintTitle": "What “on the release + instrument family on the tracks” would enter – only a preview, nothing set",
       "insts.sugg": "{n} instruments without tracks – not necessarily each on every track.",
       "insts.toRelease": "Put them on the release",
       "insts.keep": "Keep them per track",
@@ -3125,6 +3131,9 @@
       "dgStatus.checked": "checked on the MusicBrainz release page",
       "sync.dgArtwork": "Artwork",
       "sync.dgArtworkTitle": "Keeps a small picture of the cover at the top of the connected Discogs tab, while it is connected",
+      "settings.compNone": "The Script Companion has not been seen in this browser yet – its switches show here once it is installed (and a Discogs or Bandcamp tab was open).",
+      "settings.compInstall": "Install the Script Companion",
+      "sync.dgArtworkHint": "Only on Discogs: the small cover at the top of the tab – it can be dragged and shows the artwork larger.",
       "log.dgArtwork": "Cover miniature on Discogs: {state}",
       "dgStatus.artwork": "Cover art from Discogs – click: large in the page, drag to move",
       "dgStatus.artworkHide": "Hide the cover",
@@ -4620,8 +4629,8 @@
       "quick.S297": "Phonographic copyright (℗) on the release instead of the recordings",
       "quick.name.S339": "Instruments → release",
       "quick.S339": "After the import: two or more instruments without tracks go on the release, their common level on the recordings (⑃)",
-      "log.instsAuto.one": "Instruments on the release + group by themselves: {n} entry (quick switch “Instruments → release”)",
-      "log.instsAuto.other": "Instruments on the release + group by themselves: {n} entries (quick switch “Instruments → release”)",
+      "log.instsAuto.one": "Instruments on the release + instrument family on the tracks by themselves: {n} entry (quick switch “Instruments → release”)",
+      "log.instsAuto.other": "Instruments on the release + instrument family on the tracks by themselves: {n} entries (quick switch “Instruments → release”)",
       "typeAsk.askVoiceSax": "“{role}” alone: a saxophone or a voice? – please choose:",
       "typeAsk.askBugle": "“{role}”: the bugle or, as in French, the flugelhorn? – please choose:",
       "typeAsk.askLaud": "“{role}”: the Spanish laúd or the lute? – please choose:",
@@ -5579,7 +5588,7 @@
     { id: 'S316', where: 'tidyLines (TEXT.parse)', note: 'Texts (3.183.0; collected item Z-BYBREAK): a line that ends with "by" (von, par, por) is read as one line with the next line that is not empty – "All music composed and recorded by" above "Stefano Musso in Spring 2023."; not when the line below has a colon or a "by" of its own' },
     { id: 'S317', where: 'tidyLines (BK_ORIG_ART, BK_ART_TECH), R130, Q027', note: 'Texts (3.183.0; collected item Z-ARTWORKLINE): "Original artwork - Albert Irvin, COMET, 1988 / Screenprint with woodblock, edition of 75, Advanced Graphics, London" – the name after the heading is the artist of the picture ("Original artwork": artwork suggested, illustration to choose – Q027); the title and year of the picture, its technique, edition and printer – in the line or in the lines below – are left out ("the picture on the cover"). Until 3.182.0 the heading became a name and "woodblock" an instrument' },
     { id: 'S318', where: 'creditHasNoField, roleCreditFor, editNoteBlock', note: 'Role credits (3.183.0; collected item Z-NOCREDITTYPE): a detail of a type that has no field for a role credit in MusicBrainz – "Liner Notes [Spanish]": liner notes take neither "credited as" nor a task – is left out: the relationship is staged without it, its spelling is not asked ("Written small …"), and it is no line "Not stored in MB" of the edit note (the preview of the staging says "left out"). Off: as until 3.182.0' },
-    { id: 'S319', where: 'instsToRelease, instsGroupPlan (a tick in the quick switch D035)', note: 'Instruments on the release (3.186.0; collected item Z-RELGROUPDATES): "Put them on the release" / "⑃ on the release + group" for a person whose instruments stand in several date groups – "CD 1–4: recorded November 27-29, 2016", "CD 5: recorded November 30, 2016" – keeps every group: on the recordings a row for each group with its tracks and its date (the group of the instruments on tracks 1–4 in November 2016, on the tracks of CD 5 on November 30), on the release the dates of all groups – days that follow one another as one period (2016-11-27 – 2016-11-30), groups with a gap between them as a row each. Off (the tick "date groups" in the quick switch "Days → release level"): as until 3.185.0 – one row on the recordings with all tracks and the first date, the release with the first date of the release level' },
+    { id: 'S319', where: 'instsToRelease, instsGroupPlan (a tick in the quick switch D035)', note: 'Instruments on the release (3.186.0; collected item Z-RELGROUPDATES): "Put them on the release" / "⑃ on the release + instrument family on the tracks" for a person whose instruments stand in several date groups – "CD 1–4: recorded November 27-29, 2016", "CD 5: recorded November 30, 2016" – keeps every group: on the recordings a row for each group with its tracks and its date (the group of the instruments on tracks 1–4 in November 2016, on the tracks of CD 5 on November 30), on the release the dates of all groups – days that follow one another as one period (2016-11-27 – 2016-11-30), groups with a gap between them as a row each. Off (the tick "date groups" in the quick switch "Days → release level"): as until 3.185.0 – one row on the recordings with all tracks and the first date, the release with the first date of the release level' },
     { id: 'S320', where: 'TEXT.parse (promoLines, promoFacts; SALE_HEAD, CONDITION_LINE, ENDORSE_LINE, EDITION_NAME, MARKETING, PROMO_FACTS), promoAskSkip', note: 'Texts (3.187.0; collected items Z-BCPROMO, Z-BCCONDITION, Z-BCEDITION): what a shop writes to sell an edition is left out with its reason – a call to buy and prices ("Buy all three new piano/bass duos: …, and save the money!!!!!", "Special price!!!!!!": advertising), the condition of the item ("CD, wrapped as new"), what someone plays on ("Barry Guy plays exclusively on Thomastik Springs"), the name of the edition as a line ("Artist - Title - Deluxe 2-LP set with Gatefold sleeve"), a headline all in capitals, a list of selling points ("- Legendary … officially released for the 1st time") and sentences that sell ("… is proud to present the first official release …"). The credits such descriptions name – "new liner notes by Jason Weiss", "unseen concert pictures by Keith Hodkinson", "Remastered from the original Masters by Colorsound Studio" – are suggestions: on Skip with "Take" (and "Take all from descriptions"), never taken by themselves; what a credit line of the text says already is no suggestion' },
     { id: 'S321', where: 'TEXT.parse (editionLines)', note: 'Texts (3.187.0; collected items Z-BCEDITION, Z-LINERNOTE, Z-FORLABEL, Z-TITLEGUEST): credit lines written another way are read – several people in one line ("Glen Moore: Bass - Paul McCandless: Bass Clarinet, Flute - Ralph Towner: Guitar": each their own); "Mastered by David Hachour Colorsound Studio, Paris" (the engineer, and the studio as the place); "All concert photos courtesy of Keith Hodkinson" (photography); "Mandala (Front cover) by Moki Cherry courtesy of the Moki Cherry Estate" (cover art by Moki Cherry; the title of the picture and "courtesy of the … Estate" left out); "Liner Note: X" (the singular) and "Liner Note translation: X"; "Produced by X for Y" (X the producer, Y a label it was produced for – until 3.186.0 a person "X for Y")' },
     { id: 'S322', where: 'titleGuestTracks, applyTrackArtistTracks (TITLE_GUEST)', note: 'Tracks (3.187.0; collected item Z-TITLEGUEST): a guest named in the titles of tracks – "Acute ( w Shelley Hirsch)", "Echo ( w Makigami )", "(with X & Y)", "(feat. X)" – plays on those tracks only: the instruments and voices the source gives without tracks are put on them (not on all tracks, as until 3.186.0). The name of a title may be a part of the full name of an entry ("Makigami" – Makigami Koichi) when no other entry has that part; who is in no title stays on all tracks. With S078 (the tracks of the track artists); the row and the edit note say where the tracks come from' },
@@ -5599,7 +5608,7 @@
     { id: 'S336', where: 'headingKind (HEADING_DIVIDER_CHARS), suiteAsks, magicPlan', note: 'Works (3.191.0; collected item Z-SUITENAMEDASH): a heading of the track list that consists of marks only – "-", "–", "***", "…" (mapping HEADING_DIVIDER_CHARS) – is a divider, not the name of a suite (Discogs: a line "-" above the index track "Odes And Meditations For Cecil Taylor" made a suite "-" with works "-: Meditation I"). The index track below it names the suite. Where MusicBrainz\'s titles carry a name before a colon ("Name: Part"), that name holds – an offer of the source of another name over the same tracks gives way; one of the same name counts as sure as a heading ("✨ Answer all" answers it on every level). Switched off: as until 3.190.0.' },
     { id: 'S337', where: 'addDedicationRow, dedTake, acceptSuite, suiteDedications, startSuiteCreate', note: 'Dedications (3.191.0; collected item Z-DEDSUITE): a dedication belongs to the works of the tracks it fits. Tracks titled "… For X" and the tracks of a suite named so: one row "dedicated to" on the works of all these tracks (the entry may stand on the release group besides, when the release\'s title names it); several dedications stay apart, each with its tracks. An entry chosen for a name in the box "Dedications & tributes" holds for the other finds of that name – no second choice. The form of a new suite is prefilled with the dedications that hold for all its tracks. Switched off: one dedication a person (the first found), the suite without it.' },
     { id: 'S338', where: 'suiteGate, startSuiteCreate, suiteAskHtml (dci-mx-suite-must, suite-drop), yellItems', note: 'Works (3.191.0; collected item Z-SUITEPROMPT): a suite accepted ("✓ Yes", "✨ Answer all") must exist in MusicBrainz before its parts are staged – without it there are no "parts" and no order. Its line is a yellow field that must be answered: "＋ Create the suite in MusicBrainz …", "Link …" (a suite of that name MusicBrainz has), "✕ No suite" (its parts are plain works again). "Stage" with such a suite open stages nothing: the form of the suite opens by itself, prefilled (name, type "Suite", the writers and dedications of all its tracks, the edit note with the source); once it is created, staging goes on by itself (the works of the parts are created in the relationship editor as before). The form closed: nothing is staged. Switched off: the parts are staged without the suite, as until 3.190.0.' },
-    { id: 'S339', where: 'loadRelease (instsSet)', note: 'Instruments (3.191.0; collected item Z-INSTSAUTO; a quick switch, off): after every import, each person with two or more instruments or voices the source names without tracks gets "⑃ on the release + group" by itself – the instruments on the release, the level they share on the recordings. Such credits are general: they need not hold for every single track. Not where the source names tracks, not for an entry answered "keep per track", not for one skipped. Off: the suggestion at the entry, one click, as before.' },
+    { id: 'S339', where: 'loadRelease (instsSet)', note: 'Instruments (3.191.0; collected item Z-INSTSAUTO; a quick switch, off): after every import, each person with two or more instruments or voices the source names without tracks gets "⑃ on the release + instrument family on the tracks" by itself – the instruments on the release, the level they share on the recordings. Such credits are general: they need not hold for every single track. Not where the source names tracks, not for an entry answered "keep per track", not for one skipped. Off: the suggestion at the entry, one click, as before.' },
     { id: 'S340', where: 'runWorkSearch (classicalComposers)', note: 'Works (3.191.0; collected item Z-WORKFINDHEAD): on a release credited the classical way – the track to the composer ("H. I. F. Biber"), the recording to who plays (S311) – the composer of the track counts as its writer for the search of works: its works of the track\'s title, of its catalogue number (S224) and of a similar classical title (S333) are found also where the source credits no composer for the track. A composer named in a heading of the track list is a writer of the tracks below it already (S307). Switched off: the search needs a writer credited by the source.' },
     { id: 'S341', where: 'TEXT.parse (promoFacts)', note: 'Texts (3.191.0; collected item Z-CAPSCREDIT): a headline of a description all in capitals – "… WITH NEW LINER NOTES BY JASON WEISS IN CONVERSATION WITH JAMES QUINLAN" – is read for its credits too. In capitals every word looks like a name; the names the text knows otherwise – of a credit, or written the usual way in another description or a line left out – are found in it, and the credit ("liner notes by Jason Weiss") is a suggestion like those of the other descriptions (S320). A name that stands nowhere else stays unread. Switched off: headlines in capitals are left out unread.' },
     { id: 'S342', where: 'sameWorkGroups, sameWorkBase (SAME_WORK_SUFFIXES), sameWorkOne, sameWorkRows, sameWorkGate, magicPlan', note: 'Works (3.192.0; collected item Z-SAMEWORK): tracks of the same title – other mixes, takes, edits, live or demo versions, remixes (MusicBrainz: recordings of the same work; not a reprise) – are asked above the first of them in the works matrix: "the same work?" ✓ One work · ✕ Separate works (↺ asks again). One work: the work one of them has in MusicBrainz (or found for it) for all; none: one new work for all, created by its prefilled form at "Stage" (the relationship editor cannot give one new work to several recordings) – staging goes on once it exists. The endings that mark a version: mapping SAME_WORK_SUFFIXES. "✨ Answer all": a work one of them has on every level; none found: one new work for all on "balanced" when the titles and writers are the same, on "bold" also with versions marked; "careful" creates a work for the first of them only. Switched off: each track for itself, as until 3.191.0.' },
@@ -34078,14 +34087,21 @@
    * [Z-RI] (3.40.16) The question of "↻ Repeat import": the source read again and its entries looked up in MusicBrainz anew (so that
    * changed mapping rules apply) – keeping what was changed in this import (preselected) or afresh.
    */
+  /**
+   * [Z-REPEATLOOK] (3.201.0) The question of "↻ Repeat import" as the other questions of the dashboard: its heading, two cards to pick
+   * (the radio buttons in them), one big button that names the way chosen, Cancel beside it; Enter repeats, Esc cancels.
+   */
   function repeatAskHtml() {
     const keep = S.repeatKeep !== false;
-    return `<div class="dci-forget dci-repeat" data-el="repeat" role="group" aria-label="${esc(tr('repeat.ask'))}"><strong>${esc(tr('repeat.ask'))}</strong>
-      <p class="dci-sub">${esc(tr('repeat.what'))}</p>
-      <div class="dci-repeat-opts"><label class="dci-check" title="${esc(tr('repeat.keepTitle'))}"><input type="radio" name="dci-repeat" data-f="repeat-keep" value="keep" ${keep ? 'checked' : ''}> ${esc(tr('repeat.keep'))}</label>
-        <label class="dci-check" title="${esc(tr('repeat.freshTitle'))}"><input type="radio" name="dci-repeat" data-f="repeat-keep" value="fresh" ${keep ? '' : 'checked'}> ${esc(tr('repeat.fresh'))}</label></div>
-      <div class="dci-mbdate-tools"><button type="button" class="dci-small" data-act="repeat-do">${esc(tr('repeat.do'))}</button>
-        <button type="button" class="dci-textbtn" data-act="repeat-cancel">${esc(tr('common.cancel'))}</button></div></div>`;
+    const card = (v, on) => `<label class="dci-repeat-card" title="${esc(tr(`repeat.${v}Title`))}"><input type="radio" name="dci-repeat" data-f="repeat-keep" value="${v}" ${on ? 'checked' : ''}>
+      <strong>${esc(tr(`repeat.${v}`))}</strong><span class="dci-repeat-cardsub">${esc(tr(`repeat.${v}What`))}</span></label>`;
+    return `<div class="dci-repeat" data-el="repeat" role="group" aria-label="${esc(tr('repeat.ask'))}">
+      <div class="dci-repeat-h"><span aria-hidden="true">↻</span> <strong>${esc(tr('repeat.ask'))}</strong></div>
+      <p class="dci-repeat-what">${esc(tr('repeat.what'))} <strong>${esc(tr('repeat.whatRules'))}</strong></p>
+      <div class="dci-repeat-cards" role="radiogroup" aria-label="${esc(tr('repeat.ask'))}">${card('keep', keep)}${card('fresh', !keep)}</div>
+      <div class="dci-repeat-tools"><button type="button" class="dci-repeat-go" data-act="repeat-do">${esc(tr(keep ? 'repeat.doKeep' : 'repeat.doFresh'))}</button>
+        <button type="button" class="dci-small" data-act="repeat-cancel">${esc(tr('common.cancel'))}</button>
+        <span class="dci-sub dci-repeat-keys">${esc(tr('repeat.keys'))}</span></div></div>`;
   }
 
   /**
@@ -56635,9 +56651,13 @@
         S.overlay.classList.toggle('dci-only-ocr', el.checked);
         break;
       // [Z-RI] (3.40.16) the choice of "↻ Repeat import" (kept while the head is drawn anew)
-      case 'repeat-keep':
+      case 'repeat-keep': {
         S.repeatKeep = el.value !== 'fresh';
+        // [Z-REPEATLOOK] (3.201.0) the big button names the way chosen
+        const go = el.closest('[data-el="repeat"]') && el.closest('[data-el="repeat"]').querySelector('[data-act="repeat-do"]');
+        if (go) go.textContent = tr(S.repeatKeep ? 'repeat.doKeep' : 'repeat.doFresh');
         break;
+      }
       // [3.32.9] a live recording ticked or not for its comment (item 113)
       case 'livecom-on': {
         if (!S.liveComChoice) S.liveComChoice = new Map();
@@ -57022,6 +57042,14 @@
   }
 
   function onKeydown(e) {
+    // [Z-REPEATLOOK] (3.201.0) in the question of "↻ Repeat import": Enter repeats, Esc cancels
+    const rpt = e.target && e.target.closest && e.target.closest('[data-el="repeat"]');
+    if (rpt && (e.key === 'Enter' || e.key === 'Escape') && !(e.key === 'Enter' && e.target.matches('button'))) {
+      e.preventDefault();
+      const b = rpt.querySelector(`[data-act="${e.key === 'Enter' ? 'repeat-do' : 'repeat-cancel'}"]`);
+      if (b) b.click();
+      return;
+    }
     // [Z-SUITERENAME] (3.196.0, S354) Enter takes the name of a suite, Esc goes back
     if (e.target && e.target.dataset && e.target.dataset.f === 'suite-rename' && (e.key === 'Enter' || e.key === 'Escape')) {
       e.preventDefault();
@@ -60432,21 +60460,27 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       ],
       // [Z-SETTABS2] (3.137.0) the switches of the companion as switches of the menu (until 3.136.0 the bar of the page, in one line)
       // [Z-JUMP] (3.144.0) in two parts: what the source page shows of the dashboard, what the dashboard does with the source page
-      discogs: () => [
+      // [Z-COMPSETTINGS] (3.201.0) the switches of the companion only once it is known here (it reported itself, now or before);
+      // without it a line with the link to install it
+      discogs: () => (!companionKnown() ? [
+        `<p class="dci-note dci-comp-none" data-el="comp-none">${esc(tr('settings.compNone'))} <a href="${esc(RAW_MAIN + UPDATE_FILES.companion)}" target="_blank" rel="noopener">${esc(tr('settings.compInstall'))}</a></p>`,
+        `<p class="dci-sub">${esc(tr('settings.discogsHint'))}</p>`,
+      ] : [
         `<h4 class="dci-set-h" data-el="set-nav">${esc(plain(tr('nav.label')))}</h4>`,
         sh('navTo'),
         field(tr('syncMode.label'), `<span class="dci-seg dci-seg-small" role="group" data-lbg>${['hover', 'click'].map((mode) => `<button type="button" data-sync-mode="${mode}"
           aria-pressed="${S.syncMode === mode}" title="${esc(tr(`syncMode.${mode}Title`))}">${esc(tr(`syncMode.${mode}`))}</button>`).join('')}</span>`, { dflt: [S.syncMode !== 'click', tr('syncMode.click')] }),
         cb('data-dg-status', S.dgStatus, trView('sync.dgStatus'), trView('sync.dgStatusTitle'), { def: true }),
         cb('data-dg-release', S.dgRelease, tr('sync.dgRelease'), trView('sync.dgReleaseTitle'), { def: true }),
-        viewSite() === 'discogs' ? cb('data-dg-artwork', S.dgArtwork, tr('sync.dgArtwork'), tr('sync.dgArtworkTitle'), { def: true }) : '',
+        // ([Z-COMPSETTINGS] 3.201.0) always here, whatever the source of the import: the cover is shown on Discogs only
+        cb('data-dg-artwork', S.dgArtwork, tr('sync.dgArtwork'), tr('sync.dgArtworkTitle'), { def: true, hint: tr('sync.dgArtworkHint') }),
         cb('data-keep-marks', S.keepMarks, tr('sync.keepMarks'), tr('sync.keepMarksTitle'), { def: false }),
         sh('navFrom'),
         cb('data-dg-hover', S.dgHover, tr('sync.trackHover'), trView('sync.trackHoverTitle'), { def: true }),
         cb('data-dg-jump', S.dgJump, tr('sync.dgJump'), trView('sync.dgJumpTitle'), { def: false }),
         cb('data-click-toggle', S.clickToggle, tr('sync.clickToggle'), tr('sync.clickToggleTitle'), { def: true }),
         `<p class="dci-sub">${esc(tr('settings.discogsHint'))}</p>`,
-      ],
+      ]),
       works: () => [
         sh('lookups'),
         cb('data-set="aw-on"', S.awOn, tr('settings.awOn'), '', { def: true, hint: tr('settings.awOnHint') }),
@@ -62352,6 +62386,10 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
     const had = readJson('localStorage', COMPANION_SEEN_KEY, null);
     if (had && had.version === version && Date.now() - had.at < 3600000) return;
     writeJson('localStorage', COMPANION_SEEN_KEY, { version: String(version), at: Date.now() });
+  }
+  /** [Z-COMPSETTINGS] (3.201.0) Whether the companion is known here: it reported itself in this page or before (its version remembered). */
+  function companionKnown() {
+    return !!((S.sync && (S.sync.installed || S.sync.companionVersion)) || (readJson('localStorage', COMPANION_SEEN_KEY, null) || {}).version);
   }
   function versionsHtml() {
     const stored = readJson('localStorage', UPDATE_KEY, null);
@@ -65365,7 +65403,29 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       /* [Z-SK] (3.40.15) "⊘ Skip" and "↺ Take again" in the head of an entry; a skipped entry grey */
       /* [Z-RI] (3.40.16) */
       .dci-repeat-btn span[aria-hidden] { margin-right: calc(var(--u, 1px) * 4); }
-      .dci-repeat-opts { display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 18); margin: calc(var(--u, 1px) * 4) 0; }
+      /* [Z-REPEATLOOK] (3.201.0) the question of "↻ Repeat import" as the other questions: a coloured field, two cards, one big button */
+      .dci-repeat { margin: calc(var(--u, 1px) * 6) 0; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12); background: var(--date-bg, #f0eff9);
+        border: 1px solid var(--date-line, #bdb9dc); border-left: 4px solid var(--purple, #736dab); border-radius: 4px; }
+      .dci-repeat-h { display: flex; align-items: center; gap: calc(var(--u, 1px) * 6); font-size: calc(var(--u, 1px) * 15); color: var(--purple-d, #4b4585); }
+      .dci-repeat-h span { font-size: calc(var(--u, 1px) * 18); }
+      .dci-repeat-what { margin: calc(var(--u, 1px) * 4) 0 calc(var(--u, 1px) * 8); color: var(--ink); }
+      .dci-repeat-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(calc(var(--u, 1px) * 200), 1fr)); gap: calc(var(--u, 1px) * 8); }
+      .dci-repeat-card { position: relative; display: flex; flex-direction: column; gap: 2px; padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 12);
+        background: #fff; border: 2px solid var(--line, #dddae8); border-radius: 6px; cursor: pointer; }
+      .dci-repeat-card:hover { border-color: var(--date-line, #bdb9dc); }
+      .dci-repeat-card:has(input:checked) { border-color: var(--purple, #736dab); box-shadow: 0 0 0 2px var(--date-bg, #f0eff9) inset; }
+      .dci-repeat-card:has(input:focus-visible) { outline: 2px solid var(--purple, #736dab); outline-offset: 2px; }
+      .dci-repeat-card input { position: absolute; opacity: 0; pointer-events: none; }
+      .dci-repeat-card strong { color: var(--ink); }
+      .dci-repeat-card:has(input:checked) strong::before { content: '● '; color: var(--purple, #736dab); }
+      .dci-repeat-card:not(:has(input:checked)) strong::before { content: '○ '; color: var(--muted); }
+      .dci-repeat-cardsub { color: var(--muted); font-size: calc(var(--u, 1px) * 12); }
+      .dci-repeat-tools { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 8); margin-top: calc(var(--u, 1px) * 10); }
+      #dci-overlay button.dci-repeat-go { background: var(--purple, #736dab); color: #fff; border: 1px solid var(--purple-d, #4b4585); border-radius: 4px;
+        padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 16); font-size: calc(var(--u, 1px) * 14); font-weight: 600; cursor: pointer; }
+      #dci-overlay button.dci-repeat-go:hover { background: var(--purple-d, #4b4585); }
+      #dci-overlay .dci-repeat-tools button.dci-small { padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 14); font-size: calc(var(--u, 1px) * 14); border: 1px solid #c8c5d6;
+        border-radius: 4px; background: #fff; color: var(--ink); cursor: pointer; }
       /* [Z-SKIPVIS] (3.127.0) "Skip ⤼" a framed grey button, darker under the mouse */
       .dci-gskip { white-space: nowrap; padding: 0 calc(var(--u, 1px) * 6); border: 1px solid #c8c5d6; border-radius: 3px; background: #fff; color: #6d6a7c;
         text-decoration: none; font-size: calc(var(--u, 1px) * 12); line-height: 1.5; }

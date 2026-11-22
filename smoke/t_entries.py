@@ -3263,7 +3263,7 @@ def case_insts3103():
             jr, st = pg.evaluate(ENT, 'Jane Roe'), pg.evaluate(ENT, 'Sax Two')
             print('A)', jr, st)
             results.append(bool(jr) and jr['sugg'] and jr['seg'] == ['track'] and len(jr['rows']) == 5 and bool(st) and st['sugg'] and st['seg'] == ['track'])
-            results.append(st['off'] == ['release'] and st['relText'].startswith('⑃ ') and 'on the release + group' in st['relText']
+            results.append(st['off'] == ['release'] and st['relText'].startswith('⑃ ') and 'on the release + instrument family on the tracks' in st['relText']
                            and st['hint'].startswith('would be: release') and 'woodwind' in st['hint'])
             pg.click(f"{sec_sel(pg, 'Jane Roe')} .dci-insts-sugg [data-act=insts-set][data-insts=release]")
             H.wait_still(pg, "document.body.innerHTML", 10, 200)
@@ -3333,7 +3333,7 @@ def case_insts3103():
             quick = pg3.evaluate("!!document.querySelector('[data-rule-on=\"S339\"], [data-quick=\"S339\"], [data-rule=\"S339\"]')")
             print('G)', g1 and [g1['sugg'], g1['seg'], len([r for r in g1['rows'] if r[1] == 'release'])], g2 and [g2['sugg'], g2['seg']], glog, quick)
             results.append(bool(g1) and not g1['sugg'] and g1['seg'] == ['release'] and len([r for r in g1['rows'] if r[1] == 'release']) == 5
-                           and bool(g2) and g2['seg'] == ['release'] and glog == ['Instruments on the release + group by themselves: 2 entries (quick switch “Instruments → release”)'] and not errs3)
+                           and bool(g2) and g2['seg'] == ['release'] and glog == ['Instruments on the release + instrument family on the tracks by themselves: 2 entries (quick switch “Instruments → release”)'] and not errs3)
             b.close()
     finally:
         H.discogs_release = orig

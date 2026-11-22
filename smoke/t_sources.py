@@ -1601,7 +1601,8 @@ def case_repeat():
        Roe there, Bass Man still "fretless", Photo Guy without a row, "Dates & tracks" open again (Z-PF2); the log says so.
     C) ↻ with "Start afresh" (the choice kept while the head is drawn anew): Bass Man without credit, Photo Guy's row back.
        (3.40.17, review) A new work planned for track 2 is kept with "Keep my changes", gone with "Start afresh"; the question
-       closes when "Delete stored import …" is opened."""
+       closes when "Delete stored import …" is opened. (3.201.0, Z-REPEATLOOK) The two ways are cards, the big button names the
+       way chosen ("↻ Repeat, keeping my changes" / "↻ Repeat afresh"), Enter in the question repeats."""
     H.DM_FOLD = True
     orig = H.discogs_release
     ROWS = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
@@ -1609,7 +1610,8 @@ def case_repeat():
     row_of = "(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name); const t = g && g.querySelector('tr.dci-row'); return t ? t.dataset.row : ''; }"
     HEAD = "[...document.querySelector('[data-el=source]').children].map(e => e.classList.contains('dci-srcwrap') ? 'srcmenu' : (e.dataset.act || e.className.split(' ')[0]))"
     ASK = """(() => { const q = document.querySelector('[data-el=repeat]'); if (!q) return null;
-      return [q.querySelector('strong').textContent, [...q.querySelectorAll('label')].map(l => [l.textContent.trim(), l.querySelector('input').checked]), document.activeElement && document.activeElement.value]; })()"""
+      return [q.querySelector('strong').textContent, [...q.querySelectorAll('label')].map(l => [l.querySelector('strong').textContent.trim(), l.querySelector('input').checked]), document.activeElement && document.activeElement.value,
+        q.querySelector('[data-act=repeat-do]').textContent.trim()]; })()"""
     OPEN = "document.querySelector('.dci-pools-toggle').getAttribute('aria-expanded')"
     results = []
     with sync_playwright() as p:
@@ -1633,7 +1635,7 @@ def case_repeat():
         print('A) Kopf:', head, a0, '| Frage:', a1, '| Abbrechen:', a2)
         i = head.index('srcmenu') if 'srcmenu' in head else -9
         results.append(head[i + 1:i + 2] == ['repeat-open'] and a0 == ['↻ Repeat import', True])
-        results.append(a1 == ['Repeat the import?', [['Keep my changes', True], ['Start afresh', False]], 'keep'] and a2 == [None, 'repeat-open'])
+        results.append(a1 == ['Repeat the import?', [['Keep my changes', True], ['Start afresh', False]], 'keep', '↻ Repeat, keeping my changes'] and a2 == [None, 'repeat-open'])
         # B)
         r = pg.evaluate(row_of, 'Bass Man')
         pg.fill(f'tr.dci-row[data-row="{r}"] [data-f=role-credit]', 'fretless')
@@ -1669,17 +1671,20 @@ def case_repeat():
         one = [pg.evaluate("!!document.querySelector('[data-el=repeat]')"), pg.evaluate("!!document.querySelector('.dci-forget:not(.dci-repeat)')")]
         pg.click('[data-act=forget-cancel]'); pg.wait_for_timeout(200)
         pg.click('[data-el=source] [data-act=repeat-open]'); pg.wait_for_timeout(200)
-        pg.check('[data-el=repeat] input[value=fresh]')
+        pg.click('[data-el=repeat] label:has(input[value=fresh])')
+        go = pg.locator('[data-el=repeat] [data-act=repeat-do]').inner_text().strip()
         pg.click('[data-el=source] [data-act=srcmenu]'); pg.wait_for_timeout(150)
         pg.click('[data-el=source] [data-act=srcmenu]'); pg.wait_for_timeout(150)
         kept = pg.locator('[data-el=repeat] input[value=fresh]').is_checked()
-        pg.click('[data-el=repeat] [data-act=repeat-do]')
+        # [Z-REPEATLOOK] (3.201.0) Enter in the question repeats
+        pg.focus('[data-el=repeat] input[value=fresh]')
+        pg.keyboard.press('Enter')
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 3", 60)
         pg.wait_for_timeout(1200)
         c1 = [pg.evaluate(ROWS, 'Bass Man'), pg.evaluate(ROWS, 'Photo Guy'), [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'Import repeated' in x][-1:]]
         c2 = pg.evaluate(PLANNED)
-        print('C) eine Frage:', one, '| Wahl nach „Source ▾“:', kept, '| ↻ neu:', c1, '| neues Werk:', c2)
-        results.append(one == [False, True] and kept and c2 is False and c1[0] == [''] and c1[1] is not None and len(c1[1]) == 1 and c1[2] == ['Import repeated afresh – your changes are dropped'])
+        print('C) eine Frage:', one, '| Wahl nach „Source ▾“:', kept, go, '| ↻ neu:', c1, '| neues Werk:', c2)
+        results.append(one == [False, True] and kept and go == '↻ Repeat afresh' and c2 is False and c1[0] == [''] and c1[1] is not None and len(c1[1]) == 1 and c1[2] == ['Import repeated afresh – your changes are dropped'])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

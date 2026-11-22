@@ -226,7 +226,7 @@ def case_bcview():
       return [s.querySelector('[data-act=settings-topic][data-topic=discogs]').textContent.trim(), t.querySelector('[data-dg-status]').closest('label').textContent.trim(),
         !!t.querySelector('[data-dg-artwork]'), t.querySelector('.dci-sub').textContent.trim().slice(0, 60)]; })()""")
         print('G) alter Companion:', g1, '| Menü:', g2)
-        results.append(g1.startswith('Script Companion: version 1.8.0 or later needed for Bandcamp') and g2[:3] == ['Source pages', 'Bandcamp status', False])
+        results.append(g1.startswith('Script Companion: version 1.8.0 or later needed for Bandcamp') and g2[:3] == ['Source pages', 'Bandcamp status', True])  # ([Z-COMPSETTINGS] 3.201.0) “Artwork” always in the tab
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
