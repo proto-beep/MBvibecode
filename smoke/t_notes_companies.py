@@ -2469,4 +2469,125 @@ def case_notesextras3163():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_tribute3206():
+    """Credits Importer 3.206.0 (collected items Z-TRIBUTEWORKS, Z-DEDSEARCH; rules S401, S402): the release "We Play For Rollins"
+    (as Joshua Redman, "If Ever You Would Leave Us (We Play For Rollins)"); MusicBrainz has no artist named "Rollins", but Sonny Rollins
+    (composer of works titled as tracks 2 and 3; track 1 has its work), the Rollins Band (no works here) and four more of the name.
+    A) The box: "“For Rollins”" offers Sonny Rollins by his works ("2 tracks …"), not the Rollins Band; a message says the name has
+       many artists (6 > the 3 hits of the settings).
+    B) Sonny Rollins picked: tracks 2 and 3 get his works in yellow ("work of Sonny Rollins – check"), not linked.
+    C) "＋ Tribute", "Sonny" typed, Enter: MusicBrainz's artists of that name as buttons (Sonny Rollins among them).
+    E) "✨ Answer all": on "careful" nothing of them; on "balanced" both linked (a work of the tribute's artist of exactly the title).
+    D) S401 and S402 off: no offer (a single word after "For" is no name), a name typed gives "not a valid MBID"."""
+    SR, RB = H.uid('dddddddd', 3900), H.uid('dddddddd', 3901)
+    added_lts = {868: ('b41e7530-cde4-459c-b8c5-dfef08fc8295', 'dedicated to', 'artist', 'release_group'),
+                 9440: (H.uid('94409440', 1), 'tribute', 'artist', 'release_group')}
+    for i, (g, n, t0, t1) in added_lts.items():
+        H.lt(i, g, n, t0, t1, dates=False)
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.MB_SEARCH['artist'] = [{'id': SR, 'name': 'Sonny Rollins', 'disambiguation': 'jazz saxophonist', 'type': 'Person', 'score': 100},
+                             {'id': RB, 'name': 'Rollins Band', 'disambiguation': '', 'type': 'Group', 'score': 100}] + [
+        {'id': H.uid('dddddddd', 3910 + k), 'name': f'{n} Rollins', 'disambiguation': '', 'score': 90} for k, n in enumerate(['Ann', 'Bob', 'Cy', 'Dee'])]
+    rel = lambda: [{'target-type': 'artist', 'type': 'composer', 'direction': 'backward', 'artist': {'id': SR, 'name': 'Sonny Rollins'}}]
+    works0 = list(H.WORK_SEARCH)
+    H.WORK_SEARCH[:] = [{'id': H.uid('3a3a3a3a', 1), 'title': H.TITLES[1], 'aliases': [], 'type': 'Song', 'relations': rel()},
+                        {'id': H.uid('3a3a3a3a', 2), 'title': H.TITLES[2], 'aliases': [], 'type': 'Song', 'relations': rel()}]
+    orig_ws, orig_js, orig_dg = H.ws_release, H.js_entity, H.discogs_release
+    H.js_entity = lambda gid: ({'entityType': 'artist', 'id': 3900, 'gid': SR, 'name': 'Sonny Rollins', 'comment': 'jazz saxophonist'} if gid == SR else orig_js(gid))
+
+    def ws(full=False):
+        d = orig_ws(full)
+        d['title'] = 'We Play For Rollins'
+        return d
+    H.ws_release = ws
+
+    def dg():
+        d = orig_dg()
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = dg
+    BOX = """(() => { const b = document.querySelector('[data-el=dedbox]'); if (!b || b.hidden) return null;
+      return { list: [...b.querySelectorAll('.dci-dedlist li')].map(li => li.textContent.replace(/\\s+/g, ' ').trim()),
+        sugg: [...b.querySelectorAll('.dci-dedsugg')].map(x => [((x.querySelector('strong') || {}).textContent || '').trim(), ((x.querySelector('.dci-sub') || {}).textContent || '').trim(),
+          [...x.querySelectorAll('[data-act=ded-pick]')].map(y => y.textContent.replace(/\\s+/g, ' ').trim())]), err: (b.querySelector('[data-el=ded-err]') || {}).textContent || '' }; })()"""
+    MSGS = "(document.querySelector('[data-el=msgs]') || {}).textContent || ''"
+    TRIB = "[...document.querySelectorAll('[data-el=work-tribute]')].map(x => x.textContent.trim())"
+    results = []
+
+    def open_page(p, off=()):
+        H.RULES_OFF = list(off)
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.wait_ok(pg, f"(() => {{ const b = ({BOX}); return !!b && b.sugg.length >= 1; }})()", 30)
+        pg.wait_for_timeout(800)
+        return b, pg, errs
+
+    try:
+        with sync_playwright() as p:
+            b, pg, errs = open_page(p)
+            a, msgs = pg.evaluate(BOX), pg.evaluate(MSGS)
+            print('A)', a, '| Meldung:', msgs[:160])
+            s0 = a['sugg'][0] if a and a['sugg'] else ['', '', []]
+            results.append(s0[0] == '“For Rollins”' and len(s0[2]) == 1 and s0[2][0].startswith('Sonny Rollins') and '2 tracks' in s0[2][0] and 'Rollins Band' not in ' '.join(s0[2])
+                           and '“Rollins”: 6 artists in MusicBrainz' in msgs)
+            pg.click('[data-el=dedbox] [data-act=ded-pick]')
+            H.wait_ok(pg, f"{TRIB}.length >= 2", 30)
+            t1 = pg.evaluate(TRIB)
+            b1 = pg.evaluate(BOX)
+            linked = pg.evaluate("[...document.querySelectorAll('[data-el=works] .dci-mx-wlist')].length")
+            print('B)', t1, '| Liste:', b1['list'], '| Listen:', linked)
+            results.append(len(t1) == 2 and all(x == 'work of Sonny Rollins – check' for x in t1) and any(x.startswith('dedicated to Sonny Rollins') for x in b1['list']))
+            # E) "✨ Answer all": "careful" leaves them, "balanced" links those of exactly the track's title
+            PREV = "(() => { const p = document.querySelector('[data-el=magic-preview]'); return p ? [...p.querySelectorAll('[data-el=magic-item]')].map(x => x.textContent.trim()) : null; })()"
+            pg.locator('[data-act=magic-open]').evaluate('b => b.click()')
+            H.wait_for(pg, "!!document.querySelector('[data-act=magic-cancel]')", 30)
+            e1 = pg.evaluate(PREV)
+            pg.locator('[data-act=magic-cancel]').evaluate('b => b.click()'); pg.wait_for_timeout(300)
+            pg.locator('[data-act=magic-menu]').evaluate('b => b.click()'); pg.wait_for_timeout(300)
+            pg.locator('[data-act=magic-level][data-level=balanced]').evaluate('b => b.click()'); pg.wait_for_timeout(300)
+            if not pg.evaluate("!!document.querySelector('[data-act=magic-cancel]')"):
+                pg.locator('[data-act=magic-open]').evaluate('b => b.click()')
+                H.wait_for(pg, "!!document.querySelector('[data-act=magic-cancel]')", 30)
+            e2 = pg.evaluate(PREV)
+            pg.locator('[data-act=magic-cancel]').evaluate('b => b.click()'); pg.wait_for_timeout(300)
+            print('E) careful:', e1, '| balanced:', e2)
+            results.append(not any('Song Two' in x or 'Song Three' in x for x in (e1 or []))
+                           and any('Song Two' in x and 'tribute' in x for x in (e2 or [])) and any('Song Three' in x and 'tribute' in x for x in (e2 or [])))
+            pg.click('[data-el=dedbox] .dci-dedbox-head [data-act=ded-add][data-kind=tribute]')
+            pg.wait_for_timeout(300)
+            pg.fill('[data-el=dedbox] [data-f=ded-mbid][data-key=form]', 'Sonny')
+            pg.press('[data-el=dedbox] [data-f=ded-mbid][data-key=form]', 'Enter')
+            H.wait_ok(pg, "document.querySelectorAll('[data-el=dedbox] .dci-dedform [data-act=ded-pick]').length > 0", 20)
+            c = pg.evaluate("[...document.querySelectorAll('[data-el=dedbox] .dci-dedform [data-act=ded-pick]')].map(x => x.textContent.replace(/\\s+/g, ' ').trim())")
+            print('C)', c, '| Fehler:', errs)
+            results.append(any(x.startswith('Sonny Rollins') for x in c) and not errs)
+            b.close()
+            b, pg, errs = open_page(p, off=['S401', 'S402'])
+            d = pg.evaluate(BOX)
+            pg.click('[data-el=dedbox] .dci-dedbox-head [data-act=ded-add][data-kind=tribute]')
+            pg.wait_for_timeout(300)
+            pg.fill('[data-el=dedbox] [data-f=ded-mbid][data-key=form]', 'Sonny')
+            pg.click('[data-el=dedbox] [data-act=ded-take][data-key=form]')
+            pg.wait_for_timeout(600)
+            d2 = pg.evaluate(BOX)
+            print('D)', d, '|', d2['err'])
+            results.append(d is not None and d['sugg'] == [] and d2['err'].startswith('No MBID') and not errs)
+            b.close()
+    finally:
+        H.ws_release, H.js_entity, H.discogs_release = orig_ws, orig_js, orig_dg
+        H.WORK_SEARCH[:] = works0
+        H.MB_SEARCH.pop('artist', None)
+        H.RULES_OFF = []
+        for i in added_lts:
+            H.LTS.pop(i, None)
+        H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.205.0
+// @version      3.206.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.205.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.205.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.206.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.206.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.205.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.206.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -817,7 +817,7 @@
       "dedbox.kind": "Dedication or tribute",
       "dedbox.dedicated": "Dedication",
       "dedbox.tribute": "Tribute",
-      "dedbox.mbid": "MBID or link of a MusicBrainz entry",
+      "dedbox.mbid": "Name, MBID or link of a MusicBrainz entry",
       "dedbox.mbidTitle": "Paste the link of an artist, label, place or area page of MusicBrainz, or its MBID",
       "dedbox.level": "Level",
       "dedbox.levelRg": "release group",
@@ -826,6 +826,20 @@
       "dedbox.add": "Add",
       "dedbox.several": "several entries of exactly that name in MusicBrainz – which one? (from {where})",
       "dedbox.none": "no entry of exactly that name in MusicBrainz – an MBID? (from {where})",
+      "dedbox.noneSearch": "no entry of exactly that name in MusicBrainz – search the name (Enter) or give an MBID (from {where})",
+      "dedbox.searched": "MusicBrainz's artists for “{q}”: {n} – which one?",
+      "dedbox.noHits": "No artist of MusicBrainz for “{q}”.",
+      "dedbox.byWorks": "no artist of exactly that name – these artists of the name wrote works of this release (from {where})",
+      "dedbox.worksOn.one": "{n} track a work of theirs: {list}",
+      "dedbox.worksOn.other": "{n} tracks works of theirs: {list}",
+      "ded.manyNames": "“{name}”: {n} artists in MusicBrainz – the first {limit} are compared with the tracks' works, this can take a while.",
+      "log.dedManyNames": "“{name}”: {n} artists in MusicBrainz – the first {limit} compared (S402)",
+      "log.dedSearch": "Dedications: MusicBrainz searched for “{q}” – {n} artists (S401)",
+      "log.tributeWork": "{track}: works of {name} of the title – {list} (S402)",
+      "matrix.sameTribute.one": "{n} work of {name} (the tribute) with this title – check before you link it:",
+      "matrix.sameTribute.other": "{n} works of {name} (the tribute) with this title – check before you link one:",
+      "matrix.tributeTag": "work of {name} – check",
+      "magic.why.tribute": "a work of the artist of the tribute, of exactly this title",
       "dedbox.noTrack": "the work of which track? (from {where})",
       "dedbox.pickTitle": "This entry – on the level chosen",
       "dedbox.dismiss": "leave out",
@@ -5682,6 +5696,8 @@
     { id: 'S390', where: 'guessInstrument, similarInstrumentVia, guessOptLabel, instrGuessHtml', note: 'Instruments (3.203.0; collected item Z-ALIASTYPO): a word MusicBrainz does not know ("fluteophone"): each answer of the question says which of MusicBrainz\'s other names it is like ("Tonette – alias “flutophone”"); exactly one answer one letter off (its name or an alias): chosen at once – by an alias credited as written ("Tonette “fluteophone”"), by its own name a slip without a role credit ("Sxaophone": saxophone) – the question stays to change it. Off: a question with the answers only, as before' },
     { id: 'S391', where: 'medleySplit, segueTrimmed, workTitleOf', note: 'Works (3.204.0; collected item Z-SEGUE): a segue of a track list (Grateful Dead, jam bands) – "The Killers > Narragansett", "Dark Star -> St. Stephen", "→", "=>" – in one track splits like "/" (a one-off medley: each piece a work, every link with "medley", in the order of the title); a sign at the end of a title ("China Cat Sunflower >": the next piece follows on its own track) is no part of the work\'s name. Off: only the separators of the release ("/" and those added)' },
     { id: 'S392', where: 'TEXT.parse (tidyLines, fantasy roles)', note: 'Texts (3.204.0; collected item Z-WETTUNA): a line of roles broken after a slash right after the last role ("GUITAR/VOCAL/EFFECTORS/" · "ARP ODYSSEY/…/PROGRAMMING/" · "MULTIPLE INFINITIES") is one line, also when it is broken twice; words of fantasy in a list of instruments ("MULTIPLE INFINITIES", "LOW END THEORY", "VIBRATION" – mapping FANTASY_ROLE_WORDS) are left out even alone. With the mapping: ARP Odyssey, Korg synth – synthesizer; envelope filter, effectors – effects; amplified percussion, rhythm necklace – percussion; Synare – electronic drum set; space drums – drums, each credited as written (several words of one instrument: one relationship with all of them, S325)' },
+    { id: 'S402', where: 'tributeArtists, runWorkSearch, workSigOf, tributeCandidates, runDedications, magicPlan', note: 'Works (3.206.0; collected item Z-TRIBUTEWORKS): on a tribute or dedication album – a row of the box "Dedications & tributes" linked to an artist of MusicBrainz (Sonny Rollins) – the works of that artist are searched by the tracks\' titles too: a work found so (none of the track\'s own writers on it) is a suggestion in yellow, "work of Sonny Rollins" (Doxy, Pent-Up House, Blue Seven, Valse Hot); "✨ Answer all" links one of exactly the track\'s title from "balanced", never plans a new work instead. A name without an artist of exactly that name ("… We Play For Rollins": a surname) is looked for by the works: the artists of that name whose works are tracks of the release – two at least, or half of the tracks – are offered in the box, the most first, as many as the hits of the settings; a name of very many artists ("Smith") is said in a message. Never linked by itself' },
+    { id: 'S401', where: 'dedTake, dedSearch, dedSuggest', note: 'Dedications (3.206.0; collected item Z-DEDSEARCH): the field of the box "Dedications & tributes" takes a name as well as an MBID or a link – Enter or "Add" searches MusicBrainz\'s artists of that name or alias (as many as the hits of the settings), a click on one links it. A dedication found in a text without an entry of that name has its name in the field already' },
     { id: 'S400', where: 'dmTargetOf (em-ev-tracks), emEventTracks', note: 'Dates & tracks (3.205.0; collected item Z-EVTRACKSDROP): a group of the track pool dropped onto the tracks of an event in the view "by event" ("① Recording · no date · no tracks") gives all rows of that event on the recordings its tracks – added, with ⇧ Shift the other way (as onto the tracks of a row in the list "by role"). Until 3.204.0 there was no drop place for tracks in this view' },
     { id: 'S399', where: 'DISCOGS.parseTrackSpec', note: 'Discogs (3.205.0; collected item Z-DGHYPHENRANGE): tracks written as a range with a hyphen or dash ("Drums – Marcus Gilmore (tracks: A3-B5)", "1-3–1-7") are that range – before, only "A3 to B5" was one and the credit stayed without tracks. The cut is taken where both sides are positions of the track list (a hyphen can belong to a position like "1-3"); is there no such cut or more than one, the part stays unresolved as before' },
     { id: 'S398', where: 'runoutDates (DISCOGS release runouts)', note: 'Discogs (3.205.0; collected item Z-RUNOUTDATE): a date in the matrix / runout next to the name of the pressing plant ("0007197 MonotypePressing 5/20/2026" with "Made By – Monotype Pressing") becomes the date of the plant\'s "manufactured" (pressed, glass mastered), with a note to check it. Only when the plant\'s name stands in the matrix and the date is clear – the year first, or day and month told apart by a day over 12 (US or European order); "5/6/2026" gives no date' },
@@ -7094,6 +7110,11 @@
       // ((review) the last "For" of the title; a part after it in brackets, after ":" or a dash is left out)
       const m = new RegExp(String.raw`^.*\b(for|For|FOR)[ \t]+(${DED_NAME})[ \t]*(?:[(:\-–—].*)?$`, 'u').exec(src);
       if (m && !out.length) add(titleKind, m[2], m[1], m.index + m[0].lastIndexOf(m[1]), 2);
+      // [Z-TRIBUTEWORKS] (3.206.0, S402) a single word ("We Play For Rollins"): a surname – kept only for its works (runDedications)
+      if (m && !out.length && ruleOn('S402') && /^\p{Lu}[\p{L}'’-]+$/u.test(m[2].trim())) {
+        add(titleKind, m[2], m[1], m.index + m[0].lastIndexOf(m[1]), 1);
+        out.forEach((d) => { d.surname = true; });
+      }
     }
     return out;
   }
@@ -42195,6 +42216,22 @@
 
   /** The MusicBrainz writers of a track as one text (which writers a search was made with). */
   const writerSig = (people) => [...people.keys()].sort().join(' ');
+  /**
+   * [Z-TRIBUTEWORKS] (3.206.0, S402) The artists a tribute or a dedication of this release goes to (a row of the box "Dedications &
+   * tributes" linked to an artist of MusicBrainz): their works are looked for by the tracks' titles too – mbid → name.
+   */
+  function tributeArtists() {
+    const out = new Map();
+    if (!ruleOn('S402')) return out;
+    for (const r of S.rows) {
+      if (!r.dedication || r.level === 'skip' || (r.entityType || 'artist') !== 'artist') continue;
+      const a = S.artists.get(r.artistKey);
+      if (a && a.mbid && !isSpecialArtist(a.mbid)) out.set(a.mbid, a.mbName || a.name || '');
+    }
+    return out;
+  }
+  /** The writers a track's works are searched with, as one text: its writers and ([Z-TRIBUTEWORKS] S402) the artists of a tribute. */
+  const workSigOf = (i) => `${writerSig(creditedWritersOf(i))}${tributeArtists().size ? ` +${[...tributeArtists().keys()].sort().join(' ')}` : ''}`;
 
   /**
    * [3.12.1] The writers of tracks changed – a name got its MusicBrainz entry (a suggestion, an alias, a URL, a new
@@ -42213,7 +42250,7 @@
       }
       if (S.searchRunning || !S.workSearch.size) return;
       const changed = [...S.workSearch].filter(([i, s]) => s.state !== 'loading' && !worksForTrack(i).length
-        && writerSig(creditedWritersOf(i)) !== (s.sig || '')).map(([i]) => i);
+        && workSigOf(i) !== (s.sig || '')).map(([i]) => i);
       if (!changed.length) return;
       changed.forEach((i) => S.workSearch.delete(i));
       log('info', 'workRecheck', { n: changed.length });
@@ -42231,11 +42268,14 @@
     const writers = writersForTrack(i);
     const people = creditedWritersOf(i);
     // [3.12.1] which writers the search was made with (searched again when they change)
-    const sig = writerSig(people);
+    const sig = workSigOf(i);
     // [Z-WORKFINDHEAD] (3.191.0, S340) classical crediting: the composer the track is credited to (the recording to who plays) counts
     // as its writer for the search, also without a writer's credit of the source
     const comp = ruleOn('S340') && ruleOn('S311') ? (track.classicalComposers || []).map((c) => c.mbid).filter((id) => id && !isSpecialArtist(id)) : [];
-    const ids = new Set([...people.keys(), ...comp]);
+    const own = new Set([...people.keys(), ...comp]);
+    // [Z-TRIBUTEWORKS] (3.206.0, S402) and the artists of a tribute or dedication of the release: their works of the track's title
+    const trib = tributeArtists();
+    const ids = new Set([...own, ...trib.keys()]);
     if (!ids.size) {
       S.workSearch.set(i, { state: 'noWriters', results: [], writers, sig });
       renderWorkRow(i);
@@ -42273,6 +42313,16 @@
         }
         results = byKind.filter((w) => w.writerIds.some((id) => ids.has(id)) && [w.title, ...w.aliases].some((x) => classicalFit(track.title, x))).map((w) => ({ ...w, loose: true }));
         if (results.length) log('info', 'workLoose', { track: trackLabel(track), list: results.map((w) => w.title).join(' · ') });
+      }
+      // [Z-TRIBUTEWORKS] (3.206.0, S402) a work found by the artist of the tribute only (none of the track's own writers on it): a
+      // suggestion in yellow, "work of Sonny Rollins"
+      if (trib.size) {
+        results = results.map((w) => {
+          const by = w.writerIds.filter((id) => trib.has(id));
+          return by.length && !w.writerIds.some((id) => own.has(id)) ? { ...w, tribute: trib.get(by[0]) } : w;
+        });
+        const tw = results.filter((w) => w.tribute);
+        if (tw.length) log('info', 'tributeWork', { track: trackLabel(track), name: tw[0].tribute, list: tw.map((w) => w.title).join(' · ') });
       }
       S.workSearch.set(i, { state: 'done', results, writers, sig });
       log('info', 'workSearch', { track: trackLabel(track), n: results.length });
@@ -42972,6 +43022,21 @@
       let failed = false;
       let several = false;
       let hits = [];
+      // [Z-TRIBUTEWORKS] (3.206.0, S402) a single word of a title ("For Rollins"): only the artists of that name whose works the tracks
+      // are – offered in the box; none: nothing (a title "Music For Airports" names no one)
+      if (d.surname) {
+        let cands = [];
+        try {
+          cands = await tributeCandidates(d.name);
+        } catch (e) {
+          console.warn('[Discogs-Credits] tribute candidates', e);
+          continue;
+        }
+        if (seq !== importSeq) return;
+        S.dedDone.add(key);
+        if (cands.length) dedSuggest({ ...d, key, track, byWorks: true }, cands);
+        continue;
+      }
       // ((review) the names together first ("Simon & Garfunkel"), then each
       const names = uniq([d.whole && d.whole !== d.name && found.filter((x) => x.whole === d.whole).length > 1 ? d.whole : '', d.name].filter(Boolean));
       outer: for (const name of names) {
@@ -43001,10 +43066,25 @@
       // ((review) a failed search is tried again with the next run; "several" is no "none")
       if (failed) continue;
       S.dedDone.add(key);
+      // [Z-TRIBUTEWORKS] (3.206.0, S402) no artist of exactly that name ("for Rollins" – a surname): the artists of that name whose works
+      // are tracks of this release (two at least, or half of them), the most first – a choice in the box, never linked by itself
+      let byWorks = false;
+      if (!hit && !several && track == null && ruleOn('S402') && ruleOn('S109') && d.kind !== 'place') {
+        try {
+          const cands = await tributeCandidates(d.name);
+          if (seq !== importSeq) return;
+          if (cands.length) {
+            hits = cands;
+            byWorks = true;
+          }
+        } catch (e) {
+          console.warn('[Discogs-Credits] tribute candidates', e);
+        }
+      }
       if (!hit) {
         log('info', ruleOn('S109') ? (several ? 'dedSeveralSugg' : 'dedNoTargetSugg') : several ? 'dedSeveral' : 'dedNoTarget', { name: d.name, phrase: d.phrase });
         // [Z-DEDQ] (3.74.0, S109) what was found but is not sure: a suggestion of the box (the entries of that name, a field for an MBID)
-        dedSuggest({ ...d, key, track }, hits);
+        dedSuggest({ ...d, key, track, byWorks }, hits);
         continue;
       }
       if (addDedicationRow(hit, { ...d, key, kind: (choices[key] && choices[key].kind) || d.kind }, track)) added++;
@@ -43023,6 +43103,75 @@
   /** A suggestion of the box: a dedication found but not sure (several entries of the name, none, no track) – once per key. */
   /** [Z-DEDPLACE] (3.129.0, S214) Whether a dedication names a place entry of this release. */
   const dedPlaceOf = (d) => [...S.artists.values()].some((a) => a.company && entryKind(a) === 'place' && [a.name, a.mbName].some((n) => n && norm(n) === norm(d.name)));
+  /**
+   * [Z-TRIBUTEWORKS] (3.206.0, S402) The artists a name of a tribute or dedication may mean ("for Rollins"): one search of MusicBrainz's
+   * works of the tracks' titles by an artist of that name; each artist of the name with the tracks whose titles are works of theirs –
+   * two at least, or half of the tracks –, the most first, as many as the hits of the settings. A name of very many artists ("Smith"):
+   * said in a message (the count MusicBrainz gives for the name).
+   */
+  async function tributeCandidates(name) {
+    const words = luceneWords(name);
+    const titles = uniq(S.mbTracks.map((t) => workTitleOf(t.title)).filter((t) => normTitle(t).length > 1)).slice(0, 40);
+    if (!words || titles.length < 2) return [];
+    const ad = await mbWsIdle(`artist?query=${encodeURIComponent(`artist:(${words}) OR sortname:(${words})`)}&limit=1`);
+    const total = Number(ad && ad.count) || 0;
+    if (total > mbHits()) {
+      showMessage('info', 'ded.manyNames', { name, n: total, limit: mbHits() });
+      log('info', 'dedManyNames', { name, n: total, limit: mbHits() });
+    }
+    if (!total) return [];
+    const q = `(${titles.map((t) => `work:${lucenePhrase(t)}`).join(' OR ')}) AND artist:${lucenePhrase(name)}`;
+    const data = await mbWsIdle(`work?query=${encodeURIComponent(q)}&limit=100`);
+    const want = nameWords(name).map(foldWord);
+    const by = new Map();
+    for (const w of (data && data.works) || []) {
+      const names = [w.title, ...(w.aliases || []).map((x) => x.name)].filter(Boolean).map(normTitle);
+      const tracks = S.mbTracks.filter((t) => names.some((n) => withinOne(n, normTitle(workTitleOf(t.title))))).map((t) => t.idx);
+      if (!tracks.length) continue;
+      for (const r of w.relations || []) {
+        if (r['target-type'] !== 'artist' || !r.artist) continue;
+        const aw = nameWords(r.artist.name || '').map(foldWord);
+        if (!want.every((x) => aw.includes(x))) continue;
+        const c = by.get(r.artist.id) || { gid: r.artist.id, name: r.artist.name, comment0: r.artist.disambiguation || '', tracks: new Set(), titles: new Set(), entityType: 'artist' };
+        tracks.forEach((i) => c.tracks.add(i));
+        c.titles.add(w.title);
+        by.set(r.artist.id, c);
+      }
+    }
+    const n = S.mbTracks.length;
+    return [...by.values()].filter((c) => c.tracks.size >= 2 || c.tracks.size * 2 >= n).sort((a, b) => b.tracks.size - a.tracks.size).slice(0, mbHits())
+      .map((c) => ({ gid: c.gid, name: c.name, entityType: 'artist',
+        comment: [c.comment0, tr('dedbox.worksOn', { n: c.tracks.size, list: [...c.titles].slice(0, 4).join(', ') })].filter(Boolean).join(' – ') }));
+  }
+  /**
+   * [Z-DEDSEARCH] (3.206.0, S401) A name typed into the field of the box (not an MBID or a link): MusicBrainz's artists of that name or
+   * alias, as many as the hits of the settings – a choice below it, a click links the artist.
+   */
+  async function dedSearch(key, text) {
+    const x = key === 'form' ? S.dedForm : (S.dedSugg || []).find((s0) => s0.key === key);
+    if (!x || S.dedBusy) return;
+    const words = luceneWords(text);
+    const q = words ? `artist:(${words}) OR alias:(${words})` : `artist:${lucenePhrase(text)}`;
+    S.dedBusy = true;
+    S.dedErr = '';
+    renderDedBox();
+    let data;
+    try {
+      data = await mbWs(`artist?query=${encodeURIComponent(q)}&limit=${mbHits()}`, { prio: true });
+    } catch (e) {
+      S.dedBusy = false;
+      S.dedErr = e.message;
+      renderDedBox();
+      return;
+    }
+    S.dedBusy = false;
+    const items = ((data && data.artists) || []).filter((a) => a && a.id);
+    Object.assign(x, { mbid: text, searched: text, byWorks: false,
+      hits: items.map((a) => ({ gid: a.id, name: a.name, entityType: 'artist', comment: [a.disambiguation, a.type, a.country].filter(Boolean).join(', ') })) });
+    S.dedErr = x.hits.length ? '' : tr('dedbox.noHits', { q: text });
+    log('info', 'dedSearch', { q: text, n: x.hits.length });
+    renderDedBox();
+  }
   function dedSuggest(d, hits) {
     if (!ruleOn('S109')) return;
     S.dedSugg = S.dedSugg || [];
@@ -43035,7 +43184,9 @@
     }
     const choices = dedChoices();
     const sugg = { key: d.key, kind: (choices[d.key] && choices[d.key].kind) || d.kind, name: d.name, phrase: d.phrase, where: d.where, sentence: String(d.sentence || '').slice(0, 200),
-      track: d.track != null ? d.track : null, needTrack: !!d.needTrack, fromTitle: !!d.fromTitle, hits };
+      track: d.track != null ? d.track : null, needTrack: !!d.needTrack, fromTitle: !!d.fromTitle, hits, byWorks: !!d.byWorks,
+      // ([Z-DEDSEARCH] 3.206.0, S401) nothing found: the name in the field, to search for it
+      ...(ruleOn('S401') && !hits.length && !d.needTrack ? { mbid: d.name } : {}) };
     // [Z-DEDBACK] (3.128.0) one left out before: listed below the box, to be brought back
     if (choices[d.key] && choices[d.key].x) {
       S.dedLeft = S.dedLeft || [];
@@ -43090,6 +43241,9 @@
       return `<li><span class="dci-dedkind">${esc(tr(`ded.kind.${r.dedication.kind}`))}</span> <strong>${esc(a.mbName || a.name || '')}</strong> <span class="dci-sub">${esc(lv)} · ${esc(r.dedication.where || '')}</span>
         <button type="button" class="dci-textbtn" data-act="ded-goto" data-row="${esc(r.id)}" title="${esc(tr('dedbox.gotoTitle'))}">${esc(tr('dedbox.goto'))}</button></li>`;
     }).join('');
+    const hitsHtml = (key, hits) => (hits && hits.length ? `<span class="dci-dedhits">${hits.map((h) => `<span><button type="button" class="dci-small" data-act="ded-pick" data-key="${esc(key)}" data-gid="${esc(h.gid)}"
+        title="${esc(tr('dedbox.pickTitle'))}">${esc(h.name)}${h.comment ? ` <span class="dci-sub">(${esc(h.comment)})</span>` : ''}</button><a class="dci-textbtn" href="/${esc(h.entityType)}/${esc(h.gid)}" target="_blank"
+        rel="noopener" title="${esc(tr('dedbox.openTitle'))}" aria-label="${esc(tr('dedbox.openTitle'))}">↗</a></span>`).join('')}</span>` : '');
     const sugg = (S.dedSugg || []).map((x) => {
       // ((review) the work of a track to choose: the first track at first)
       const first = selTracks()[0];
@@ -43098,14 +43252,15 @@
         title="${esc(tr('dedbox.pickTitle'))}">${esc(h.name)}${h.comment ? ` <span class="dci-sub">(${esc(h.comment)})</span>` : ''}</button><a class="dci-textbtn" href="/${esc(h.entityType)}/${esc(h.gid)}" target="_blank"
         rel="noopener" title="${esc(tr('dedbox.openTitle'))}" aria-label="${esc(tr('dedbox.openTitle'))}">↗</a></span>`).join('')}</span>` : '';
       return `<div class="dci-dedsugg" data-key="${esc(x.key)}" role="group" aria-label="${esc(`${x.phrase} ${x.name}`)}">
-        <div><strong>“${esc(x.phrase)} ${esc(x.name)}”</strong> <span class="dci-sub" title="${esc(x.sentence)}">${esc(tr(x.hits.length ? 'dedbox.several' : x.needTrack ? 'dedbox.noTrack' : 'dedbox.none', { where: x.where }))}</span></div>
+        <div><strong>“${esc(x.phrase)} ${esc(x.name)}”</strong> <span class="dci-sub" title="${esc(x.sentence)}">${esc(x.searched ? tr('dedbox.searched', { q: x.searched, n: x.hits.length }) : tr(x.byWorks ? 'dedbox.byWorks' : x.hits.length ? 'dedbox.several' : x.needTrack ? 'dedbox.noTrack' : ruleOn('S401') ? 'dedbox.noneSearch' : 'dedbox.none', { where: x.where }))}</span></div>
         <div class="dci-dedrow">${dedKindSeg('ded-sugg-kind', x.kind, `data-key="${esc(x.key)}"`)}${hits}${dedFieldsHtml(x.key, lvl, tr('dedbox.mbidTitle'), x, x.kind)}
           ${ruleOn('S197') && !x.hits.length && !x.needTrack ? `<a class="dci-textbtn" data-el="ded-create" href="/artist/create?${toQuery([['edit-artist.name', x.name]])}" target="_blank" rel="noopener" title="${esc(tr('dedbox.createTitle', { name: x.name }))}">${esc(tr('dedbox.create'))}</a>` : ''}
           <button type="button" class="dci-textbtn" data-act="ded-dismiss" data-key="${esc(x.key)}" title="${esc(tr('dedbox.dismissTitle'))}">✕ ${esc(tr('dedbox.dismiss'))}</button></div></div>`;
     }).join('');
     const form = S.dedForm ? `<div class="dci-dedsugg dci-dedform" role="group" aria-label="${esc(tr(`dedbox.${S.dedForm.kind}`))}">
         <div class="dci-dedrow">${dedKindSeg('ded-form-kind', S.dedForm.kind)}${dedFieldsHtml('form', 'release_group', tr('dedbox.mbidTitle'), S.dedForm, S.dedForm.kind)}
-          <button type="button" class="dci-textbtn" data-act="ded-form-cancel">${esc(tr('common.cancel'))}</button></div></div>` : '';
+          <button type="button" class="dci-textbtn" data-act="ded-form-cancel">${esc(tr('common.cancel'))}</button></div>
+        ${S.dedForm.searched ? `<div class="dci-sub">${esc(tr('dedbox.searched', { q: S.dedForm.searched, n: (S.dedForm.hits || []).length }))}</div>` : ''}${hitsHtml('form', S.dedForm.hits)}</div>` : '';
     // ((review) drawn anew only when something changed: a box drawn anew takes the page's scroll anchor – the works matrix jumped
     // while a track group was dragged)
     const html = `<div class="dci-dedbox-head"><h3 id="dci-dedbox-h">${esc(tr('dedbox.title'))}</h3>${dedKindSeg('ded-add', '')}
@@ -43136,6 +43291,12 @@
     const input = el && el.querySelector(`[data-f="ded-mbid"][data-key="${q(key)}"]`);
     const levelSel = el && el.querySelector(`[data-f="ded-level"][data-key="${q(key)}"]`);
     const mbid = gid || ((input && input.value.match(MBID_RE)) || [])[0];
+    // [Z-DEDSEARCH] (3.206.0, S401) a name, not an MBID or a link: searched in MusicBrainz
+    const typed = input ? input.value.trim() : '';
+    if (!mbid && typed && ruleOn('S401') && !/^https?:\/\//i.test(typed)) {
+      await dedSearch(key, typed);
+      return;
+    }
     if (!mbid) {
       if (err) err.textContent = tr('msg.badMbidAny');
       return;
@@ -48511,15 +48672,18 @@
       // ([Z-BWV] 3.138.0) found by a catalogue number
       const byCat = same.find((w) => w.catalogue);
       // ([Z-WORKFIND] 3.189.0, S333) only works of a similar title: yellow, to check
-      const allLoose = same.every((w) => w.loose);
-      const what = byCat ? tr('matrix.sameCatalogue', { n: same.length, cat: byCat.catalogue }) : allLoose ? tr('matrix.sameLoose', { n: same.length })
+      const allLoose = same.every((w) => w.loose || w.tribute);
+      // [Z-TRIBUTEWORKS] (3.206.0, S402) works of the artist of the tribute: yellow, to check
+      const trib = same.find((w) => w.tribute);
+      const what = byCat ? tr('matrix.sameCatalogue', { n: same.length, cat: byCat.catalogue }) : trib && same.every((w) => w.tribute) ? tr('matrix.sameTribute', { n: same.length, name: trib.tribute })
+        : allLoose ? tr('matrix.sameLoose', { n: same.length })
         : tr(same.some((w) => w.artistWork) ? 'matrix.sameArtists' : 'matrix.same', { n: same.length });
       pick = ` <button type="button" class="dci-small dci-mx-wpickbtn${allLoose ? ' dci-mx-wloosebtn' : ''}" data-act="mx-works" aria-expanded="${open}" aria-controls="${listId}"
         title="${esc(what)}">${esc(tr('matrix.worksPick', { n: same.length }))} ${open ? '▴' : '▾'}</button>`;
-      found = `<div class="dci-same dci-mx-wlist" id="${listId}"${open ? '' : ' hidden'}><strong>${esc(what)}</strong><ul class="dci-candidates">${same.map((w) => `<li${w.loose ? ' class="dci-mx-wloose"' : ''}>
+      found = `<div class="dci-same dci-mx-wlist" id="${listId}"${open ? '' : ' hidden'}><strong>${esc(what)}</strong><ul class="dci-candidates">${same.map((w) => `<li${w.loose || w.tribute ? ' class="dci-mx-wloose"' : ''}>
           <button type="button" data-act="work-pick" data-gid="${esc(w.gid)}" data-title="${esc(w.title)}"${w.composer ? ` data-composer="${esc(w.composer)}" data-composer-name="${esc(w.composerName || '')}"` : ''}>${esc(tr('works.link'))}</button>
           <a class="dci-mblink" href="/work/${esc(w.gid)}" target="_blank" rel="noopener"><span class="dci-src dci-src-mb">MB</span>${esc(w.title)}</a>${w.disambiguation ? ` <span class="dci-disamb">(${esc(w.disambiguation)})</span>` : ''}
-          <span class="dci-sub">${esc([w.type, w.writers.join(', ')].filter(Boolean).join(' – '))}</span>${w.loose ? ` <span class="dci-badge dci-mx-wloosetag" data-el="work-loose">${esc(tr('matrix.looseTag'))}</span>` : ''}</li>`).join('')}</ul></div>`;
+          <span class="dci-sub">${esc([w.type, w.writers.join(', ')].filter(Boolean).join(' – '))}</span>${w.loose ? ` <span class="dci-badge dci-mx-wloosetag" data-el="work-loose">${esc(tr('matrix.looseTag'))}</span>` : ''}${w.tribute ? ` <span class="dci-badge dci-mx-wloosetag" data-el="work-tribute">${esc(tr('matrix.tributeTag', { name: w.tribute }))}</span>` : ''}</li>`).join('')}</ul></div>`;
     }
     // [Z-SU] (3.41.3) a title of parts ("A / B"): split into works of their own (a medley) – offered, not done by itself (Q-cg)
     // [Z-MDLY2] (3.99.0) a switch: marked, its parts become new works when "＋ New" or "＋ New works" plans them (not before)
@@ -50211,7 +50375,12 @@
         let why = '';
         // ([Z-WORKFIND] 3.189.0, S333) a work of a similar title only is for the user to check: neither linked nor a new work instead
         if (cands.some((w) => w.loose)) pick = null;
-        else if (cands.length === 1 && exact.length === 1 && sameWriters(exact[0])) [pick, why] = [exact[0], 'magic.why.exact'];
+        // [Z-TRIBUTEWORKS] (3.206.0, S402) works of the artist of the tribute: one of exactly the track's title from "balanced", else none
+        // (and no new work instead)
+        else if (cands.some((w) => w.tribute)) {
+          const ex = exact.filter((w) => w.tribute);
+          if (ex.length === 1 && cands.filter((w) => normTitle(w.title) === title).length === 1 && magicAt('balanced')) [pick, why] = [ex[0], 'magic.why.tribute'];
+        } else if (cands.length === 1 && exact.length === 1 && sameWriters(exact[0])) [pick, why] = [exact[0], 'magic.why.exact'];
         else if (cands.length === 1 && magicAt('balanced')) [pick, why] = [cands[0], 'magic.why.one'];
         else if (cands.length > 1 && magicAt('bold')) {
           // (several: the one of exactly this title with the most of the track's writers – MusicBrainz's numbers of recordings are not loaded)

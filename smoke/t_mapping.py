@@ -1509,7 +1509,8 @@ def case_dedphrases():
     """Credits Importer 3.67.0 (collected item Z-DED, rule S097), in Node: the dedications of a text – "dedicated to A and B" (two),
     "In memory of", "In Memoriam:", "Homage To", "gewidmet" (after the name too), "In Erinnerung an", "Hommage an" (dedicated to);
     "A tribute to" (tribute to); "For Cecil Taylor" only as a line of its own ("Recorded for the BBC." not); "to my mother" none;
-    titles: "Odes And Meditations For Cecil Taylor" a tribute, "Music For Airports" none (one word).
+    titles: "Odes And Meditations For Cecil Taylor" a tribute, "Music For Airports" (one word) from 3.206.0 on a surname (S402) – kept only
+    when artists of that name wrote works of the release (runDedications), none here.
     (review) The name ends where its capitals end ("… who passed away", a new line); "Simon & Garfunkel" one name; "the memory of", "the late
     great"; the last "For" of a title; "Sonata For Violin And Piano", "Walking To New Orleans", a track "In Memory Of Elizabeth Reed",
     "meinem Vater gewidmet", "FOR PROMOTION ONLY": none."""
@@ -1533,7 +1534,7 @@ console.log(JSON.stringify(cases.map(([t, o]) => m.findDedications(t, o).map((d)
     D, T = 'dedicated', 'tribute'
     want = [[[D, 'Ornette Coleman', 'dedicated to'], [D, 'Don Cherry', 'dedicated to']], [[D, 'Peter Kowald', 'In memory of']], [],
             [[T, 'Cecil Taylor', 'A tribute to']], [[D, 'Peter Brötzmann', 'gewidmet']], [[D, 'Peter Kowald', 'In Erinnerung an']], [[D, 'Albert Ayler', 'Hommage an']],
-            [[D, 'Cecil Taylor', 'For']], [[T, 'Cecil Taylor', 'For']], [], [[D, 'Don Cherry', 'In Memoriam']], [[D, 'Monk', 'Homage To']],
+            [[D, 'Cecil Taylor', 'For']], [[T, 'Cecil Taylor', 'For']], [[T, 'Airports', 'For']], [[D, 'Don Cherry', 'In Memoriam']], [[D, 'Monk', 'Homage To']],
             [[D, 'Cecil Taylor', 'Dedicated to']], [[D, 'Cecil Taylor', 'Dedicated to']], [[T, 'Simon & Garfunkel', 'A tribute to']],
             [[D, 'Peter Kowald', 'Dedicated to the memory of']], [[T, 'Sun Ra', 'A tribute to']], [[T, 'Cecil Taylor', 'For']], [], [], [], [], []]
     results = [res == want]

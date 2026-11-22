@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-22 | 3.197.0 – 3.205.0 | – |
+| 2026-11-22 | 3.197.0 – 3.206.0 | – |
 | 2026-11-21 | 3.193.0 – 3.196.0 | – |
 | 2026-11-20 | 3.185.0 – 3.192.0 | 1.23.0 |
 | 2026-11-19 | 3.170.0 – 3.184.0 | – |
@@ -136,6 +136,14 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.206.0
+
+**Tribute albums: the works of the honoured artist; a search in the box of dedications.**
+
+- **Works of the artist of a tribute** (rule S402): on a tribute or dedication album – a row of the box "Dedications & tributes" linked to an artist (Sonny Rollins) – the works of that artist are searched by the tracks' titles too. A work found so is a suggestion in yellow, "work of Sonny Rollins – check" (Doxy, Pent-Up House, Blue Seven, Valse Hot); "✨ Answer all" links one of exactly the track's title from "balanced", and plans no new work instead.
+- **A surname in the title** (S402): "If Ever You Would Leave Us (We Play For Rollins)" names no artist of exactly that name – the artists of the name whose works are tracks of the release (two at least, or half of the tracks) are offered in the box, the most first, as many as the hits of the settings ("Sonny Rollins (4 tracks works of theirs …)"). A name of very many artists ("Smith") says so in a message. Without such works the title names no one ("Music For Airports").
+- **Search in the box** (S401): the field of the box "Dedications & tributes" takes a name as well as an MBID or a link – Enter or "Add" searches MusicBrainz's artists of that name or alias (as many as the hits of the settings), a click links one. A dedication found in a text without an entry of that name has its name in the field already.
 
 ### Import 3.205.0
 
