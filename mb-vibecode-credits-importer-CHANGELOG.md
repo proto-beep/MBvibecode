@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-22 | 3.197.0 | – |
+| 2026-11-22 | 3.197.0 – 3.198.0 | – |
 | 2026-11-21 | 3.193.0 – 3.196.0 | – |
 | 2026-11-20 | 3.185.0 – 3.192.0 | 1.23.0 |
 | 2026-11-19 | 3.170.0 – 3.184.0 | – |
@@ -136,6 +136,20 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.198.0
+
+**Booklets: what was read wrongly.**
+
+- **Instruments without a player** (rule S362): "Instrumentation : harmonium, melodica, guitar, …" belongs to the one member the text names ("BHAJAN BHOY is Ajay Saggar."), else to the release's artist when that is one person, else it is asked; before, the instruments became names ("harmonium" playing "Instrumentation", "guitar, bass guitar" one name).
+- **Equipment** (S363): "equipment: farfisa, ems London", "(Equipment: Concert Sound London)" are left out (before: people "farfisa", "ems London").
+- **Misspelt instruments** (S364): "Moog Syntheziser" asks for the instrument instead of being left out as a name of fantasy.
+- **Writers of one title** (S365): "'Brain In A Fish Tank' written by …" holds for that track only (before: all tracks); "Track 2 written by …", "Tracks 1 & 3 written by …" are read; a list of names broken after a comma goes on in the next line.
+- **A full stop between two roles** (S366): "Electric Guitar on tracks 3, 5. Acoustic guitar on tracks 2, 3" – both, with their tracks.
+- **Shared surnames** (S367): "composed by Edgar and Jerome Froese" – Edgar Froese and Jerome Froese (when the text writes "Edgar Froese" elsewhere); the words of the sentence before the verb are no role credit.
+- **Produced for a label in a paragraph** (S368): "…; Produced by Edgar Froese for Virgin Records; …" – the producer, and Virgin Records "produced for".
+- **Rights** (S369): "P&C 2026 X under license to A and B" – ℗ and © of X, licensed to A and B; "Published by X the band from Texas LLC."; "written by … ©BMG Rights Management, Warner Chappell Music, Inc." – publishers, not writers.
+- **Trade codes** (S370): barcode, "LC 02112.", "UK: TAND 5", "The copyright in this recording is owned by …" are left out; "Twisted Records Ltd. TWSCD45" – the catalogue number no part of the name.
 
 ### Import 3.197.0
 

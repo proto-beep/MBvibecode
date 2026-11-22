@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.197.0, Companion 1.6.0 – 1.23.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.198.0, Companion 1.6.0 – 1.23.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,16 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.198.0 · 2026-11-22
+
+- **`readUnit`**: `INSTR_HEAD` (S362) → `P.instrNoName`, given out in **`finishPlayers`** (the one member of `members` credits, else `addPlaceholder` with `instrNoName`); **`placeholderCredits`**: a release artist of type Person takes them without a question. `EQUIP_LINE`, `EQUIP_PAREN` (S363) in `readUnit` and `readClause` (why `equipment`). `legalMore` / `BK_LEGAL_MORE` (S370) in `bookletLines` and `readUnit`; the ℗/© name without a catalogue number after the company's form.
+- **`finishLeftOut`** (S364): `TYPO_OF`, `typoWord` – a misspelt instrument is no fantasy.
+- **`leadTitleScope`** (S365) beside `titleScope` in `readClause`; `LEAD_POS2` in `readLine0`; `tidyLines` joins a list of names broken after a comma.
+- **`tidyLines`** (S366): ". " between two roles with tracks → ", ".
+- **`namesScoped`** (S367): a first name alone takes the surname of the last name when the text has the full name; **`finishProseDetails`** in `stageFinish`.
+- **`readClause`** (S368): "X for <label words>" → the name X, and `Produced For` (S369): `©` after the names → `Published By` companies. **`readUnit`** (S369): "P&C", "under license to", "Published by … LLC".
+- Text: `ignored.why.equipment`. Test: `t_text_lists.py` `case_booklets3198`.
 
 ## Import 3.197.0 · 2026-11-22
 
