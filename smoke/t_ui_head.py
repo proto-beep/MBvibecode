@@ -1202,6 +1202,82 @@ def case_headnarrow():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_capsjp3202():
+    """Credits Importer 3.202.0 (collected item Z-CAPSJP, rules S385, S386): Discogs credits "SUPER ULTRA HYPER ULTIMATE-HAKO-" (Guitar)
+    and "TORBEN SNEKKESTAD" (Saxophone).
+    A) Japan from two places – Discogs "Country: Japan" and MusicBrainz's script "Jpan": both heads keep the capitals, "↺ normal case"
+       at each (pressed), the log names the signs.
+    B) Only Discogs "Country: Japan" (one sign; the release's artist in MusicBrainz is no Japanese): normal case as before.
+    C) Two signs, S385 off: normal case.
+    D) In Node (S386): "SUPER ULTRA HYPER ULTIMATE-HAKO- (箱) : guitar", "Kawabata Makoto (河端一) : guitar" – the names without the
+       brackets, "箱" and "河端一" as their names in their own script."""
+    H.ENTRIES_VIEW = 'matrix'
+    orig, orig_ws = H.discogs_release, H.ws_release
+    ex = lambda name, role, i: {'name': name, 'anv': '', 'role': role, 'tracks': '', 'id': i, 'join': ''}
+    state = {'country': 'Japan', 'script': 'Jpan'}
+
+    def rel():
+        d = orig()
+        d['country'] = state['country']
+        d['extraartists'] += [ex('SUPER ULTRA HYPER ULTIMATE-HAKO-', 'Guitar', 3411), ex('TORBEN SNEKKESTAD', 'Saxophone', 3412)]
+        return d
+
+    def ws():
+        d = orig_ws()
+        if state['script']:
+            d['text-representation'] = {'script': state['script'], 'language': 'jpn'}
+        return d
+    H.discogs_release = rel
+    H.ws_release = ws
+    SEC = "(name) => [...document.querySelectorAll('section.dci-group')].find(s => { const st = s.querySelector('.dci-gname strong'); return [st.dataset.name, st.textContent.trim()].some(x => x && x.toLowerCase() === name.toLowerCase()); })"
+    HEAD = """(name) => { const g = (%s)(name); if (!g) return null; const b = g.querySelector('[data-act=case-back]');
+      return [g.querySelector('.dci-gname strong').textContent.trim(), b ? b.textContent.trim() : null, b ? b.getAttribute('aria-pressed') : null]; }""" % SEC
+    results = []
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.wait_still(pg, "document.body.innerHTML", 10, 400)
+        out = [pg.evaluate(HEAD, n) for n in ('SUPER ULTRA HYPER ULTIMATE-HAKO-', 'Torben Snekkestad')]
+        logs = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'Japanese, Chinese or Korean' in x]
+        b.close()
+        return out, logs, errs
+
+    try:
+        with sync_playwright() as p:
+            out, logs, errs = run(p)
+            print('A)', out, logs, errs)
+            results.append(out[0] and out[0][0] == 'SUPER ULTRA HYPER ULTIMATE-HAKO-' and out[0][1] == '↺ normal case' and out[1] and out[1][0] == 'TORBEN SNEKKESTAD'
+                           and len(logs) == 1 and 'the source\'s country' in logs[0] and 'script or language' in logs[0] and not errs)
+            state['script'] = ''
+            out, logs, errs = run(p)
+            print('B)', out, logs, errs)
+            results.append(out[0] and out[0][0] == 'Super Ultra Hyper Ultimate-Hako-' and out[1] and out[1][0] == 'Torben Snekkestad' and not logs and not errs)
+            state['script'] = 'Jpan'
+            out, logs, errs = run(p, off=['S385'])
+            print('C)', out, logs, errs)
+            results.append(out[1] and out[1][0] == 'Torben Snekkestad' and not logs and not errs)
+        import subprocess
+        js = subprocess.run(['node', '-e', """global.localStorage = { getItem: () => null, setItem() {}, removeItem() {}, key: () => null, length: 0 };
+const m = require(process.argv[1]);
+const r = m.SOURCES.text.parse('SUPER ULTRA HYPER ULTIMATE-HAKO- (箱) : guitar\\nKawabata Makoto (河端一) : guitar', { isRole: (x) => /guitar/.test(x), isCompanyRole: () => false,
+  resolveTracks: () => null, resolveTitles: (t) => ({ indexes: new Set(), unresolved: t }), artistNames: [], trackCount: 4 });
+console.log(JSON.stringify(r.credits.map((c) => [c.who.name, c.who.aka || c.aka || ''])));""", str(H.ROOT / 'mb-vibecode-credits-importer.user.js')], capture_output=True, text=True)
+        d = js.stdout.strip()
+        print('D)', d, js.stderr[-300:])
+        results.append(d == '[["SUPER ULTRA HYPER ULTIMATE-HAKO-","箱"],["Kawabata Makoto","河端一"]]')
+    finally:
+        H.discogs_release, H.ws_release = orig, orig_ws
+        H.RULES_OFF = []
+        H.ENTRIES_VIEW = 'legacy'
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 def case_capsnames():
     """Credits Importer 3.38.12 (F-4, rule S060).
     A) Discogs credits "TORBEN SNEKKESTAD" (Saxophone), "DJ SHADOW" (Scratches), "ABBA" (linked: MusicBrainz "ABBA"), Oliver Lake
