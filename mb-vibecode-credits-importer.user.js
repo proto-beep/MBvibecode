@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.203.0
+// @version      3.204.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.203.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.203.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.204.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.204.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.203.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.204.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -972,6 +972,7 @@
       "ignored.why.commissionAgain": "the same commission as a line that names its tracks",
       "ignored.why.equipment": "the gear used (no credit)",
       "ignored.why.tourCrew": "the crew of the tour (no relationship of the recording)",
+      "ignored.why.sessionSeries": "a session or concert series (an event in MusicBrainz, not linked here)",
       "ignored.why.foh": "the sound for the audience at the concert – not the mix of the recording",
       "ignored.why.logo": "the lettering of a logo",
       "ignored.why.title": "the release's title",
@@ -5674,6 +5675,9 @@
     { id: 'S388', where: 'TEXT.parse (bookletMore, photoFileCredit), findDates', note: 'Texts (3.203.0; collected item Z-POETICS): a photo credit written as a file\'s name – "Photography : Gustafsson_Guy_Millà_MaschinenHausMusik_(c)_Sabrina Richmann_Ruhrtriennale 2023": the name after "(c)" or "©" is the photographer; who is on the photo, a place and the year of the photo are no credit and no date. Without "(c)"/"©": not read' },
     { id: 'S389', where: 'TEXT.parse (readUnit; mapping TEXT_PACKAGING_LINE)', note: 'Texts (3.203.0; collected item Z-POETICS): a line that only describes the package – "Compact Disc (CD): cardboard gatefold sleeve", "6-panel digipak", "jewel case" – is left out ("about the package")' },
     { id: 'S390', where: 'guessInstrument, similarInstrumentVia, guessOptLabel, instrGuessHtml', note: 'Instruments (3.203.0; collected item Z-ALIASTYPO): a word MusicBrainz does not know ("fluteophone"): each answer of the question says which of MusicBrainz\'s other names it is like ("Tonette – alias “flutophone”"); exactly one answer one letter off (its name or an alias): chosen at once – by an alias credited as written ("Tonette “fluteophone”"), by its own name a slip without a role credit ("Sxaophone": saxophone) – the question stays to change it. Off: a question with the answers only, as before' },
+    { id: 'S391', where: 'medleySplit, segueTrimmed, workTitleOf', note: 'Works (3.204.0; collected item Z-SEGUE): a segue of a track list (Grateful Dead, jam bands) – "The Killers > Narragansett", "Dark Star -> St. Stephen", "→", "=>" – in one track splits like "/" (a one-off medley: each piece a work, every link with "medley", in the order of the title); a sign at the end of a title ("China Cat Sunflower >": the next piece follows on its own track) is no part of the work\'s name. Off: only the separators of the release ("/" and those added)' },
+    { id: 'S392', where: 'TEXT.parse (tidyLines, fantasy roles)', note: 'Texts (3.204.0; collected item Z-WETTUNA): a line of roles broken after a slash right after the last role ("GUITAR/VOCAL/EFFECTORS/" · "ARP ODYSSEY/…/PROGRAMMING/" · "MULTIPLE INFINITIES") is one line, also when it is broken twice; words of fantasy in a list of instruments ("MULTIPLE INFINITIES", "LOW END THEORY", "VIBRATION" – mapping FANTASY_ROLE_WORDS) are left out even alone. With the mapping: ARP Odyssey, Korg synth – synthesizer; envelope filter, effectors – effects; amplified percussion, rhythm necklace – percussion; Synare – electronic drum set; space drums – drums, each credited as written (several words of one instrument: one relationship with all of them, S325)' },
+    { id: 'S393', where: 'TEXT.parse (bookletMore; mapping SESSION_SERIES_LINE)', note: 'Texts (3.204.0; collected item Z-WETTUNA): a line naming a session or concert series of a magazine or a station without a credit of its own – "digital version of our lagniappe session...much obliged aquarium drunkard" (Aquarium Drunkard\'s Lagniappe Sessions), Tiny Desk, Daytrotter, Audiotree, KEXP, Peel or Maida Vale sessions – is left out with its reason: such a series is linked at the level of an event in MusicBrainz' },
     { id: 'S299', where: 'TEXT.parse (shopLines; SHOP_BLOCK_LINES)', note: 'Texts (3.169.0; Z-BCSHOPBLOCK): what a shop writes below an edition is left out as "shop" – the edition\'s name with "(Limited Edition …)" and its format, what the records look like ("2 x 180gsm …", "DiscA/B - Transparent green with gold blob", "Packaged in a standard Sleeve."), the block about shipping ("+++++INTERNATIONAL SHIPPING +++++", "- WE DO NOT SHIP TO PO BOXES", "- ALL ORDERS ARE SENT BY TRACKED COURIER …", "UK: 2-3 days") and the page\'s own details ("published March 29, 2019", "license"). They stood under "not recognized". Every free text' },
     { id: 'S298', where: 'TEXT.parse (hyphenTrackLines; HT_TRACKS, HT_HYPHEN, HT_HEAD, HT_SPLIT)', note: 'Texts (3.169.0; Z-HYPHENTRACKS): a lineup written "Pete Callard-Acoustic Guitar On Tracks 1,2,3, Electric Guitar on Tracks 18,19 Hari-Om- Vocals On Tracks 9,10 …" – a hyphen without spaces between name and role, each role with its tracks, the whole lineup in one paragraph (Beatport and shop texts): the paragraph is cut before each name, the name is what stands before the first hyphen whose right side begins with a role ("Hari-Om- Vocals": Hari-Om), "and Vocals on Tracks …" and a role after a list of tracks are roles of their own, "on all tracks" says nothing new; a heading before the first name ("Musicians In The Studio") is a heading. Only for a line that names tracks that way. Every free text' },
     { id: 'S296', where: 'videoLevelWant, videoLevelFor, VIDEO_RULES, R033 (mapRole), rgIsDjMix, Q022', note: 'Video credits and DJ mixes (3.164.0; proposals F-VIDEOLEVEL, F-DJMIX of review run 2): every credit of a video – video director, camera work, cinematographer and the table of video credits (R076, R110, R119) – is on the recordings when its tracks are videos – from 3.169.0 on the videos only when just some of its tracks are (Z-VIDEOTRACKS; until then such a credit went to the release) – and on the release when none is, where MusicBrainz has the type there (the cinematographer and the camera work were always on the recordings, the others on the release). "Mixed By [DJ Mix]" is the DJ-mix of the release, not the mix engineer; on a release group of the type DJ-mix "Mixed By" asks which of the two (Q022)' },
@@ -6546,6 +6550,16 @@
   // at X by Y", "Compositions arranged by X"; no "made", "done", "shot", "drawn" (no role of their own)
   // [3.30.8] about the package: "Including a 52 p. booklet." – left out on purpose (T030)
   const TEXT_PACKAGE = MAP.TEXT_PACKAGE;
+  // [Z-SEGUE] (3.204.0, S391) the signs of a segue in a track list (Grateful Dead, jam bands): the next piece follows without a break
+  const SEGUE_SEPS = ['>', '->', '-->', '→', '=>'];
+  // [Z-WETTUNA] (3.204.0, S392) words of fantasy in a list of instruments that are left out even alone ("VIBRATION", "LOW END THEORY")
+  const FANTASY_ROLE_WORDS = MAP.FANTASY_ROLE_WORDS;
+  // [Z-WETTUNA] (3.204.0, S393) a session or concert series of a magazine or a station ("lagniappe session … aquarium drunkard"): an event in MusicBrainz
+  const SESSION_SERIES_LINE = MAP.SESSION_SERIES_LINE;
+  /** [Z-SEGUE] (3.204.0, S391) A title without the sign of a segue at its end ("China Cat Sunflower >" → "China Cat Sunflower"). */
+  function segueTrimmed(t) {
+    return String(t || '').replace(/\s+(?:-{0,2}>|→|=>)\s*$/u, '').trim() || String(t || '');
+  }
   // [Z-POETICS] (3.203.0, S389) a line that only describes the package: "Compact Disc (CD): cardboard gatefold sleeve"
   const TEXT_PACKAGING_LINE = MAP.TEXT_PACKAGING_LINE;
 
@@ -11528,7 +11542,8 @@
       // [Z-OCRLINEJOIN] (3.153.0, S269) a line of roles broken after "/", "&", "and" … – "Peter Baumann: Bass /" above "Guitar, Mouth Organ" –: one line
       if (ruleOn('S269')) {
         for (let i = 0; i < out.length - 1; i++) {
-          if (!P.NAME_ROLES.test(out[i]) || !/(?:^|\s)(?:\/|&|\+|and|und|et|y)\s*$/i.test(out[i])) continue;
+          // ([Z-WETTUNA] 3.204.0, S392) also "GUITAR/VOCAL/" – a slash right after the last role
+          if (!P.NAME_ROLES.test(out[i]) || !(/(?:^|\s)(?:\/|&|\+|and|und|et|y)\s*$/i.test(out[i]) || (ruleOn('S392') && /\S\/\s*$/.test(out[i])))) continue;
           let j = i + 1;
           while (j < out.length && !out[j].trim()) j++;
           const next = j < out.length ? out[j].trim() : '';
@@ -11536,6 +11551,8 @@
           const raw = P.rawOf.get(out[i]) || out[i];
           out[i] = keep(`${out[i].replace(/\s+$/, '')} ${next}`, raw);
           for (let k = i + 1; k <= j; k++) out[k] = '';
+          // ([Z-WETTUNA] 3.204.0, S392) broken twice ("…/EFFECTORS/" · "ARP ODYSSEY/…/PROGRAMMING/" · "MULTIPLE INFINITIES"): the same line again
+          if (ruleOn('S392')) i--;
         }
       }
       // [Z-TITLEWRITTEN] (3.198.0, S365) a list of names broken after a comma – "'X' written by Simon Posford, Raja Ram," above "Michele Adamson
@@ -12296,6 +12313,13 @@
         if (ruleOn('S378')) {
           const lq = x.match(/^(recorded\s+live)\s+on\s+(.+?)\s+at\s+the\s+["“„]([^"”“]{3,60})["”“]\s+in\s+(?:the\s+(?:city|town)\s+of\s+)?(\p{Lu}[\p{L}-]+)(?:\s+in\s+(\p{Lu}[\p{L} -]+?))?(?:\s+during\b.*)?\.?$/iu);
           if (lq) x = `${cap(lq[1])} at ${lq[3]}, ${lq[4]}${lq[5] ? `, ${lq[5]}` : ''} on ${lq[2]}.`;
+        }
+        // [Z-WETTUNA] (3.204.0, S393) a line naming a session or concert series of a magazine or a station without a credit of its own
+        // ("digital version of our lagniappe session...much obliged aquarium drunkard xoxo ∞"): left out – such a series is linked at the
+        // level of an event in MusicBrainz, not by the dashboard
+        if (ruleOn('S393') && SESSION_SERIES_LINE.test(x) && !/:|\s(?:by|von|par|por)\s/i.test(x)) {
+          P.ignored.push({ text: t, why: 'sessionSeries' });
+          continue;
         }
         // [Z-POETICS] (3.203.0, S388) a photo credit written as a file's name – "Photography : Gustafsson_Guy_Millà_MaschinenHausMusik_(c)_Sabrina
         // Richmann_Ruhrtriennale 2023": the name after "(c)" or "©" is the photographer; the rest (who is on the photo, a place, the year
@@ -14913,7 +14937,8 @@
         const TYPO_OF = ['synthesizer', 'synthesiser', 'keyboards', 'guitar', 'piano', 'organ', 'drums', 'percussion', 'saxophone', 'trumpet', 'trombone', 'violin',
           'viola', 'cello', 'mellotron', 'clarinet', 'flute', 'harmonica', 'accordion', 'vibraphone', 'marimba', 'xylophone', 'harpsichord', 'vocals', 'sequencer'];
         const typoWord = (w) => ruleOn('S364') && w.length >= 5 && TYPO_OF.some((x) => Math.abs(x.length - w.length) <= 2 && editDistance(w.toLowerCase(), x, 2) <= 2);
-        const fantasy = (r) => { const ws = clean(r).split(/\s+/); return ws.length >= 2 && ws.length <= 4 && !/\d/.test(r) && !SOUNDISH.test(r) && !ws.some((w) => playable(P, w.toLowerCase()) || P.isRoleKnown(cap(w)) || typoWord(w)) && !P.isRoleKnown(cap(r)); };
+        const listed = (r) => ruleOn('S392') && FANTASY_ROLE_WORDS.has(norm(clean(r)));
+        const fantasy = (r) => { if (listed(r)) return true; const ws = clean(r).split(/\s+/); return ws.length >= 2 && ws.length <= 4 && !/\d/.test(r) && !SOUNDISH.test(r) && !ws.some((w) => playable(P, w.toLowerCase()) || P.isRoleKnown(cap(w)) || typoWord(w)) && !P.isRoleKnown(cap(r)); };
         // ((review) the odd one among known roles: one such name at most per name and line
         const knownN = new Map();
         P.credits.filter((c) => !c.guess && c.line != null).forEach((c) => { const k = `${c.line}|${norm(c.who.name)}`; knownN.set(k, (knownN.get(k) || 0) + 1); });
@@ -14922,7 +14947,7 @@
         for (let i = P.credits.length - 1; i >= 0; i--) {
           const c = P.credits[i];
           const ck = `${c.line}|${norm(c.who.name)}`;
-          if (!c.guess || !known.has(ck) || !fantasy(c.role) || guessN.get(ck) > 1 || !knownN.get(ck)) continue;
+          if (!c.guess || !fantasy(c.role) || (!listed(c.role) && (!known.has(ck) || guessN.get(ck) > 1 || !knownN.get(ck)))) continue;
           P.credits.splice(i, 1);
           fant.unshift({ text: `${c.role} (${c.who.name})`, why: 'fantasy' });
         }
@@ -47137,7 +47162,10 @@
       } catch {
         seps = ['/'];
       }
+      // [Z-SEGUE] (3.204.0, S391) a segue – "The Killers > Narragansett", "Dark Star -> St. Stephen" – splits like "/" (one-off medley)
+      if (ruleOn('S391')) seps = [...seps, ...SEGUE_SEPS.filter((x) => !seps.includes(x))];
     }
+    title = ruleOn('S391') ? segueTrimmed(title) : title;
     const masks = [];
     const mask = (m) => { masks.push(m); return `\u0000${masks.length - 1}\u0000`; };
     let t = String(title || '').replace(/\([^()]*\)|\[[^[\]]*\]/g, mask);
@@ -48618,7 +48646,7 @@
   /** MB's special track titles such as "[untitled]" or "[unknown]": the works matrix skips such tracks. */
   const isPlaceholderTitle = (t) => /^\s*\[[^\]]*\]\s*$/.test(String(t || ''));
   /** Title of a work: information in square brackets is left out ("Song [bonus track]" → "Song"). */
-  const workTitleOf = (t) => String(t || '').replace(/\s*\[[^\]]*\]/g, '').trim() || String(t || '');
+  const workTitleOf = (t) => (ruleOn('S391') ? segueTrimmed(String(t || '').replace(/\s*\[[^\]]*\]/g, '').trim()) : String(t || '').replace(/\s*\[[^\]]*\]/g, '').trim()) || String(t || '');
   /** Medium filter for large releases ("Medium: all · 1 · 2 …"). */
   /** Media choice: tracks of the media chosen for this import (all of them without a choice). */
   const inSelection = (i) => !S.mediaSel || !!(S.mbTracks[i] && S.mediaSel.media.has(S.mbTracks[i].medium));

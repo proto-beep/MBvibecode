@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.203.0",
+  "version": "3.204.0",
   "about": "MB x Vibecode: Credits Importer – the texts of its dashboard in German, Spanish and French (English, the base of the keys and what shows when a text or this file is missing, stays in the script). Loaded by the script (@resource languages). Placeholders {name} are filled in by the script; keys ending in .one / .other are plural forms.",
   "de": {
     "title": "Credits Importer",
@@ -4505,6 +4505,7 @@
     "ignored.why.commissionAgain": "derselbe Auftrag wie in einer Zeile, die seine Tracks nennt",
     "ignored.why.equipment": "die verwendete Ausrüstung (kein Credit)",
     "ignored.why.tourCrew": "die Crew der Tournee (keine Beziehung der Aufnahme)",
+    "ignored.why.sessionSeries": "eine Session- oder Konzertreihe (in MusicBrainz ein Event, hier nicht verknüpft)",
     "ignored.why.foh": "der Ton für das Publikum im Konzert – nicht der Mix der Aufnahme",
     "ignored.why.logo": "die Schrift eines Logos",
     "ignored.why.title": "der Titel des Release",
@@ -8975,6 +8976,7 @@
     "ignored.why.commissionAgain": "el mismo encargo que una línea que nombra sus pistas",
     "ignored.why.equipment": "el equipo usado (sin crédito)",
     "ignored.why.tourCrew": "el equipo de la gira (ninguna relación de la grabación)",
+    "ignored.why.sessionSeries": "una serie de sesiones o conciertos (un evento en MusicBrainz, no se enlaza aquí)",
     "ignored.why.foh": "el sonido para el público en el concierto – no la mezcla de la grabación",
     "ignored.why.logo": "las letras de un logotipo",
     "ignored.why.title": "el título de la publicación",
@@ -13511,6 +13513,7 @@
     "ignored.why.commissionAgain": "la même commande qu’une ligne qui nomme ses pistes",
     "ignored.why.equipment": "le matériel utilisé (pas de crédit)",
     "ignored.why.tourCrew": "l’équipe de la tournée (aucune relation de l’enregistrement)",
+    "ignored.why.sessionSeries": "une série de sessions ou de concerts (un événement dans MusicBrainz, non lié ici)",
     "ignored.why.foh": "le son pour le public du concert – pas le mixage de l’enregistrement",
     "ignored.why.logo": "le lettrage d’un logo",
     "ignored.why.title": "le titre de la parution",

@@ -786,6 +786,62 @@ def case_poetics3203():
         H.ENTRIES_VIEW = 'legacy'
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+def case_wettuna3204():
+    """Credits Importer 3.204.0 (collected item Z-WETTUNA, rules S392, S393): Wet Tuna's Bandcamp credits pasted – names and instruments in
+    capitals, lists with "/", lines broken after "/", words of fantasy, a line about the Lagniappe Sessions.
+    A) Every name with its instruments – ARP Odyssey and Korg synth as synthesizer, envelope filter and effectors as effects, amplified
+       percussion and rhythm necklace as percussion, Synare as electronic drum set, space drums as drums (each credited as written);
+       Coot's two percussion words one relationship ("⧉ amplified percussion, rhythm necklace").
+    B) Left out: MULTIPLE INFINITIES, LOW END THEORY, VIBRATION (fantasy), the line about the lagniappe session (a series); nothing
+       "not recognized"."""
+    TEXT = open(str(H.ROOT.parent / 'notes' / 'testdaten' / 'bandcamp-wettuna-eaud5.txt'), encoding='utf-8').read() if (H.ROOT.parent / 'notes' / 'testdaten' / 'bandcamp-wettuna-eaud5.txt').exists() else None
+    TEXT = TEXT or ('digital version of our lagniappe session...much obliged aquarium drunkard xoxo ∞\n\n'
+                    'MATT VALENTINE: GUITAR/VOCAL/EFFECTORS/ \nARP ODYSSEY/PERCUSSION/PROGRAMMING/ \nMULTIPLE INFINITIES \n\n'
+                    'ERIKA ELDER: SYNTHESIZERS/VOCAL/ELECTRIC PIANO/ \nSPACE DRUMS/SYNARE/PERCUSSION \n\n'
+                    'JIM BLISS: BASS/ENVELOPE FILTER/KORG SYNTH/ VOCAL/PERCUSSION/LOW END THEORY \n\n'
+                    'COOT: CONGAS/AMPLIFIED PERCUSSION/RHYTHM NECKLACE/VIBRATION')
+    for i, n in ((9311, 'effects'), (9312, 'percussion'), (9313, 'electric piano'), (9314, 'congas'), (9315, 'electronic drum set')):
+        H.attr(i, n, 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
+    CHIPS = """(() => Object.fromEntries([...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+      [...g.querySelectorAll('.dci-em-chip .dci-em-chipname')].map(c => c.textContent.replace(/\\s+/g, ' ').trim())])))()"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            H.ENTRIES_VIEW = 'matrix'
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.src_menu(pg, 'text-open')
+            pg.fill('[data-f=text-src]', TEXT)
+            pg.click('[data-act=text-load]')
+            H.wait_for(pg, f"{LOGS}.filter(x => /Import complete/.test(x)).length >= 2", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 400)
+            pg.click('.dci-head [data-act=view-toggle]')
+            H.wait_still(pg, "document.body.innerHTML", 10, 400)
+            ch = pg.evaluate(CHIPS)
+            un = pg.evaluate("[...document.querySelectorAll('[data-el=unrec] li, .dci-unrec li')].map(li => li.textContent.trim().slice(0, 50))")
+            page = pg.evaluate("document.getElementById('dci-overlay').textContent")
+            for k, v in ch.items():
+                print('A)', k, v)
+            print('B) nicht erkannt:', un, '| Fehler:', errs)
+            all_ = ' | '.join(' '.join(v) for v in ch.values())
+            want = ['synthesizer “ARP Odyssey”', 'synthesizer “Korg synth”', 'effects “envelope filter”', 'effects “effectors”', 'electronic drum set “Synare”',
+                    'drums (drum set) “space drums”']
+            missing = [w for w in want if w.lower() not in all_.lower()]
+            coot = ' '.join(next((v for k, v in ch.items() if k.lower() == 'coot'), []))
+            print('   fehlt:', missing, '| Coot:', coot)
+            results.append(not missing and 'amplified percussion, rhythm necklace' in coot.lower())
+            results.append(not un and all(w in page for w in ('MULTIPLE INFINITIES', 'LOW END THEORY', 'VIBRATION', 'lagniappe')) and not errs)
+            b.close()
+    finally:
+        H.ENTRIES_VIEW = 'legacy'
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 def case_bandtracks3183():
     """Credits Importer 3.183.0 (collected item Z-BANDTRACKS, S078): a release of the "Blue Shroud Collective" whose tracks 1 and 2 name single
     players (Maya Homburger; Maya Homburger & Barry Guy) and whose tracks 3 and 4 are credited to the band.

@@ -746,6 +746,48 @@ def case_medley():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_segue3204():
+    """Credits Importer 3.204.0 (collected item Z-SEGUE, rule S391): segues of jam bands – track 3 "The Killers > Narragansett" (one track,
+    two pieces), track 4 "China Cat Sunflower >" (the next piece follows on its own track).
+    A) Track 3: "Split into 2 works (medley)" as for "/" – its parts The Killers · Narragansett; track 4: no split (a sign at the end only).
+    B) S391 off: no split for track 3."""
+    t0 = list(H.TITLES)
+    H.TITLES[2] = 'The Killers > Narragansett'
+    H.TITLES[3] = 'China Cat Sunflower >'
+    H.attr(757, 'medley', 757)
+    H.lt(278, H.LTS[278]['gid'], 'performance', 'recording', 'work', (757,))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    TIP = "(i) => (b => b ? b.title : null)(document.querySelector(`.dci-matrix tr[data-work=\"${i}\"] [data-act=medley-mark]`))"
+    results = []
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Works of the artists compared|Checks complete/.test(li.textContent))", 60)
+        H.wait_still(pg, "document.body.innerHTML", 10, 400)
+        out = [pg.evaluate(TIP, 2), pg.evaluate(TIP, 3)]
+        b.close()
+        return out, errs
+
+    try:
+        with sync_playwright() as p:
+            a, errs = run(p)
+            print('A)', a, errs)
+            results.append(bool(a[0]) and a[0].endswith('The Killers · Narragansett') and a[1] is None and not errs)
+            bb, errs = run(p, off=['S391'])
+            print('B)', bb, errs)
+            results.append(bb[0] is None and not errs)
+    finally:
+        H.TITLES[:] = t0
+        H.RULES_OFF = []
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 def case_mdly398():
     """Credits Importer 3.98.0 (collected item Z-MDLY; rule S157): medleys by the separators of the release; traditional tunes arranged.
     Track 2 "Alpha/Beta" (no spaces), track 3 "AC/DC Song", track 4 "Gamma + Delta"; Traditional wrote, The Band arranged (Discogs).

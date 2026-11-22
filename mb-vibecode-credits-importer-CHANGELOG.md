@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-22 | 3.197.0 – 3.203.0 | – |
+| 2026-11-22 | 3.197.0 – 3.204.0 | – |
 | 2026-11-21 | 3.193.0 – 3.196.0 | – |
 | 2026-11-20 | 3.185.0 – 3.192.0 | 1.23.0 |
 | 2026-11-19 | 3.170.0 – 3.184.0 | – |
@@ -136,6 +136,15 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.204.0
+
+**Segues and a jam band's lineup.**
+
+- **Segues** (rule S391): "The Killers > Narragansett", "Dark Star -> St. Stephen" (also "→", "=>") in one track split like "/" – a one-off medley, each piece a work, every link with "medley"; a sign at the end of a title ("China Cat Sunflower >", the next piece on its own track) is no part of the work's name.
+- **Lists broken after "/"** (S392): "GUITAR/VOCAL/EFFECTORS/" · "ARP ODYSSEY/PERCUSSION/PROGRAMMING/" · "MULTIPLE INFINITIES" is one line (until 3.203.0 only after " /" with a space, and once); words of fantasy in such a list ("MULTIPLE INFINITIES", "LOW END THEORY", "VIBRATION") are left out even alone.
+- **New words** (mapping): ARP Odyssey, Korg synth – synthesizer; envelope filter, effectors – effects; amplified percussion, rhythm necklace – percussion; Synare – electronic drum set; space drums – drums; each credited as written (two words of one instrument of a person: one relationship, "amplified percussion, rhythm necklace").
+- **Session series** (S393): a line naming the Lagniappe Sessions of Aquarium Drunkard, Tiny Desk, Daytrotter, Audiotree, KEXP, Peel or Maida Vale sessions without a credit is left out with its reason – such a series is linked at an event in MusicBrainz.
 
 ### Import 3.203.0
 
