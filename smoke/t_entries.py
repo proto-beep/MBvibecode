@@ -3056,6 +3056,144 @@ def case_relgroups3186():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_dateinrange3200():
+    """Credits Importer 3.200.0 (collected item Z-DATEINRANGE, rule S384): Jane Roe with voice and soprano saxophone without tracks, "Performer"
+    on tracks 1, 2 and 4 of two media (3 + 1 tracks); the notes "CD 1 / Recorded: November 27-29, 2016 … / CD 2 / Recorded November 30,
+    2016 …"; the quick switch S339 on (as in the case of Savina Yannatou, Odes and Meditations for Cecil Taylor).
+    A) Staged on the release: each instrument once per date – no "2016-11-30" beside "2016-11-27 – 2016-11-30" (a day within the period
+       of the same relationship); on the recordings: dates of their own.
+    B) S384 off: what was staged before (to compare – the log of the case shows it)."""
+    import copy
+    orig = H.discogs_release
+    lts0, attrs0 = copy.deepcopy(H.LTS), copy.deepcopy(H.ATTRS)
+    linked0 = copy.deepcopy({k: H.LINKED.get(k) for k in ('link_type', 'link_attribute_type')})
+    media0 = H.MEDIA
+    H.MEDIA = [3, 1]
+    for i, n in ((9131, 'soprano saxophone'), (9132, 'tenor saxophone'), (9134, 'alto saxophone')):
+        H.attr(i, n, 14, 14)
+    H.lt(44, H.uid('1aaa0000', 44), 'instrument', 'artist', 'release', (14, 1, 194, 596))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    H.ARTISTS[3301] = (H.uid('dddddddd', 3301), 'Jane Roe')
+
+    def rel():
+        d = orig()
+        d['notes'] = 'CD 1\nRecorded: November 27-29, 2016 at Alchemia Club, Kraków\nCD 2\nRecorded November 30, 2016 at Radio Kraków'
+        d['extraartists'] = [{'name': 'Jane Roe', 'anv': '', 'role': 'Soprano Saxophone, Tenor Saxophone', 'tracks': '', 'id': 3301, 'join': ''},
+                             {'name': 'Jane Roe', 'anv': '', 'role': 'Alto Saxophone', 'tracks': '4', 'id': 3301, 'join': ''}]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = rel
+    ADDED = """MB.relationshipEditor.state.added.filter((r) => (r.entity0 || {}).name === 'Jane Roe').map((r) => [(r.entity1 || {}).entityType || '', (r.entity1 || {}).name || '',
+      ((r.attributes && r.attributes.__tree) || []).map((x) => x.typeName).sort().join(','), [r.begin_date, r.end_date].map(d => d ? [d.year, d.month, d.day].filter(x => x != null).join('-') : '').join('..')]).sort()"""
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        H.ENTRIES_VIEW = 'legacy'
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.wait_still(pg, "document.body.innerHTML", 10, 400)
+        if pg.locator('[data-act=dm-apply-fold]').count():
+            pg.click('[data-act=dm-apply-fold]')
+            H.wait_still(pg, "document.body.innerHTML", 10, 400)
+        pg.click(f"{sec_sel(pg, 'Jane Roe')} [data-act=insts-set][data-insts=release]")
+        H.wait_still(pg, "document.body.innerHTML", 10, 400)
+        H.stage(pg)
+        added = pg.evaluate(ADDED)
+        b.close()
+        return added, errs
+
+    results = []
+    try:
+        with sync_playwright() as p:
+            added, errs = run(p)
+            rel_ = [a for a in added if a[0] == 'release']
+            print('A) Release:', rel_)
+            print('   Aufnahmen:', [a for a in added if a[0] == 'recording'], '| Fehler:', errs)
+            per = {}
+            for a in rel_:
+                per.setdefault(a[2], []).append(a[3])
+            inside = any(d1 != d2 and d1.split('..')[0] >= d2.split('..')[0] and d1.split('..')[1] <= d2.split('..')[1] for ds in per.values() for d1 in ds for d2 in ds)
+            results.append(bool(rel_) and not inside and not errs)
+            added2, errs2 = run(p, off=['S384'])
+            print('B) ohne S384, Release:', [a for a in added2 if a[0] == 'release'])
+            results.append(not errs2)
+    finally:
+        H.discogs_release = orig
+        H.MEDIA = media0
+        H.RULES_OFF = []
+        H.LTS.clear(); H.LTS.update(lts0)
+        H.ATTRS.clear(); H.ATTRS.update(attrs0)
+        for k, v in linked0.items():
+            H.LINKED[k] = v
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+def case_guestdup3200():
+    """Credits Importer 3.200.0 (collected item Z-GUESTDUP, S383): Discogs "Vocals [Guest], Jaw Harp [Guest] – Makigami Koichi", its notes
+    "Makigami Koichi -harmonic overtone singing, jaw harp" (as on Throats, with Bandcamp's credits).
+    A) Makigami Koichi: one jaw harp (guest), one voice "harmonic overtone singing" (guest) – no second jaw harp, no bare "vocals".
+    B) S383 off: two rows of jaw harp, as until 3.199.0."""
+    import copy
+    orig = H.discogs_release
+    attrs0 = copy.deepcopy(H.ATTRS)
+    linked0 = copy.deepcopy({k: H.LINKED.get(k) for k in ('link_attribute_type',)})
+    H.attr(9201, 'jaw harp', 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    H.ARTISTS[3371] = (H.uid('dddddddd', 3371), 'Makigami Koichi')
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': 'Makigami Koichi', 'anv': '', 'role': 'Vocals [Guest], Jaw Harp [Guest]', 'tracks': '', 'id': 3371, 'join': ''}]
+        d['companies'] = []
+        d['notes'] = 'Makigami Koichi -harmonic overtone singing, jaw harp'
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = rel
+    ROWS = """(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === 'Makigami Koichi');
+      return g ? [...g.querySelectorAll('tr.dci-row')].map(tr => [tr.querySelector('.dci-drole').dataset.raw, (tr.querySelector('[data-f=primary]') || {}).value || '',
+        (tr.querySelector('input[data-f=flag][value=guest]') || {}).checked ? 'guest' : '']) : []; })()"""
+    results = []
+
+    def read(p, off=()):
+        H.RULES_OFF = list(off)
+        H.ENTRIES_VIEW = 'legacy'
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.wait_still(pg, "document.body.innerHTML", 10, 400)
+        r = pg.evaluate(ROWS)
+        b.close()
+        return r, errs
+
+    try:
+        with sync_playwright() as p:
+            r, errs = read(p)
+            print('A)', r, errs)
+            results.append(len([x for x in r if 'jaw' in x[0].lower()]) == 1 and not any(x[0].lower().startswith('vocal') for x in r) and all(x[2] == 'guest' for x in r) and not errs)
+            r, errs = read(p, off=['S383'])
+            print('B)', r, errs)
+            results.append(len([x for x in r if 'jaw' in x[0].lower()]) == 2 and not errs)
+    finally:
+        H.RULES_OFF = []
+        H.discogs_release = orig
+        H.ATTRS.clear(); H.ATTRS.update(attrs0)
+        for k, v in linked0.items():
+            H.LINKED[k] = v
+        H.ENTRIES_VIEW = 'legacy'
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 def case_insts3103():
     """Credits Importer 3.103.0 (collected item Z-INSTS, rules S169, S170): Discogs names Jane Roe with five instruments without tracks
     (soprano and tenor saxophone, flute, bass clarinet, little instruments), Sax Two with soprano saxophone and flute, both as guest.
@@ -3866,6 +4004,95 @@ def case_dsupask3188():
             H.LINKED[k] = v
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+
+def case_dsupother3200():
+    """Credits Importer 3.200.0 (collected item Z-DATEINRANGE, S384): the dates of the pools against MusicBrainz's. MusicBrainz: In Man
+    double bass on all four recordings with 2001-03-01 – 2001-03-05; Out Man trombone on them with 2001-04. Discogs: both; the notes
+    "Recorded March 1–3, 2001".
+    A) The date matrix applied: In Man – the source's date lies within MusicBrainz's: nothing offered, his row stays on Skip. Out Man –
+       another date: "＋ Add beside it" (pressed) · "⇄ Replace MusicBrainz's".
+    B) Staged as it is: Out Man's trombone added four times with 2001-03 (the recordings' date of March 1–3) beside MusicBrainz's (none edited).
+    C) "⇄ Replace": the four of MusicBrainz edited to 2001-03, none added."""
+    import copy
+    import json as _j
+    orig = H.discogs_release
+    lts0, attrs0, extra0 = copy.deepcopy(H.LTS), copy.deepcopy(H.ATTRS), copy.deepcopy(H.MB_EXTRA)
+    linked0 = copy.deepcopy({k: H.LINKED.get(k) for k in ('link_type', 'link_attribute_type')})
+    H.attr(9160, 'trombone', 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    PEOPLE = [('In Man', 3361, 'Double Bass'), ('Out Man', 3362, 'Trombone')]
+    for n, i, _r in PEOPLE:
+        H.ARTISTS[i] = (H.uid('dddddddd', i), n)
+    rel_ = lambda i, name, attrs, begin='', end='': {'target-type': 'artist', 'type': 'instrument', 'type-id': H.LTS[148]['gid'], 'attributes': attrs, 'attribute-values': {},
+                                                     'artist': {'id': H.ARTISTS[i][0], 'name': name}, 'begin': begin, 'end': end or begin}
+    for rec in H.REC:
+        H.MB_EXTRA[rec] = H.MB_EXTRA.get(rec, []) + [rel_(3361, 'In Man', ['double bass'], '2001-03-01', '2001-03-05'), rel_(3362, 'Out Man', ['trombone'], '2001-04')]
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': n, 'anv': '', 'role': r, 'tracks': '', 'id': i, 'join': ''} for n, i, r in PEOPLE]
+        d['companies'] = []
+        d['notes'] = 'Recorded March 1–3, 2001.'
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = rel
+    BOX = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      if (!g) return null; const b = g.querySelector('.dci-dsup[data-el=dsup]');
+      return { lines: b ? [...b.querySelectorAll('.dci-dsup-l')].map(l => [l.dataset.dsup, l.textContent.replace(/\\s+/g, ' ').trim(),
+          [...l.querySelectorAll('[data-act=dsup-other]')].map(x => x.dataset.choice + ':' + x.getAttribute('aria-pressed')).join(' ')]) : [],
+        rows: [...g.querySelectorAll('tr.dci-row')].map(tr => { const lv = tr.querySelector('[data-act=level][aria-pressed=true]'); return lv ? lv.dataset.level : ''; }) }; }"""
+    at = lambda i: {'type': {'gid': H.ATTRS[i]['gid'], 'id': i, 'name': H.ATTRS[i]['name']}, 'typeID': i, 'typeName': H.ATTRS[i]['name']}
+    ex = [{'id': 9400 + k, 'linkTypeID': 148, 'entity0': {'gid': H.ARTISTS[3362][0], 'entityType': 'artist', 'id': 3362, 'name': 'Out Man'},
+           'entity1': {'gid': rec, 'entityType': 'recording', 'id': 5001 + k, 'name': 'x'}, 'begin_date': {'year': 2001, 'month': 4, 'day': None},
+           'end_date': {'year': 2001, 'month': 4, 'day': None}, 'ended': True,
+           'attributes': {'__tree': [at(9160)]}, 'entity0_credit': '', 'entity1_credit': '', '_status': 0} for k, rec in enumerate(H.REC)]
+    ADDED = """MB.relationshipEditor.state.added.filter((r) => (r.entity0 || {}).name === 'Out Man').map((r) => [r._status,
+      [r.begin_date, r.end_date].map(d => d ? [d.year, d.month, d.day].filter(x => x != null).join('-') : '').join('..')])"""
+
+    def run(p, replace=False):
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.wait_still(pg, "document.body.innerHTML", 10, 300)
+        pg.click('[data-act=dm-apply]')
+        H.wait_still(pg, "document.body.innerHTML", 10, 300)
+        im, om = pg.evaluate(BOX, 'In Man'), pg.evaluate(BOX, 'Out Man')
+        if replace:
+            pg.click(f"{sec_sel(pg, 'Out Man')} [data-act=dsup-other][data-choice=replace]")
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+        pg.evaluate(f"(() => {{ const re = MB.relationshipEditor; re.state = {{ ...re.state, existingRels: {_j.dumps(ex)} }}; }})()")
+        H.stage_click(pg, least=2000)
+        added = pg.evaluate(ADDED)
+        b.close()
+        return im, om, added, errs
+
+    results = []
+    try:
+        with sync_playwright() as p:
+            H.ENTRIES_VIEW = 'legacy'
+            im, om, added, errs = run(p)
+            print('A)', im, '\n  ', om)
+            results.append(bool(im) and im['rows'] == ['skip'] and im['lines'] == []
+                           and bool(om) and any(l[0] == 'date-other' and l[2] == 'add:true replace:false' for l in om['lines']))
+            print('B)', added, '| Fehler:', errs)
+            results.append(len(added) == 4 and all(x == [1, '2001-3..2001-3'] for x in added) and not errs)
+            im, om, added, errs = run(p, replace=True)
+            print('C)', added, '| Fehler:', errs)
+            results.append(len(added) == 4 and all(x == [2, '2001-3..2001-3'] for x in added) and not errs)
+    finally:
+        H.discogs_release = orig
+        H.LTS.clear(); H.LTS.update(lts0)
+        H.ATTRS.clear(); H.ATTRS.update(attrs0)
+        H.MB_EXTRA.clear(); H.MB_EXTRA.update(extra0)
+        for k, v in linked0.items():
+            H.LINKED[k] = v
+        H.ENTRIES_VIEW = 'legacy'
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 def case_dsup3107():
     """Credits Importer 3.107.0 (collected items Z-DSUP3, Z-DSUP2, Z-DSUPWHY): the dates of the pools for relationships MusicBrainz has.

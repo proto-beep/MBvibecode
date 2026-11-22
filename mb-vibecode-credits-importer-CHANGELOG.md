@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-22 | 3.197.0 – 3.199.0 | – |
+| 2026-11-22 | 3.197.0 – 3.200.0 | – |
 | 2026-11-21 | 3.193.0 – 3.196.0 | – |
 | 2026-11-20 | 3.185.0 – 3.192.0 | 1.23.0 |
 | 2026-11-19 | 3.170.0 – 3.184.0 | – |
@@ -136,6 +136,15 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.200.0
+
+**Musicians on the right tracks, one date per relationship.**
+
+- **Classical crediting** (rule S381): the tracks of a musician credited for the whole release are also found by the recording's own artists – "Passacaglia in G minor" is credited to H. I. F. Biber, its recording to Maya Homburger: her violin goes onto her recordings and those of the band, not onto all 37 tracks.
+- **One track only** (S382): a person credited for one track (a guest named in a title, a track's artists) keeps all the instruments on that track – "⑃ on the release …" is greyed with its reason, the quick switch "Instruments → release" leaves the person out.
+- **The same instrument twice** (S383): "Vocals [Guest], Jaw Harp [Guest]" beside "Makigami Koichi -harmonic overtone singing, jaw harp" – one jaw harp (guest), one voice "harmonic overtone singing" (guest); a bare "vocals" is that voice, unless one line names both.
+- **A date within another** (S384): a day lying within a period of the same relationship is not staged as one more – on the release the period stays ("from 2016-11-27 until 2016-11-30", not also "on 2016-11-30"), on a recording the more exact date; periods that only overlap stay both. Against MusicBrainz: its date holds the source's – nothing new; another date – "＋ Add beside it" (chosen) or "⇄ Replace MusicBrainz's" in "Compared with MusicBrainz".
 
 ### Import 3.199.0
 

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.199.0
+// @version      3.200.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.199.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.199.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.200.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.200.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.199.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.200.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -2274,6 +2274,13 @@
       "dsup.dateDiffers": "Date of “{role}”: MusicBrainz {mb}, the source {src} – nothing in common",
       "dsup.takeDate": "Take",
       "dsup.dateTaken": "Taken ✓",
+      "insts.oneTrack": "Credited for one track only ({track}): its instruments stay on that track",
+      "log.guestDup": "{n} rows of the same instrument or voice of a guest taken into one (S383)",
+      "status.dateIn.one": "{n}× not added: its date lies within another of the same relationship",
+      "status.dateIn.other": "{n}× not added: its date lies within another of the same relationship",
+      "dsup.date.other": "Date of “{role}”: MusicBrainz {mb}, the source {to}",
+      "dsup.other.add": "＋ Add beside it",
+      "dsup.other.replace": "⇄ Replace MusicBrainz's",
       "dsup.takeAll": "Add all conflicts ({n})",
       "dsup.takeAllDates": "Take all dates offered ({n})",
       "log.dsupTaken": "Compared with MusicBrainz: {n} roles taken",
@@ -3013,6 +3020,7 @@
       "wd.staged": "{date} onto the link – staged",
       "wd.change": "{date} onto the link (MusicBrainz: {mb} – changed)",
       "out.mbOther": "MusicBrainz has another date: {mb} (here {date})",
+      "out.mbWithin": "MusicBrainz's date holds this one: {mb} (here {date})",
       "wd.off": "{date} not onto the link",
       "wd.back": "take",
       "wd.add": "{date} onto the link (MusicBrainz has none)",
@@ -5633,6 +5641,10 @@
     { id: 'S378', where: 'TEXT.parse (bookletMore)', note: 'Texts (3.199.0; collected item Z-LIVEQUOTEPLACE): "Recorded live on April 23th 1997 at the "Dome Muziki i Tanca" in the city of Zabrze in Poland during …" – recorded live at the place in quotation marks, in its town (the date from the dates of the text)' },
     { id: 'S379', where: 'TEXT.parse (bookletMore)', note: 'Texts (3.199.0; collected item Z-TOURCREW): the crew of a tour below its heading ("Tangerine Dream Crew on the European Tour 1997") is left out with its reason, until an empty line – stage monitoring, technicians, light, catering, drivers, booking, agents, promoters, merchandising, PR; "Recording engineer and FOH Mix: Dave Dixon" – the recording engineer, "FOH Mix" (the sound for the audience) left out with its reason' },
     { id: 'S380', where: 'TEXT.parse (bookletMore)', note: 'Texts (3.199.0; collected item Z-LOGOTEXT): what a booklet prints besides credits is left out with its reason – a logo\'s lettering (a label of the release in capitals, "CARDINAL FUZZ"; "TDI International Production" of the company of ℗/©), the release\'s title alone ("REPAIR"), a heading of a lineup or performance ("The concert music performance:", "Tangerine Dream\'s lineup on this live recording:", "… LIVE Recording "Tournado""), "Please visit the official … homepage: …", "This Live set runs without breaks or pauses.", what software was used' },
+    { id: 'S381', where: 'applyTrackArtistTracks, bandTrackFor', note: 'Track artists (3.200.0; collected item Z-TARRECORDING): S078 reads the artists of each recording too, not only of the track – classical crediting gives the track to the composer and the recording to who plays ("Passacaglia in G minor" by H. I. F. Biber, recorded by Maya Homburger): her violin, credited for the whole release, goes onto the tracks whose track or recording names her (1-2, 2-4, 3-7) and those of the band (CD 5), not onto all 37. Off: the track\'s artists only, as until 3.199.0' },
+    { id: 'S382', where: 'instsOneTrack, instsSet, instsSegHtml, instsBarHtml', note: 'Instruments (3.200.0; collected item Z-INSTSONETRACK): a person credited for one track only – the source gives no tracks, a title names the person as a guest (S322) or the track\'s artists name the person on just that one (S078) – keeps all the instruments on that track: "⑃ on the release …" is greyed (its tooltip says why), the suggestion is not shown, the quick switch S339 leaves the person out. Off: as until 3.199.0' },
+    { id: 'S383', where: 'guestDupMerge', note: 'Guests (3.200.0; collected item Z-GUESTDUP): one person, one instrument or voice, one target – one relationship. Two lines naming the same ("Makigami Koichi -harmonic overtone singing, jaw harp" and "… with guests Makigami Koichi vocal and jaw harp") are one row, "guest" if one of them says so; a bare "vocal" of a guest beside another voice of the person ("harmonic overtone singing") is that voice – unless one line names both ("vocals & harmonic overtone singing"). Off: a row each, as until 3.199.0' },
+    { id: 'S384', where: 'dateInRangeOf, dateSpanOf, computePlan, dsupDateOf, dsupInside, dsupHolds', note: 'Dates (3.200.0; collected item Z-DATEINRANGE): a date lying wholly within another of the same relationship (the same entry, type, attributes and target) is not a relationship of its own – on the release the period stays ("from 2016-11-27 until 2016-11-30", not also "on 2016-11-30"), on a recording the more exact date. Periods that only overlap stay both (two sessions). Against MusicBrainz: no date there – added (as before); its date holds the source\'s – nothing new; another date – "＋ Add beside it" (chosen) or "⇄ Replace MusicBrainz\'s" in the box "Compared with MusicBrainz". Off: every date a relationship, other dates as their common part (as until 3.199.0)' },
     { id: 'S299', where: 'TEXT.parse (shopLines; SHOP_BLOCK_LINES)', note: 'Texts (3.169.0; Z-BCSHOPBLOCK): what a shop writes below an edition is left out as "shop" – the edition\'s name with "(Limited Edition …)" and its format, what the records look like ("2 x 180gsm …", "DiscA/B - Transparent green with gold blob", "Packaged in a standard Sleeve."), the block about shipping ("+++++INTERNATIONAL SHIPPING +++++", "- WE DO NOT SHIP TO PO BOXES", "- ALL ORDERS ARE SENT BY TRACKED COURIER …", "UK: 2-3 days") and the page\'s own details ("published March 29, 2019", "license"). They stood under "not recognized". Every free text' },
     { id: 'S298', where: 'TEXT.parse (hyphenTrackLines; HT_TRACKS, HT_HYPHEN, HT_HEAD, HT_SPLIT)', note: 'Texts (3.169.0; Z-HYPHENTRACKS): a lineup written "Pete Callard-Acoustic Guitar On Tracks 1,2,3, Electric Guitar on Tracks 18,19 Hari-Om- Vocals On Tracks 9,10 …" – a hyphen without spaces between name and role, each role with its tracks, the whole lineup in one paragraph (Beatport and shop texts): the paragraph is cut before each name, the name is what stands before the first hyphen whose right side begins with a role ("Hari-Om- Vocals": Hari-Om), "and Vocals on Tracks …" and a role after a list of tracks are roles of their own, "on all tracks" says nothing new; a heading before the first name ("Musicians In The Studio") is a heading. Only for a line that names tracks that way. Every free text' },
     { id: 'S296', where: 'videoLevelWant, videoLevelFor, VIDEO_RULES, R033 (mapRole), rgIsDjMix, Q022', note: 'Video credits and DJ mixes (3.164.0; proposals F-VIDEOLEVEL, F-DJMIX of review run 2): every credit of a video – video director, camera work, cinematographer and the table of video credits (R076, R110, R119) – is on the recordings when its tracks are videos – from 3.169.0 on the videos only when just some of its tracks are (Z-VIDEOTRACKS; until then such a credit went to the release) – and on the release when none is, where MusicBrainz has the type there (the cinematographer and the camera work were always on the recordings, the others on the release). "Mixed By [DJ Mix]" is the DJ-mix of the release, not the mix engineer; on a release group of the type DJ-mix "Mixed By" asks which of the two (Q022)' },
@@ -21063,7 +21075,7 @@
     const sug = sug0 && (sug0.kind === 'add' || sug0.kind === 'refine') ? sug0
       : sug0 && own ? { kind: 'change', mb: sug0.mb, to: sug0.row || sug0.to } : null;
     const dkey = sug ? `wd|${key}|${dsupDateText(sug.to)}` : '';
-    return { key, value, sug, mb, other: !!(sug0 && !sug && (sug0.kind === 'change' || sug0.kind === 'differs')), own, off: !!(S.workDateOff && S.workDateOff.has(key)), dkey,
+    return { key, value, sug, mb, other: !!(sug0 && !sug && (sug0.kind === 'change' || sug0.kind === 'differs' || sug0.kind === 'other')), own, off: !!(S.workDateOff && S.workDateOff.has(key)), dkey,
       staged: !!(dkey && S.dsupDone && S.dsupDone.has(dkey)) };
   }
   /** [Z-WORKDATE] (3.130.0) The date of a link in MusicBrainz as text ("2007-05", "2007-05-06 – 2007-05-07"). */
@@ -21119,6 +21131,7 @@
       return attrsCache.get(k);
     };
     const msynCredits = msynCreditsOf(S.rows, attrsOf);
+    const dateIn = dateInRangeOf(S.rows, attrsOf); // [Z-DATEINRANGE] (3.200.0, S384)
     for (const row of S.rows) {
       const info = { issues: [], ready: 0, existing: 0, applied: 0, loose: 0, noWork: 0, mb: null, exact: 0, locked: 0 };
       rowInfo.set(row.id, info);
@@ -21207,6 +21220,11 @@
         if (!cur || RANK[st] > RANK[cur]) info.per.set(target.track.idx, st);
       };
       const planTarget = (target) => {
+        // [Z-DATEINRANGE] (3.200.0, S384) its date lies within another's of the same relationship (or, on a recording, holds a more exact one)
+        if (dateIn.has(`${row.id}|${target.gid}`)) {
+          info.dateIn = (info.dateIn || 0) + 1;
+          return;
+        }
         // Rows that differ only in their date (several single dates, D013) are relationships of their own
         const baseKey = `${target.gid}|${artist.mbid}|${lt.gid}|${attrKey}`;
         const key = planKeyOf(target.gid, artist, lt, attrs, row);
@@ -21270,8 +21288,29 @@
         if (S.existing.exact.has(baseKey)) {
           // [Z-DSUP] (3.106.0, S172) a date offered and taken: an edit of MusicBrainz's relationship
           if (ruleOn('S172') && item.date && S.existing.list) {
-            const x = dsupOf(artist.mbid).find((y) => `${y.target}|${y.mbid}|${y.typeId}|${y.attrKey}` === baseKey);
+            const xs = dsupOf(artist.mbid).filter((y) => `${y.target}|${y.mbid}|${y.typeId}|${y.attrKey}` === baseKey);
+            // ([Z-DATEINRANGE] 3.200.0, S384) MusicBrainz has it more than once: one of them holding this date is enough
+            const held = ruleOn('S384') && xs.some((y) => !dsupDateOf(item.date, y));
+            const x = held ? null : xs[0];
             const sug = x ? dsupDateOf(item.date, x) : null;
+            // [Z-DATEINRANGE] (3.200.0, S384) another date than MusicBrainz's: added beside it (as chosen by default) or put in its place
+            if (sug && sug.kind === 'other') {
+              const okey = `${baseKey}|${dsupDateText(sug.to)}`;
+              if (S.dsupDone.has(okey)) { info.applied++; return; }
+              if (dsupTaken(okey, 'other')) {
+                if (!seen.has(`rd|${okey}`)) {
+                  seen.add(`rd|${okey}`);
+                  items.push({ ...item, key: `rd|${okey}`, relDate: { key: okey, attrs: x.attrs, to: sug.to, kind: 'change' } });
+                  info.ready++;
+                }
+                return;
+              }
+              if (seen.has(key)) return;
+              seen.add(key);
+              items.push(item);
+              info.ready++;
+              return;
+            }
             const dkey = sug && sug.kind !== 'differs' ? `${baseKey}|${dsupDateText(sug.to)}` : '';
             if (dkey && S.dsupDone.has(dkey)) { info.applied++; return; }
             if (dkey && dsupTaken(dkey, sug.kind) && !seen.has(`rd|${dkey}`)) {
@@ -21410,6 +21449,60 @@
     const baseKey = `${gid}|${artist.mbid}|${lt.gid}|${attrKey}`;
     const rowDate = row.dateKeyed ? formatDateValue(rowDateInfo(row, lt).value) : '';
     return rowDate ? `${baseKey}|d:${rowDate}` : baseKey;
+  }
+  /**
+   * [Z-DATEINRANGE] (3.200.0, S384) A date of a relationship as a span of days (yyyymmdd): a month from its first to its last day, a
+   * year likewise; no begin – from the start; a begin alone – that date.
+   */
+  function dateSpanOf(v) {
+    if (!v || (!v.begin && !v.end)) return null;
+    const lo = (d) => d.year * 10000 + (d.month || 1) * 100 + (d.day || 1);
+    const hi = (d) => d.year * 10000 + (d.month || 12) * 100 + (d.day || 31);
+    // (a begin alone: that date – the dashboard's single dates; an open "from …" is not a credit's date)
+    return { lo: v.begin ? lo(v.begin) : -Infinity, hi: v.end ? hi(v.end) : v.begin ? hi(v.begin) : Infinity };
+  }
+  /**
+   * [Z-DATEINRANGE] (3.200.0, S384) Rows whose date lies wholly within another date of the same relationship (the same entry, type,
+   * attributes and target): "from 2016-11-27 until 2016-11-30" and "on 2016-11-30" of one person on the release. On the release (and
+   * any target but a recording) the period stays, the day inside it is not staged; on a recording the more exact date stays, the
+   * period holding it is not staged. Periods that only overlap (27–29 and 28–30) stay both – they may be two sessions.
+   * Returns a set of "row id|target gid".
+   */
+  function dateInRangeOf(rows, attrsOf) {
+    const out = new Set();
+    if (!ruleOn('S384')) return out;
+    const groups = new Map();
+    for (const row of rows) {
+      if (row.level === 'skip' || row.level === 'work' || !row.date) continue;
+      const artist = S.artists.get(row.artistKey);
+      const lt = currentLinkType(row);
+      if (!artist || !artist.mbid || !lt) continue;
+      const d = rowDateInfo(row, lt);
+      const span = !d.error && dateSpanOf(d.value);
+      if (!span) continue;
+      const r = attrsOf(row, lt);
+      if (!r || r.error) continue;
+      const attrKey = r.attrs.map((a) => (a.text_value != null ? `${norm(a.type.name)}=${norm(a.text_value)}` : norm(a.type.name))).sort().join(',');
+      const gids = row.level === 'release' ? [releaseMbid] : row.level === 'release_group' ? (S.releaseGroup ? [S.releaseGroup.id] : [])
+        : [...(row.tracks || [])].map((i) => S.mbTracks[i]).filter(Boolean).map((t) => t.recordingGid);
+      for (const gid of gids) {
+        const key = `${gid}|${artist.mbid}|${lt.gid}|${attrKey}`;
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push({ id: row.id, gid, span, rec: row.level === 'recording' });
+      }
+    }
+    const inside = (a, b) => b.lo <= a.lo && a.hi <= b.hi && (a.lo !== b.lo || a.hi !== b.hi);
+    for (const list of groups.values()) {
+      if (list.length < 2) continue;
+      for (const x of list) {
+        for (const y of list) {
+          if (x === y || !inside(x.span, y.span)) continue;
+          // x lies within y: a recording keeps the more exact x, any other target the period y
+          out.add(x.rec ? `${y.id}|${y.gid}` : `${x.id}|${x.gid}`);
+        }
+      }
+    }
+    return out;
   }
   /**
    * [Z-MSYN] The role credits of the rows that are one relationship (the same entry, instrument, target, date and other attributes –
@@ -28083,6 +28176,9 @@
           mbEvents: rels.filter((r) => r['target-type'] === 'event' && r.event).map((r) => ({ id: r.event.id, name: r.event.name || '', type: norm(r.type || '') })),
           // [S078] (3.50.0; Z-TAR) their names as credited and in MusicBrainz (an entry of the source is found by its name)
           trackArtistNames: uniq((track['artist-credit'] || []).flatMap((c) => [c.name, c.artist && c.artist.name]).filter(Boolean).map(nameKey)),
+          // [Z-TARRECORDING] (3.200.0, S381) the recording's own artists – who plays, where the track is credited to the composer
+          recArtists: ((track.recording && track.recording['artist-credit']) || []).map((c) => c.artist && c.artist.id).filter(Boolean),
+          recArtistNames: uniq(((track.recording && track.recording['artist-credit']) || []).flatMap((c) => [c.name, c.artist && c.artist.name]).filter(Boolean).map(nameKey)),
           mbPerformers: rels.filter((r) => r['target-type'] === 'artist' && r.artist && PERFORMING_TYPES.includes(norm(r.type))).map((r) => r.artist.id),
           works: rels.filter((r) => r['target-type'] === 'work' && r.work).map((r) => ({
             gid: r.work.id,
@@ -31506,6 +31602,7 @@
       applyPerformerTracks();
       // [S078] (3.50.0; Z-TAR) a musician for the whole release on the tracks that name the musician as their artist
       applyTrackArtistTracks();
+      guestDupMerge(); // [Z-GUESTDUP] (3.200.0, S383)
       soloistResolve(); // [Z-SOLOIST] (3.140.0, S226)
       // Media choice: entries whose credits all belong to media not chosen are not shown
       if (S.mediaSel) [...S.artists.keys()].filter((k) => !S.rows.some((r) => r.artistKey === k)).forEach((k) => S.artists.delete(k));
@@ -31639,7 +31736,7 @@
         if (ruleOn('S339') && ruleOn('S169')) {
           let nAuto = 0;
           for (const a of [...S.artists.values()]) {
-            if (a.insts || a.instsNo || entrySkipped(a) || uniq(instsRows(a).map(lineKeyOf)).length < INSTS_SUGGEST) continue;
+            if (a.insts || a.instsNo || entrySkipped(a) || uniq(instsRows(a).map(lineKeyOf)).length < INSTS_SUGGEST || instsOneTrack(a)) continue;
             instsSet(a, 'release');
             if (a.insts === 'release') nAuto += 1;
           }
@@ -36083,8 +36180,8 @@
       // ((review) by the kind of the comparison: the same (open ends too), MusicBrainz more precise, another date
       const same = !sug && dsupDateText({ b: (x.begin || '').split('-').filter(Boolean).map(Number), e: (x.end || '').split('-').filter(Boolean).map(Number) })
         === dsupDateText(dsupDateOf(v, { begin: '', end: '' }).to);
-      if (!sug) return same ? tr('out.mbSame', { date: mb }) : tr('out.mbPrecise', { mb, date: own });
-      if (sug.kind === 'change' || sug.kind === 'differs') return tr('out.mbOther', { mb, date: own });
+      if (!sug) return same ? tr('out.mbSame', { date: mb }) : ruleOn('S384') && dsupInside(v, x) && !dsupHolds(v, x) ? tr('out.mbWithin', { mb, date: own }) : tr('out.mbPrecise', { mb, date: own });
+      if (sug.kind === 'change' || sug.kind === 'differs' || sug.kind === 'other') return tr('out.mbOther', { mb, date: own }); // ([Z-DATEINRANGE] 3.200.0: 'other')
     }
     return tr('out.mbHas');
   }
@@ -40979,6 +41076,7 @@
       // [Z-CWR] (3.56.0) writers left out beside composer, lyricist or librettist
       if (info.exact) parts.push(tr('status.writerExact', { n: info.exact }));
       if (info.locked) parts.push(tr('status.workLocked', { n: info.locked }));
+      if (info.dateIn) parts.push(tr('status.dateIn', { n: info.dateIn })); // [Z-DATEINRANGE] (3.200.0, S384)
       if (info.loose) {
         parts.push(tr('status.loose', { n: info.loose }));
         el.classList.add('dci-warn');
@@ -43887,6 +43985,10 @@
    * artist of its credit is one of the release's credit, and none of them is a person who has instruments, voices or "performer"
    * here. With the members of that group listed in the text (S162: "X: A, B, C" / a heading), only they stay on it.
    */
+  // [Z-TARRECORDING] (3.200.0, S381) who a track names: its artists and (classical crediting: the track is the composer's, the
+  // recording who plays – "Passacaglia in G minor" by H. I. F. Biber, recorded by Maya Homburger) the artists of its recording
+  const tarIds = (t) => uniq([...(t.trackArtists || []), ...(ruleOn('S381') ? t.recArtists || [] : [])]);
+  const tarNames = (t) => uniq([...(t.trackArtistNames || []), ...(ruleOn('S381') ? t.recArtistNames || [] : [])]);
   function bandTrackFor(a, i, keys) {
     const t = S.mbTracks[i];
     const ids = (t && t.trackArtists) || [];
@@ -43901,7 +44003,7 @@
     if (!credited.length || !credited.every((p) => (p.type ? !['Person', 'Character'].includes(p.type) : BAND_NAME_WORD.test(p.name || p.artistName || '')))) return false;
     // (a person with instruments here who is named on the track: a track of that person – the rule as before)
     const players = [...S.artists.values()].filter((x) => !x.company && S.rows.some((r) => r.artistKey === x.key && !r.company && TAR_TYPES.includes(norm(rowTypeName(r) || (r.types || [])[0] || ''))));
-    if (players.some((x) => (x.mbid && ids.includes(x.mbid)) || [x.name, x.mbName].filter(Boolean).map(nameKey).some((k) => names.includes(k)))) return false;
+    if (players.some((x) => (x.mbid && tarIds(t).includes(x.mbid)) || [x.name, x.mbName].filter(Boolean).map(nameKey).some((k) => tarNames(t).includes(k)))) return false;
     // (the members of the group as the text lists them)
     const groups = ((S.workNotesRel && S.workNotesRel.groups) || []).filter((g) => names.includes(nameKey(g.name)) && (g.members || []).length);
     if (groups.length && !groups.some((g) => g.members.some((m) => keys.has(nameKey(m))))) return false;
@@ -43931,6 +44033,55 @@
       }
     });
     return out;
+  }
+  /**
+   * [Z-GUESTDUP] (3.200.0, S383) One person, one instrument or voice, one target – one relationship. Two lines of the source naming
+   * the same – "Makigami Koichi -harmonic overtone singing, jaw harp" and "… with guests Makigami Koichi vocal and jaw harp" – gave
+   * two rows that differ only by "guest": they become one row (its tracks, places of the source and "guest", if one of them has it).
+   * A bare "vocal" of such a line, beside another voice of the person ("harmonic overtone singing"), is that voice – unless one line
+   * of the source names both ("vocals & harmonic overtone singing"). Returns the number of rows taken in.
+   */
+  const GUEST_BARE_VOICE = /^(?:vocals?|voice|sings|singing)$/;
+  function guestDupMerge() {
+    if (!ruleOn('S383')) return 0;
+    const word = (r) => norm(String(r.raw || '').replace(/\s*\[[^\]]*\]/g, ''));
+    const lines = (r) => [r.dSplitFrom, ...(r.srcRefs || []).map((x) => x && x.line)].filter(Boolean).map(String);
+    const shares = (x, y) => x.level === y.level && (x.level !== 'recording' || [...(x.tracks || [])].some((i) => y.tracks && y.tracks.has(i)) || !x.tracks || !y.tracks);
+    const drop = new Set();
+    const take = (keep, r) => {
+      if (r.flags && r.flags.has('guest')) keep.flags.add('guest');
+      (r.tracks || []).forEach((i) => keep.tracks && keep.tracks.add(i));
+      keep.srcRefs = [...(keep.srcRefs || []), ...(r.srcRefs || [])];
+      drop.add(r);
+    };
+    const byArtist = new Map();
+    S.rows.forEach((r) => {
+      if (r.manual || r.company || r.level === 'skip' || !instsKind(r) || !r.flags) return;
+      if (!byArtist.has(r.artistKey)) byArtist.set(r.artistKey, []);
+      byArtist.get(r.artistKey).push(r);
+    });
+    for (const rows of byArtist.values()) {
+      if (rows.length < 2 || !rows.some((r) => r.flags.has('guest'))) continue;
+      // the same instrument or voice twice, one of them "guest"
+      for (const r of rows) {
+        if (drop.has(r) || !norm(r.primaryText)) continue;
+        const keep = rows.find((x) => x !== r && !drop.has(x) && instsKind(x) === instsKind(r) && norm(x.primaryText) === norm(r.primaryText) && shares(x, r)
+          && x.flags.has('guest') !== r.flags.has('guest'));
+        if (keep && rows.indexOf(keep) < rows.indexOf(r)) take(keep, r);
+      }
+      // a bare "vocal" of a guest beside another voice of the person
+      for (const r of rows) {
+        if (drop.has(r) || instsKind(r) !== 'vocal' || !r.flags.has('guest') || !GUEST_BARE_VOICE.test(word(r))) continue;
+        const voices = rows.filter((x) => x !== r && !drop.has(x) && instsKind(x) === 'vocal' && !GUEST_BARE_VOICE.test(word(x)) && shares(x, r));
+        if (!voices.length || voices.some((x) => lines(x).some((l) => /\b(?:vocals?|voice|sings|singing)\b/i.test(l.replace(new RegExp(escRe(word(x)), 'ig'), ''))))) continue;
+        voices.forEach((x) => x.flags.add('guest'));
+        drop.add(r);
+      }
+    }
+    if (!drop.size) return 0;
+    S.rows = S.rows.filter((r) => !drop.has(r));
+    log('info', 'guestDup', { n: drop.size });
+    return drop.size;
   }
   function applyTrackArtistTracks() {
     const on = ruleOn('S078');
@@ -43971,7 +44122,7 @@
       const keys = new Set([a.name, a.rawName, a.caseFrom, a.mbName, r.anv, ...(a.anvs || []).map((x) => (typeof x === 'string' ? x : x && (x.name || x.anv)))].filter(Boolean).map(nameKey));
       const named = sel.filter((i) => {
         const t = S.mbTracks[i];
-        return t && ((a.mbid && (t.trackArtists || []).includes(a.mbid)) || (t.trackArtistNames || []).some((k) => keys.has(k)));
+        return t && ((a.mbid && tarIds(t).includes(a.mbid)) || tarNames(t).some((k) => keys.has(k)));
       });
       // [Z-BANDTRACKS] (3.183.0) a track that is credited to the release's artist as a group – none of the people with instruments
       // or voices here is named on it ("Blue Shroud Band" on CD 5, the others by their names on CD 1–4) – excludes nobody: the person
@@ -44440,9 +44591,33 @@
       const to = { b: row.b.length > mb.b.length ? row.b : mb.b, e: row.e.length > mb.e.length ? row.e : mb.e };
       return same(to.b, mb.b) && same(to.e, mb.e) ? null : { kind: 'refine', mb, to };
     }
+    // [Z-DATEINRANGE] (3.200.0, S384) the source's date lies within MusicBrainz's ("on 2016-11-30" – MusicBrainz "from 2016-11-27 until
+    // 2016-11-30"): nothing new (a
+    // more precise date of the same is offered above)
+    const inMb = ruleOn('S384') && dsupInside(value, x);
+    if (inMb) return null;
+    // (MusicBrainz's lies within the source's: on a recording the more exact date of MusicBrainz stays – as within the dashboard; not
+    // for a date dropped onto the link of a work by hand)
+    if (ruleOn('S384') && x.target && (S.mbTracks || []).some((t) => t.recordingGid === x.target) && dsupHolds(value, x)) return null;
+    // [Z-DATEINRANGE] (3.200.0, S384) another date: added beside MusicBrainz's (a session of its own) or put in its place – a choice
+    if (ruleOn('S384')) return { kind: 'other', mb, to: row, row };
     const to = { b: lcd(row.b, mb.b), e: lcd(row.e, mb.e) };
     if (!to.b.length && !to.e.length) return { kind: 'differs', mb, row };
     return same(to.b, mb.b) && same(to.e, mb.e) ? null : { kind: 'change', mb, to, row };
+  }
+  /** [Z-DATEINRANGE] (3.200.0, S384) Whether a date of the dashboard lies wholly within MusicBrainz's date of a relationship. */
+  function dsupInside(value, x) {
+    const part = (t) => { const a = String(t || '').split('-').filter((v) => /^\d+$/.test(v)).map(Number); return a.length ? { year: a[0], month: a[1] || null, day: a[2] || null } : null; };
+    const mine = dateSpanOf(value);
+    const theirs = dateSpanOf({ begin: part(x.begin), end: part(x.end) });
+    return !!mine && !!theirs && theirs.lo <= mine.lo && mine.hi <= theirs.hi;
+  }
+  /** [Z-DATEINRANGE] (3.200.0, S384) Whether MusicBrainz's date of a relationship lies wholly within a date of the dashboard. */
+  function dsupHolds(value, x) {
+    const part = (t) => { const a = String(t || '').split('-').filter((v) => /^\d+$/.test(v)).map(Number); return a.length ? { year: a[0], month: a[1] || null, day: a[2] || null } : null; };
+    const mine = dateSpanOf(value);
+    const theirs = dateSpanOf({ begin: part(x.begin), end: part(x.end) });
+    return !!mine && !!theirs && mine.lo <= theirs.lo && theirs.hi <= mine.hi;
   }
   const dsupFmt = (p) => p.map((v, i) => (i ? String(v).padStart(2, '0') : String(v))).join('-');
   const dsupDateText = (d) => { const b = dsupFmt(d.b); const e = dsupFmt(d.e); return !b && !e ? '' : b === e ? b : `${b} – ${e}`; };
@@ -44723,14 +44898,23 @@
       const n = !many && keys.length > 1 ? ` (${keys.length}×)` : '';
       const roles = uniq(grows.map(name));
       const role = many ? tr('dsup.roles', { n: roles.length, list: roles.slice(0, 3).join(', ') + (roles.length > 3 ? ', …' : '') }) : name(x.row);
+      // [Z-DATEINRANGE] (3.200.0, S384) another date: "＋ Add beside it" (chosen by default) · "⇄ Replace MusicBrainz's"
+      if (sg.kind === 'other') {
+        const repl = keys.every((k) => dsupTaken(k, 'other'));
+        const b = (c, on) => `<button type="button" class="dci-small" data-act="dsup-other" data-choice="${c}" data-keys="${esc(keys.join('\n'))}" aria-pressed="${on}">${esc(tr(`dsup.other.${c}`))}</button>`;
+        parts.push(`<div class="dci-dsup-l" data-dsup="date-other"${many ? ` title="${esc(roles.join(', '))}"` : ''}><span>${esc(tr('dsup.date.other', { role, mb: dsupDateText(sg.mb), to: dsupDateText(sg.to) }) + n)}</span>
+          <span class="dci-seg dci-seg-small" role="group">${b('add', !repl)}${b('replace', repl)}</span></div>`);
+        continue;
+      }
       const text = (sg.kind === 'differs' ? tr('dsup.dateDiffers', { role, mb: dsupDateText(sg.mb), src: dsupDateText(sg.row) })
         : tr(many ? `dsup.dates.${sg.kind}` : `dsup.date.${sg.kind}`, { role, mb: dsupDateText(sg.mb), to: dsupDateText(sg.to) })) + n;
       const taken = keys.every((k) => dsupTaken(k, sg.kind));
       parts.push(`<div class="dci-dsup-l" data-dsup="date-${sg.kind}"${many ? ` title="${esc(roles.join(', '))}"` : ''}><span>${esc(text)}</span>${sg.kind === 'differs' ? '' : ` <button type="button" class="dci-small" data-act="dsup-date" data-keys="${esc(keys.join('\n'))}" aria-pressed="${taken}">${esc(taken ? tr('dsup.dateTaken') : tr('dsup.takeDate'))}</button>`}</div>`);
     }
     const allHeld = S.rows.filter((r) => r.dsupHold && r.dsupHold.kind === 'conflict' && r.level === 'skip' && !r.entrySkip).length;
-    const allDates = [...S.artists.values()].reduce((n, x) => n + (x.dsupDates || []).filter((y) => y.sug.kind !== 'differs' && !dsupTaken(y.key, y.sug.kind)).length, 0);
-    const btns = (allHeld > e.held.filter((r) => r.dsupHold.kind === 'conflict').length || allDates > dates.filter((y) => y.sug.kind !== 'differs' && !dsupTaken(y.key, y.sug.kind)).length) || allHeld + allDates > 1
+    const offerable = (y) => y.sug.kind !== 'differs' && y.sug.kind !== 'other' && !dsupTaken(y.key, y.sug.kind);
+    const allDates = [...S.artists.values()].reduce((n, x) => n + (x.dsupDates || []).filter(offerable).length, 0);
+    const btns = (allHeld > e.held.filter((r) => r.dsupHold.kind === 'conflict').length || allDates > dates.filter(offerable).length) || allHeld + allDates > 1
       ? `<div class="dci-dsup-all">${allHeld ? `<button type="button" class="dci-textbtn" data-act="dsup-all">${esc(tr('dsup.takeAll', { n: allHeld }))}</button>` : ''}
         ${allDates ? `<button type="button" class="dci-textbtn" data-act="dsup-dates-all">${esc(tr('dsup.takeAllDates', { n: allDates }))}</button>` : ''}</div>` : '';
     return `<div class="dci-note dci-dsup" data-el="dsup" role="note"><div class="dci-dsup-h">${esc(tr('dsup.head'))}</div>${parts.join('')}${btns}</div>`;
@@ -44756,6 +44940,19 @@
       && instsKind(r));
   }
   const instsAvail = (a) => a.insts === 'release' || (ruleOn('S169') && uniq(instsRows(a).map(lineKeyOf)).length >= 2);
+  /**
+   * [Z-INSTSONETRACK] (3.200.0, S382) a person credited for one track only – the source gives no tracks, but a title names the
+   * person as a guest (S322) or the track's artists name the person (S078) on just that one: all the instruments stay on that track,
+   * nothing goes on the release ("⑃ on the release …" greyed, with its reason; the quick switch S339 leaves the person out).
+   */
+  function instsOneTrack(a) {
+    if (!ruleOn('S382') || a.insts === 'release' || selIdx().length < 2) return false;
+    const rows = instsRows(a);
+    if (!rows.length) return false;
+    const on = new Set();
+    rows.forEach((r) => (r.tracks || []).forEach((i) => on.add(i)));
+    return on.size === 1;
+  }
   /**
    * [S170] The lowest group of MusicBrainz's instrument tree all of them share ('' – "instruments": none, the whole tree, a group of
    * strings with piano or keyboards in it).
@@ -44829,6 +45026,7 @@
   }
   /** "on the release" ('release') or "per track" ('track'): one of the two states, whatever came before. */
   function instsSet(a, mode) {
+    if (mode === 'release' && instsOneTrack(a)) return; // [Z-INSTSONETRACK] (3.200.0, S382)
     if (mode === 'release') instsToRelease(a);
     else instsToTrack(a);
   }
@@ -45028,20 +45226,21 @@
   function instsSegHtml(a) {
     if (!instsAvail(a)) return instsCommonBtnHtml(a).trim() ? ` <span class="dci-insts-seg">${instsCommonBtnHtml(a)}</span>` : '';
     const on = a.insts === 'release';
+    const one = instsOneTrack(a); // [Z-INSTSONETRACK] (3.200.0, S382)
     // [Z-INSTSCLEAR] (3.156.0) two buttons in the colours of their levels – "all tracks" and "⑃ on the release + group" (the common level
     // in it: no ⑃ of its own here) –, the one not chosen greyed; beside them, in italics, what the other one would enter
     const rows = on ? S.rows.filter((r) => r.artistKey === a.key && r.instsPrev) : instsRows(a);
     const names = uniq(rows.map((r) => r.primaryText || r.raw).filter(Boolean));
     const group = instsGroup(rows) || tr(rows.some((r) => instsKind(r) === 'vocal') ? 'insts.commonPerformer' : 'insts.commonAll');
-    const hint = !on && names.length ? ` <span class="dci-insts-hint" data-el="insts-hint" title="${esc(tr('insts.hintTitle'))}">${esc(tr('insts.hint', { list: names.join(', '), group }))}</span>` : '';
+    const hint = !on && !one && names.length ? ` <span class="dci-insts-hint" data-el="insts-hint" title="${esc(tr('insts.hintTitle'))}">${esc(tr('insts.hint', { list: names.join(', '), group }))}</span>` : '';
     return ` <span class="dci-insts-seg"><span class="dci-sub">${esc(tr('insts.label'))}</span> <span class="dci-seg dci-seg-small dci-insts-btns" role="group" aria-label="${esc(tr('insts.label'))}">${['track', 'release'].map((v) => `<button type="button"
-      class="dci-insts-${v}${on === (v === 'release') ? '' : ' dci-insts-off'}" data-act="insts-set" data-insts="${v}" aria-pressed="${on === (v === 'release')}" title="${esc(tr(`insts.${v}Title`))}">${v === 'release' ? '⑃ ' : ''}${esc(tr(`insts.${v}`))}</button>`).join('')}</span>${hint}</span>`;
+      class="dci-insts-${v}${on === (v === 'release') ? '' : ' dci-insts-off'}" data-act="insts-set" data-insts="${v}" aria-pressed="${on === (v === 'release')}"${one && v === 'release' ? ' disabled' : ''} title="${esc(one && v === 'release' ? tr('insts.oneTrack', { track: trackListLabel([...new Set(instsRows(a).flatMap((r) => [...(r.tracks || [])]))]) }) : tr(`insts.${v}Title`))}">${v === 'release' ? '⑃ ' : ''}${esc(tr(`insts.${v}`))}</button>`).join('')}</span>${hint}</span>`;
   }
   /** At the top of the entry: the suggestion (from four instruments without tracks), and the switch where no matrix shows it. */
   function instsBarHtml(a) {
     if (!instsAvail(a)) return '';
     const n = uniq(instsRows(a).map(lineKeyOf)).length;
-    const sugg = !a.insts && !a.instsNo && n >= INSTS_SUGGEST;
+    const sugg = !a.insts && !a.instsNo && n >= INSTS_SUGGEST && !instsOneTrack(a);
     const seg = mxEntry(a) ? '' : instsSegHtml(a);
     if (!sugg && !seg) return '';
     return `<div class="dci-insts-bar" data-el="insts">${sugg ? `<div class="dci-insts-sugg"><span>${esc(emo('tip'))} ${esc(tr('insts.sugg', { n }))}</span>
@@ -53553,10 +53752,19 @@
         refresh();
         break;
       }
+      // [Z-DATEINRANGE] (3.200.0, S384) another date than MusicBrainz's: added beside it, or put in its place
+      case 'dsup-other': {
+        const keys = String(btn.dataset.keys || '').split('\n').filter(Boolean);
+        keys.forEach((k) => (btn.dataset.choice === 'replace' ? S.dsupDateTake.add(k) : S.dsupDateTake.delete(k)));
+        S.dsupSig = '';
+        renderGroups();
+        refresh();
+        break;
+      }
       case 'dsup-date':
       case 'dsup-dates-all': {
         const keys = act === 'dsup-date' ? String(btn.dataset.keys || '').split('\n').filter(Boolean)
-          : [...S.artists.values()].flatMap((x) => (x.dsupDates || []).filter((y) => y.sug.kind !== 'differs').map((y) => y.key));
+          : [...S.artists.values()].flatMap((x) => (x.dsupDates || []).filter((y) => y.sug.kind !== 'differs' && y.sug.kind !== 'other').map((y) => y.key));
         // ([Z-DSUP3] 3.107.0) a date MusicBrainz does not have is taken already: the click takes it back (dsupDateOff)
         const kinds = new Map([...S.artists.values()].flatMap((x) => (x.dsupDates || []).map((y) => [y.key, y.sug.kind])));
         const off = act === 'dsup-date' && keys.every((k) => dsupTaken(k, kinds.get(k))); // a second click: not taken again
