@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-22 | 3.197.0 – 3.204.0 | – |
+| 2026-11-22 | 3.197.0 – 3.205.0 | – |
 | 2026-11-21 | 3.193.0 – 3.196.0 | – |
 | 2026-11-20 | 3.185.0 – 3.192.0 | 1.23.0 |
 | 2026-11-19 | 3.170.0 – 3.184.0 | – |
@@ -136,6 +136,18 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.205.0
+
+**Session series, authors by their societies, and the pressing date in the runout.**
+
+- **Session series** (rule S394, corrects S393): Lagniappe Sessions, Tiny Desk Concerts, Live on KEXP, Peel Sessions … are series of recordings: MusicBrainz is searched by the full name from the mapping (`SESSION_SERIES_NAMES`) – one hit of that name is linked at once, several are offered at the entry. A series of recordings: the recordings the text names (else all) part of it, without a number; a series of events: a note only. Series not in the list are left out as before.
+- **Collecting societies** (S395): "Mats Gustafsson (STIM / NcB), Barry Guy (PRS, PPL), Jordina Milla (GEMA)" – the three are composers of the works of all tracks. Only when every name has such a bracket and an authors' society is among them (PPL or GVL alone: the line stays), and no name of a company ("X Music (BMI)" is a publisher); the society is never entered.
+- **"Cover art; sPl@t!"** (S396): a semicolon after a role reads as its colon; a name with an @ is a name, taken as written – artwork credited "cover art". "RELATIVE PITCH RECORDS RPRI285" (the release: RPR1285) is left out as label and catalogue number, OCR slips I/1 and O/0 allowed.
+- **Instrument in brackets** (S397): Discogs "Reeds [Fluteophone]" – a bracket naming an instrument (or one letter off one or its alias) wins over the role: Tonette credited "fluteophone".
+- **Track ranges with a hyphen** (S399): Discogs "Drums – Marcus Gilmore (tracks: A3-B5)" – a range written with a hyphen or dash is that range (until 3.204.0 only "A3 to B5"; the credit stayed without tracks). The cut is taken where both sides are positions of the track list ("1-3" can be a position itself).
+- **Track groups onto an event** (S400): in the view "by event" a group of the track pool can be dropped onto the tracks of an event ("① Recording · no date · no tracks") – all its rows on the recordings get them (added, with ⇧ Shift replaced); until 3.204.0 there was no place for it there.
+- **Date in the runout** (S398): "Matrix / Runout: 0007197 MonotypePressing 5/20/2026" with "Made By – Monotype Pressing" – the date 2026-05-20 on the plant's "manufactured", with a note to check it. Only when the plant's name stands in the matrix and the date is clear (day over 12 or the year first).
 
 ### Import 3.204.0
 

@@ -792,8 +792,8 @@ def case_wettuna3204():
     A) Every name with its instruments – ARP Odyssey and Korg synth as synthesizer, envelope filter and effectors as effects, amplified
        percussion and rhythm necklace as percussion, Synare as electronic drum set, space drums as drums (each credited as written);
        Coot's two percussion words one relationship ("⧉ amplified percussion, rhythm necklace").
-    B) Left out: MULTIPLE INFINITIES, LOW END THEORY, VIBRATION (fantasy), the line about the lagniappe session (a series); nothing
-       "not recognized"."""
+    B) Left out: MULTIPLE INFINITIES, LOW END THEORY, VIBRATION (fantasy), the line about the lagniappe session (from 3.205.0 on, S394: the
+       series "Lagniappe Sessions"); nothing "not recognized"."""
     TEXT = open(str(H.ROOT.parent / 'notes' / 'testdaten' / 'bandcamp-wettuna-eaud5.txt'), encoding='utf-8').read() if (H.ROOT.parent / 'notes' / 'testdaten' / 'bandcamp-wettuna-eaud5.txt').exists() else None
     TEXT = TEXT or ('digital version of our lagniappe session...much obliged aquarium drunkard xoxo ∞\n\n'
                     'MATT VALENTINE: GUITAR/VOCAL/EFFECTORS/ \nARP ODYSSEY/PERCUSSION/PROGRAMMING/ \nMULTIPLE INFINITIES \n\n'
@@ -836,7 +836,7 @@ def case_wettuna3204():
             coot = ' '.join(next((v for k, v in ch.items() if k.lower() == 'coot'), []))
             print('   fehlt:', missing, '| Coot:', coot)
             results.append(not missing and 'amplified percussion, rhythm necklace' in coot.lower())
-            results.append(not un and all(w in page for w in ('MULTIPLE INFINITIES', 'LOW END THEORY', 'VIBRATION', 'lagniappe')) and not errs)
+            results.append(not un and all(w in page for w in ('MULTIPLE INFINITIES', 'LOW END THEORY', 'VIBRATION', 'agniappe')) and not errs)
             b.close()
     finally:
         H.ENTRIES_VIEW = 'legacy'
@@ -2476,5 +2476,80 @@ console.log(JSON.stringify({
         len(off['a']['un']) == 2 and 'tourCrew' not in off['g']['ig'],
     ]
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+def case_texts3205():
+    """Credits Importer 3.205.0 (collected items Z-SESSIONSERIES, Z-PROSOCIETY, Z-POETICS2; rules S394–S396): pasted credits of
+    "Poetics of Frø" (back cover) and a line about the Lagniappe Sessions.
+    A) "Mats Gustafsson (STIM / NcB), Barry Guy (PRS, PPL), Jordina Milla (GEMA)": the three composers (work level, all tracks); no
+       society entered; "Jane Doe (PPL), John Roe (GVL)" stays unrecognized (performers' societies only).
+    B) "Cover art; sPl@t!": sPl@t! with artwork, credited "cover art".
+    C) "RELATIVE PITCH RECORDS RPRI285" (the release: Relative Pitch Records, RPR1285): left out as label and catalogue number.
+    D) "digital version of our lagniappe session…": MusicBrainz searched for "Lagniappe Sessions" (one recording series of that name):
+       linked at once, all recordings part of it, no number; S394 off: left out as in 3.204.0."""
+    TEXT = ('digital version of our lagniappe session...much obliged aquarium drunkard xoxo\n\n'
+            'Mats Gustafsson (STIM / NcB), Barry Guy (PRS, PPL), Jordina Milla (GEMA)\n'
+            'Jane Doe (PPL), John Roe (GVL)\n'
+            'Cover art; sPl@t!\n'
+            'RELATIVE PITCH RECORDS RPRI285')
+    rl0 = list(H.RELEASE_LABELS)
+    H.RELEASE_LABELS[:] = [(H.uid('eeeeeeee', 77), 'Relative Pitch Records', 'RPR1285')]
+    H.lt(9930, H.uid('1a1a1a1a', 9930), 'artwork', 'artist', 'release', (1, 1150))
+    H.lt(9931, H.uid('1a1a1a1a', 9931), 'part of', 'recording', 'series', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.MB_SEARCH['series'] = [{'id': H.uid('5e5e5e5e', 77), 'name': 'Lagniappe Sessions', 'type': 'Recording series', 'disambiguation': '', 'score': 100}]
+    main0 = H.MAIN
+    H.MAIN = H.MAIN.replace('  const S = {', '  const S = window.__S = {', 1)
+    LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
+    ROWS = """() => window.__S.rows.map(r => { const a = window.__S.artists.get(r.artistKey) || {}; return { name: a.name, types: r.types || [],
+      credit: r.roleCredit || r.creditFromRole || '', level: r.level, notes: r.notes || [], n: r.tracks ? r.tracks.size : 0, lt: r.linkTypeId || null }; })"""
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, f"{LOGS}.filter(x => /Import complete/.test(x)).length >= 2", 60)
+        H.wait_still(pg, "document.body.innerHTML", 10, 400)
+        pg.wait_for_timeout(800)
+        rows = pg.evaluate(ROWS)
+        un = pg.evaluate("[...document.querySelectorAll('[data-el=unrec] li, .dci-unrec li')].map(li => li.textContent.trim().slice(0, 60))")
+        page = pg.evaluate("document.getElementById('dci-overlay').textContent")
+        b.close()
+        return rows, un, page, errs
+
+    results = []
+    try:
+        with sync_playwright() as p:
+            rows, un, page, errs = run(p)
+            of = lambda n: [r for r in rows if r['name'] == n]
+            comp = {n: [(r['types'][:1], r['level'], r['n']) for r in of(n)] for n in ('Mats Gustafsson', 'Barry Guy', 'Jordina Milla')}
+            print('A)', comp, '| nicht erkannt:', un)
+            results.append(all(v and v[0][0] == ['composer'] and v[0][1] == 'work' and v[0][2] == len(H.TITLES) for v in comp.values())
+                           and not any(r['name'] in ('STIM', 'GEMA', 'PRS', 'NcB') for r in rows) and any('Jane Doe' in u for u in un))
+            sp = of('sPl@t!')
+            print('B)', sp)
+            results.append(len(sp) == 1 and sp[0]['types'][:1] == ['artwork'] and sp[0]['credit'] == 'cover art')
+            print('C) RPRI285 auf der Seite:', 'RPRI285' in page, not any('RPRI285' in u for u in un))
+            results.append('RPRI285' in page and not any('RPRI285' in u for u in un))
+            ser = [r for r in rows if 'Lagniappe' in (r['name'] or '')]
+            print('D)', ser, errs)
+            results.append(bool(ser) and ser[0]['notes'] == ['seriesSession'] and ser[0]['level'] == 'recording' and ser[0]['n'] == len(H.TITLES) and ser[0]['lt'] == 9931 and not errs)
+            rows2, un2, page2, errs2 = run(p, off=['S394'])
+            ser2 = [r for r in rows2 if 'Lagniappe' in (r['name'] or '')]
+            print('D) ohne S394:', ser2, 'lagniappe' in page2)
+            results.append(not ser2 and 'lagniappe' in page2 and not errs2)
+    finally:
+        H.MAIN = main0
+        H.RELEASE_LABELS[:] = rl0
+        H.MB_SEARCH.pop('series', None)
+        H.RULES_OFF = []
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 
 run_cases(globals())
