@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.196.0, Companion 1.6.0 – 1.23.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.197.0, Companion 1.6.0 – 1.23.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,17 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.197.0 · 2026-11-22
+
+- **`mbWs(path, { prio })`** (S356): `mbPrio`; a request with `prio` does not wait in `mbQueue`; queued ones wait while `mbPrio > 0` or `S.subDialog` (at most five minutes). **`acceptSuite`**: with S356 the parts looked up only once the suite is not pending or `searchSuite` found an offer; `o.child` (a part's suite, `acceptPartSuite`) not at all; `suite-pick` looks the parts up.
+- **`startSuiteCreate`** (S357): `sw.forming` (no second form; `renderWorks` for "Its form is open …"), `workIdsRestore` first, the MBID set at once and the title fetched with `prio`; returns whether a form opened. `onClick` `suite-create`: through all pending works of the suite (`go`).
+- **`suiteNamingOf(key)`**, **`suitePartName(suite, part, key)`** (S358): `sw.naming` ('colon' | 'comma' | 'part'), a part's suite takes its parent's; `S.suiteNaming` may be `'part'` (`dci-suite-naming`); action `suite-naming1`.
+- **`SUITE_ATTRS`, `suiteAttrRoot`, `suitePartAttr`, `suiteAttrSelect`** (S359): `sw.partAttr`, `sw.upAttr`; `computePlan` takes the attribute per suite (`E.suitePartAttr`); `buildWorkSeed`: `rels.N.attributes.M.type` from `w.attrGids`; `onChangeInner` `suite-attr`.
+- **`mbCaseName(name, tracks)`** (S360): in `suiteAsks`; `acceptSuite` names a whole track's part by MusicBrainz's title.
+- **`PART_SCOPE_WORDS`** (mapping), `PART_SCOPE_RE`, **`finishPartScope(P)`** (S361) in `stageFinish`: `c.partScope` on credits and companies without tracks (the words taken out of the role's details); carried through the role entries; **`partScopeAsk(row, scope)`** – works: `row.suggest` with `scope`, else on Skip with `scopeAsk`; `uncrHtml` and `cellHtml` say why. Commission prose: the sentence not compared with itself.
+- Texts: `suite.forming`, `suite.names`, `suite.namesTitle`, `suite.attr`, `suite.attrUp`, `suite.attrNone`, `settings.suiteNaming.part`, `matrix.partScopeReason`, `partScope.ask`, `log.suiteAttr`, `log.suiteNamingOne`.
+- Tests: `t_works_more.py` `case_suite3197`; `t_text_lists.py` `case_texts3197`; `t_sources_bandcamp.py` `case_scope3197`.
 
 ## Import 3.196.0 · 2026-11-21
 

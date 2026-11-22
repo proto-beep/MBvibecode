@@ -639,7 +639,7 @@ def case_suiteparts():
         a2 = [pg.evaluate(PARTS), pg.evaluate("MB.relationshipEditor.state.added.filter(r => r.linkTypeID === 278 && /^Trisect: /.test(r.entity1.name)).length")]
         print('A)', a0, '| Vorschau:', a1, '| vorgemerkt:', a2)
         results.append(a0 is not None and '＋ Create the suite in MusicBrainz …' in a0[0] and 'Its “parts” wait until the suite exists in MusicBrainz' in a0[0]
-                       and a0[1] == ['suite-rename', 'suite-create', 'suite-undo'] and a0[2] is None and a1 == [] and a2 == [[], 6])
+                       and a0[1] == ['suite-rename', 'suite-create', 'suite-naming1', 'suite-undo'] and a0[2] is None and a1 == [] and a2 == [[], 6])
         pg.click('[data-el=works] [data-act=suite-create]')
         H.wait_for(pg, "!!document.querySelector('[data-el=sub-frame]') && /work\\/create/.test(document.querySelector('[data-el=sub-frame]').src)", 20)
         src = pg.evaluate("document.querySelector('[data-el=sub-frame]').src")
@@ -654,7 +654,7 @@ def case_suiteparts():
         b1 = [pg.evaluate(LINE), pg.evaluate("[...document.querySelectorAll('.dci-msg, [data-el=messages] *')].map(x => x.textContent).join(' ')")]
         print('B)', b0, '| Info:', info[:160], '\n  ', b1[0], '|', 'Suite “Trisect” has been created' in b1[1])
         results.append(b0 == [['Trisect'], ['6'], [WW], None, False] and 'work type Suite, writer: Writer W.' in info and 'Writer Z' not in info
-                       and b1[0][1] == ['suite-undo'] and b1[0][2] and b1[0][2].endswith(f'/work/{SUITE}') and 'Suite in MusicBrainz: Trisect' in b1[0][0]
+                       and b1[0][1] == ['suite-naming1', 'suite-undo'] and b1[0][2] and b1[0][2].endswith(f'/work/{SUITE}') and 'Suite in MusicBrainz: Trisect' in b1[0][0]
                        and 'Suite “Trisect” has been created' in b1[1])
         pg.click('[data-act=preview]'); pg.wait_for_timeout(500)
         c1 = pg.evaluate(PREVIEW)
@@ -2095,7 +2095,7 @@ def case_suitegate3191():
             magic(pg)
             b0 = pg.evaluate(LINE)
             print('B)', b0)
-            results.append(len(b0) == 1 and 'dci-mx-suite-must' in b0[0][0] and 'is not in MusicBrainz yet' in b0[0][1] and b0[0][2] == ['suite-rename', 'suite-create', 'suite-drop', 'suite-undo'])
+            results.append(len(b0) == 1 and 'dci-mx-suite-must' in b0[0][0] and 'is not in MusicBrainz yet' in b0[0][1] and b0[0][2] == ['suite-rename', 'suite-create', 'suite-naming1', 'suite-drop', 'suite-undo'])  # ([Z-SUITENAMES] 3.197.0)
             n0 = pg.evaluate(ADDED)
             pg.click('[data-act=apply]')
             H.wait_for(pg, "!!document.querySelector('[data-el=sub-frame]') && /work\\/create/.test(document.querySelector('[data-el=sub-frame]').src)", 20)
@@ -2828,6 +2828,104 @@ def case_parthead3196():
     finally:
         H.discogs_release = orig
         H.ws_release = orig_ws
+        H.TITLES[:] = old
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_suite3197():
+    """Credits Importer 3.197.0 (collected items Z-SUITEDUP, Z-BGLOAD, Z-SUITECASE, Z-SUITENAMES, Z-PARTATTR; rules S356–S360): Discogs
+    writes the titles "Entre Helechos", "Bejuco Del Alma" below the headings "Part I", "Part II"; MusicBrainz "Entre helechos", "Bejuco del alma".
+    A) Accepted (track 1 has its work): the works of the tracks named as MusicBrainz writes them ("Bosque de niebla, Part II: Bejuco del
+       alma"); the line has "Names:",
+       the attribute of its parts' suites (none) and of their tracks (movement); no part is looked up in MusicBrainz (only the suite).
+    B) "Names:" clicked: the works by the part alone ("Fantasmas"); once more: back.
+    C) "Stage": the form of the suite – while it is open the line says "Its form is open …" and has no "＋ Create"; the parts' suites as
+       "movement" (chosen): the form of Part I has the attribute; the works of the tracks without one (chosen: none)."""
+    import urllib.parse
+    TOP, P1, P2 = H.uid('cccccccc', 1971), H.uid('cccccccc', 1972), H.uid('cccccccc', 1973)
+    H.attr(1105, 'movement', 1105)
+    H.lt(281, 'ca8d3642-ce5f-49f8-91f2-125d72524e6a', 'parts', 'work', 'work', (1105,))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    if '<option value="6">Suite</option>' not in H.WORK_FORM:
+        H.WORK_FORM = H.WORK_FORM.replace('<option value="1">Aria</option>', '<option value="1">Aria</option><option value="6">Suite</option>')
+    orig, orig_ws, old = H.discogs_release, H.ws_release, H.TITLES[:]
+    H.TITLES[:] = ['Entre helechos', 'Fantasmas', 'Bejuco del alma', 'Musguito']
+
+    def rel():
+        d = orig()
+        tl = d['tracklist']
+        for tk, title in zip(tl, ['Entre Helechos', 'Fantasmas', 'Bejuco Del Alma', 'Musguito']):
+            tk['title'] = title
+        d['tracklist'] = [{'position': '', 'type_': 'heading', 'title': 'Part I', 'duration': ''}] + tl[:2] + [{'position': '', 'type_': 'heading', 'title': 'Part II', 'duration': ''}] + tl[2:]
+        return d
+
+    def ws(full=False):
+        d = orig_ws(full)
+        d['title'] = 'Bosque de niebla'
+        return d
+    H.discogs_release, H.ws_release = rel, ws
+    LINE = "(() => { const x = document.querySelector('[data-el=works] [data-suite]'); return x ? [x.textContent.replace(/\\s+/g, ' ').trim(), [...x.querySelectorAll('button')].map(y => y.dataset.act), [...x.querySelectorAll('select[data-f=suite-attr]')].map(y => [y.dataset.level, y.value])] : null; })()"
+    SRC = "document.querySelector('[data-el=sub-frame]') ? document.querySelector('[data-el=sub-frame]').src : ''"
+    ADDED = "MB.relationshipEditor.state.added"
+    results = []
+    searches = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(2500)
+            pg.on('request', lambda r: searches.append(urllib.parse.unquote(r.url)) if '/ws/2/work?query' in r.url else None)
+            pg.locator('[data-act=suite-yes]').first.evaluate('b => b.click()')
+            pg.wait_for_timeout(4000)
+            a = pg.evaluate(LINE)
+            print('A)', a, '\n   searches:', searches)
+            results.append(a and '“Bosque de niebla, Part I: Fantasmas” ⇄ “Fantasmas”' in a[0] and ['up', ''] in a[2] and ['', 'movement'] in a[2]
+                           and not any('Entre helechos' in x or 'Bejuco' in x for x in searches))
+            pg.locator('[data-act=suite-naming1]').evaluate('b => b.click()'); pg.wait_for_timeout(500)
+            b1 = pg.evaluate(LINE)
+            pg.locator('[data-act=suite-naming1]').evaluate('b => b.click()'); pg.wait_for_timeout(500)
+            b2 = pg.evaluate(LINE)
+            print('B)', b1[0][-160:], '\n  ', b2[0][-160:])
+            results.append('“Fantasmas” ⇄ “Bosque de niebla, Part I: Fantasmas”' in b1[0] and '“Bosque de niebla, Part I: Fantasmas” ⇄' in b2[0])
+            pg.select_option('select[data-f=suite-attr][data-level=up]', 'movement'); pg.wait_for_timeout(300)
+            pg.select_option('select[data-f=suite-attr][data-level=""]', ''); pg.wait_for_timeout(300)
+            n0 = len(pg.evaluate(ADDED))
+            pg.click('[data-act=apply]')
+            H.wait_for(pg, f"/work\\/create/.test({SRC})", 20)
+            c0 = pg.evaluate(LINE)
+            pg.locator('[data-act=apply]').evaluate('b => b.click()'); pg.wait_for_timeout(800)
+            src_before = pg.evaluate(SRC)
+
+            def create(gid, title):
+                H.wait_for(pg, f"/work\\/create/.test({SRC})", 20)
+                q = urllib.parse.parse_qs(urllib.parse.urlparse(pg.evaluate(SRC)).query)
+                H.WORK_TITLES[gid] = title
+                H.COMPANIES[int(gid[-4:])] = ('work', gid, title)
+                pg.evaluate(f"document.querySelector('[data-el=sub-frame]').src = 'https://musicbrainz.org/work/{gid}'")
+                pg.wait_for_timeout(1500)
+                return q
+            q1 = create(TOP, 'Bosque de niebla')
+            q2 = create(P1, 'Bosque de niebla, Part I')
+            create(P2, 'Bosque de niebla, Part II')
+            H.wait_for(pg, f"{ADDED}.length > {n0}", 30)
+            pg.wait_for_timeout(1500)
+            parts = pg.evaluate(f"{ADDED}.filter(r => r.linkTypeID === 281).map(r => [(r.entity1 || {{}}).name, (r.attributes || []).length])")
+            mv = H.ATTRS[1105]['gid']
+            k_up = next((k for k in range(8) if q2.get(f'rels.{k}.target') == [TOP]), None)
+            up_attr = q2.get(f'rels.{k_up}.attributes.0.type') if k_up is not None else None
+            print('C)', c0, k_up, up_attr, parts, errs)
+            results.append('Its form is open' in c0[0] and 'suite-create' not in c0[1] and q1.get('edit-work.name') == ['Bosque de niebla'] and src_before
+                           and up_attr == [mv] and parts and all(n == 0 for _, n in parts)
+                           and any(t == 'Bosque de niebla, Part II: Bejuco del alma' for t, _ in parts) and not errs)
+            b.close()
+    finally:
+        H.discogs_release, H.ws_release = orig, orig_ws
         H.TITLES[:] = old
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 

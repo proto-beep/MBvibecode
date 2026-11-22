@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.196.0",
+  "version": "3.197.0",
   "about": "MB x Vibecode: Credits Importer – the data of its mapping register (role rules, company roles, questions, tables and word lists, the quick switches). Loaded by the script (@resource mapping); the rules with code stay in the script. Regular expressions are {\"$re\": source, \"$flags\": flags}, sets {\"$set\": [...]}, maps {\"$map\": [[key, value], ...]}.",
   "DEFAULT_OFF_RULES": {"$set":["D023","S046","D026","S114","S155","S160","S297","S339","S343"]},
   "CHECKBOX_DETAILS": [
@@ -763,6 +763,22 @@
     "Logic"
   ],
   "HEADING_DIVIDER_CHARS": "-–—―_*·•.…~=+#/\\|",
+  "PART_SCOPE_WORDS": [
+    "the\\s+majority\\s+of\\s+(?:the\\s+)?(?:album|record|release|tracks|songs|pieces|music)",
+    "most\\s+of\\s+(?:the|these|this)\\s+(?:album|record|release|tracks|songs|pieces|music|compositions)",
+    "(?:some|several|a\\s+few|two|three|four|five|six|\\d+)\\s+of\\s+(?:the|these)\\s+(?:tracks|songs|pieces|compositions)",
+    "on\\s+(?:some|several|a\\s+few|selected|certain)\\s+(?:of\\s+the\\s+)?(?:tracks|songs|pieces)",
+    "half\\s+of\\s+(?:the|this)\\s+(?:album|record|release|tracks|songs)",
+    "parts?\\s+of\\s+(?:the|this)\\s+(?:album|record|release)",
+    "die\\s+meisten\\s+(?:stücke|titel|songs|tracks|lieder)",
+    "(?:einige|mehrere|manche)\\s+(?:der\\s+)?(?:stücke|titel|songs|tracks|lieder)",
+    "auf\\s+(?:einigen|manchen|mehreren)\\s+(?:stücken|titeln|songs|tracks)",
+    "teilweise",
+    "la\\s+mayor(?:í|i)a\\s+de",
+    "algun(?:os|as)\\s+(?:de\\s+los\\s+)?(?:temas|canciones|piezas)",
+    "la\\s+plupart\\s+des",
+    "certain(?:s|es)\\s+(?:morceaux|titres|pièces|chansons)"
+  ],
   "SAME_WORK_SUFFIXES": [
     "alt(?:ernate|\\.)?\\s+(?:take|version|mix|edit)(?:\\s*(?:#|no\\.?)?\\s*\\d+)?",
     "(?:\\d+(?:st|nd|rd|th)\\s+|first\\s+|second\\s+|third\\s+|false\\s+start\\s*(?:&|and)?\\s*)?take(?:\\s*(?:#|no\\.?)?\\s*\\d+|\\s+[a-z]+)?",

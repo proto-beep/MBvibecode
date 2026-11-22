@@ -2488,4 +2488,45 @@ def case_what3194():
         H.ws_release = orig_ws
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+
+def case_scope3197():
+    """Credits Importer 3.197.0 (collected items Z-PARTSCOPE, Z-COMMISSIONPROSE; rule S361): a Bandcamp album whose credits say "Most of the
+    songs were mixed by John Smith." and "Jane Doe: saxophone" – John Smith's mix held on Skip with the words ("The text says part of the album
+    only (“Most of the songs”)"), "Take" takes it; Jane Doe's saxophone staged as usual."""
+    ALBUM = 'https://testband.bandcamp.com/album/scope'
+    H.BC_PAGES[ALBUM] = H.bc_page({'artist': 'Test Band', 'current': {
+        'title': 'Scope', 'credits': 'Jane Doe: saxophone\nMost of the songs were mixed by John Smith.', 'about': ''},
+        'trackinfo': [{'track_num': i + 1, 'title': t} for i, t in enumerate(H.TITLES)]})
+    orig_ws = H.ws_release
+
+    def ws(full=False):
+        d = orig_ws(full)
+        d['relations'] = [{'target-type': 'url', 'type': 'purchase for download', 'url': {'resource': ALBUM}}]
+        return d
+    H.ws_release = ws
+    ROWS = """(() => [...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+      [...g.querySelectorAll('tr.dci-row')].map(r => [((r.querySelector('.dci-drole') || {}).dataset || {}).raw || '', ((r.querySelector('[data-act=level][aria-pressed=true]') || {}).dataset || {}).level || (r.textContent.includes('Skipped') ? 'skip' : '')])]))()"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=True, gm_xhr=True)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            pg.click('#dci-open')
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
+            H.wait_still(pg, "document.body.innerHTML", 10, 300)
+            g = dict((k, v) for k, v in pg.evaluate(ROWS))
+            uncr = pg.evaluate("[...document.querySelectorAll('[data-el=uncr]')].map(x => x.textContent.replace(/\\s+/g, ' ').slice(0, 200))")
+            print('A)', g, '\n   ', uncr, errs)
+            js = dict(g.get('John Smith') or [])
+            jd = dict(g.get('Jane Doe') or [])
+            results.append(js and all(v == 'skip' for v in js.values()) and any('The text says part of the album only (“Most of the songs”)' in x for x in uncr)
+                           and jd and all(v != 'skip' for v in jd.values()) and not errs)
+            b.close()
+    finally:
+        H.ws_release = orig_ws
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 run_cases(globals())
