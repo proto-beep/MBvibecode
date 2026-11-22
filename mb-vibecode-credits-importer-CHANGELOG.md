@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-22 | 3.197.0 – 3.198.0 | – |
+| 2026-11-22 | 3.197.0 – 3.199.0 | – |
 | 2026-11-21 | 3.193.0 – 3.196.0 | – |
 | 2026-11-20 | 3.185.0 – 3.192.0 | 1.23.0 |
 | 2026-11-19 | 3.170.0 – 3.184.0 | – |
@@ -136,6 +136,22 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.199.0
+
+**Booklets: what was not read.**
+
+- **Lineups in two columns** (rule S371): "Edgar Froese   Keyboards & Electronic Instruments", "Zlatko "Z-Man" Perica   Electric & Acoustic Guitar" – read as "Name: roles" (two such lines one below the other).
+- **Sides** (S372): "SIDE A" is a heading, "Side C: Reel 43: Down on the Street" a line of the track list.
+- **Track lists with a full stop in the time and titles over two lines** (S373): "Phaedra 16.45", "Mysterious Semblance At The Strand" / "Of Nightmares 10.35".
+- **Tracks by titles that share a word** (S374): "Electronics on Reel 45, 38 and 41." – those tracks; "Electric Bass on Reel 43." below – the same person; "Down on the Street" names the track "Reel 43: Down on the Street".
+- **Writers by their initials, publishers in the track list** (S375): "Flashflood (J.Froese/E.Froese) TDI /Warner/Chappel" – Jerome and Edgar Froese (the names the text writes in full) write that track; TDI and Warner/Chappel publish it.
+- **Artwork lines** (S376): "CD Label image by …", "CD Front Cover by … ( from the … Series)", "Sleeve Booklet Photography by …"; "Original Mask Sculpture … designed and created by …" left out.
+- **Mastering with a technique before it** (S377): "High definition digital remastering by …", "DQC™ Mastering by …".
+- **A place in quotation marks** (S378): "Recorded live on April 23th 1997 at the "Dome Muziki i Tanca" in the city of Zabrze …".
+- **The crew of a tour** (S379) is left out with its reason; "Recording engineer and FOH Mix: Dave Dixon" – the recording engineer ("FOH Mix", the sound for the audience, left out).
+- **Logos, titles, headings** (S380): a label's lettering, the release's title alone, headings of a lineup or performance, "Please visit … homepage", "This Live set runs without breaks or pauses." are left out with their reasons.
+- Not done: initials compared with the members of the release's artist in MusicBrainz – a name the text does not write in full stays as printed ("J. Froese"), and MusicBrainz's search offers the artists.
 
 ### Import 3.198.0
 

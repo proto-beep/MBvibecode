@@ -1916,10 +1916,14 @@
         ],
         "companies": [],
         "unrecognized": [
-          "Side A",
           "Morning Light"
         ],
-        "ignored": []
+        "ignored": [
+          {
+            "text": "Side A",
+            "why": "heading"
+          }
+        ]
       }
     },
     {
