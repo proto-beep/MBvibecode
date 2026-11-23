@@ -1512,4 +1512,62 @@ def case_crlfstale3207():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_fieldrec3210():
+    """Credits Importer 3.210.0 (collected item Z-FIELDRECDATE, rule D039): the notes of Alio Die – "All music composed and recorded by" /
+    "Stefano Musso in Spring 2023." / "Alio Die: Drones and loops, zither, rattles and bells, field recordings.".
+    A) The row "field recordings" (field recordist) has the date 2023 as the instruments have.
+    B) D039 off (as 3.209.0): it has none."""
+    orig = H.discogs_release
+    NOTES = ('All music composed and recorded by\r\n\r\nStefano Musso in Spring 2023.\r\n\r\nMixed at Lunae studio, Lunigiana, Italy, June 2023.\r\n\r\n'
+             'Alio Die: Drones and loops, zither, rattles and bells, field recordings.\r\n\r\nArtwork by Hic Sunt Leones.\r\n')
+
+    def rel():
+        d = orig()
+        d['notes'] = NOTES
+        d['companies'] = []
+        d['extraartists'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    main0 = H.MAIN
+    H.MAIN = H.MAIN.replace('  const S = {', '  const S = window.__S = {', 1)
+    ROWS = """() => window.__S.rows.filter(r => /field|drones/i.test(String(r.raw || r.base || ''))).map(r => [String(r.raw || r.base), r.date ? ['', JSON.stringify(r.date)] : null])"""
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        H.ENTRIES_VIEW = 'legacy'
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(1500)
+        if pg.locator('[data-act=dm-apply]:not([disabled])').count():
+            pg.click('[data-act=dm-apply]')
+            pg.wait_for_timeout(800)
+        rows = pg.evaluate(ROWS)
+        b.close()
+        return rows, errs
+
+    results = []
+    H.discogs_release = rel
+    try:
+        with sync_playwright() as p:
+            rows, errs = run(p)
+            print('A)', rows, errs)
+            fr = [r for r in rows if 'field' in r[0].lower()]
+            results.append(bool(fr) and all(r[1] and '2023' in r[1][1] for r in rows) and not errs)
+            rows, errs = run(p, off=['D039'])
+            print('B)', rows, errs)
+            fr = [r for r in rows if 'field' in r[0].lower()]
+            results.append(bool(fr) and all(not r[1] or '2023' not in r[1][1] for r in fr) and not errs)
+    finally:
+        H.discogs_release = orig
+        H.MAIN = main0
+        H.RULES_OFF = []
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

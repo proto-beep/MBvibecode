@@ -197,6 +197,8 @@ lt(24, '01323b2c-6f62-4b7e-af29-7e0d7d6f7b20', 'liner notes', 'artist', 'release
 lt(30, '8bf377ba-8d71-4ecc-97f2-7bb2d8a2a75f', 'producer', 'artist', 'release', (1, 526))
 lt(62, '25dd0db4-189f-436c-a610-aacb979f13e2', 'artists and repertoire', 'artist', 'release', (1150,))
 lt(1010, '25dd0db4-189f-436c-a610-aacb979f1300', 'artists and repertoire', 'artist', 'release_group', (1150,))
+# (3.210.0, D039) field recordings on recordings, as on MusicBrainz (the test's own gid)
+lt(1011, 'c5f5e6a1-1f0b-4d4b-9a4e-0f1e1d2c3011', 'field recordist', 'artist', 'recording', (1, 526))
 lt(63, '0b63af5e-85b2-4891-8234-f4b0ea7d6d0f', 'miscellaneous support', 'artist', 'release', (1150,))
 lt(168, 'd59d99ea-23d4-4a80-b066-edca32ee158f', 'composer', 'artist', 'work', (1,))
 lt(165, '3e48faba-ec01-47fd-8e89-30e81161661c', 'lyricist', 'artist', 'work', (1,))

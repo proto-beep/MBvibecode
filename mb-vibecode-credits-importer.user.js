@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.209.0
+// @version      3.210.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.209.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.209.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.210.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.210.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.209.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.210.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -212,6 +212,8 @@
       "ignored.why.package": "about the package",
       "log.notesCompanies": "From the Discogs notes, not listed by Discogs ({n}): {list}",
       "log.entryMerged": "“{name}” is the same entry in MusicBrainz as “{into}”: one entry",
+      "log.mergeCancelled": "Joining “{name}” into “{into}” cancelled",
+      "log.joinUndone": "Join of “{name}” into “{into}” undone",
       "log.notesExtras": "From the Discogs notes, besides the credits: {list}",
       "notesExtras.ensembles": "ensembles",
       "notesExtras.liveHeads": "live recordings named",
@@ -4098,6 +4100,18 @@
       "settings.instLinksTitle": "A small ↗ after an instrument in an entry opened (not in the compact lines) opens its page on MusicBrainz",
       "merge.gripTitle": "Drag onto another entry of the same kind to join them (the one dropped onto stays)",
       "merge.done": "“{a}” joined into “{b}”",
+      "merge.askTitle": "Join these entries?",
+      "merge.rows.one": "{n} row",
+      "merge.rows.other": "{n} rows",
+      "merge.ask": "“{a}” ({ra}) is joined into “{b}” ({rb}): “{b}” stays, the rows of “{a}” come to it – the same role once, each row credited as its source writes it – and “{a}” becomes one of its names.",
+      "merge.askMb": "“{b}” takes over the link to MusicBrainz of “{a}”.",
+      "merge.askUndo": "↶ in the head of “{b}” undoes it.",
+      "merge.askYes": "Join",
+      "merge.undoBtn": "↶ Undo join",
+      "merge.undoTitle": "Takes “{a}” out again: both entries as they were before joining, each with its rows (what you changed in them since stays)",
+      "merge.undoStoredTitle": "Joined at an earlier import ({a}): forgotten, the entries come apart when the import is repeated",
+      "merge.undone": "Join undone: “{a}” and “{b}” are two entries again",
+      "merge.undoNext": "The join of {list} into “{b}” is forgotten – the entries come apart when the import is repeated",
       "merge.kinds": "“{a}” ({ka}) and “{b}” ({kb}) are not of the same kind – not joined",
       "merge.differentMb": "“{a}” and “{b}” are different entries of MusicBrainz – not joined (link one to the other's entry first)",
       "settings.smartQuotes": "Typographic quotes in what is entered (“…”, ‘…’, ’)",
@@ -5706,6 +5720,9 @@
     { id: 'S390', where: 'guessInstrument, similarInstrumentVia, guessOptLabel, instrGuessHtml', note: 'Instruments (3.203.0; collected item Z-ALIASTYPO): a word MusicBrainz does not know ("fluteophone"): each answer of the question says which of MusicBrainz\'s other names it is like ("Tonette – alias “flutophone”"); exactly one answer one letter off (its name or an alias): chosen at once – by an alias credited as written ("Tonette “fluteophone”"), by its own name a slip without a role credit ("Sxaophone": saxophone) – the question stays to change it. Off: a question with the answers only, as before' },
     { id: 'S391', where: 'medleySplit, segueTrimmed, workTitleOf', note: 'Works (3.204.0; collected item Z-SEGUE): a segue of a track list (Grateful Dead, jam bands) – "The Killers > Narragansett", "Dark Star -> St. Stephen", "→", "=>" – in one track splits like "/" (a one-off medley: each piece a work, every link with "medley", in the order of the title); a sign at the end of a title ("China Cat Sunflower >": the next piece follows on its own track) is no part of the work\'s name. Off: only the separators of the release ("/" and those added)' },
     { id: 'S392', where: 'TEXT.parse (tidyLines, fantasy roles)', note: 'Texts (3.204.0; collected item Z-WETTUNA): a line of roles broken after a slash right after the last role ("GUITAR/VOCAL/EFFECTORS/" · "ARP ODYSSEY/…/PROGRAMMING/" · "MULTIPLE INFINITIES") is one line, also when it is broken twice; words of fantasy in a list of instruments ("MULTIPLE INFINITIES", "LOW END THEORY", "VIBRATION" – mapping FANTASY_ROLE_WORDS) are left out even alone. With the mapping: ARP Odyssey, Korg synth – synthesizer; envelope filter, effectors – effects; amplified percussion, rhythm necklace – percussion; Synare – electronic drum set; space drums – drums, each credited as written (several words of one instrument: one relationship with all of them, S325)' },
+    { id: 'S411', where: 'joinEntry, ncySpellings, creditAllHtml', note: 'Entries (3.210.0; collected item Z-ENTITYMERGE2): an entry joined into another (by hand, S409, or as the same place or label, S324) gives it all its names – its name, its spellings at the source, its name in MusicBrainz, its other names; they are offered when clicking through the spellings (the name of the entry: the next spelling as "credited as") and in "Credited as for all roles". Until 3.209.0 only its name was kept, and not offered there' },
+    { id: 'S412', where: 'mergeAsk, askDialog, joinByHand, joinUndo, joinUndoHtml', note: 'Entries (3.210.0; Z-ENTITYMERGE3): before two entries are joined by hand (S409) a dialog of the dashboard asks – not the browser\'s own: it names both, which one stays, how many rows each has and whether the link to MusicBrainz moves, with "Join" and "Cancel" (Esc, a click beside it). ↶ in the head of the entry that stays undoes the last join, also after other changes (the rows keep what was changed in them; only whose they are and their credit go back) – until 3.209.0 only the message offered ↶, and only while nothing had changed. A join remembered from an earlier import: forgotten there, the entries come apart at the next import' },
+    { id: 'S413', where: 'freshForget', note: 'Import (3.210.0; Z-FRESHALL2): "Start afresh" (S410) forgets the source and the media chosen for the release too – the import repeated reads the source open now, the choice of media is asked again with all media; at the next opening the source is the first of the release\'s links in the order of the settings (several of one kind: asked). Until 3.209.0 both were kept' },
     { id: 'S410', where: 'freshForget, repeatImport, loadRelease', note: '"↻ Repeat import" (3.209.0; collected item Z-FRESHALL): "Start afresh" forgets everything the dashboard holds of the release – not only the changes of the rows and the choices of the works matrix (Z-RI, 3.40.16), also the date pool, the track pool and the date matrix, the choices of the box "Dedications & tributes", "✕ No suite", texts and parts of sources switched off, "skip the works", entries joined by hand, the ticks of suggestions, what is remembered of the release ("Remember changes"; nothing of the import before is stored on the way). Kept: what was created in MusicBrainz through the dashboard (the lists of created works and suites), the source and the media chosen, the log' },
     { id: 'S409', where: 'mergeEntries, joinEntry, applyEntryMerges, dmTargetOf (entry-merge), groupHtml (grip)', note: 'Entries (3.208.0; collected item Z-ENTITYMERGE): two entries of the same kind that are one – from different sources, written otherwise – are joined by hand: the grip ⠿ before the kind of an entry dropped onto another entry. The entry dropped onto stays (its link to MusicBrainz counts; without one it takes the other\'s), the rows of the other come to it – the same role once, each row credited as its source writes it, the other\'s name one of its names. Two different entries of MusicBrainz, or entries of different kinds: not joined, a message says why. Remembered for the release (joined again at the next import); ↶ in the message undoes it' },
     { id: 'S408', where: 'renderDedBox (ded-kind), emChipHtml, toggleDedication', note: 'Dedications (3.207.0; collected item Z-DEDKINDSWITCH): each row of the box "Dedications & tributes" has two buttons "Dedication | Tribute" – the chosen one filled in its colour (dedication old rose, tribute gold), a click switches (as "⇄" at the row and the chip did); the chips of these relationships have the colours too. A kind MusicBrainz has not for this target (a tribute of a place) is greyed out' },
@@ -7465,8 +7482,11 @@
   const DATE_GROUPS = [
     // [Z-AP] (3.40.12) the areas too ("recorded in", "mixed in", "mastered in": a date of the notes for "… in Hiroshima" went nowhere)
     // [Z-CAMD] (3.85.0, S129) the cameras of live recordings too (misc "cameras", R110): filmed at the performance
+    // [Z-FIELDRECDATE] (3.210.0, D039) the field recordings too ("Alio Die: … field recordings" under "composed and recorded by … in
+    // Spring 2023"): made in the same time as the recording
     { key: 'performance', label: 'Performance', types: ['performer', 'instrument', 'vocal', 'performing orchestra', 'conductor', 'chorus master', 'concertmaster', 'recording', 'recorded at', 'recorded in',
-      'misc', 'miscellaneous support'], onlyNote: 'misc only for camera work on live recordings (S129)', only: (n, row) => !['misc', 'miscellaneous support'].includes(n) || cameraLive(row) },
+      'misc', 'miscellaneous support', 'field recordist'], onlyNote: 'misc only for camera work on live recordings (S129); field recordist with D039',
+      only: (n, row) => (n === 'field recordist' ? ruleOn('D039') : !['misc', 'miscellaneous support'].includes(n) || cameraLive(row)) },
     { key: 'mix', label: 'Mix', types: ['mix', 'mixed at', 'mixed in'] },
     // [3.15.1] releaseOnly: MusicBrainz has mastering on the release only (on recordings it is deprecated, "mastered at"
     // does not exist there) – every date of the column is for the release level, a track group only says which row
@@ -8248,6 +8268,7 @@
     { id: 'D036', note: 'Days in a row, each named (3.178.0; collected item Z-DAYLIST): up to three – "27., 28. & 29.11.2016", "June 16/17 2018" – are single days, one date each; four or more are one period (D013 until 3.177.0: always one period). A period written with a dash ("27-29") stays one. In the date finder each such find can be had the other way: "as one period" / "as single dates"' },
     { id: 'D037', note: 'Media as a heading (3.178.0; collected item Z-MEDIAHEAD): a line only of media – "CD#1, CD#2, CD#3, CD#4", "CD 5", "Disc 1–3:" – right above a date\'s line: the date is that of the tracks of those media (a track group "Media 1–4"), on a release with several media. The text reader gives the lines below such a heading its tracks as well (S312)' },
     { id: 'D038', note: 'A date that only sums up others (3.187.0; collected item Z-WIKISEMI): a date for all tracks whose days are each named for a group of tracks elsewhere in the texts – "May 26–27, 2016" of Wikipedia\'s infobox beside "May 27, 2016 (Disc 1), May 26, 2016 (Disc 2)" of the notes – says nothing new: it is neither placed in the date matrix nor put into the pool (placed, it would give every track both days)' },
+    { id: 'D039', where: 'DATE_GROUPS (performance)', note: 'Dates (3.210.0; collected item Z-FIELDRECDATE): the field recordings (field recordist: "Alio Die: Drones and loops, zither, …, field recordings") belong to the column Performance of the date matrix – a date of the recording ("composed and recorded by Stefano Musso in Spring 2023") is theirs too. Off (as until 3.209.0): they got no date' },
     { id: 'D034', note: 'Relative dates (3.132.0; collected item Z-RELDATE; a quick switch): "last September", "earlier this year", "the following spring", "that summer", "two years ago", "letzten September", "im Frühjahr darauf", "vor zwei Jahren", "el pasado septiembre", "hace dos años", "en septembre dernier", "il y a deux ans" – reckoned from a date of the text itself: a dateline ("Berlin, June 2019") or a date of the same paragraph, never the date of the release (a text of a reissue belongs to the original); two possible dates or none: nothing. A season is a period (spring March–May, summer June–August, autumn September–November, winter December–February); "earlier this year" the year only' },
     { id: 'D025', note: 'The kinds of the artwork (3.73.0): a date of the column Artwork goes to the kind its words name – "Cover Painting: “View at Nice” (1992)" to the illustration only (not to design), "Cover Photo: “…” (1985)" to the photography, "Cover design … 1992" to design; "cover art", "artwork": illustration and design. Each date of the column says its kind (to change). The date of a concert is no date the photographs get by themselves: it goes into the pool named for them ("Photography By") and is suggested at their row' },
   ];
@@ -28781,6 +28802,7 @@
     log('info', 'importForgotten');
     S.release = null;
     S.artists = new Map();
+    S.joinUndos = new Map();
     S.rows = [];
     S.rowOpen.clear();
     S.groupCompact.clear();
@@ -31839,6 +31861,7 @@
       unstashWorkGroups();
       S.workGroupsOff = false;
       S.artists = new Map();
+      S.joinUndos = new Map();
       S.rows = [];
       S.emGhost = new Map(); // [Z-EVCOL] (3.103.0)
       yellLoad(); // [Z-YELL] (3.110.0) what was confirmed: open again unless remembered
@@ -34421,7 +34444,9 @@
    * its rows and entries, the choices of the box "Dedications & tributes", "✕ No suite", the texts and parts of sources switched off,
    * "skip the works", the entries joined by hand, the ticks of suggestions, the frames and the state of "Text from cover art", the
    * credits taken out in the editor. Kept: what was created in MusicBrainz through the dashboard (the lists of created works and
-   * suites), the source and the media chosen (what is imported), the log.
+   * suites), the log. ([Z-FRESHALL2] 3.210.0, S413) The source and the media chosen are forgotten too (until 3.209.0 kept): the import
+   * repeated reads the source open now; the choice of media is asked again with all media; at the next opening the source is the first
+   * of the release's links in the order of the settings (several of one kind: asked).
    */
   function freshForget() {
     const srcPick = (readJson('localStorage', SOURCE_PICK_KEY, {}) || {})[releaseMbid];
@@ -34433,9 +34458,12 @@
       all[releaseMbid] = v;
       writeJson('localStorage', key, all);
     };
-    putBack(SOURCE_PICK_KEY, srcPick);
-    putBack(MEDIA_SEL_KEY, mediaSel);
-    Object.entries(relMem).forEach(([key, all]) => { if (key !== SOURCE_PICK_KEY && key !== MEDIA_SEL_KEY) delete all[releaseMbid]; });
+    const keepPicks = !ruleOn('S413');
+    if (keepPicks) {
+      putBack(SOURCE_PICK_KEY, srcPick);
+      putBack(MEDIA_SEL_KEY, mediaSel);
+    }
+    Object.entries(relMem).forEach(([key, all]) => { if (!keepPicks || (key !== SOURCE_PICK_KEY && key !== MEDIA_SEL_KEY)) delete all[releaseMbid]; });
     const rel = String(releaseMbid || '').toLowerCase();
     for (const key of [DED_KEY, SUITE_NO_KEY]) {
       const all = readJson('localStorage', key, null) || {};
@@ -35018,7 +35046,7 @@
   function creditAllHtml(a) {
     const common = commonSpelling(a);
     const label = a.company || a.other ? 'group.creditAllOther' : 'group.creditAll';
-    const names = a.company ? uniq([a.name, a.mbName, a.rawName, ...(a.anvs || [])].filter(Boolean)) : artistVariants(a);
+    const names = uniq([...(a.company ? [a.name, a.mbName, a.rawName, ...(a.anvs || [])] : artistVariants(a)), ...(ruleOn('S411') ? a.altNames || [] : [])].filter(Boolean));
     return `<label class="dci-credit">${esc(tr(label))}
         <input type="text" data-f="artist-credit-all" list="dci-ac-${a.key}" value="${esc(common && !caseOnlyAnv(a, common) ? common : '')}"
           placeholder="${esc(tr('credit.placeholder'))}" aria-label="${esc(tr(`${label}Aria`, { name: a.name }))}">
@@ -35139,7 +35167,8 @@
     const rows = S.rows.filter((r) => r.artistKey === a.key);
     const out = [];
     // ((review) the source's spellings first, then its name and the name in MusicBrainz
-    for (const v of [...rows.map((r) => r.anv), ...(a.anvs || []), a.rawName, a.name, a.mbName, ...rows.map((r) => r.credit)].map(ncyClean).filter(Boolean)) {
+    // ([Z-ENTITYMERGE2] 3.210.0, S411) and the names of entries joined into it
+    for (const v of [...rows.map((r) => r.anv), ...(a.anvs || []), a.rawName, a.name, a.mbName, ...rows.map((r) => r.credit), ...(ruleOn('S411') ? a.altNames || [] : [])].map(ncyClean).filter(Boolean)) {
       if (!out.some((x) => typo(x) === typo(v))) out.push(v);
     }
     return out;
@@ -37454,7 +37483,7 @@
         <div class="dci-ghead">
           ${S.view === 'full' && !a.company ? groupFoldHtml(a) : ''}<div class="dci-gname">${mxOn(a) && rows.length && (S.view === 'compact' || S.emWide.has(a.key)) ? emWideHtml(a) : S.view === 'compact' && rows.length ? openAllHtml(a, rows) : ''}${ruleOn('S409') && rows.length ? `<span class="dci-entry-grip" data-drag="entry" data-id="${esc(a.key)}" draggable="true" role="img" title="${esc(tr('merge.gripTitle'))}" aria-label="${esc(tr('merge.gripTitle'))}"></span>` : ''}${kindTagHtml(a)}${entryNameHtml(a)}${ruleOn('S201') ? entryOriginsHtml(a) : ''}${improvMarkHtml(S.rows.filter((r) => r.artistKey === a.key && r.level === 'work'))}${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}${membersNoteHtml(a)}${siteNoteHtml(a)}${memberOfHtml(a)}</div>
           <div class="dci-gmatch" data-match="${a.key}">${matchHtml(a)}${ruleOn('S201') ? identityLinkHtml(a) : ''}</div>
-          ${worksLink}<div class="dci-ghead-r">${compact ? emBySegHtml(a) : ''}${entrySkipHtml(a, allRows)}</div>
+          ${worksLink}<div class="dci-ghead-r">${compact ? emBySegHtml(a) : ''}${joinUndoHtml(a)}${entrySkipHtml(a, allRows)}</div>
         </div>
         ${a.pageOf ? pageOfHtml(a) : ''}
         ${a.artl ? artlNoteHtml(a) : ''}
@@ -41089,7 +41118,12 @@
         ours.forEach((r) => { if (!r.creditTouched && !norm(r.credit) && credit && !main.dId) Object.assign(r, { credit, anv: r.anv || o.name }); });
       }
     }
-    main.altNames = uniq([...(main.altNames || []), o.name].filter(Boolean));
+    // ([Z-ENTITYMERGE2] 3.210.0, S411) all names of the entry that goes – its name, its spellings at the source, its name in MusicBrainz,
+    // its other names – are names of the one that stays: offered when clicking through the spellings (until 3.209.0 only its name was
+    // kept, and not offered there)
+    const names = ruleOn('S411') ? [o.name, o.rawName, o.mbName, ...(o.anvs || []), ...(o.altNames || [])] : [o.name];
+    main.altNames = uniq([...(main.altNames || []), ...names].map((x) => (typeof x === 'string' ? x : x && (x.name || x.anv))).filter(Boolean)
+      .filter((x) => x !== main.name));
     if (!main.area && o.area) main.area = o.area;
     log('info', 'entryMerged', { name: o.name, into: main.mbName || main.name });
   }
@@ -41127,6 +41161,16 @@
   function mergeEntries(fromKey, toKey, { quiet = false } = {}) {
     const o = S.artists.get(fromKey);
     const main = S.artists.get(toKey);
+    if (!mergeAllowed(o, main, quiet)) return false;
+    if (!main.mbid && o.mbid) {
+      ['status', 'mbid', 'mbName', 'mbComment', 'candidates', 'matchTouched', 'entityType'].forEach((k) => { if (o[k] !== undefined) main[k] = o[k]; });
+    }
+    joinEntry(main, o);
+    if (!main.dId && o.dId) main.dId = o.dId;
+    return true;
+  }
+  /** [Z-ENTITYMERGE] (3.208.0, S409) Whether entry o may be joined to main: the same kind, not two different entries of MusicBrainz. */
+  function mergeAllowed(o, main, quiet = false) {
     if (!o || !main || o === main) return false;
     const ko = groupKindOf(o).type;
     const km = groupKindOf(main).type;
@@ -41138,11 +41182,6 @@
       if (!quiet) showMessage('warn', 'merge.differentMb', { a: o.mbName || o.name, b: main.mbName || main.name });
       return false;
     }
-    if (!main.mbid && o.mbid) {
-      ['status', 'mbid', 'mbName', 'mbComment', 'candidates', 'matchTouched', 'entityType'].forEach((k) => { if (o[k] !== undefined) main[k] = o[k]; });
-    }
-    joinEntry(main, o);
-    if (!main.dId && o.dId) main.dId = o.dId;
     return true;
   }
   /** [Z-ENTITYMERGE] (3.208.0, S409) The joins made by hand for this release, again after an import. */
@@ -53603,6 +53642,11 @@
     if (snap.entries) {
       snap.entries.forEach(([a, c]) => restoreFields(a, c));
       writeJson('localStorage', MERGES_KEY, mergesRead().filter(([f]) => f !== snap.merge));
+      for (const [k, recs] of S.joinUndos) {
+        const left = recs.filter((x) => x.from !== snap.merge);
+        if (left.length) S.joinUndos.set(k, left);
+        else S.joinUndos.delete(k);
+      }
     }
     S.mxColDate = snap.mxColDate;
     S.dateFills = snap.dateFills;
@@ -53624,6 +53668,147 @@
     renderGroups();
     renderWorks();
     refresh();
+  }
+
+  /**
+   * [Z-ENTITYMERGE3] (3.210.0, S412) Before two entries are joined by hand: a dialog of the dashboard names both – which one stays, how many
+   * rows each has, whether the link to MusicBrainz moves – with "Join" and "Cancel" (Esc, a click beside it).
+   */
+  async function mergeAsk(o, m) {
+    const nm = (x) => x.mbName || x.name;
+    const rowsOf = (x) => S.rows.filter((r) => r.artistKey === x.key).length;
+    const lines = [tr('merge.ask', { a: nm(o), b: nm(m), ra: tr('merge.rows', { n: rowsOf(o) }), rb: tr('merge.rows', { n: rowsOf(m) }) })];
+    if (o.mbid && !m.mbid) lines.push(tr('merge.askMb', { a: nm(o), b: nm(m) }));
+    lines.push(tr('merge.askUndo', { b: nm(m) }));
+    const yes = await askDialog({ title: tr('merge.askTitle'), lines, yes: tr('merge.askYes') });
+    if (!yes) {
+      log('info', 'mergeCancelled', { name: o.name, into: nm(m) });
+      return;
+    }
+    if (S.artists.get(o.key) !== o || S.artists.get(m.key) !== m) return;
+    joinByHand(o, m);
+  }
+
+  /** [Z-ENTITYMERGE] (3.208.0, S409) The join by hand itself: remembered for the release; ↶ in the message and (S412) at the entry that stays. */
+  function joinByHand(o, m) {
+    const snap = dropSnapshot();
+    const keep = [o, m].map((x) => [x, { ...x }]);
+    // ([Z-ENTITYMERGE3] 3.210.0, S412) the rows of both as they were: the join is undone at the entry, whatever changed since
+    const rows = S.rows.map((r, k) => [r, k]).filter(([r]) => r.artistKey === o.key || r.artistKey === m.key).map(([r, k]) => {
+      let c;
+      try { c = structuredClone({ ...r }); } catch { c = { ...r }; }
+      return [r, k, c];
+    });
+    if (!mergeEntries(o.key, m.key)) return;
+    const list = mergesRead().filter(([f]) => f !== o.key);
+    list.push([o.key, m.key, o.name, m.name]);
+    writeJson('localStorage', MERGES_KEY, list);
+    if (snap) Object.assign(snap, { entries: keep, merge: o.key });
+    if (ruleOn('S412')) {
+      const recs = S.joinUndos.get(m.key) || [];
+      recs.push({ from: o.key, entries: keep, rows });
+      S.joinUndos.set(m.key, recs);
+    }
+    refresh();
+    renderGroups();
+    dropDone(snap, 'merge.done', { a: o.mbName || o.name, b: m.mbName || m.name });
+  }
+
+  /**
+   * [Z-ENTITYMERGE3] (3.210.0, S412) ↶ at the entry that stays: the last join undone – both entries as they were, the rows of each back with
+   * it (what was changed in them since stays, only whose they are and how they are credited goes back), no longer remembered. A join
+   * remembered from before (no rows to give back): forgotten, the entries come apart at the next import.
+   */
+  function joinUndo(key) {
+    const recs = S.joinUndos.get(key) || [];
+    const rec = recs.pop();
+    if (!recs.length) S.joinUndos.delete(key);
+    const main = S.artists.get(key);
+    if (!rec) {
+      const gone = mergesRead().filter(([, to]) => to === key);
+      if (!gone.length) return;
+      writeJson('localStorage', MERGES_KEY, mergesRead().filter(([, to]) => to !== key));
+      showMessage('info', 'merge.undoNext', { b: main ? main.mbName || main.name : key, list: gone.map(([, , fn]) => fn).join(', ') });
+      renderGroups();
+      return;
+    }
+    const o = S.artists.get(rec.from);
+    rec.entries.forEach(([a, c]) => restoreFields(a, c));
+    for (const [r, k, c] of rec.rows) {
+      if (S.rows.includes(r)) ['artistKey', 'anv', 'credit', 'creditTouched'].forEach((f) => { if (f in c) r[f] = c[f]; else delete r[f]; });
+      else S.rows.splice(Math.min(k, S.rows.length), 0, restoreFields(r, c));
+    }
+    writeJson('localStorage', MERGES_KEY, mergesRead().filter(([f]) => f !== rec.from));
+    // (the ↶ of the message for this join: gone)
+    for (const [id, snap] of dropUndos) {
+      if (snap.merge !== rec.from) continue;
+      dropUndos.delete(id);
+      S.messages = S.messages.filter((x) => !(x.action && x.action.act === 'drop-undo' && x.action.arg === id));
+    }
+    log('info', 'joinUndone', { name: o ? o.name : rec.from, into: main ? main.mbName || main.name : key });
+    showMessage('ok', 'merge.undone', { a: o ? o.mbName || o.name : rec.from, b: main ? main.mbName || main.name : key });
+    renderGroups();
+    renderWorks();
+    refresh();
+  }
+
+  /** [Z-ENTITYMERGE3] (3.210.0, S412) ↶ in the head of an entry another was joined to (this session, or remembered from before). */
+  function joinUndoHtml(a) {
+    if (!ruleOn('S412')) return '';
+    const recs = S.joinUndos.get(a.key);
+    const from = recs && recs.length ? S.artists.get(recs[recs.length - 1].from) : null;
+    const stored = !recs && mergesRead().filter(([, to]) => to === a.key);
+    if (!from && !(stored && stored.length)) return '';
+    const name = from ? from.mbName || from.name : stored.map(([, , fn]) => fn).join(', ');
+    return `<button type="button" class="dci-textbtn dci-join-undo" data-act="join-undo" data-key="${esc(a.key)}" title="${esc(tr(from ? 'merge.undoTitle' : 'merge.undoStoredTitle', { a: name }))}">${esc(tr('merge.undoBtn'))}</button>`;
+  }
+
+  /**
+   * [Z-ENTITYMERGE3] (3.210.0, S412) A question in a dialog of the dashboard (not the browser's own): a title, its lines, "yes" and "no".
+   * Esc or a click beside it: no. The focus stays in it (Tab between its buttons) and goes back where it was.
+   */
+  function askDialog({ title, lines, yes, no = tr('common.cancel') }) {
+    const el = $('ask');
+    if (!el) return Promise.resolve(false);
+    const back = document.activeElement;
+    el.innerHTML = `<div class="dci-ask-panel" role="alertdialog" aria-modal="true" aria-labelledby="dci-ask-title" aria-describedby="dci-ask-text">
+        <h3 id="dci-ask-title">${esc(title)}</h3>
+        <div id="dci-ask-text">${lines.map((l) => `<p>${esc(l)}</p>`).join('')}</div>
+        <div class="dci-ask-btns"><button type="button" class="dci-small dci-ask-yes" data-ask="yes">${esc(yes)}</button><button type="button" class="dci-textbtn" data-ask="no">${esc(no)}</button></div>
+      </div>`;
+    el.hidden = false;
+    return new Promise((resolve) => {
+      const done = (v) => {
+        el.removeEventListener('click', onClick);
+        el.removeEventListener('keydown', onKey);
+        el.hidden = true;
+        el.innerHTML = '';
+        if (S.subDialog === handle) S.subDialog = null;
+        try { if (back && back.isConnected && back.focus) back.focus({ preventScroll: true }); } catch { /* gone */ }
+        resolve(v);
+      };
+      const onClick = (e) => {
+        const b = e.target.closest('[data-ask]');
+        if (b) done(b.dataset.ask === 'yes');
+        else if (e.target === el) done(false);
+      };
+      const onKey = (e) => {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          e.stopPropagation();
+          done(false);
+        } else if (e.key === 'Tab') {
+          const bs = [...el.querySelectorAll('button')];
+          e.preventDefault();
+          bs[(bs.indexOf(document.activeElement) + (e.shiftKey ? -1 : 1) + bs.length) % bs.length].focus();
+        }
+      };
+      const handle = { cancel: () => done(false) };
+      el.addEventListener('click', onClick);
+      el.addEventListener('keydown', onKey);
+      S.subDialog = handle;
+      el.querySelector('[data-ask="yes"]').focus();
+    });
   }
 
   /**
@@ -53965,17 +54150,10 @@
     if (t.kind === 'entry-merge') {
       const o = S.artists.get(d.id);
       const m = S.artists.get(t.el.dataset.group);
-      if (!o || !m) return;
-      const snap = dropSnapshot();
-      const keep = [o, m].map((x) => [x, { ...x }]);
-      if (!mergeEntries(o.key, m.key)) return;
-      const list = mergesRead().filter(([f]) => f !== o.key);
-      list.push([o.key, m.key, o.name, m.name]);
-      writeJson('localStorage', MERGES_KEY, list);
-      if (snap) Object.assign(snap, { entries: keep, merge: o.key });
-      refresh();
-      renderGroups();
-      dropDone(snap, 'merge.done', { a: o.mbName || o.name, b: m.mbName || m.name });
+      if (!mergeAllowed(o, m)) return;
+      // ([Z-ENTITYMERGE3] 3.210.0, S412) asked first, in a dialog of the dashboard (not the browser's)
+      if (ruleOn('S412')) mergeAsk(o, m);
+      else joinByHand(o, m);
       return;
     }
     if (t.kind === 'em-order') {
@@ -55173,6 +55351,10 @@
       // [Z-DND] (3.78.0)
       case 'drop-undo':
         dropUndo(btn.dataset.arg);
+        break;
+      // [Z-ENTITYMERGE3] (3.210.0, S412)
+      case 'join-undo':
+        joinUndo(btn.dataset.key);
         break;
       // [E4] (3.35.0) compact as a matrix: by event or by role, the full matrix of an entry, a chip opened or taken out
       case 'em-by':
@@ -58314,7 +58496,8 @@
         </div>
       </div>
       <div class="dci-subdlg dci-media-dlg" data-el="media" hidden></div>
-      <div class="dci-subdlg dci-media-dlg" data-el="links" hidden></div>`;
+      <div class="dci-subdlg dci-media-dlg" data-el="links" hidden></div>
+      <div class="dci-subdlg dci-ask-dlg" data-el="ask" hidden></div>`;
     document.body.appendChild(overlay);
     overlay.classList.toggle('dci-only-missing', S.onlyMissing);
     overlay.classList.toggle('dci-only-ocr', !!S.onlyOcr);
@@ -58686,6 +58869,7 @@
   S.emByDefault = readJson('localStorage', EM_BY_KEY, 'event') === 'role' ? 'role' : 'event';
   S.emAttr = readJson('localStorage', EM_ATTR_KEY, 'joint') === 'split' ? 'split' : 'joint';
   Object.assign(S, { emBy: new Map(), emWide: new Set() });
+  S.joinUndos = new Map(); // [Z-ENTITYMERGE3] (3.210.0, S412) the joins by hand of this import, to be undone at their entry
   S.emSide = readJson('localStorage', EM_SIDE_KEY, 'beside') === 'lines' ? 'lines' : 'beside';
   S.emojiText = readJson('localStorage', EMOJI_TEXT_KEY, false) === true; // [Z-SRCTAG] (3.127.0)
   S.logLines = readJson('localStorage', LOG_LINES_KEY, false) === true; // [Z-LOGMORE] (3.128.0)
@@ -65275,6 +65459,11 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       /* (the sign by the style: the text of the entry's head stays its kind and name) */
       .dci-entry-grip::before { content: "⠿"; }
       .dci-entry-grip:hover { color: var(--purple); }
+      .dci-ask-panel { background: #fff; border-top: 4px solid var(--orange); border-radius: 4px; padding: calc(var(--u, 1px) * 14) calc(var(--u, 1px) * 18); max-width: min(60ch, 100%); box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25); }
+      .dci-ask-panel h3 { margin: 0 0 calc(var(--u, 1px) * 6); }
+      .dci-ask-panel p { margin: calc(var(--u, 1px) * 4) 0; }
+      .dci-ask-btns { display: flex; gap: calc(var(--u, 1px) * 10); align-items: center; margin-top: calc(var(--u, 1px) * 10); }
+      .dci-join-undo { white-space: nowrap; }
       #dci-overlay.dci-dm-drag-entry section.dci-group.dci-dm-over { outline: 2px dashed var(--purple); outline-offset: 2px; }
       /* [Z-DEDKINDSWITCH] (3.207.0, S408) */
       .dci-dedsw { display: inline-flex; vertical-align: middle; }

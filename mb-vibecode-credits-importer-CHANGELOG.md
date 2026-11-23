@@ -137,6 +137,18 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 
 ## 2026-11-08
 
+### Import 3.210.0
+
+**Joining entries: asked first, undone at the entry, all names kept; "Start afresh" forgets the source and the media; field recordings dated.**
+
+- **The names of a joined entry** (rule S411): an entry joined into another (by hand with the grip ⠿, S409, or as the same place or label, S324) gives it all its names – its name, its spellings at the source, its name in MusicBrainz, its other names. They are offered when clicking through the spellings (a click on the entry's name: the next spelling as "credited as") and in "Credited as for all roles". Until 3.209.0 only its name was kept, and not offered there – a place joined onto another with the same role lost its spelling.
+
+- **Asked before joining** (rule S412): an entry dropped onto another with the grip ⠿ is not joined at once – a dialog of the dashboard (not the browser's own) names both, which one stays, how many rows each has and whether the link to MusicBrainz moves, with "Join" and "Cancel" (Esc, a click beside it).
+- **↶ Undo join at the entry** (rule S412): the entry that stays has "↶ Undo join" in its head – both entries as they were, each with its rows, also after other changes (what was changed in the rows stays; only whose they are and their credit go back). Until 3.209.0 only the message offered ↶, and only while nothing had changed. A join remembered from an earlier import is forgotten there and comes apart when the import is repeated.
+- **Start afresh forgets the source and the media chosen** (rule S413): "Start afresh" also forgets which source and which media were chosen for the release – the import repeated reads the source open now, the media are asked again with all chosen; at the next opening the source is the first of the release's links in the order of the settings. Until 3.209.0 both were kept.
+- **Field recordings dated** (rule D039): field recordings ("Alio Die: Drones and loops, zither, …, field recordings") belong to the column Performance of the date matrix and get the date of the recording ("composed and recorded by Stefano Musso in Spring 2023"). Until 3.209.0 they got no date.
+
+
 ### Import 3.209.0
 
 **"Start afresh" forgets everything of the release.**
