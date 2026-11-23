@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-22 | 3.197.0 – 3.206.0 | – |
+| 2026-11-22 | 3.197.0 – 3.207.0 | – |
 | 2026-11-21 | 3.193.0 – 3.196.0 | – |
 | 2026-11-20 | 3.185.0 – 3.192.0 | 1.23.0 |
 | 2026-11-19 | 3.170.0 – 3.184.0 | – |
@@ -136,6 +136,17 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.207.0
+
+**Dates of Bandcamp's credits, tribute albums, typographic quotes.**
+
+- **Dates of lines ending in "\r\n"** (rule S404): Bandcamp's credits end their lines with "\r\n" – "All music composed and recorded by" / "Stefano Musso in Spring 2023." now gives 2023 to Performance and Composition (until 3.206.0 it stood in the pool as "Date 1", without a group).
+- **Dates placed anew with a new version** (S405): a release imported before keeps no longer what an old version made of its notes – a new version places them anew; what was dragged or removed by hand stays, and a date of the pool without a group gets the group's name.
+- **A name in a bracket of the title** (S406): "If Ever You Would Leave Us (we play for Rollins)" names Rollins (the closing bracket stopped it).
+- **All works of the artist of a tribute** (S407): the works of the artist's page – written, or only recorded (covers too) – are read and compared with the tracks' titles, in yellow ("work of Sonny Rollins – check"); also while the question "look works up for n tracks?" is open.
+- **Dedication | Tribute** (S408): two buttons in each row of the box "Dedications & tributes", the chosen one filled in its colour (dedication old rose, tribute gold); the chips of these relationships have the colours too.
+- **Typographic quotes** (S403): credits, role credits, the names of the forms "Create …" and the titles of new works: Bernhard "Benne" Vischer → Bernhard “Benne” Vischer, '…' → ‘…’, O'Brien → O’Brien. The edit note keeps the source's writing. One setting, ⚙ → Appearance (on).
 
 ### Import 3.206.0
 
