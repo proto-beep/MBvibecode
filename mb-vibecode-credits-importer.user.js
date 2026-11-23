@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.207.0
+// @version      3.208.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.207.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.207.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.208.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.208.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.207.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.208.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -4096,6 +4096,10 @@
       "instrGuess.auto": "“{word}” is no instrument of MusicBrainz – one letter off one of its names, suggested:",
       "settings.instLinks": "Links to MusicBrainz's instrument pages (↗)",
       "settings.instLinksTitle": "A small ↗ after an instrument in an entry opened (not in the compact lines) opens its page on MusicBrainz",
+      "merge.gripTitle": "Drag onto another entry of the same kind to join them (the one dropped onto stays)",
+      "merge.done": "“{a}” joined into “{b}”",
+      "merge.kinds": "“{a}” ({ka}) and “{b}” ({kb}) are not of the same kind – not joined",
+      "merge.differentMb": "“{a}” and “{b}” are different entries of MusicBrainz – not joined (link one to the other's entry first)",
       "settings.smartQuotes": "Typographic quotes in what is entered (“…”, ‘…’, ’)",
       "settings.smartQuotesTitle": "Credits, role credits, the names of new entries and works get typographic quotes and apostrophes: Bernhard \"Benne\" Vischer → Bernhard “Benne” Vischer, O'Brien → O’Brien. The edit note keeps the source's writing.",
       "dedbox.kindGroup": "Dedication or tribute",
@@ -5702,6 +5706,7 @@
     { id: 'S390', where: 'guessInstrument, similarInstrumentVia, guessOptLabel, instrGuessHtml', note: 'Instruments (3.203.0; collected item Z-ALIASTYPO): a word MusicBrainz does not know ("fluteophone"): each answer of the question says which of MusicBrainz\'s other names it is like ("Tonette – alias “flutophone”"); exactly one answer one letter off (its name or an alias): chosen at once – by an alias credited as written ("Tonette “fluteophone”"), by its own name a slip without a role credit ("Sxaophone": saxophone) – the question stays to change it. Off: a question with the answers only, as before' },
     { id: 'S391', where: 'medleySplit, segueTrimmed, workTitleOf', note: 'Works (3.204.0; collected item Z-SEGUE): a segue of a track list (Grateful Dead, jam bands) – "The Killers > Narragansett", "Dark Star -> St. Stephen", "→", "=>" – in one track splits like "/" (a one-off medley: each piece a work, every link with "medley", in the order of the title); a sign at the end of a title ("China Cat Sunflower >": the next piece follows on its own track) is no part of the work\'s name. Off: only the separators of the release ("/" and those added)' },
     { id: 'S392', where: 'TEXT.parse (tidyLines, fantasy roles)', note: 'Texts (3.204.0; collected item Z-WETTUNA): a line of roles broken after a slash right after the last role ("GUITAR/VOCAL/EFFECTORS/" · "ARP ODYSSEY/…/PROGRAMMING/" · "MULTIPLE INFINITIES") is one line, also when it is broken twice; words of fantasy in a list of instruments ("MULTIPLE INFINITIES", "LOW END THEORY", "VIBRATION" – mapping FANTASY_ROLE_WORDS) are left out even alone. With the mapping: ARP Odyssey, Korg synth – synthesizer; envelope filter, effectors – effects; amplified percussion, rhythm necklace – percussion; Synare – electronic drum set; space drums – drums, each credited as written (several words of one instrument: one relationship with all of them, S325)' },
+    { id: 'S409', where: 'mergeEntries, joinEntry, applyEntryMerges, dmTargetOf (entry-merge), groupHtml (grip)', note: 'Entries (3.208.0; collected item Z-ENTITYMERGE): two entries of the same kind that are one – from different sources, written otherwise – are joined by hand: the grip ⠿ before the kind of an entry dropped onto another entry. The entry dropped onto stays (its link to MusicBrainz counts; without one it takes the other\'s), the rows of the other come to it – the same role once, each row credited as its source writes it, the other\'s name one of its names. Two different entries of MusicBrainz, or entries of different kinds: not joined, a message says why. Remembered for the release (joined again at the next import); ↶ in the message undoes it' },
     { id: 'S408', where: 'renderDedBox (ded-kind), emChipHtml, toggleDedication', note: 'Dedications (3.207.0; collected item Z-DEDKINDSWITCH): each row of the box "Dedications & tributes" has two buttons "Dedication | Tribute" – the chosen one filled in its colour (dedication old rose, tribute gold), a click switches (as "⇄" at the row and the chip did); the chips of these relationships have the colours too. A kind MusicBrainz has not for this target (a tribute of a place) is greyed out' },
     { id: 'S407', where: 'artistWorkTargets, runArtistWorks, matchArtistWorks', note: 'Works (3.207.0; collected item Z-TRIBUTEWORKS2): the artist of a tribute or dedication is one of the artists whose works are read – all works of the artist\'s page, those written and those only recorded (covers too) – and compared with the tracks\' titles; a work found through that artist only is a suggestion in yellow ("work of Sonny Rollins – check"). Read also while the question "look works up for n tracks?" is open (only that artist then)' },
     { id: 'S406', where: 'findDedications (title)', note: 'Dedications (3.207.0; collected item Z-TRIBUTETITLE): the last "for" of a release\'s title may stand inside a bracket at its end – "If Ever You Would Leave Us (we play for Rollins)" names Rollins (until 3.206.0 the closing bracket stopped it)' },
@@ -37408,7 +37413,7 @@
     return `
       <section class="dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${hidden}${groupFolded(a.key) ? ' dci-gcompact' : ''}${mxEntry(a) ? ' dci-em-entry' : mxCompact(a) ? ' dci-em-centry' : ''}${entrySkipped(a) ? ' dci-gskipped' : ''}" data-group="${a.key}">
         <div class="dci-ghead">
-          ${S.view === 'full' && !a.company ? groupFoldHtml(a) : ''}<div class="dci-gname">${mxOn(a) && rows.length && (S.view === 'compact' || S.emWide.has(a.key)) ? emWideHtml(a) : S.view === 'compact' && rows.length ? openAllHtml(a, rows) : ''}${kindTagHtml(a)}${entryNameHtml(a)}${ruleOn('S201') ? entryOriginsHtml(a) : ''}${improvMarkHtml(S.rows.filter((r) => r.artistKey === a.key && r.level === 'work'))}${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}${membersNoteHtml(a)}${siteNoteHtml(a)}${memberOfHtml(a)}</div>
+          ${S.view === 'full' && !a.company ? groupFoldHtml(a) : ''}<div class="dci-gname">${mxOn(a) && rows.length && (S.view === 'compact' || S.emWide.has(a.key)) ? emWideHtml(a) : S.view === 'compact' && rows.length ? openAllHtml(a, rows) : ''}${ruleOn('S409') && rows.length ? `<span class="dci-entry-grip" data-drag="entry" data-id="${esc(a.key)}" draggable="true" role="img" title="${esc(tr('merge.gripTitle'))}" aria-label="${esc(tr('merge.gripTitle'))}"></span>` : ''}${kindTagHtml(a)}${entryNameHtml(a)}${ruleOn('S201') ? entryOriginsHtml(a) : ''}${improvMarkHtml(S.rows.filter((r) => r.artistKey === a.key && r.level === 'work'))}${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}${membersNoteHtml(a)}${siteNoteHtml(a)}${memberOfHtml(a)}</div>
           <div class="dci-gmatch" data-match="${a.key}">${matchHtml(a)}${ruleOn('S201') ? identityLinkHtml(a) : ''}</div>
           ${worksLink}<div class="dci-ghead-r">${compact ? emBySegHtml(a) : ''}${entrySkipHtml(a, allRows)}</div>
         </div>
@@ -41021,6 +41026,34 @@
    * tracks than the whole release), credited as the notes write it; the other rows of the entry that goes move over. Returns how many
    * entries went.
    */
+  /**
+   * The rows of entry o go to entry main ([Z-PLACEDUP] 3.188.0, S324; [Z-ENTITYMERGE] 3.208.0, S409 by hand): of a role both have, the rows
+   * that say more stay (the same role on fewer tracks), credited as o writes it; o's name is one of main's names (altNames).
+   */
+  function joinEntry(main, o) {
+    const mine = S.rows.filter((r) => r.artistKey === o.key);
+    const typeOf = (r) => { const lt = r.level !== 'skip' ? currentLinkType(r) : null; return lt ? lt.gid : norm(String(r.raw || '')); };
+    const size = (rows) => new Set(rows.flatMap((r) => [...(r.tracks || [])])).size;
+    const credit = sourceCreditFor({ anv: o.name }, { ...main, name: o.name, regionPick: null });
+    for (const t of uniq(mine.map(typeOf))) {
+      const theirs = mine.filter((r) => typeOf(r) === t);
+      const ours = S.rows.filter((r) => r.artistKey === main.key && typeOf(r) === t);
+      const recLevel = (rows) => rows.every((r) => r.level === 'recording');
+      // (the rows that say more: the same role on fewer tracks – the notes' "CD 1–4" against the source's whole release)
+      const keepTheirs = !ours.length || (recLevel(theirs) && recLevel(ours) && size(theirs) < size(ours));
+      if (keepTheirs) {
+        S.rows = S.rows.filter((r) => !ours.includes(r));
+        // (the spelling of the entry that goes stays the row's own – its credit follows it: sourceCreditFor)
+        theirs.forEach((r) => { r.artistKey = main.key; if (!r.anv) r.anv = o.name; if (!r.creditTouched && !norm(r.credit) && credit) r.credit = credit; });
+      } else {
+        S.rows = S.rows.filter((r) => !theirs.includes(r));
+        ours.forEach((r) => { if (!r.creditTouched && !norm(r.credit) && credit && !main.dId) Object.assign(r, { credit, anv: r.anv || o.name }); });
+      }
+    }
+    main.altNames = uniq([...(main.altNames || []), o.name].filter(Boolean));
+    if (!main.area && o.area) main.area = o.area;
+    log('info', 'entryMerged', { name: o.name, into: main.mbName || main.name });
+  }
   function mergeSameCompanies() {
     if (!ruleOn('S324')) return 0;
     const by = new Map();
@@ -41031,8 +41064,6 @@
       by.get(k).push(a);
     }
     let n = 0;
-    const typeOf = (r) => { const lt = r.level !== 'skip' ? currentLinkType(r) : null; return lt ? lt.gid : norm(String(r.raw || '')); };
-    const size = (rows) => new Set(rows.flatMap((r) => [...(r.tracks || [])])).size;
     for (const list of by.values()) {
       if (list.length < 2) continue;
       const main = list.find((a) => a.dId) || list[0];
@@ -41040,31 +41071,56 @@
         if (o === main) continue;
         const mine = S.rows.filter((r) => r.artistKey === o.key);
         if (mine.some((r) => r.manual || r.entrySkip) || S.rows.some((r) => r.artistKey === main.key && r.entrySkip)) continue;
-        const credit = sourceCreditFor({ anv: o.name }, { ...main, name: o.name, regionPick: null });
-        for (const t of uniq(mine.map(typeOf))) {
-          const theirs = mine.filter((r) => typeOf(r) === t);
-          const ours = S.rows.filter((r) => r.artistKey === main.key && typeOf(r) === t);
-          const recLevel = (rows) => rows.every((r) => r.level === 'recording');
-          // (the rows that say more: the same role on fewer tracks – the notes' "CD 1–4" against the source's whole release)
-          const keepTheirs = !ours.length || (recLevel(theirs) && recLevel(ours) && size(theirs) < size(ours));
-          if (keepTheirs) {
-            S.rows = S.rows.filter((r) => !ours.includes(r));
-            // (the spelling of the entry that goes stays the row's own – its credit follows it: sourceCreditFor)
-            theirs.forEach((r) => { r.artistKey = main.key; if (!r.anv) r.anv = o.name; if (!r.creditTouched && !norm(r.credit) && credit) r.credit = credit; });
-          } else {
-            S.rows = S.rows.filter((r) => !theirs.includes(r));
-            ours.forEach((r) => { if (!r.creditTouched && !norm(r.credit) && credit && !main.dId) Object.assign(r, { credit, anv: r.anv || o.name }); });
-          }
-        }
-        main.altNames = uniq([...(main.altNames || []), o.name].filter(Boolean));
-        if (!main.area && o.area) main.area = o.area;
-        log('info', 'entryMerged', { name: o.name, into: main.mbName || main.name });
+        joinEntry(main, o);
         n++;
       }
     }
     return n;
   }
+  /**
+   * [Z-ENTITYMERGE] (3.208.0, S409) Two entries of the same kind joined by hand: the grip (⠿) of one dropped onto another. The entry dropped
+   * onto stays (its link to MusicBrainz counts; without one it takes the other's), the rows of the other come to it – the same role once
+   * (joinEntry), each row credited as its source writes it, the other's name one of its names. Two different entries of MusicBrainz: not
+   * joined (a message). Remembered for the release (joined again at the next import); ↶ undoes it.
+   */
+  const MERGES_KEY = `dci-entry-merges:${releaseMbid}`;
+  const mergesRead = () => { const v = readJson('localStorage', MERGES_KEY, []); return Array.isArray(v) ? v : []; };
+  function mergeEntries(fromKey, toKey, { quiet = false } = {}) {
+    const o = S.artists.get(fromKey);
+    const main = S.artists.get(toKey);
+    if (!o || !main || o === main) return false;
+    const ko = groupKindOf(o).type;
+    const km = groupKindOf(main).type;
+    if (ko !== km) {
+      if (!quiet) showMessage('warn', 'merge.kinds', { a: o.mbName || o.name, b: main.mbName || main.name, ka: tr(`entity.${ko}`), kb: tr(`entity.${km}`) });
+      return false;
+    }
+    if (o.mbid && main.mbid && o.mbid !== main.mbid) {
+      if (!quiet) showMessage('warn', 'merge.differentMb', { a: o.mbName || o.name, b: main.mbName || main.name });
+      return false;
+    }
+    if (!main.mbid && o.mbid) {
+      ['status', 'mbid', 'mbName', 'mbComment', 'candidates', 'matchTouched', 'entityType'].forEach((k) => { if (o[k] !== undefined) main[k] = o[k]; });
+    }
+    joinEntry(main, o);
+    if (!main.dId && o.dId) main.dId = o.dId;
+    return true;
+  }
+  /** [Z-ENTITYMERGE] (3.208.0, S409) The joins made by hand for this release, again after an import. */
+  function applyEntryMerges() {
+    if (!ruleOn('S409')) return 0;
+    let n = 0;
+    for (const [from, to, fromName, toName] of mergesRead()) {
+      const byName = (key, name) => (S.artists.has(key) ? S.artists.get(key) : [...S.artists.values()].find((a) => a.name === name) || null);
+      const o = byName(from, fromName);
+      const m = byName(to, toName);
+      if (!o || !m || o === m || !S.rows.some((r) => r.artistKey === o.key)) continue;
+      if (mergeEntries(o.key, m.key, { quiet: true })) n++;
+    }
+    return n;
+  }
   function renderGroupsNow() {
+    applyEntryMerges(); // [Z-ENTITYMERGE] (3.208.0, S409)
     mergeSameCompanies(); // [Z-PLACEDUP] (3.188.0, S324)
     yellSoon(); // [Z-YELL] (3.110.0)
     renderSortBox(); // [Z-SORT] (3.112.0)
@@ -53504,6 +53560,11 @@
       return;
     }
     S.rows = snap.rows.map(([r, c]) => restoreFields(r, c));
+    // ([Z-ENTITYMERGE] 3.208.0, S409) a join of entries: both as they were, no longer remembered
+    if (snap.entries) {
+      snap.entries.forEach(([a, c]) => restoreFields(a, c));
+      writeJson('localStorage', MERGES_KEY, mergesRead().filter(([f]) => f !== snap.merge));
+    }
     S.mxColDate = snap.mxColDate;
     S.dateFills = snap.dateFills;
     S.filledDates = snap.filled;
@@ -53561,6 +53622,11 @@
     const d = S.dmDrag;
     const t = e.target;
     if (!d || !t || !t.closest) return null;
+    // [Z-ENTITYMERGE] (3.208.0, S409) an entry's grip: onto another entry
+    if (d.kind === 'entry') {
+      const sec = t.closest('#dci-overlay section.dci-group[data-group]');
+      return sec && sec.dataset.group !== d.id ? { el: sec, kind: 'entry-merge' } : null;
+    }
     // A source in a preference list: onto another source of the same list
     if (d.kind === 'srcorder') {
       const li = t.closest('[data-srcorder-item]');
@@ -53856,6 +53922,23 @@
   }
 
   function onDropOn(t, d, e) {
+    // [Z-ENTITYMERGE] (3.208.0, S409)
+    if (t.kind === 'entry-merge') {
+      const o = S.artists.get(d.id);
+      const m = S.artists.get(t.el.dataset.group);
+      if (!o || !m) return;
+      const snap = dropSnapshot();
+      const keep = [o, m].map((x) => [x, { ...x }]);
+      if (!mergeEntries(o.key, m.key)) return;
+      const list = mergesRead().filter(([f]) => f !== o.key);
+      list.push([o.key, m.key, o.name, m.name]);
+      writeJson('localStorage', MERGES_KEY, list);
+      if (snap) Object.assign(snap, { entries: keep, merge: o.key });
+      refresh();
+      renderGroups();
+      dropDone(snap, 'merge.done', { a: o.mbName || o.name, b: m.mbName || m.name });
+      return;
+    }
     if (t.kind === 'em-order') {
       const a = artistOf(t.el);
       if (a && emMoveLine(a, d.id, t.el.dataset.line, emAfter(t.el, e))) {
@@ -65148,6 +65231,12 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       .dci-dedlist { margin: calc(var(--u, 1px) * 6) 0 0; padding-left: calc(var(--u, 1px) * 18); }
       .dci-dedlist li { margin: 2px 0; }
       .dci-dedkind { color: var(--muted); }
+      /* [Z-ENTITYMERGE] (3.208.0, S409) */
+      .dci-entry-grip { display: inline-block; cursor: grab; color: var(--muted); padding: 0 calc(var(--u, 1px) * 3); user-select: none; }
+      /* (the sign by the style: the text of the entry's head stays its kind and name) */
+      .dci-entry-grip::before { content: "⠿"; }
+      .dci-entry-grip:hover { color: var(--purple); }
+      #dci-overlay.dci-dm-drag-entry section.dci-group.dci-dm-over { outline: 2px dashed var(--purple); outline-offset: 2px; }
       /* [Z-DEDKINDSWITCH] (3.207.0, S408) */
       .dci-dedsw { display: inline-flex; vertical-align: middle; }
       .dci-dedsw button { font: inherit; font-size: 0.92em; padding: 0 calc(var(--u, 1px) * 7); cursor: pointer; background: transparent; color: var(--muted); border: 1px solid var(--line, #ccc); }
