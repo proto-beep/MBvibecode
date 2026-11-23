@@ -5684,6 +5684,7 @@ def case_entitymerge3208():
     link), "Vocals – A. Smith" (not found) and "Drums – Drum Guy".
     A) The grip ⠿ of "A. Smith" dropped onto "Ann Smith": one entry – Ann Smith with piano and vocals, the vocals credited "A. Smith";
        the entry "A. Smith" gone; the join remembered for the release.
+    A2) (3.210.0, S411) "A. Smith" offered at "Ann Smith": in "Credited as for all roles" and when clicking through the spellings.
     B) ↶ in the message: both entries again, nothing remembered.
     C) "Ann Smith" onto "Drum Guy" (another entry of MusicBrainz): not joined, a message says so.
     D) S409 off: no grip."""
@@ -5744,8 +5745,22 @@ def case_entitymerge3208():
             e0 = pg.evaluate(ENT)
             pg.evaluate("() => { const l = document.getElementById('dci-log'); if (l) l.style.display = 'none'; }")
             drag(pg, f"{sec_sel(pg, 'A. Smith')} .dci-entry-grip", sec_sel(pg, 'Ann Smith') + ' .dci-gname')
+            pg.wait_for_timeout(300)
+            if pg.locator('[data-el=ask] [data-ask=yes]').count():
+                pg.click('[data-el=ask] [data-ask=yes]')
             pg.wait_for_timeout(600)
             e1, r1 = pg.evaluate(ENT), pg.evaluate(ROWS)
+            # ([Z-ENTITYMERGE2] 3.210.0, S411) the names of the entry joined: offered at the one that stays
+            names = pg.evaluate("""(s) => [...document.querySelectorAll(s + ' datalist option')].map(o => o.value)""", sec_sel(pg, 'Ann Smith'))
+            seen = []
+            for _ in range(3):
+                pg.click(f"{sec_sel(pg, 'Ann Smith')} [data-act=ncy-all]")
+                pg.wait_for_timeout(300)
+                seen.append(pg.evaluate(ROWS))
+            print('A2)', names, seen)
+            results.append('A. Smith' in names and any(all(c == 'A. Smith' for _, c in x) for x in seen))
+            pg.click(f"{sec_sel(pg, 'Ann Smith')} [data-act=ncy-all]")
+            pg.wait_for_timeout(300)
             mem = pg.evaluate(f"localStorage.getItem('dci-entry-merges:{H.REL}')")
             print('A)', e0, '→', e1, r1, mem)
             results.append('A. Smith' in e0 and 'A. Smith' not in e1 and any(x[0] == 'Vocals' and x[1] == 'A. Smith' for x in r1) and any(x[0] == 'Piano' for x in r1)
@@ -5770,6 +5785,168 @@ def case_entitymerge3208():
             n = pg.evaluate("document.querySelectorAll('.dci-entry-grip').length")
             print('D)', n)
             results.append(n == 0 and not errs)
+            b.close()
+    finally:
+        H.discogs_release = orig
+        H.MAIN = main0
+        H.RULES_OFF = []
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_entitymerge3210():
+    """Credits Importer 3.210.0 (collected item Z-ENTITYMERGE2, rule S411): "Piano – Ann Smith" (an artist of MusicBrainz) and "Piano –
+    A. Smith" (not found) – the same role: the row of "Ann Smith" stays, the other goes when they are joined.
+    A) "A. Smith" joined into "Ann Smith": "A. Smith" is offered in "Credited as for all roles" and when clicking through the spellings.
+    B) S411 off (as 3.209.0): it is not."""
+    orig = H.discogs_release
+    H.ARTISTS[3701] = (H.uid('dddddddd', 3701), 'Ann Smith')
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': 'Ann Smith', 'anv': '', 'role': 'Piano', 'tracks': '', 'id': 3701, 'join': ''},
+                             {'name': 'A. Smith', 'anv': '', 'role': 'Piano', 'tracks': '', 'id': 999377, 'join': ''}]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    main0 = H.MAIN
+    H.MAIN = H.MAIN.replace('  const S = {', '  const S = window.__S = {', 1)
+    ROWS = """() => window.__S.rows.filter(r => (window.__S.artists.get(r.artistKey) || {}).name === 'Ann Smith').map(r => r.credit || '')"""
+    JOIN = """([a, b]) => { const g = document.querySelector(a); const t = document.querySelector(b); const dt = new DataTransfer();
+      g.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: dt })); t.dispatchEvent(new DragEvent('dragover', { bubbles: true, cancelable: true, dataTransfer: dt }));
+      t.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dt })); g.dispatchEvent(new DragEvent('dragend', { bubbles: true, dataTransfer: dt })); }"""
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        H.ENTRIES_VIEW = 'legacy'
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.wait_still(pg, "document.body.innerHTML", 10, 400)
+        pg.evaluate(JOIN, [f"{sec_sel(pg, 'A. Smith')} .dci-entry-grip", sec_sel(pg, 'Ann Smith') + ' .dci-gname'])
+        pg.wait_for_timeout(300)
+        if pg.locator('[data-el=ask] [data-ask=yes]').count():
+            pg.click('[data-el=ask] [data-ask=yes]')
+        pg.wait_for_timeout(600)
+        names = pg.evaluate("""(s) => [...document.querySelectorAll(s + ' datalist option')].map(o => o.value)""", sec_sel(pg, 'Ann Smith'))
+        seen = []
+        for _ in range(3):
+            btn = pg.locator(f"{sec_sel(pg, 'Ann Smith')} [data-act=ncy-all]")
+            if not btn.count():
+                break
+            btn.first.click()
+            pg.wait_for_timeout(300)
+            seen.append(pg.evaluate(ROWS))
+        b.close()
+        return names, seen, errs
+
+    results = []
+    H.discogs_release = rel
+    try:
+        with sync_playwright() as p:
+            n, seen, errs = run(p)
+            print('A)', n, seen, errs)
+            results.append('A. Smith' in n and ['A. Smith'] in seen and not errs)
+            n, seen, errs = run(p, off=['S411'])
+            print('B)', n, seen, errs)
+            results.append('A. Smith' not in n and ['A. Smith'] not in seen and not errs)
+    finally:
+        H.discogs_release = orig
+        H.MAIN = main0
+        H.RULES_OFF = []
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_entityask3210():
+    """Credits Importer 3.210.0 (collected item Z-ENTITYMERGE3, rule S412): "Piano – Ann Smith" (an artist of MusicBrainz), "Vocals –
+    A. Smith" (not found).
+    A) "A. Smith" dropped onto "Ann Smith": a dialog of the dashboard (no browser dialog) names both and the rows of each; nothing joined yet.
+    B) "Cancel": both entries stay. Esc too.
+    C) "Join": one entry; "↶ Undo join" in the head of "Ann Smith".
+    D) Something changed since (the ↶ of the message would refuse): "↶ Undo join" in the head gives both entries back, nothing remembered.
+    E) S412 off (as 3.209.0): joined at once, no dialog."""
+    orig = H.discogs_release
+    H.ARTISTS[3701] = (H.uid('dddddddd', 3701), 'Ann Smith')
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': 'Ann Smith', 'anv': '', 'role': 'Piano', 'tracks': '', 'id': 3701, 'join': ''},
+                             {'name': 'A. Smith', 'anv': '', 'role': 'Vocals', 'tracks': '', 'id': 999377, 'join': ''}]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    main0 = H.MAIN
+    H.MAIN = H.MAIN.replace('  const S = {', '  const S = window.__S = {', 1)
+    ENT = """() => [...document.querySelectorAll('section.dci-group')].map(g => (g.querySelector('.dci-gname strong') || {}).textContent.trim())"""
+    JOIN = """([a, b]) => { const g = document.querySelector(a); const t = document.querySelector(b); const dt = new DataTransfer();
+      g.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: dt })); t.dispatchEvent(new DragEvent('dragover', { bubbles: true, cancelable: true, dataTransfer: dt }));
+      t.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dt })); g.dispatchEvent(new DragEvent('dragend', { bubbles: true, dataTransfer: dt })); }"""
+    ASK = "(() => { const d = document.querySelector('[data-el=ask]'); return d && !d.hidden ? d.textContent.replace(/\\s+/g, ' ') : ''; })()"
+    MEM = f"localStorage.getItem('dci-entry-merges:{H.REL}') || ''"
+    browser_dialogs = []
+
+    def open_page(p, off=()):
+        H.RULES_OFF = list(off)
+        H.ENTRIES_VIEW = 'legacy'
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: (browser_dialogs.append(d.message), d.dismiss()))
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.wait_still(pg, "document.body.innerHTML", 10, 400)
+        return b, pg, errs
+
+    def join(pg):
+        pg.evaluate(JOIN, [f"{sec_sel(pg, 'A. Smith')} .dci-entry-grip", sec_sel(pg, 'Ann Smith') + ' .dci-gname'])
+        pg.wait_for_timeout(400)
+
+    results = []
+    H.discogs_release = rel
+    try:
+        with sync_playwright() as p:
+            b, pg, errs = open_page(p)
+            join(pg)
+            ask, e1 = pg.evaluate(ASK), pg.evaluate(ENT)
+            focus = pg.evaluate("document.activeElement && document.activeElement.dataset.ask")
+            print('A)', ask, e1, focus)
+            results.append('Join these entries?' in ask and '“A. Smith” (1 row)' in ask and '“Ann Smith” (1 row)' in ask and 'A. Smith' in e1 and focus == 'yes')
+            pg.click('[data-el=ask] [data-ask=no]')
+            pg.wait_for_timeout(300)
+            e2, ask2 = pg.evaluate(ENT), pg.evaluate(ASK)
+            join(pg)
+            pg.keyboard.press('Escape')
+            pg.wait_for_timeout(300)
+            e2b, ask2b, open2b = pg.evaluate(ENT), pg.evaluate(ASK), pg.evaluate("!!document.querySelector('.dci-panel')")
+            print('B)', e2, ask2, '|', e2b, ask2b, open2b)
+            results.append('A. Smith' in e2 and not ask2 and 'A. Smith' in e2b and not ask2b and open2b and not pg.evaluate(MEM))
+            join(pg)
+            pg.click('[data-el=ask] [data-ask=yes]')
+            pg.wait_for_timeout(600)
+            e3, btn = pg.evaluate(ENT), pg.locator(f"{sec_sel(pg, 'Ann Smith')} [data-act=join-undo]").count()
+            print('C)', e3, btn, pg.evaluate(MEM))
+            results.append('A. Smith' not in e3 and btn == 1 and 'A. Smith' in pg.evaluate(MEM))
+            # (a change the message's ↶ would refuse: a row of another entry to the recording level)
+            pg.evaluate("() => { const r = window.__S.rows.find(r => r.level !== 'recording'); if (r) r.level = 'recording'; }")
+            pg.click(f"{sec_sel(pg, 'Ann Smith')} [data-act=join-undo]")
+            pg.wait_for_timeout(600)
+            e4, mem4 = pg.evaluate(ENT), pg.evaluate(MEM)
+            rows4 = pg.evaluate("() => window.__S.rows.map(r => [(window.__S.artists.get(r.artistKey) || {}).name, r.base || r.raw]).sort()")
+            print('D)', e4, mem4, rows4, errs, browser_dialogs)
+            results.append('A. Smith' in e4 and 'Ann Smith' in e4 and 'A. Smith' not in mem4 and ['A. Smith', 'Vocals'] in rows4 and ['Ann Smith', 'Piano'] in rows4
+                           and pg.locator('[data-act=join-undo]').count() == 0 and not errs and not browser_dialogs)
+            b.close()
+            b, pg, errs = open_page(p, off=['S412'])
+            join(pg)
+            e5, ask5 = pg.evaluate(ENT), pg.evaluate(ASK)
+            print('E)', e5, ask5, errs)
+            results.append('A. Smith' not in e5 and not ask5 and not errs)
             b.close()
     finally:
         H.discogs_release = orig

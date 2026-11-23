@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.209.0, Companion 1.6.0 – 1.23.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.210.0, Companion 1.6.0 – 1.23.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,14 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.210.0 · 2026-11-23
+
+- S411: `joinEntry` – `altNames` with all names of the entry that goes (name, rawName, mbName, anvs, altNames); `ncySpellings` and `creditAllHtml` offer `altNames`.
+- S412: `mergeAsk` + `askDialog` (a dialog of the dashboard, `data-el=ask`, `role=alertdialog`) before `joinByHand` (taken out of `onDropOn`); `mergeAllowed` (taken out of `mergeEntries`) checks before asking; `S.joinUndos` (rows and entries before the join) → `joinUndo` / `joinUndoHtml` (`data-act=join-undo` in the entry head, no stale check); `dropUndo` of a join drops its record.
+- S413: `freshForget` – the source pick (`dci-source-pick`) and the media choice (`dci-media-sel`) of the release no longer put back.
+- D039: `DATE_GROUPS` performance – `field recordist` (with D039).
+- Tests: `t_entries.py` `case_entitymerge3210` (the same role: the row of the target stays); `case_entitymerge3208` (A2: the spellings clicked through); `case_entityask3210` (the dialog: cancel, Esc, join; ↶ at the entry after a change; S412 off); `t_sources.py` `case_freshall3209` D (S413); `t_notes_dates.py` `case_fieldrec3210` (D039); harness: link type `field recordist` on recordings.
 
 ## Import 3.209.0 · 2026-11-23
 

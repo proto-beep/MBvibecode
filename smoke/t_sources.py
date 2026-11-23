@@ -2086,7 +2086,8 @@ def case_freshall3209():
     group "Side A" made by hand – then "↻ Repeat import" → "Start afresh".
     A) After it: no credit, the track pool and the date pool without what was made by hand; nothing of them in the browser's storage.
     B) The page loaded again and imported: still nothing of it.
-    C) S410 off (as 3.208.0): the track group stays – after the repeat and after the page is loaded again."""
+    C) S410 off (as 3.208.0): the track group stays – after the repeat and after the page is loaded again.
+    D) (3.210.0, Z-FRESHALL2, S413) the source and the media chosen for the release: forgotten by "Start afresh"; with S413 off kept."""
     ROWS = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
       return g ? [...g.querySelectorAll('tr.dci-row')].map(tr => (tr.querySelector('[data-f=role-credit]') || { value: '-' }).value) : null; }"""
     row_of = "(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name); const t = g && g.querySelector('tr.dci-row'); return t ? t.dataset.row : ''; }"
@@ -2119,12 +2120,15 @@ def case_freshall3209():
         pg.click('[data-act=tg-save]')
         pg.wait_for_timeout(1500)
         before = [pg.evaluate(ROWS, 'Bass Man'), pg.evaluate(TG)]
+        pg.evaluate(f"""() => {{ for (const k of ['dci-source-pick', 'dci-media-sel']) {{ const a = JSON.parse(localStorage.getItem(k) || '{{}}') || {{}};
+          a['{H.REL}'] = k === 'dci-source-pick' ? {{ source: 'discogs', id: '1', at: Date.now() }} : {{ media: [1], release: true, at: Date.now() }}; localStorage.setItem(k, JSON.stringify(a)); }} }}""")
         pg.click('[data-el=source] [data-act=repeat-open]'); pg.wait_for_timeout(200)
         pg.click('[data-el=repeat] label:has(input[value=fresh])')
         pg.click('[data-el=repeat] [data-act=repeat-do]')
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 60)
         pg.wait_for_timeout(1500)
-        after = [pg.evaluate(ROWS, 'Bass Man'), pg.evaluate(TG), pg.evaluate(STORE)]
+        after = [pg.evaluate(ROWS, 'Bass Man'), pg.evaluate(TG), pg.evaluate(STORE),
+                 pg.evaluate(f"['dci-source-pick', 'dci-media-sel'].map(k => !!(JSON.parse(localStorage.getItem(k) || '{{}}') || {{}})['{H.REL}'])")]
         pg.close()
         pg, errs2 = start()
         again = [pg.evaluate(ROWS, 'Bass Man'), pg.evaluate(TG)]
@@ -2136,6 +2140,7 @@ def case_freshall3209():
         with sync_playwright() as p:
             before, after, again, errs = run(p)
             print('A)', before, '→', after)
+            picks_on = after[3]
             results.append(before[0] == ['fretless'] and any('Side A' in x for x in before[1]) and after[0] == [''] and not any('Side A' in x for x in after[1])
                            and after[2][0] is None and 'fretless' not in (after[2][1] or ''))
             print('B)', again, errs)
@@ -2143,6 +2148,9 @@ def case_freshall3209():
             before, after, again, errs = run(p, off=['S410'])
             print('C)', after[:2], again, errs)
             results.append(any('Side A' in x for x in after[1]) and any('Side A' in x for x in again[1]) and not errs)
+            before, after, again, errs = run(p, off=['S413'])
+            print('D)', picks_on, after[3], errs)
+            results.append(picks_on == [False, False] and after[3] == [True, True] and not errs)
     finally:
         H.REMEMBER, H.ENTRIES_VIEW = rem0, view0
         H.RULES_OFF = []
