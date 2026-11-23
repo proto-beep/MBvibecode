@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.210.0
+// @version      3.211.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.210.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.210.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.211.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.211.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.210.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.211.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -923,6 +923,7 @@
       "ignored.why.trackTitle": "a track's title (or its position): the lines below are its credits",
       "ignored.why.ensemble": "who plays on these tracks (a duo, trio …): only those named",
       "ignored.why.artTitle": "the title of the cover's picture",
+      "ignored.why.studioOf": "the studio of the person before it",
       "ignored.why.series": "a series the release is part of",
       "ignored.why.catno": "the release’s catalogue number",
       "ignored.why.tracklist": "a line of the track list",
@@ -5716,13 +5717,18 @@
     { id: 'S386', where: 'TEXT.parse (namesScoped, parseState), the name search', note: 'Names (3.202.0; collected item Z-CAPSJP): a name in Japanese, Chinese or Korean script in brackets after a name – "SUPER ULTRA HYPER ULTIMATE-HAKO- (箱)", "Kawabata Makoto (河端一)" – is the same person\'s (or group\'s) name in that script: MusicBrainz is searched by it too (persons and groups of that name or alias), the credit stays the name as written' },
     { id: 'S387', where: 'TEXT.parse (bookletMore)', note: 'Texts (3.203.0; collected item Z-POETICS): "Recorded, January 18, 2024, L\'Auditori de Barcelona By Ferran Conangla" – the date and the place between commas, "By" before the name – read as "Recorded January 18, 2024 at L\'Auditori de Barcelona by Ferran Conangla"; roles without "by" before a name ("Mastered, Mixed Ferran Conangla at FCM Studios,") – the person too, not the studio only. A name: each word with a capital, no month, no "Live" or "Digitally"' },
     { id: 'S388', where: 'TEXT.parse (bookletMore, photoFileCredit), findDates', note: 'Texts (3.203.0; collected item Z-POETICS): a photo credit written as a file\'s name – "Photography : Gustafsson_Guy_Millà_MaschinenHausMusik_(c)_Sabrina Richmann_Ruhrtriennale 2023": the name after "(c)" or "©" is the photographer; who is on the photo, a place and the year of the photo are no credit and no date. Without "(c)"/"©": not read' },
-    { id: 'S389', where: 'TEXT.parse (readUnit; mapping TEXT_PACKAGING_LINE)', note: 'Texts (3.203.0; collected item Z-POETICS): a line that only describes the package – "Compact Disc (CD): cardboard gatefold sleeve", "6-panel digipak", "jewel case" – is left out ("about the package")' },
+    { id: 'S389', where: 'TEXT.parse (readUnit; mapping TEXT_PACKAGING_LINE)', note: 'Texts (3.203.0; collected item Z-POETICS): a line that only describes the package – "Compact Disc (CD): cardboard gatefold sleeve", "6-panel digipak", "jewel case" – is left out ("about the package"); (3.211.0, Z-PKGWALLET) also with the number in words and what comes with it – "Compact Disc (CD): Six panel wallet and CD"' },
     { id: 'S390', where: 'guessInstrument, similarInstrumentVia, guessOptLabel, instrGuessHtml', note: 'Instruments (3.203.0; collected item Z-ALIASTYPO): a word MusicBrainz does not know ("fluteophone"): each answer of the question says which of MusicBrainz\'s other names it is like ("Tonette – alias “flutophone”"); exactly one answer one letter off (its name or an alias): chosen at once – by an alias credited as written ("Tonette “fluteophone”"), by its own name a slip without a role credit ("Sxaophone": saxophone) – the question stays to change it. Off: a question with the answers only, as before' },
     { id: 'S391', where: 'medleySplit, segueTrimmed, workTitleOf', note: 'Works (3.204.0; collected item Z-SEGUE): a segue of a track list (Grateful Dead, jam bands) – "The Killers > Narragansett", "Dark Star -> St. Stephen", "→", "=>" – in one track splits like "/" (a one-off medley: each piece a work, every link with "medley", in the order of the title); a sign at the end of a title ("China Cat Sunflower >": the next piece follows on its own track) is no part of the work\'s name. Off: only the separators of the release ("/" and those added)' },
     { id: 'S392', where: 'TEXT.parse (tidyLines, fantasy roles)', note: 'Texts (3.204.0; collected item Z-WETTUNA): a line of roles broken after a slash right after the last role ("GUITAR/VOCAL/EFFECTORS/" · "ARP ODYSSEY/…/PROGRAMMING/" · "MULTIPLE INFINITIES") is one line, also when it is broken twice; words of fantasy in a list of instruments ("MULTIPLE INFINITIES", "LOW END THEORY", "VIBRATION" – mapping FANTASY_ROLE_WORDS) are left out even alone. With the mapping: ARP Odyssey, Korg synth – synthesizer; envelope filter, effectors – effects; amplified percussion, rhythm necklace – percussion; Synare – electronic drum set; space drums – drums, each credited as written (several words of one instrument: one relationship with all of them, S325)' },
     { id: 'S411', where: 'joinEntry, ncySpellings, creditAllHtml', note: 'Entries (3.210.0; collected item Z-ENTITYMERGE2): an entry joined into another (by hand, S409, or as the same place or label, S324) gives it all its names – its name, its spellings at the source, its name in MusicBrainz, its other names; they are offered when clicking through the spellings (the name of the entry: the next spelling as "credited as") and in "Credited as for all roles". Until 3.209.0 only its name was kept, and not offered there' },
     { id: 'S412', where: 'mergeAsk, askDialog, joinByHand, joinUndo, joinUndoHtml', note: 'Entries (3.210.0; Z-ENTITYMERGE3): before two entries are joined by hand (S409) a dialog of the dashboard asks – not the browser\'s own: it names both, which one stays, how many rows each has and whether the link to MusicBrainz moves, with "Join" and "Cancel" (Esc, a click beside it). ↶ in the head of the entry that stays undoes the last join, also after other changes (the rows keep what was changed in them; only whose they are and their credit go back) – until 3.209.0 only the message offered ↶, and only while nothing had changed. A join remembered from an earlier import: forgotten there, the entries come apart at the next import' },
     { id: 'S413', where: 'freshForget', note: 'Import (3.210.0; Z-FRESHALL2): "Start afresh" (S410) forgets the source and the media chosen for the release too – the import repeated reads the source open now, the choice of media is asked again with all media; at the next opening the source is the first of the release\'s links in the order of the settings (several of one kind: asked). Until 3.209.0 both were kept' },
+    { id: 'S414', where: 'TEXT.parse (placeOf: numberedPlace)', note: 'Texts (3.211.0; collected item Z-EDITEDAT): a place whose name begins with a number – "Edited by Owen Mulholland at 35 Street Studio, NYC" – is the place (35 Street Studio, edited at; NYC its area). Until 3.210.0 the name was taken for a date and left out, the city became the place' },
+    { id: 'S415', where: 'TEXT.parse (readClause: dateL)', note: 'Texts (3.211.0; collected item Z-MASTEREDBYLATE): a date between the verb and the place – "Mastered on January 28, 2026 at Skye Mastering by Denis Blackham" – is no part of the role: Denis Blackham mastering, Skye Mastering mastered at. Until 3.210.0 the name was lost' },
+    { id: 'S416', where: 'TEXT.parse (readClause: allOf)', note: 'Texts (3.211.0; collected item Z-PROSOCALL): "all (the) …" before a role in the plural – "All compositions by Sylvie Courvoisier (SUISA, ASCAP)", "All arrangements by X" – is that role for all tracks. Until 3.210.0 the line was not recognized' },
+    { id: 'S417', where: 'TEXT.parse (readClause: studioLike)', note: 'Texts (3.211.0; collected item Z-DESIGNSTUDIO): after a person\'s full name, a name behind "/" that looks like a studio – a word of studios or companies ("Studio Blue", "X Design", "Y Ltd") or one word alone – is the person\'s studio: "Design by Michael Dyer / Remake" gives Michael Dyer, "Remake" is left out with its reason. Only for the artwork, the design and photographs; two persons ("A / B C") stay two' },
+    { id: 'S418', where: 'nameSourceUrls, createNoteSources (startArtistCreate, the forms of companies and series)', note: 'Edit notes (3.211.0; collected item Z-CREATENOTELINKS): "Create artist / place / label / series" for an entry whose name was read from the text of a page – the Bandcamp album, the notes of the Discogs release, a Wikipedia article – and that has no page of its own there: the edit note names that page as its source. Never MusicBrainz\'s pages, nor a text pasted in. An entry with its own page at the source (a Discogs artist) names that page as before' },
     { id: 'S410', where: 'freshForget, repeatImport, loadRelease', note: '"↻ Repeat import" (3.209.0; collected item Z-FRESHALL): "Start afresh" forgets everything the dashboard holds of the release – not only the changes of the rows and the choices of the works matrix (Z-RI, 3.40.16), also the date pool, the track pool and the date matrix, the choices of the box "Dedications & tributes", "✕ No suite", texts and parts of sources switched off, "skip the works", entries joined by hand, the ticks of suggestions, what is remembered of the release ("Remember changes"; nothing of the import before is stored on the way). Kept: what was created in MusicBrainz through the dashboard (the lists of created works and suites), the source and the media chosen, the log' },
     { id: 'S409', where: 'mergeEntries, joinEntry, applyEntryMerges, dmTargetOf (entry-merge), groupHtml (grip)', note: 'Entries (3.208.0; collected item Z-ENTITYMERGE): two entries of the same kind that are one – from different sources, written otherwise – are joined by hand: the grip ⠿ before the kind of an entry dropped onto another entry. The entry dropped onto stays (its link to MusicBrainz counts; without one it takes the other\'s), the rows of the other come to it – the same role once, each row credited as its source writes it, the other\'s name one of its names. Two different entries of MusicBrainz, or entries of different kinds: not joined, a message says why. Remembered for the release (joined again at the next import); ↶ in the message undoes it' },
     { id: 'S408', where: 'renderDedBox (ded-kind), emChipHtml, toggleDedication', note: 'Dedications (3.207.0; collected item Z-DEDKINDSWITCH): each row of the box "Dedications & tributes" has two buttons "Dedication | Tribute" – the chosen one filled in its colour (dedication old rose, tribute gold), a click switches (as "⇄" at the row and the chip did); the chips of these relationships have the colours too. A kind MusicBrainz has not for this target (a tribute of a place) is greyed out' },
@@ -9523,7 +9529,10 @@
       // ([Z-KIRAMEKI] 3.194.0, S348) a date after the place without "on" ("environment 0g (Osaka ) 5th Aug. 2025"); a name with a digit in it
       // ("Environment 0g", "Studio 54") is a name – only a part that is a date (a year, a day, a month) is left out
       const bare = ruleOn('S348') ? String(text || '').replace(new RegExp(`\\s+\\d{1,2}(?:st|nd|rd|th)?\\.?\\s+${TEXT_MONTH_WORD.source}\\.?,?\\s+\\d{4}\\.?\\s*$`, 'i'), '') : String(text || '');
-      const dateLike = (x) => /\d/.test(x) && (!ruleOn('S348') || /^\d|\b(?:1[89]|20)\d{2}\b|\d(?:st|nd|rd|th)\b|\d{1,2}[./]\d{1,2}/i.test(x) || TEXT_MONTH_WORD.test(x));
+      // ([Z-EDITEDAT] 3.211.0, S414) a name of a place that begins with a number ("35 Street Studio") is a name, not a date – a part with a
+      // word of places and neither a year nor a month
+      const numberedPlace = (x) => ruleOn('S414') && /^\d/.test(x) && TEXT_PLACE_WORDS.test(x) && !/\b(?:1[89]|20)\d{2}\b/.test(x) && !TEXT_MONTH_WORD.test(x);
+      const dateLike = (x) => /\d/.test(x) && !numberedPlace(x) && (!ruleOn('S348') || /^\d|\b(?:1[89]|20)\d{2}\b|\d(?:st|nd|rd|th)\b|\d{1,2}[./]\d{1,2}/i.test(x) || TEXT_MONTH_WORD.test(x));
       const parts = bare.replace(PLACE_DATE_TAIL, '').replace(/\s*\([^)]*\d[^)]*\)/g, '').replace(/\s*\(([^()]+)\)/, ', $1').split(/\s*,\s*/).map(clean).filter((x) => x && !dateLike(x));
       if (!parts.length) return null;
       let name = parts[0];
@@ -13120,6 +13129,10 @@
             leftRaw = ts.rest;
           }
           let left = leftRaw.replace(TEXT_QUOTED_TITLE, ' ');
+          // [Z-PROSOCALL] (3.211.0, S416) "All compositions by Sylvie Courvoisier (SUISA, ASCAP)": "all (the) …" before a role in the plural
+          // – the role for all tracks (until 3.210.0 the line was not recognized)
+          const allOf = ruleOn('S416') ? left.match(/^\s*all\s+(?:of\s+)?(?:the\s+)?(\p{L}+s)\s*$/iu) : null;
+          if (allOf && byRoles(P, allOf[1]).length) left = allOf[1];
           let right = clause.slice(m[0].length - m[2].length);
           // [Z-RAD] (3.81.0, S121) the names and places end with their sentence: "… recorded by Norwegian State radio, at …. The first time
           // I played with Rutherford and Guy. At the time …" – Guy recorded nothing (the "at" of the next sentence split it as a pair)
@@ -13139,7 +13152,9 @@
             left = at[1];
           }
           // [Z-LJTEXT] (3.140.0, S232) "Mixed and mastered in September 2026 by X": the date is no part of the role (its group reads it)
-          const dateL = ruleOn('S232') && !at ? left.match(/^(.*?\S)\s+(?:in|on|during|im|am)\s+(\S.*)$/u) : null;
+          // ([Z-MASTEREDBYLATE] 3.211.0, S415) also with a place: "Mastered on January 28, 2026 at Skye Mastering by Denis Blackham" (until 3.210.0
+          // the date stayed in the role, and the name was lost)
+          const dateL = ruleOn('S232') && (!at || ruleOn('S415')) ? left.match(/^(.*?\S)\s+(?:in|on|during|im|am)\s+(\S.*)$/u) : null;
           if (dateL && (dateL[2].search(TEXT_MONTHS) >= 0 || /\b(?:1[89]|20)\d{2}\b/.test(dateL[2])) && !noDates(dateL[2]).replace(/^(?:the|early|late|mid)\b\s*/i, '').replace(/[,.\s]/g, '')) left = dateL[1];
           // [3.22.0] "Recorded in Xixon, Asturies by X"
           const inL = !at && left.match(/^(.*?)(?:\s+(?:live|again))?\s+in\s+(\p{Lu}.*)$/u);
@@ -13178,6 +13193,17 @@
           // [3.21.0] "…, courtesy of the X Estate" is no name (T031)
           const courtesy = right.search(TEXT_COURTESY);
           if (courtesy >= 0) right = right.slice(0, courtesy);
+          // [Z-DESIGNSTUDIO] (3.211.0, S417) "Design by Michael Dyer / Remake": after a person's full name, a name that looks like a studio – a
+          // word of studios or companies, or one word alone – is the person's studio: left out (named), not a second person; only for the
+          // artwork and the design
+          if (ruleOn('S417') && /design|art|layout|graphic|illustrat|photo|sleeve|cover/i.test(left)) {
+            const st = right.match(/^(\p{Lu}[\p{L}.'’-]+(?:\s+\p{Lu}[\p{L}.'’-]+)+)\s*\/\s*([^/,]+?)\s*\.?$/u);
+            const studioLike = (x) => /\b(?:studios?|design(?:s|ers)?|graphics?|agency|works|lab|labs|atelier|büro|bureau|collective|creative|ltd|inc|llc|gmbh|co)\b\.?/i.test(x) || /^\S+$/.test(x);
+            if (st && studioLike(clean(st[2])) && !/\s(?:and|&)\s/.test(st[2])) {
+              P.ignored.push({ text: clean(st[2]), why: 'studioOf' });
+              right = st[1];
+            }
+          }
           // [Z-PCLICENSE] (3.198.0, S369) "… written by A, B and C ©BMG Rights Management, Warner Chappell Music, Inc.": the © ends the names –
           // the companies after it are the publishers of these works (", Inc." part of a name)
           const pcAt = ruleOn('S369') ? right.search(/\s*(?:©|\(c\))\s*\p{Lu}/u) : -1;
@@ -41931,6 +41957,23 @@
 
   /** The page of an entry at the source ('' if none). */
   const srcUrlOf = (a) => (a && a.dId && (a.links || [])[0]) || '';
+  /**
+   * [Z-CREATENOTELINKS] (3.211.0, S418) The pages whose texts gave an entry its name – the Bandcamp album, the Discogs release of its
+   * notes, the Wikipedia article (an entry without a page of its own at the source): for the edit note of "Create …". Never MusicBrainz's
+   * pages, nor a text pasted in (no page).
+   */
+  function nameSourceUrls(a) {
+    if (!a || !ruleOn('S418') || srcUrlOf(a)) return [];
+    try {
+      const rows = S.rows.filter((r) => r.artistKey === a.key);
+      return uniq(entryOrigins(a).filter((k) => !['mb', 'text', 'ocr'].includes(k)).map((k) => originLink(k, rows).href)
+        .filter((u) => /^https?:\/\//i.test(String(u || '')) && !/musicbrainz\.org/i.test(u)));
+    } catch (e) {
+      return [];
+    }
+  }
+  /** The sources of the edit note of "Create …": the entry's page at the source, else (S418) the pages its name was read from. */
+  const createNoteSources = (a) => [srcUrlOf(a), ...nameSourceUrls(a)].filter(Boolean);
   const prefilledBy = (from) => `Prefilled by ${EDIT_NOTE_SCRIPT_NAME} v${VERSION} (userscript, ${SCRIPT_URL})${from ? ` from ${S.source.noteName}` : ''}.`;
   /**
    * [Z-EN] (3.41.9) The edit note of a form the script fills in, by ⚙ Settings → Staging → Edit note: "full" its sources and the line
@@ -42114,7 +42157,7 @@
       sourceLinkTypeId: sourceUrlLtId('artist'),
       dates,
       rels: [...rels, ...aliasAsk.filter((m) => asked.get(m.mbid)).map((m) => ({ ...m, linkTypeId: x.isPersonLtId, backward: asked.get(m.mbid) === 'back', alias: true }))],
-      editNote: srcUrlOf(artist) ? formEditNote([srcUrlOf(artist)], prefilledBy(true)) : '',
+      editNote: createNoteSources(artist).length ? formEditNote(createNoteSources(artist), prefilledBy(true)) : '',
     });
     const params = seed();
     const urlCount = params.filter(([k]) => /^edit-artist\.url\.\d+\.text$/.test(k)).length;
@@ -42192,7 +42235,7 @@
       if (lt) params.push([`edit-${path}.url.0.link_type_id`, String(lt)]);
     }
     if (owner.srcSeries) params.push(...seriesLabelParams(owner));
-    const otherNote = formEditNote([owner.srcSeries && srcUrlOf(owner)], prefilledBy(!!owner.dId));
+    const otherNote = formEditNote(owner.srcSeries ? createNoteSources(owner) : nameSourceUrls(owner), prefilledBy(!!owner.dId || nameSourceUrls(owner).length > 0));
     if (otherNote) params.push([`edit-${path}.edit_note`, otherNote]);
     const type = tr(`entity.${et}`);
     log('info', 'otherForm', { name: owner.name, type });
@@ -42236,7 +42279,7 @@
     // [3.21.3] a name from a text: the web profiles found next to it (T032, 37c)
     const web = company.dId ? [] : (company.links || []).filter((u) => /^https?:\/\//i.test(u));
     web.forEach((u, i) => params.push([`edit-${entityType}.url.${i + (srcUrlOf(company) && !person ? 1 : 0)}.text`, u]));
-    const companyNote = formEditNote([srcUrlOf(company)], prefilledBy(true));
+    const companyNote = formEditNote(createNoteSources(company), prefilledBy(true));
     if (companyNote) params.push([`edit-${entityType}.edit_note`, companyNote]);
     // [3.21.3] without a link of the source (a text): the name and the web links found next to it
     const what = srcUrlOf(company) && !person ? tr('companyDlg.prefilled')

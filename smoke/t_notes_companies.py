@@ -2688,4 +2688,78 @@ def case_tribute3207():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_courvoisier3211():
+    """Credits Importer 3.211.0 (collected items Z-EDITEDAT, Z-MASTEREDBYLATE, Z-PROSOCALL, Z-DESIGNSTUDIO, Z-PKGWALLET, Z-CREATENOTELINKS;
+    rules S414 – S418): the credits of Sylvie Courvoisier's album as Discogs notes.
+    A) Owen Mulholland edited by, the place "35 Street Studio" edited at (no entry "NYC"); Denis Blackham mastered by; Sylvie Courvoisier
+       composer (works); Michael Dyer design, no entry "Remake"; Véronique Hoegger photography; the line of the package left out.
+    B) "Create artist" for a name of the notes (no page of its own): the edit note names the Discogs release the notes are from.
+    C) The rules off (as 3.210.0): "NYC" an entry, no Denis Blackham, "Remake" an entry, no source in the edit note."""
+    import urllib.parse
+    orig = H.discogs_release
+    NOTES = ('Sylvie Courvoisier: piano, composition\nDan Weiss: drums\n\nAll compositions by Sylvie Courvoisier (SUISA, ASCAP)\n\n'
+             'Recorded by Ryan Streber on April 22, 2025 at Oktaven Audio, Mount Vernon, NY\nEdited by Owen Mulholland at 35 Street Studio, NYC\n'
+             'Mastered on January 28, 2026 at Skye Mastering by Denis Blackham\n\nDesign by Michael Dyer / Remake\nPortrait by Véronique Hoegger\n\n'
+             'Compact Disc (CD): Six panel wallet and CD\n')
+
+    def rel():
+        d = orig()
+        d['notes'] = NOTES
+        d['companies'] = []
+        d['extraartists'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    main0 = H.MAIN
+    H.MAIN = H.MAIN.replace('  const S = {', '  const S = window.__S = {', 1)
+    ROWS = """() => window.__S.rows.filter(r => r.level !== 'skip').map(r => [(window.__S.artists.get(r.artistKey) || {}).name, (r.types || []).join('|'), r.level])"""
+    IGN = "[...document.querySelectorAll('[data-el=ignored] li, .dci-ign li, .dci-ignored li')].map(li => li.textContent.replace(/\\s+/g, ' ').trim())"
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        H.ENTRIES_VIEW = 'legacy'
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.wait_still(pg, "document.body.innerHTML", 10, 400)
+        rows = pg.evaluate(ROWS)
+        ign = pg.evaluate("JSON.stringify(window.__S.notesResult ? window.__S.notesResult.ignored : null)") or ''
+        body = pg.evaluate("document.body.innerText")
+        note = None
+        sel = [x for x in pg.evaluate("[...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(), g.dataset.group])") if x[0] == 'Véronique Hoegger']
+        if sel and pg.locator(f'section[data-group="{sel[0][1]}"] [data-act=artist-create]').count():
+            pg.click(f'section[data-group="{sel[0][1]}"] [data-act=artist-create]')
+            pg.wait_for_selector('[data-el=sub]:not([hidden])', timeout=20000)
+            url = pg.evaluate("document.querySelector('[data-el=sub-frame]').src")
+            note = dict(urllib.parse.parse_qsl(urllib.parse.urlparse(url).query)).get('edit-artist.edit_note', '')
+        b.close()
+        return rows, body, note, errs
+
+    has = lambda rows, name, t: any(r[0] == name and t in r[1] for r in rows)
+    results = []
+    H.discogs_release = rel
+    try:
+        with sync_playwright() as p:
+            rows, body, note, errs = run(p)
+            names = sorted({r[0] for r in rows})
+            print('A)', names, [r for r in rows if r[0] in ('35 Street Studio', 'Denis Blackham', 'Sylvie Courvoisier', 'Michael Dyer', 'Véronique Hoegger', 'Owen Mulholland')], errs)
+            results.append(has(rows, '35 Street Studio', 'edited at') and 'NYC' not in names and has(rows, 'Denis Blackham', 'mastering') and has(rows, 'Sylvie Courvoisier', 'composer')
+                           and has(rows, 'Michael Dyer', 'design') and 'Remake' not in names and has(rows, 'Véronique Hoegger', 'photography') and has(rows, 'Owen Mulholland', 'editor')
+                           and 'Six panel wallet' not in [r[0] for r in rows] and not errs)
+            print('B)', repr(note))
+            results.append(bool(note) and note.startswith('Source: https://www.discogs.com/release/'))
+            rows, body, note, errs = run(p, off=['S414', 'S415', 'S416', 'S417', 'S418'])
+            names = sorted({r[0] for r in rows})
+            print('C)', names, repr(note), errs)
+            results.append('NYC' in names and 'Denis Blackham' not in names and 'Remake' in names and not (note or '').startswith('Source:') and not errs)
+    finally:
+        H.discogs_release = orig
+        H.MAIN = main0
+        H.RULES_OFF = []
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 run_cases(globals())

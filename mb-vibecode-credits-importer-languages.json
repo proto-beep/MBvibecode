@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.210.0",
+  "version": "3.211.0",
   "about": "MB x Vibecode: Credits Importer – the texts of its dashboard in German, Spanish and French (English, the base of the keys and what shows when a text or this file is missing, stays in the script). Loaded by the script (@resource languages). Placeholders {name} are filled in by the script; keys ending in .one / .other are plural forms.",
   "de": {
     "title": "Credits Importer",
@@ -3794,6 +3794,7 @@
     "ignored.why.trackTitle": "der Titel eines Tracks (oder seine Position): die Zeilen darunter sind seine Credits",
     "ignored.why.ensemble": "wer auf diesen Tracks spielt (Duo, Trio …): nur die Genannten",
     "ignored.why.artTitle": "der Titel des Bildes auf dem Cover",
+    "ignored.why.studioOf": "das Studio der Person davor",
     "ignored.why.series": "eine Serie, zu der das Release gehört",
     "ignored.why.catno": "die Katalognummer des Releases",
     "ignored.why.tracklist": "eine Zeile der Trackliste",
@@ -4615,6 +4616,7 @@
     "ignored.why.software": "software musical – no es un instrumento ni una relación de MusicBrainz (T056)",
     "ignored.why.permission": "un permiso – no es un crédito",
     "ignored.why.artTitle": "el título de la imagen de la portada",
+    "ignored.why.studioOf": "el estudio de la persona anterior",
     "ignored.why.series": "una serie de la que forma parte la publicación",
     "ignored.why.releaseArtist": "el artista de la publicación – una línea de título, no un crédito",
     "tcp.surnameAsk": "{word}: ¿qué persona con ese nombre?",
@@ -9195,6 +9197,7 @@
     "ignored.why.software": "logiciel de musique – ni un instrument ni une relation de MusicBrainz (T056)",
     "ignored.why.permission": "une autorisation – pas un crédit",
     "ignored.why.artTitle": "le titre de l’image de la pochette",
+    "ignored.why.studioOf": "le studio de la personne qui précède",
     "ignored.why.series": "une série dont la parution fait partie",
     "ignored.why.releaseArtist": "l’artiste de la parution – une ligne de titre, pas un crédit",
     "tcp.surnameAsk": "{word} : quelle personne de ce nom ?",

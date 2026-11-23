@@ -13,6 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
+| 2026-11-23 | 3.210.0 – 3.211.0 | – |
 | 2026-11-22 | 3.197.0 – 3.209.0 | – |
 | 2026-11-21 | 3.193.0 – 3.196.0 | – |
 | 2026-11-20 | 3.185.0 – 3.192.0 | 1.23.0 |
@@ -136,6 +137,17 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.211.0
+
+**Credit lines read better: places with numbers, dates before the place, "All compositions by", a designer's studio; edit notes name the page of a name.**
+
+- **A place whose name begins with a number** (rule S414): "Edited by Owen Mulholland at 35 Street Studio, NYC" gives the place 35 Street Studio (edited at), NYC its area. Until 3.210.0 the name was taken for a date and the city became the place.
+- **A date before the place** (rule S415): "Mastered on January 28, 2026 at Skye Mastering by Denis Blackham" gives Denis Blackham mastering and Skye Mastering. Until 3.210.0 the name was lost.
+- **"All compositions by …"** (rule S416): "all (the) …" before a role in the plural – "All compositions by Sylvie Courvoisier (SUISA, ASCAP)" – is that role for all tracks. Until 3.210.0 the line was not recognized.
+- **A designer's studio** (rule S417): "Design by Michael Dyer / Remake" – after a person's full name, a name that looks like a studio (a word of studios or companies, or one word alone) is the person's studio: left out with its reason, not a second person.
+- **The package** (rule S389): also "Compact Disc (CD): Six panel wallet and CD" (the number in words, what comes with it) is left out.
+- **Edit notes name the page of a name** (rule S418): "Create artist / place / label / series" for an entry whose name was read from the text of a page – the Bandcamp album, the notes of the Discogs release, a Wikipedia article – names that page as its source. Never MusicBrainz's pages.
 
 ### Import 3.210.0
 
