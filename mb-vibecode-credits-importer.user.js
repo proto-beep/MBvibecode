@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.208.0
+// @version      3.209.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.208.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.208.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.209.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.209.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.208.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.209.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -191,16 +191,16 @@
       "repeat.keep": "Keep my changes",
       "repeat.keepTitle": "What you changed in this import is put onto the new one",
       "repeat.fresh": "Start afresh",
-      "repeat.freshTitle": "The rows as the source and the mapping rules give them now: the changes of this import are dropped",
+      "repeat.freshTitle": "Everything the dashboard holds of this release is forgotten – changes, dates and track groups, choices, entries joined. Only what was created in MusicBrainz (works, suites) stays known",
       "repeat.do": "↻ Repeat import",
       "repeat.whatRules": "changed mapping rules apply.",
       "repeat.keepWhat": "Levels, roles, credits, rows, entries and works stay as you set them.",
-      "repeat.freshWhat": "The rows as the source and the rules give them now – your changes of this import are dropped.",
+      "repeat.freshWhat": "Everything anew, as the source and the rules give it now: your changes, the dates and track groups, all choices for this release are forgotten. Only works created in MusicBrainz stay known.",
       "repeat.doKeep": "↻ Repeat, keeping my changes",
       "repeat.doFresh": "↻ Repeat afresh",
       "repeat.keys": "Enter repeats · Esc cancels",
       "log.repeatKeep": "Import repeated – your changes are kept",
-      "log.repeatFresh": "Import repeated afresh – your changes are dropped",
+      "log.repeatFresh": "Import repeated afresh – everything held of this release is forgotten (works created in MusicBrainz stay known)",
       "about.off": "Leave out the “about” text",
       "about.offTitle": "Only for this release: places, liner notes and dates from Bandcamp's “about” text are left out",
       "notes.credit": "From the Discogs notes",
@@ -5706,6 +5706,7 @@
     { id: 'S390', where: 'guessInstrument, similarInstrumentVia, guessOptLabel, instrGuessHtml', note: 'Instruments (3.203.0; collected item Z-ALIASTYPO): a word MusicBrainz does not know ("fluteophone"): each answer of the question says which of MusicBrainz\'s other names it is like ("Tonette – alias “flutophone”"); exactly one answer one letter off (its name or an alias): chosen at once – by an alias credited as written ("Tonette “fluteophone”"), by its own name a slip without a role credit ("Sxaophone": saxophone) – the question stays to change it. Off: a question with the answers only, as before' },
     { id: 'S391', where: 'medleySplit, segueTrimmed, workTitleOf', note: 'Works (3.204.0; collected item Z-SEGUE): a segue of a track list (Grateful Dead, jam bands) – "The Killers > Narragansett", "Dark Star -> St. Stephen", "→", "=>" – in one track splits like "/" (a one-off medley: each piece a work, every link with "medley", in the order of the title); a sign at the end of a title ("China Cat Sunflower >": the next piece follows on its own track) is no part of the work\'s name. Off: only the separators of the release ("/" and those added)' },
     { id: 'S392', where: 'TEXT.parse (tidyLines, fantasy roles)', note: 'Texts (3.204.0; collected item Z-WETTUNA): a line of roles broken after a slash right after the last role ("GUITAR/VOCAL/EFFECTORS/" · "ARP ODYSSEY/…/PROGRAMMING/" · "MULTIPLE INFINITIES") is one line, also when it is broken twice; words of fantasy in a list of instruments ("MULTIPLE INFINITIES", "LOW END THEORY", "VIBRATION" – mapping FANTASY_ROLE_WORDS) are left out even alone. With the mapping: ARP Odyssey, Korg synth – synthesizer; envelope filter, effectors – effects; amplified percussion, rhythm necklace – percussion; Synare – electronic drum set; space drums – drums, each credited as written (several words of one instrument: one relationship with all of them, S325)' },
+    { id: 'S410', where: 'freshForget, repeatImport, loadRelease', note: '"↻ Repeat import" (3.209.0; collected item Z-FRESHALL): "Start afresh" forgets everything the dashboard holds of the release – not only the changes of the rows and the choices of the works matrix (Z-RI, 3.40.16), also the date pool, the track pool and the date matrix, the choices of the box "Dedications & tributes", "✕ No suite", texts and parts of sources switched off, "skip the works", entries joined by hand, the ticks of suggestions, what is remembered of the release ("Remember changes"; nothing of the import before is stored on the way). Kept: what was created in MusicBrainz through the dashboard (the lists of created works and suites), the source and the media chosen, the log' },
     { id: 'S409', where: 'mergeEntries, joinEntry, applyEntryMerges, dmTargetOf (entry-merge), groupHtml (grip)', note: 'Entries (3.208.0; collected item Z-ENTITYMERGE): two entries of the same kind that are one – from different sources, written otherwise – are joined by hand: the grip ⠿ before the kind of an entry dropped onto another entry. The entry dropped onto stays (its link to MusicBrainz counts; without one it takes the other\'s), the rows of the other come to it – the same role once, each row credited as its source writes it, the other\'s name one of its names. Two different entries of MusicBrainz, or entries of different kinds: not joined, a message says why. Remembered for the release (joined again at the next import); ↶ in the message undoes it' },
     { id: 'S408', where: 'renderDedBox (ded-kind), emChipHtml, toggleDedication', note: 'Dedications (3.207.0; collected item Z-DEDKINDSWITCH): each row of the box "Dedications & tributes" has two buttons "Dedication | Tribute" – the chosen one filled in its colour (dedication old rose, tribute gold), a click switches (as "⇄" at the row and the chip did); the chips of these relationships have the colours too. A kind MusicBrainz has not for this target (a tribute of a place) is greyed out' },
     { id: 'S407', where: 'artistWorkTargets, runArtistWorks, matchArtistWorks', note: 'Works (3.207.0; collected item Z-TRIBUTEWORKS2): the artist of a tribute or dedication is one of the artists whose works are read – all works of the artist\'s page, those written and those only recorded (covers too) – and compared with the tracks\' titles; a work found through that artist only is a suggestion in yellow ("work of Sonny Rollins – check"). Read also while the question "look works up for n tracks?" is open (only that artist then)' },
@@ -31799,7 +31800,8 @@
       const rel = await source.release(id, sourceContext());
       // [146] (3.36.0) what is remembered of the import before is stored first – (3.43.2, review) with the media choice and the works
       // choices that import had (until 3.43.1 after `applyMediaChoice`: the old rows were stored under the new choice and "fitted" the new import)
-      saveRememberNow();
+      // ([Z-FRESHALL] 3.209.0, S410) not before "Start afresh": what is dropped is not remembered for the import after it
+      if (!(repeat && repeat.fresh && ruleOn('S410'))) saveRememberNow();
       // [Z-RI] (3.40.17, review) "↻ Repeat import" afresh: the choices of the works matrix go too (once the source was read)
       if (repeat && repeat.fresh) dropWorkChoices();
       // [3.30.8] places named in the Discogs notes, unless Discogs lists them already (S042)
@@ -34413,9 +34415,46 @@
    * up. "Keep my changes": a snapshot as "Remember per release" makes, put onto the new import (also with ⚙ Settings → Cache off);
    * afresh: nothing remembered is taken over for this import.
    */
+  /**
+   * [Z-FRESHALL] (3.209.0, S410) "Start afresh" forgets everything the dashboard holds of this release, in this tab and in the browser –
+   * the date pool, the track pool and the date matrix (with the note that the dates of the notes were placed), what is remembered of
+   * its rows and entries, the choices of the box "Dedications & tributes", "✕ No suite", the texts and parts of sources switched off,
+   * "skip the works", the entries joined by hand, the ticks of suggestions, the frames and the state of "Text from cover art", the
+   * credits taken out in the editor. Kept: what was created in MusicBrainz through the dashboard (the lists of created works and
+   * suites), the source and the media chosen (what is imported), the log.
+   */
+  function freshForget() {
+    const srcPick = (readJson('localStorage', SOURCE_PICK_KEY, {}) || {})[releaseMbid];
+    const mediaSel = (readJson('localStorage', MEDIA_SEL_KEY, {}) || {})[releaseMbid];
+    forgetRelease(releaseMbid);
+    const putBack = (key, v) => {
+      if (v === undefined) return;
+      const all = readJson('localStorage', key, {}) || {};
+      all[releaseMbid] = v;
+      writeJson('localStorage', key, all);
+    };
+    putBack(SOURCE_PICK_KEY, srcPick);
+    putBack(MEDIA_SEL_KEY, mediaSel);
+    Object.entries(relMem).forEach(([key, all]) => { if (key !== SOURCE_PICK_KEY && key !== MEDIA_SEL_KEY) delete all[releaseMbid]; });
+    const rel = String(releaseMbid || '').toLowerCase();
+    for (const key of [DED_KEY, SUITE_NO_KEY]) {
+      const all = readJson('localStorage', key, null) || {};
+      if (!all[rel]) continue;
+      delete all[rel];
+      writeJson('localStorage', key, Object.keys(all).length ? all : null);
+    }
+    writeJson('localStorage', MERGES_KEY, null);
+    Object.assign(S, { datePool: [], trackPool: [], poolForm: null, trackForm: null, dm: { cells: [], found: '', dirty: false }, notesDatesFor: null,
+      aboutStash: null, workGroupsStash: null, freshRows: null, rememberReady: false, aboutOff: false, notesOff: false, worksSkip: false, srcOff: new Set(),
+      yellDone: new Set(), rmdAsk: null, dedForm: null });
+    S.suiteAnswers.clear();
+    S.suiteNoLoaded = true; // (nothing stored any more – and nothing read again)
+  }
   async function repeatImport(keep) {
     if (!S.release) return;
     const repeat = keep ? { snap: S.freshRows ? rememberSnapshot() : null } : { fresh: true };
+    // [Z-FRESHALL] (3.209.0, S410)
+    if (!keep && ruleOn('S410')) freshForget();
     entityCache.clear();
     log('info', keep ? 'repeatKeep' : 'repeatFresh');
     await loadRelease(S.release.id, { source: S.source, confirmed: true, repeat });

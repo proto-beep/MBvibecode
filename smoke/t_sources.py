@@ -1684,7 +1684,7 @@ def case_repeat():
         c1 = [pg.evaluate(ROWS, 'Bass Man'), pg.evaluate(ROWS, 'Photo Guy'), [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'Import repeated' in x][-1:]]
         c2 = pg.evaluate(PLANNED)
         print('C) eine Frage:', one, '| Wahl nach „Source ▾“:', kept, go, '| ↻ neu:', c1, '| neues Werk:', c2)
-        results.append(one == [False, True] and kept and go == '↻ Repeat afresh' and c2 is False and c1[0] == [''] and c1[1] is not None and len(c1[1]) == 1 and c1[2] == ['Import repeated afresh – your changes are dropped'])
+        results.append(one == [False, True] and kept and go == '↻ Repeat afresh' and c2 is False and c1[0] == [''] and c1[1] is not None and len(c1[1]) == 1 and c1[2] == ['Import repeated afresh – everything held of this release is forgotten (works created in MusicBrainz stay known)'])
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
@@ -2079,6 +2079,74 @@ def case_videotracks3169():
         H.discogs_release = orig
         H.VIDEO_TRACKS.clear()
     print('Ergebnis:', 'OK' if results and all(results) else 'FEHLER', results)
+
+
+def case_freshall3209():
+    """Credits Importer 3.209.0 (collected item Z-FRESHALL, rule S410): "Remember changes" on. Bass Man credited "fretless", a track
+    group "Side A" made by hand – then "↻ Repeat import" → "Start afresh".
+    A) After it: no credit, the track pool and the date pool without what was made by hand; nothing of them in the browser's storage.
+    B) The page loaded again and imported: still nothing of it.
+    C) S410 off (as 3.208.0): the track group stays – after the repeat and after the page is loaded again."""
+    ROWS = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      return g ? [...g.querySelectorAll('tr.dci-row')].map(tr => (tr.querySelector('[data-f=role-credit]') || { value: '-' }).value) : null; }"""
+    row_of = "(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name); const t = g && g.querySelector('tr.dci-row'); return t ? t.dataset.row : ''; }"
+    TG = "[...document.querySelectorAll('.dci-pools-body .dci-pchip-tg')].map(c => c.textContent.replace(/\\s+/g, ' ').trim())"
+    STORE = f"['dci-track-pool:{H.REL}', 'dci-remember:{H.REL}'].map(k => localStorage.getItem(k))"
+    rem0, view0 = H.REMEMBER, H.ENTRIES_VIEW
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        H.REMEMBER = True
+        H.ENTRIES_VIEW = 'legacy'
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+
+        def start():
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(800)
+            return pg, errs
+        pg, errs = start()
+        r = pg.evaluate(row_of, 'Bass Man')
+        pg.fill(f'tr.dci-row[data-row="{r}"] [data-f=role-credit]', 'fretless')
+        pg.press(f'tr.dci-row[data-row="{r}"] [data-f=role-credit]', 'Tab')
+        pg.click('[data-act=tg-new]')
+        pg.fill('[data-f=tg-name]', 'Side A')
+        pg.check('[data-f=tg-track][data-i="0"]')
+        pg.click('[data-act=tg-save]')
+        pg.wait_for_timeout(1500)
+        before = [pg.evaluate(ROWS, 'Bass Man'), pg.evaluate(TG)]
+        pg.click('[data-el=source] [data-act=repeat-open]'); pg.wait_for_timeout(200)
+        pg.click('[data-el=repeat] label:has(input[value=fresh])')
+        pg.click('[data-el=repeat] [data-act=repeat-do]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].filter(li => /Import complete/.test(li.textContent)).length >= 2", 60)
+        pg.wait_for_timeout(1500)
+        after = [pg.evaluate(ROWS, 'Bass Man'), pg.evaluate(TG), pg.evaluate(STORE)]
+        pg.close()
+        pg, errs2 = start()
+        again = [pg.evaluate(ROWS, 'Bass Man'), pg.evaluate(TG)]
+        b.close()
+        return before, after, again, errs + errs2
+
+    results = []
+    try:
+        with sync_playwright() as p:
+            before, after, again, errs = run(p)
+            print('A)', before, '→', after)
+            results.append(before[0] == ['fretless'] and any('Side A' in x for x in before[1]) and after[0] == [''] and not any('Side A' in x for x in after[1])
+                           and after[2][0] is None and 'fretless' not in (after[2][1] or ''))
+            print('B)', again, errs)
+            results.append(again[0] == [''] and not any('Side A' in x for x in again[1]) and not errs)
+            before, after, again, errs = run(p, off=['S410'])
+            print('C)', after[:2], again, errs)
+            results.append(any('Side A' in x for x in after[1]) and any('Side A' in x for x in again[1]) and not errs)
+    finally:
+        H.REMEMBER, H.ENTRIES_VIEW = rem0, view0
+        H.RULES_OFF = []
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
 run_cases(globals())

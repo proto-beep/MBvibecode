@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-22 | 3.197.0 – 3.208.0 | – |
+| 2026-11-22 | 3.197.0 – 3.209.0 | – |
 | 2026-11-21 | 3.193.0 – 3.196.0 | – |
 | 2026-11-20 | 3.185.0 – 3.192.0 | 1.23.0 |
 | 2026-11-19 | 3.170.0 – 3.184.0 | – |
@@ -136,6 +136,12 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.209.0
+
+**"Start afresh" forgets everything of the release.**
+
+- **Start afresh** (rule S410): "↻ Repeat import" → "Start afresh" forgets everything the dashboard holds of the release – not only the changes of the rows and the choices of the works matrix, also the date pool, the track pool and the date matrix, the choices of the box "Dedications & tributes", "✕ No suite", texts and parts of sources switched off, "skip the works", entries joined by hand, the ticks of suggestions and what "Remember changes" stored of the release. Kept: what was created in MusicBrainz through the dashboard (the lists of created works and suites), the source and the media chosen, the log.
 
 ### Import 3.208.0
 
