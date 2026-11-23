@@ -5679,4 +5679,103 @@ def case_smartquotes3207():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_entitymerge3208():
+    """Credits Importer 3.208.0 (collected item Z-ENTITYMERGE, rule S409): Discogs "Piano – Ann Smith" (an artist of MusicBrainz, by the
+    link), "Vocals – A. Smith" (not found) and "Drums – Drum Guy".
+    A) The grip ⠿ of "A. Smith" dropped onto "Ann Smith": one entry – Ann Smith with piano and vocals, the vocals credited "A. Smith";
+       the entry "A. Smith" gone; the join remembered for the release.
+    B) ↶ in the message: both entries again, nothing remembered.
+    C) "Ann Smith" onto "Drum Guy" (another entry of MusicBrainz): not joined, a message says so.
+    D) S409 off: no grip."""
+
+    def drag(pg, src, dst):
+        # (the two entries one below the other: the target at the top of the view, so that the source is seen too)
+        ya, yb = pg.locator(src).first.evaluate("e => e.getBoundingClientRect().top"), pg.locator(dst).first.evaluate("e => e.getBoundingClientRect().top")
+        pg.locator(src if ya < yb else dst).first.evaluate("e => e.scrollIntoView({ block: 'start' })")
+        pg.wait_for_timeout(100)
+        sa, sb = pg.locator(src).first.bounding_box(), pg.locator(dst).first.bounding_box()
+        x0, y0 = sa['x'] + sa['width'] / 2, sa['y'] + sa['height'] / 2
+        x1, y1 = sb['x'] + sb['width'] / 2, sb['y'] + sb['height'] / 2
+        pg.mouse.move(x0, y0)
+        pg.mouse.down()
+        for k in range(1, 4):
+            pg.mouse.move(x0 + 4 * k, y0 + 4 * k)
+            pg.wait_for_timeout(30)
+        for k in range(1, 11):
+            pg.mouse.move(x0 + (x1 - x0) * k / 10, y0 + (y1 - y0) * k / 10)
+            pg.wait_for_timeout(20)
+        pg.mouse.up()
+    orig = H.discogs_release
+    H.ARTISTS[3701] = (H.uid('dddddddd', 3701), 'Ann Smith')
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': 'Ann Smith', 'anv': '', 'role': 'Piano', 'tracks': '', 'id': 3701, 'join': ''},
+                             {'name': 'A. Smith', 'anv': '', 'role': 'Vocals', 'tracks': '', 'id': 999377, 'join': ''},
+                             {'name': 'Drum Guy', 'anv': '', 'role': 'Drums', 'tracks': '', 'id': 1002, 'join': ''}]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    main0 = H.MAIN
+    H.MAIN = H.MAIN.replace('  const S = {', '  const S = window.__S = {', 1)
+    ENT = """() => [...document.querySelectorAll('section.dci-group')].map(g => (g.querySelector('.dci-gname strong') || {}).textContent.trim())"""
+    ROWS = """() => window.__S.rows.filter(r => (window.__S.artists.get(r.artistKey) || {}).name === 'Ann Smith').map(r => [r.base || r.raw, r.credit || '']).sort()"""
+    MSG = "(document.querySelector('[data-el=msgs]') || {}).textContent || ''"
+
+    def open_page(p, off=()):
+        H.RULES_OFF = list(off)
+        H.ENTRIES_VIEW = 'legacy'
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.wait_still(pg, "document.body.innerHTML", 10, 400)
+        return b, pg, errs
+
+    results = []
+    H.discogs_release = rel
+    try:
+        with sync_playwright() as p:
+            b, pg, errs = open_page(p)
+            e0 = pg.evaluate(ENT)
+            pg.evaluate("() => { const l = document.getElementById('dci-log'); if (l) l.style.display = 'none'; }")
+            drag(pg, f"{sec_sel(pg, 'A. Smith')} .dci-entry-grip", sec_sel(pg, 'Ann Smith') + ' .dci-gname')
+            pg.wait_for_timeout(600)
+            e1, r1 = pg.evaluate(ENT), pg.evaluate(ROWS)
+            mem = pg.evaluate(f"localStorage.getItem('dci-entry-merges:{H.REL}')")
+            print('A)', e0, '→', e1, r1, mem)
+            results.append('A. Smith' in e0 and 'A. Smith' not in e1 and any(x[0] == 'Vocals' and x[1] == 'A. Smith' for x in r1) and any(x[0] == 'Piano' for x in r1)
+                           and 'A. Smith' in (mem or ''))
+            pg.click('.dci-msg [data-act=drop-undo]')
+            pg.wait_for_timeout(600)
+            e2 = pg.evaluate(ENT)
+            mem2 = pg.evaluate(f"localStorage.getItem('dci-entry-merges:{H.REL}')")
+            print('B)', e2, mem2)
+            results.append('A. Smith' in e2 and 'A. Smith' not in (mem2 or ''))
+            # (C by events of its own – the entry below is outside the view of the test's window)
+            pg.evaluate("""([a, b]) => { const g = document.querySelector(a); const t = document.querySelector(b); const dt = new DataTransfer();
+              g.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: dt })); t.dispatchEvent(new DragEvent('dragover', { bubbles: true, cancelable: true, dataTransfer: dt }));
+              t.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dt })); g.dispatchEvent(new DragEvent('dragend', { bubbles: true, dataTransfer: dt })); }""",
+                        [f"{sec_sel(pg, 'Ann Smith')} .dci-entry-grip", sec_sel(pg, 'Drum Guy') + ' .dci-gname'])
+            pg.wait_for_timeout(600)
+            e3, msg = pg.evaluate(ENT), pg.evaluate(MSG)
+            print('C)', e3, '|', msg[:200], errs)
+            results.append('Drum Guy' in e3 and 'different entries of MusicBrainz' in msg and not errs)
+            b.close()
+            b, pg, errs = open_page(p, off=['S409'])
+            n = pg.evaluate("document.querySelectorAll('.dci-entry-grip').length")
+            print('D)', n)
+            results.append(n == 0 and not errs)
+            b.close()
+    finally:
+        H.discogs_release = orig
+        H.MAIN = main0
+        H.RULES_OFF = []
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
