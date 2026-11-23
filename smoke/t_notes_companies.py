@@ -1668,10 +1668,11 @@ def case_pldup3111():
             H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
             H.wait_still(pg, "document.body.innerHTML", 10, 300)
             ent = pg.evaluate("""[...document.querySelectorAll('section.dci-group')].map(g => g.querySelector('.dci-gname strong').textContent.trim()).filter(n => /Tonart|Loft|Sterling/.test(n))""")
-            rows = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => /Tonart Studio, Kerpen/.test(x.querySelector('.dci-gname strong').textContent));
+            rows = pg.evaluate("""(() => { const g = [...document.querySelectorAll('section.dci-group')].find(x => /^Tonart Studio(?:, Kerpen-Horrem)?$/.test(x.querySelector('.dci-gname strong').textContent.trim()));
               return g ? [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('.dci-drole') || {}).textContent.trim(), (r.querySelector('[data-f=credit]') || {}).value]) : null; })()""")
             print('A)', ent, '\\nB)', rows)
-            results.append(sorted(ent) == ['Loft, Köln', 'Sterling Road Studios', 'Sterling Sound', 'Tonart Studio, Kerpen-Horrem'])
+            # ((3.212.0, S424) Discogs's place without its town: "Tonart Studio", Kerpen-Horrem its area; "Loft" alone stays as it is)
+            results.append(sorted(ent) == ['Loft, Köln', 'Sterling Road Studios', 'Sterling Sound', 'Tonart Studio'])
             results.append(bool(rows) and sorted(rows) == [['mixed at', 'Tonart Studio'], ['recorded at', 'Tonart']])
             print('Fehler:', errs)
             results.append(not errs)
@@ -2759,6 +2760,111 @@ def case_courvoisier3211():
     finally:
         H.discogs_release = orig
         H.MAIN = main0
+        H.RULES_OFF = []
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+def case_kindofshadow3212():
+    """Credits Importer 3.212.0 (collected items Z-RECBYLATE, Z-NAMEYEARAREA, Z-PLACECREDITAREA, Z-PUBYEAR, Z-PUBLABEL, Z-PUBLEVEL,
+    Z-CREATEMEMBER2; rules S419, S420, S422, S424 – S426): Kind Of Shadow – the Discogs notes, "Recorded At – Agnieszka Osiecka Polish Radio
+    Concert Hall, Warsaw", "Published By – Pub Co" (a label of the release), the release's artist a group of MusicBrainz.
+    A) Kuba Sosulski recording; Artur Majewski mix, no entry "Wrocław"; Grzegorz Piwkowski mastering, the place "Hi End Studio", no entry
+       "Warsaw"; the place "Agnieszka Osiecka Polish Radio Concert Hall" with its area Warsaw.
+    B) Pub Co: publishing with the date 2023; its works the new ones (more tracks than with S425 off); the level switched to Release.
+    C) "Create artist" for Arun Kumar (guitar): "member of" Test Band with guitar, said in the dialog; for Guest Person (vocals, guest): none.
+    D) The rules off (as 3.211.0): an entry "Wrocław", no Kuba Sosulski, no "member of"."""
+    import urllib.parse
+    orig = H.discogs_release
+    NOTES = ('Recorded 17 of October 2021 at Agnieszka Osiecka Polish Radio Concert Hall, Warsaw by Kuba Sosulski\n'
+             'Mixed by Artur Majewski 2022, Wrocław\nMasterded by Grzegorz Piwkowski, Hi End Studio 2022, Warsaw\n\n'
+             'All Rights Reserved Pub Co! FSR 01/2023\nPublished by Pub Co 2023\n')
+
+    def rel():
+        d = orig()
+        d['notes'] = NOTES
+        d['companies'] = [{'name': 'Pub Co', 'entity_type_name': 'Published By', 'id': 1003, 'catno': ''},
+                          {'name': 'Agnieszka Osiecka Polish Radio Concert Hall, Warsaw', 'entity_type_name': 'Recorded At', 'id': 1099, 'catno': ''}]
+        d['extraartists'] = [{'name': 'Arun Kumar', 'anv': '', 'role': 'Guitar', 'tracks': '', 'id': 999401, 'join': ''},
+                             {'name': 'Guest Person', 'anv': '', 'role': 'Vocals [Guest]', 'tracks': '', 'id': 999402, 'join': ''},
+                             {'name': 'Writer Z', 'anv': '', 'role': 'Composed By', 'tracks': '', 'id': 3009, 'join': ''}]
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    main0, ac0, rl0 = H.MAIN, list(H.RELEASE_AC), list(H.RELEASE_LABELS)
+    H.MAIN = H.MAIN.replace('  const S = {', '  const S = window.__S = {', 1)
+    band = H.uid('dddddddd', 3212)
+    ROWS = """() => window.__S.rows.filter(r => r.level !== 'skip').map(r => { const a = window.__S.artists.get(r.artistKey) || {};
+      return [a.name, (r.types || []).join('|'), r.level, r.date ? r.date.by || '' : '', r.tracks ? r.tracks.size : 0, a.area || '', r.id]; })"""
+
+    def create(pg, name):
+        sel = [x for x in pg.evaluate("[...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(), g.dataset.group])") if x[0] == name]
+        if not sel or not pg.locator(f'section[data-group="{sel[0][1]}"] [data-act=artist-create]').count():
+            return None, ''
+        pg.click(f'section[data-group="{sel[0][1]}"] [data-act=artist-create]')
+        pg.wait_for_selector('[data-el=sub]:not([hidden])', timeout=20000)
+        url = pg.evaluate("document.querySelector('[data-el=sub-frame]').src")
+        info = pg.evaluate("document.querySelector('[data-el=sub-info]').innerText")
+        pg.click('[data-act=sub-close]')
+        pg.wait_for_timeout(300)
+        return dict(urllib.parse.parse_qsl(urllib.parse.urlparse(url).query)), info
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        H.ENTRIES_VIEW = 'legacy'
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.wait_still(pg, "document.body.innerHTML", 10, 400)
+        rows = pg.evaluate(ROWS)
+        arun = create(pg, 'Arun Kumar')
+        guest = create(pg, 'Guest Person')
+        lvl = None
+        pub = [r for r in rows if r[0] == 'Pub Co' and 'publish' in r[1]]
+        if pub:
+            g = pg.evaluate("[...document.querySelectorAll('section.dci-group')].find(g => g.querySelector('.dci-gname strong').textContent.trim() === 'Pub Co').dataset.group")
+            btn = pg.locator(f'section[data-group="{g}"] [data-act=level][data-level=release]')
+            if btn.count():
+                btn.first.click()
+                pg.wait_for_timeout(500)
+                lvl = pg.evaluate(f"(() => {{ const r = window.__S.rows.find(r => r.id === '{pub[0][6]}'); return r ? r.level : null; }})()")
+        b.close()
+        return rows, arun, guest, lvl, errs
+
+    has = lambda rows, name, t: any(r[0] == name and t in r[1] for r in rows)
+    results = []
+    H.discogs_release = rel
+    H.ARTISTS[3212] = (band, 'Test Band')
+    H.RELEASE_AC[:] = [(band, 'Test Band', 'Test Band', '', 'Group')]
+    H.RELEASE_LABELS[:] = [(H.COMPANIES[1003][1], 'Pub Co', 'FSR 01/2023')]
+    try:
+        with sync_playwright() as p:
+            rows, arun, guest, lvl, errs = run(p)
+            names = sorted({r[0] for r in rows})
+            place = [r for r in rows if r[0] and r[0].startswith('Agnieszka')]
+            print('A)', names, place[:1], errs)
+            results.append(has(rows, 'Kuba Sosulski', 'recording') and has(rows, 'Artur Majewski', 'mix') and all('mixed in' in r[1] for r in rows if r[0] == 'Wrocław') and has(rows, 'Grzegorz Piwkowski', 'mastering')
+                           and 'Hi End Studio' in names and 'Warsaw' not in names and place and place[0][0] == 'Agnieszka Osiecka Polish Radio Concert Hall' and 'Warsaw' in place[0][5] and not errs)
+            pub = [r for r in rows if r[0] == 'Pub Co' and 'publish' in r[1]]
+            print('B)', pub, lvl)
+            n_on = max([r[4] for r in pub] or [0])
+            q, info = arun
+            gq, ginfo = guest
+            print('C)', {k: v for k, v in (q or {}).items() if k.startswith('rels.')}, '|', info, '| guest:', {k: v for k, v in (gq or {}).items() if k.startswith('rels.')})
+            results.append(bool(q) and q.get('rels.0.target') == band and q.get('rels.0.attributes.0.type') and 'member of Test Band' in info and gq is not None and 'rels.0.target' not in gq)
+            rows2, arun2, guest2, lvl2, errs2 = run(p, off=['S419', 'S420', 'S422', 'S424', 'S425', 'S426'])
+            names2 = sorted({r[0] for r in rows2})
+            pub2 = [r for r in rows2 if r[0] == 'Pub Co' and 'publish' in r[1]]
+            print('D)', names2, pub2, {k: v for k, v in (arun2[0] or {}).items() if k.startswith('rels.')})
+            results.insert(1, any(r[3] == '2023' for r in pub) and n_on > max([r[4] for r in pub2] or [0]) and lvl == 'release')
+            results.append(any(r[0] == 'Wrocław' and 'mix' in r[1] and 'mixed in' not in r[1] for r in rows2) and 'Kuba Sosulski' not in names2 and arun2[0] is not None and 'rels.0.target' not in arun2[0] and not errs2)
+    finally:
+        H.discogs_release = orig
+        H.MAIN = main0
+        H.RELEASE_AC[:] = ac0
+        H.RELEASE_LABELS[:] = rl0
         H.RULES_OFF = []
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 

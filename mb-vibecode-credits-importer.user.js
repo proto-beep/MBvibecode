@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.211.0
+// @version      3.212.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.211.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.211.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.212.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.212.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.211.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.212.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -2665,6 +2665,7 @@
       "group.mxHidden.other": "{n} rows skipped with the works matrix are not shown (setting)",
       "log.pubEvidence.one": "Publisher {name}: evidence for {n} work",
       "log.pubEvidence.other": "Publisher {name}: evidence for {n} works",
+      "pub.labelOfRelease": "a label of the release – a new work",
       "note.seriesMissing": "No MusicBrainz series has this Discogs link, so the series is only shown and not added.",
       "note.rsocOff": "Rights societies are not taken (quick switch “Take rights societies” off): this one is on Skip – choose its level to take it.",
       "note.supportLabel": "MusicBrainz has no relationship of a label for support: switch the kind of the entry to Artist (miscellaneous support, credited “support”).",
@@ -4707,6 +4708,7 @@
       "memberOf.add": "member of {group}",
       "memberOf.editTitle": "The text names this artist a member of {group}, MusicBrainz does not",
       "memberOf.onCreate": "“Create artist” adds “member of {group}”",
+      "memberOf.prefilled": "“member of {group}” is filled in with the instruments and voices of this release – check it, or take it out of the form",
       "memberOf.createTitle": "The text names this artist a member of {group}",
       "site.note": "Website per the text: {host} – not in MusicBrainz yet.",
       "site.edit": "add it in MusicBrainz ↗",
@@ -5725,10 +5727,18 @@
     { id: 'S412', where: 'mergeAsk, askDialog, joinByHand, joinUndo, joinUndoHtml', note: 'Entries (3.210.0; Z-ENTITYMERGE3): before two entries are joined by hand (S409) a dialog of the dashboard asks – not the browser\'s own: it names both, which one stays, how many rows each has and whether the link to MusicBrainz moves, with "Join" and "Cancel" (Esc, a click beside it). ↶ in the head of the entry that stays undoes the last join, also after other changes (the rows keep what was changed in them; only whose they are and their credit go back) – until 3.209.0 only the message offered ↶, and only while nothing had changed. A join remembered from an earlier import: forgotten there, the entries come apart at the next import' },
     { id: 'S413', where: 'freshForget', note: 'Import (3.210.0; Z-FRESHALL2): "Start afresh" (S410) forgets the source and the media chosen for the release too – the import repeated reads the source open now, the choice of media is asked again with all media; at the next opening the source is the first of the release\'s links in the order of the settings (several of one kind: asked). Until 3.209.0 both were kept' },
     { id: 'S414', where: 'TEXT.parse (placeOf: numberedPlace)', note: 'Texts (3.211.0; collected item Z-EDITEDAT): a place whose name begins with a number – "Edited by Owen Mulholland at 35 Street Studio, NYC" – is the place (35 Street Studio, edited at; NYC its area). Until 3.210.0 the name was taken for a date and left out, the city became the place' },
-    { id: 'S415', where: 'TEXT.parse (readClause: dateL)', note: 'Texts (3.211.0; collected item Z-MASTEREDBYLATE): a date between the verb and the place – "Mastered on January 28, 2026 at Skye Mastering by Denis Blackham" – is no part of the role: Denis Blackham mastering, Skye Mastering mastered at. Until 3.210.0 the name was lost' },
-    { id: 'S416', where: 'TEXT.parse (readClause: allOf)', note: 'Texts (3.211.0; collected item Z-PROSOCALL): "all (the) …" before a role in the plural – "All compositions by Sylvie Courvoisier (SUISA, ASCAP)", "All arrangements by X" – is that role for all tracks. Until 3.210.0 the line was not recognized' },
-    { id: 'S417', where: 'TEXT.parse (readClause: studioLike)', note: 'Texts (3.211.0; collected item Z-DESIGNSTUDIO): after a person\'s full name, a name behind "/" that looks like a studio – a word of studios or companies ("Studio Blue", "X Design", "Y Ltd") or one word alone – is the person\'s studio: "Design by Michael Dyer / Remake" gives Michael Dyer, "Remake" is left out with its reason. Only for the artwork, the design and photographs; two persons ("A / B C") stay two' },
+    { id: 'S415', where: 'TEXT.parse (readUnit: dateL)', note: 'Texts (3.211.0; collected item Z-MASTEREDBYLATE): a date between the verb and the place – "Mastered on January 28, 2026 at Skye Mastering by Denis Blackham" – is no part of the role: Denis Blackham mastering, Skye Mastering mastered at. Until 3.210.0 the name was lost' },
+    { id: 'S416', where: 'TEXT.parse (readUnit: allOf)', note: 'Texts (3.211.0; collected item Z-PROSOCALL): "all (the) …" before a role in the plural – "All compositions by Sylvie Courvoisier (SUISA, ASCAP)", "All arrangements by X" – is that role for all tracks. Until 3.210.0 the line was not recognized' },
+    { id: 'S417', where: 'TEXT.parse (readUnit: studioLike)', note: 'Texts (3.211.0; collected item Z-DESIGNSTUDIO): after a person\'s full name, a name behind "/" that looks like a studio – a word of studios or companies ("Studio Blue", "X Design", "Y Ltd") or one word alone – is the person\'s studio: "Design by Michael Dyer / Remake" gives Michael Dyer, "Remake" is left out with its reason. Only for the artwork, the design and photographs; two persons ("A / B C") stay two' },
     { id: 'S418', where: 'nameSourceUrls, createNoteSources (startArtistCreate, the forms of companies and series)', note: 'Edit notes (3.211.0; collected item Z-CREATENOTELINKS): "Create artist / place / label / series" for an entry whose name was read from the text of a page – the Bandcamp album, the notes of the Discogs release, a Wikipedia article – and that has no page of its own there: the edit note names that page as its source. Never MusicBrainz\'s pages, nor a text pasted in. An entry with its own page at the source (a Discogs artist) names that page as before' },
+    { id: 'S419', where: 'TEXT.parse (readUnit: dateV)', note: 'Texts (3.212.0; collected item Z-RECBYLATE): a date right after the verb, without "on" – "Recorded 17 of October 2021 at … Concert Hall, Warsaw by Kuba Sosulski" – is no part of the role: Kuba Sosulski recorded it. Until 3.211.0 the name was lost' },
+    { id: 'S420', where: 'TEXT.parse (readUnit: yearIn)', note: 'Texts (3.212.0; collected item Z-NAMEYEARAREA): a year and a place or a city after the name – "Mixed by Artur Majewski 2022, Wrocław" (mixed in Wrocław), "Mastered by Grzegorz Piwkowski, Hi End Studio 2022, Warsaw" (mastered at Hi End Studio, in Warsaw) – the name, the place of the verb or its area; the year is the date\'s. Only when the year ends the name or stands with the place ("A, B 2020" stays two names). Until 3.211.0 the city became a person' },
+    { id: 'S421', where: 'TEXT.parse (readLine0: the release\'s artists)', note: 'Texts (3.212.0; collected item Z-HEADERLINES): a line only of the release\'s artists, joined by "/", ",", "&", "and" … – "Izumi Kimura / Artur Majewski / Barry Guy / Ramon Lopez" above a track list – is left out as such (one name alone: S068)' },
+    { id: 'S422', where: 'TEXT.parse (readUnit: yr), addCredit (P.pubDate)', note: 'Texts (3.212.0; collected item Z-PUBYEAR): a year right after a name – "Published by Fundacja Słuchaj 2023" – is no part of the name; of a publisher it is the date of its publishing (only of that relationship). Until 3.211.0 the line was not recognized' },
+    { id: 'S423', where: 'legalMore (RIGHTS_LABEL_CATNO)', note: 'Texts (3.212.0; collected item Z-LABELLINES): "All Rights Reserved Fundacja Słuchaj! FSR 01/2023" – the notice with a label and its catalogue number – is left out ("legal")' },
+    { id: 'S424', where: 'addCompanyEntry (headName)', note: 'Companies (3.212.0; collected item Z-PLACECREDITAREA): a place of the source with its town after a comma – Discogs\'s "Recorded At – Agnieszka Osiecka Polish Radio Concert Hall, Warsaw" – is the place without it: searched, credited and created so; the town its area, the whole name one of its names' },
+    { id: 'S425', where: 'computePublisherEvidence', note: 'Publishers (3.212.0; collected item Z-PUBLABEL): a publisher that is a label of the release (a small label publishing its own music) is ticked on the works of the tracks without a work in MusicBrainz – the new works; an existing work is never supplemented (S083). Other publishers of the whole release as before (S014: only with a personal publisher of a writer)' },
+    { id: 'S426', where: 'releaseBandOf, startArtistCreate', note: 'Members (3.212.0; collected item Z-CREATEMEMBER2): "Create artist" for a player of the release whose one artist is a group of MusicBrainz (group, orchestra, choir …) fills in "member of band" with that group and the instruments and voices of this release as its attributes – only a person with rows of playing, singing or performing on half the tracks or more (or on the release), none of them a guest\'s, additional, a session player\'s, "featuring" or "with"; not the band itself; no date. The dialog says so; it can be taken out of the form' },
     { id: 'S410', where: 'freshForget, repeatImport, loadRelease', note: '"↻ Repeat import" (3.209.0; collected item Z-FRESHALL): "Start afresh" forgets everything the dashboard holds of the release – not only the changes of the rows and the choices of the works matrix (Z-RI, 3.40.16), also the date pool, the track pool and the date matrix, the choices of the box "Dedications & tributes", "✕ No suite", texts and parts of sources switched off, "skip the works", entries joined by hand, the ticks of suggestions, what is remembered of the release ("Remember changes"; nothing of the import before is stored on the way). Kept: what was created in MusicBrainz through the dashboard (the lists of created works and suites), the source and the media chosen, the log' },
     { id: 'S409', where: 'mergeEntries, joinEntry, applyEntryMerges, dmTargetOf (entry-merge), groupHtml (grip)', note: 'Entries (3.208.0; collected item Z-ENTITYMERGE): two entries of the same kind that are one – from different sources, written otherwise – are joined by hand: the grip ⠿ before the kind of an entry dropped onto another entry. The entry dropped onto stays (its link to MusicBrainz counts; without one it takes the other\'s), the rows of the other come to it – the same role once, each row credited as its source writes it, the other\'s name one of its names. Two different entries of MusicBrainz, or entries of different kinds: not joined, a message says why. Remembered for the release (joined again at the next import); ↶ in the message undoes it' },
     { id: 'S408', where: 'renderDedBox (ded-kind), emChipHtml, toggleDedication', note: 'Dedications (3.207.0; collected item Z-DEDKINDSWITCH): each row of the box "Dedications & tributes" has two buttons "Dedication | Tribute" – the chosen one filled in its colour (dedication old rose, tribute gold), a click switches (as "⇄" at the row and the chip did); the chips of these relationships have the colours too. A kind MusicBrainz has not for this target (a tribute of a place) is greyed out' },
@@ -7277,7 +7287,9 @@
     /^(?:UK|US|USA|D|F|E|I|NL|J|JP|EU|CAN|AUS|GER)\s*:\s*[A-Z]{1,6}[\s-]?\d{1,6}[A-Z]?\.?$/,
     /^the\s+copyright\s+in\s+this\s+(?:sound\s+)?recording\s+is\s+owned\s+by\b/i,
   ];
-  const legalMore = (t) => ruleOn('S370') && BK_LEGAL_MORE.some((re) => re.test(String(t || '').trim()));
+  // [Z-LABELLINES] (3.212.0, S423) "All Rights Reserved Fundacja Słuchaj! FSR 01/2023": the notice with the label and its catalogue number
+  const RIGHTS_LABEL_CATNO = /^(?:all|ALL|All)\s+(?:rights|RIGHTS|Rights)\s+(?:reserved|RESERVED|Reserved)\b[\s.,:;–—-]*\p{Lu}[^©℗]{0,60}?\s+[\p{Lu}\d]{2,8}[\s-]?\d[\d\s/.-]*\.?$/u;
+  const legalMore = (t) => (ruleOn('S370') && BK_LEGAL_MORE.some((re) => re.test(String(t || '').trim()))) || (ruleOn('S423') && RIGHTS_LABEL_CATNO.test(String(t || '').trim()));
   // [Z-ARTWORKLINE] (3.183.0, S317)
   const BK_ORIG_ART = /^(original\s+(?:art\s*work|cover\s+art|painting|image)|cover\s+painting|painting)\s*[-–—:]\s*(\p{Lu}.+)$/iu;
   const BK_ART_TECH = /^(?:screen\s*print|silk\s*screen|wood\s*block|woodcut|linocut|lithograph|etching|aquatint|monotype|oil\s+on|acrylic\s+on|gouache|watercolou?r|tempera|mixed\s+media|collage|pencil\s+on|ink\s+on|charcoal)\b|\bedition\s+of\s+\d+\b|\b\d+(?:[.,]\d+)?\s*[x×]\s*\d+(?:[.,]\d+)?\s*(?:cm|mm|in\b)/i;
@@ -9854,7 +9866,7 @@
       const recArr = /^(?:arrang|orchestrat)/i.test(p.base || '') && P.recArrNames.has(norm(name));
       const workArr = !recArr && ruleOn('S150') && /^(?:arrang|orchestrat)/i.test(p.base || '') && !(p.mods || []).length && (songsArr || P.WORK_ARR.test(P.curLine));
       const affil = P.affilOf.get(norm(name)) || '';
-      const extra = { ...extra0, ...(typos ? { typos } : {}), ...(aka0 && !extra0.aka ? { aka: aka0 } : {}), ...(mc && !extra0.roleCredit ? { roleCredit: mc } : {}), ...(workArr ? { workArr: true } : {}), ...(recArr ? { recArr: true } : {}),
+      const extra = { ...extra0, ...(P.pubDate && /^publish/i.test(p.raw) && !extra0.date ? { date: P.pubDate } : {}), ...(typos ? { typos } : {}), ...(aka0 && !extra0.aka ? { aka: aka0 } : {}), ...(mc && !extra0.roleCredit ? { roleCredit: mc } : {}), ...(workArr ? { workArr: true } : {}), ...(recArr ? { recArr: true } : {}),
         ...(affil ? { affil } : {}) };
       // [Z-AFFIL] (3.146.0, S262) the company of a studio's role ("Mastering : Soushi Mizuno (StudioMASS)"): also the place of that role
       // ((review) only a studio ("StudioMASS", "… Studios", "… Sound", "… Mastering"): "Mixed by X (Universal Music)" is no place
@@ -13156,6 +13168,11 @@
           // the date stayed in the role, and the name was lost)
           const dateL = ruleOn('S232') && (!at || ruleOn('S415')) ? left.match(/^(.*?\S)\s+(?:in|on|during|im|am)\s+(\S.*)$/u) : null;
           if (dateL && (dateL[2].search(TEXT_MONTHS) >= 0 || /\b(?:1[89]|20)\d{2}\b/.test(dateL[2])) && !noDates(dateL[2]).replace(/^(?:the|early|late|mid)\b\s*/i, '').replace(/[,.\s]/g, '')) left = dateL[1];
+          // [Z-RECBYLATE] (3.212.0, S419) a date right after the verb, without "on" – "Recorded 17 of October 2021 at … by Kuba Sosulski": no part
+          // of the role (until 3.211.0 the name after "by" was lost)
+          const dateV = ruleOn('S419') ? left.match(/^(\p{L}+(?:\s*(?:,|&|\band\b)\s*\p{L}+)*)\s+(\S.*)$/u) : null;
+          if (dateV && (dateV[2].search(TEXT_MONTHS) >= 0 || /\b(?:1[89]|20)\d{2}\b/.test(dateV[2]))
+            && !noDates(dateV[2]).replace(/\b(?:of|the|early|late|mid|and|to|from|until|between|de|du|del|von|bis)\b/gi, '').replace(/[,.&\s–—-]/g, '')) left = dateV[1];
           // [3.22.0] "Recorded in Xixon, Asturies by X"
           const inL = !at && left.match(/^(.*?)(?:\s+(?:live|again))?\s+in\s+(\p{Lu}.*)$/u);
           if (inL && (placeIn(verb, inL[2]) || inArea(verb, areaOf(inL[2].replace(TEXT_TIME_AFTER_NAME, ''))))) left = inL[1];
@@ -13188,6 +13205,24 @@
             if (at2) {
               atVerbs.forEach((v) => places(v, at2[2]));
               right = at2[1];
+            }
+          }
+          // [Z-NAMEYEARAREA] (3.212.0, S420) a year and a place or a city after the name – "Mixed by Artur Majewski 2022, Wrocław", "Mastered by
+          // Grzegorz Piwkowski, Hi End Studio 2022, Warsaw": the name, the place (a word of places) of the verb, the city its area or the area of
+          // the verb; the year is the date's (its group reads it). Until 3.211.0 the city became a person and the name was lost
+          if (ruleOn('S420') && /,/.test(right) && /\b(?:1[89]|20)\d{2}\b/.test(right)) {
+            const raw = right.split(/\s*,\s*/);
+            const yearIn = (j) => /\b(?:1[89]|20)\d{2}\b/.test(raw[j] || '');
+            const segs = raw.map((x) => clean(x.replace(/\b(?:1[89]|20)\d{2}\b/g, ' ')));
+            const k = segs.findIndex((x, j) => j > 0 && TEXT_PLACE_WORDS.test(x));
+            const restAt = k > 0 ? k : 1;
+            const tail = segs.slice(restAt).filter(Boolean);
+            // (the year ends the name – "Name 2022, City" – or stands with the place – "Name, Studio 2022, City"; "A, B 2020" stays two names)
+            const area = k > 0 || !yearIn(0) ? null : areaOf(tail.join(', '));
+            if (segs[0] && looksLikeName(segs[0]) && tail.length && ((k > 0 && (yearIn(k) || yearIn(0))) || area)) {
+              if (k > 0) atVerbs.forEach((v) => places(v, tail.join(', ')));
+              else inArea(verb, area);
+              right = segs.slice(0, restAt).join(', ');
             }
           }
           // [3.21.0] "…, courtesy of the X Estate" is no name (T031)
@@ -13247,6 +13282,14 @@
           }
           // [3.14.0] the first sentence only, and a time after the name cut off (T020): "X in October 2026" → X
           right = firstSentence(P, right).replace(TEXT_TIME_AFTER_NAME, '');
+          // [Z-PUBYEAR] (3.212.0, S422) a year right after the name – "Published by Fundacja Słuchaj 2023": no part of the name; of a publisher
+          // the date of its publishing (until 3.211.0 the line was not recognized)
+          P.pubDate = null;
+          const yr = ruleOn('S422') ? right.match(/^(.+?\S)\s*,?\s+((?:1[89]|20)\d{2})\.?$/u) : null;
+          if (yr && looksLikeName(clean(yr[1]))) {
+            right = yr[1];
+            if (roles.some((r) => /^publish/i.test(r))) P.pubDate = { ...emptyDateFields(), by: yr[2], ey: yr[2] };
+          }
           // [3.22.0] "Recorded by X in Xixon, Asturies, Spain (in the spring, 2017)": X, and the area (T037)
           const inR = right.match(/^(.+?)\s+in\s+(\p{Lu}.*)$/u);
           if (inR && looksLikeName(clean(inR[1])) && (placeIn(verb, inR[2]) || inArea(verb, areaOf(inR[2])))) right = inR[1];
@@ -14366,6 +14409,16 @@
       if (ruleOn('S181') && P.releaseTitle && titleKey(P.releaseTitle).length >= 3 && titleKey(line) === titleKey(P.releaseTitle)) {
         P.ignored.push({ text: line, why: 'releaseTitle' });
         return;
+      }
+      // [Z-HEADERLINES] (3.212.0, S421) a line only of the release's artists – "Izumi Kimura / Artur Majewski / Barry Guy / Ramon Lopez" above the
+      // track list: no credit, left out as such (until 3.211.0 not recognized)
+      if (ruleOn('S421') && !P.pubBlock && P.artistNames.length > 1) {
+        const parts = line.split(/\s*(?:\/|,|&|\+|\band\b|\bund\b|\bet\b|\by\b|\bwith\b|\bfeat\.?|\bfeaturing\b|·|•|–|—|\s-\s)\s*/iu).map((x) => titleKey(x)).filter(Boolean);
+        const known = new Set(P.artistNames.map(titleKey));
+        if (parts.length > 1 && parts.every((x) => known.has(x)) && titleKey(line).length >= 3) {
+          P.ignored.push({ text: line, why: 'releaseArtist' });
+          return;
+        }
       }
       // [S074] (3.43.0, review) tracks named by what they are not ("Produced by X except track 3", "Bass – X (not on track 3)",
       // "all other tracks mixed by Y"): not read – before, the tracks named were taken as the credit's
@@ -30535,6 +30588,8 @@
       const alt = (d) => { if (d.who.name !== c.who.name && !(d.who.altNames || []).includes(c.who.name)) d.who.altNames = [...(d.who.altNames || []), c.who.name]; };
       if (sameRole) {
         placeCredit(sameRole);
+        // ([Z-PUBYEAR] 3.212.0, S422) the year the notes give a publisher ("Published by X 2023"): the date of Discogs's entry of it
+        if (ruleOn('S422') && c.date && !sameRole.date) sameRole.date = c.date;
         // [S043] Discogs names the publisher for the whole release ("Published By – Flizmo Music"): the tracks the notes give
         // it go onto Discogs's entry ([3.31.6] set, ⓘ shows the line); [S053] (3.36.7) so does a place ("Recorded At – Goldsmiths
         // College" for the whole release, the notes: "A1 to B2 recorded … at Goldsmith's College, London"; collected item 150)
@@ -30551,7 +30606,7 @@
       // [Z-PLDUP] (3.111.0) the same place with another role ("Recorded at Tonart" – Discogs: "Mixed At – Tonart Studio, …"): Discogs's
       // place, credited as the notes write it
       const anv = (byPlace || (same.length && spelt(same[0]))) && norm(c.who.name) !== norm(same[0].who.name) ? c.who.name : '';
-      rel.companies.push({ who, role: c.role, catno: '', tracks: c.tracks || null, fromNotes: true, line: c.line, ...(anv ? { anv } : {}), ...(c.partScope ? { partScope: c.partScope } : {}), ...((c.pubBlock || ruleOn('S053')) && someTracks(c.tracks) ? { notesLine: c.line } : {}) });
+      rel.companies.push({ who, role: c.role, catno: '', tracks: c.tracks || null, fromNotes: true, line: c.line, ...(anv ? { anv } : {}), ...(c.date ? { date: c.date } : {}), ...(c.partScope ? { partScope: c.partScope } : {}), ...((c.pubBlock || ruleOn('S053')) && someTracks(c.tracks) ? { notesLine: c.line } : {}) });
       added.push(`${c.who.name} (${c.role})`);
     }
     if (added.length) log('info', 'notesCompanies', { n: added.length, list: added.join(', ') });
@@ -31753,6 +31808,12 @@
       if (kept.length < g.roles.length) log('info', 'festivalSkipped', { name: g.name });
       g = { ...g, roles: kept };
     }
+    // [Z-PLACECREDITAREA] (3.212.0, S424) a place of Discogs with its town after a comma – "Recorded At – Agnieszka Osiecka Polish Radio Concert
+    // Hall, Warsaw": the place without it (searched, credited and created so), the town its area; the whole name one of its names
+    const placeRole = (r) => /\sAt$/i.test(String(r.role || '').trim());
+    const headName = ruleOn('S424') && g.roles.length && g.roles.every(placeRole) ? withoutAreaTail(String(g.name || '').replace(/\s*\(\d+\)$/, ''), '', '', true) : '';
+    const cut = headName && headName !== String(g.name || '').replace(/\s*\(\d+\)$/, '') && headName.split(/\s+/).length >= 2 ? headName : '';
+    if (cut) g = { ...g, name: cut, area: g.area || String(g.name).replace(/\s*\(\d+\)$/, '').slice(cut.length).replace(/^[\s,]+/, ''), altNames: uniq([...(g.altNames || []), g.name]) };
     const company = {
       key: nextId('c'), dId: g.dId, links: g.links, name: g.name, rawName: g.rawName, status: 'pending', company: true,
       entityType: null, mbid: null, mbName: '', candidates: [], editing: false, error: '', anvs: [], area: g.area || '',
@@ -42142,6 +42203,15 @@
       rels.push({ mbid: mo.gid, name: mo.group, linkTypeId: x.memberLtId, backward: false, attrs: memberAttrIds(artist) });
       (mo.created = mo.created || new Set()).add(artist.key);
     }
+    // [Z-CREATEMEMBER2] (3.212.0, S426) a member of the release's band: "member of band" with its instruments and voices – the one artist of
+    // the release a group of MusicBrainz (any kind: group, orchestra, choir), the person playing or singing on half its tracks or more, not as
+    // a guest; the dialog says so (it can be taken out of the form)
+    let memberNote = '';
+    const band = !mo && !(person && person.type === 'group') ? releaseBandOf(artist) : null;
+    if (band && !rels.some((r) => r.mbid === band.mbid)) {
+      rels.push({ mbid: band.mbid, name: band.name, linkTypeId: x.memberLtId, backward: false, attrs: memberAttrIds(artist) });
+      memberNote = tr('memberOf.prefilled', { group: band.name });
+    }
     const type = person ? person.type : null;
     // [Z-ARTDATES] (3.141.0, S238) born / died (formed / disbanded) as the Discogs profile says them
     const dates = ruleOn('S238') && person && person.profile ? profileDates(person.profile, { name: person.name || artist.name, group: type === 'group' }) : null;
@@ -42191,6 +42261,7 @@
       const links = notInMb.map((r) => `<a href="${esc(r.links[0])}" target="_blank" rel="noopener">${esc(r.name)}</a>`).join(', ');
       info.push(`<p class="dci-muted">${esc(tr('artistDlg.notInMb')).replace('{list}', links)}</p>`);
     }
+    if (memberNote) info.push(`<p class="dci-sub" data-el="member-note">${esc(memberNote)}</p>`);
     warnings.forEach((w) => info.push(`<p class="dci-bad">${esc(w)}</p>`));
     info.push(`<p>${esc(tr('artistDlg.check'))}</p>`);
     log('info', 'artistForm', { name: displayName });
@@ -43865,6 +43936,31 @@
     return mo;
   }
   /** The attributes of "member of band" from the member's rows (instruments, voices): their ids. */
+  /**
+   * [Z-CREATEMEMBER2] (3.212.0, S426) The band of the release a new artist is a member of: the release's one artist, a group of MusicBrainz
+   * (group, orchestra, choir …); the person with rows of playing, singing or performing on half the tracks or more (or on the release), none
+   * of them a guest's, an additional one, a session player's, "featuring" or "with" – and not the band itself. null otherwise.
+   */
+  function releaseBandOf(a) {
+    if (!ruleOn('S426') || !a || a.company) return null;
+    const credit = (S.releaseCredit || []).filter((p) => p.mbid);
+    if (credit.length !== 1 || (S.releaseCredit || []).length !== 1) return null;
+    const band = credit[0];
+    if (!['group', 'orchestra', 'choir'].includes(norm(band.type))) return null;
+    if (a.mbid === band.mbid || [band.name, band.artistName].some((n) => n && norm(n) === norm(a.name))) return null;
+    const rows = S.rows.filter((r) => r.artistKey === a.key && r.level !== 'skip');
+    const perf = rows.filter((r) => PERFORMING_TYPES.includes(norm(rowTypeName(r) || '')));
+    if (!perf.length) return null;
+    const NOT_MEMBER = /\b(?:guests?|additional|session|featuring|feat\.?|special)\b/i;
+    const lines = (r) => [r.raw, r.roleCredit, r.notesCredit, ...(r.srcRefs || []).map((x) => x && x.line)].filter(Boolean).map(String);
+    if (rows.some((r) => (r.flags && r.flags.has && (r.flags.has('guest') || r.flags.has('additional'))) || lines(r).some((l) => NOT_MEMBER.test(l) || /^\s*with\b/i.test(l)))) return null;
+    const n = (S.mbTracks || []).length;
+    const onRelease = perf.some((r) => r.level === 'release');
+    const tracks = new Set(perf.flatMap((r) => [...(r.tracks || [])]));
+    if (!onRelease && n && tracks.size * 2 < n) return null;
+    return { mbid: band.mbid, name: band.artistName || band.name };
+  }
+
   function memberAttrIds(a) {
     const ids = [];
     for (const r of S.rows.filter((x) => x.artistKey === a.key && x.level !== 'skip' && norm(x.primaryText))) {
@@ -46866,6 +46962,8 @@
       const now = new Set();
       let did = false;
       const ev = pc.artist && pc.artist.pubEvidence && pc.artist.pubEvidence.evidence;
+      // ([Z-PUBLABEL] 3.212.0, S425) a label of the release: its new works stay ticked without a personal publisher
+      const labelPub = ruleOn('S425') && (S.releaseLabels || []).includes(pc.mbid);
       for (const m of mrows) {
         const k = ppsKey(m, mrows);
         const st = cellState(pc, m);
@@ -46876,15 +46974,16 @@
         if (!(m.work && workLocked(m.work)) && !creditsSkipped(m.i) && !keep.ppsHand.has(k)) {
           if (!writers.has(m.key)) writers.set(m.key, ppsWriters(m));
           const hit = rels.filter((r) => writers.get(m.key).has(r.mbid));
-          if (hit.length && !on) {
+          const own = labelPub && !((S.mbTracks[m.i] || {}).works || []).length;
+          if ((hit.length || own) && !on) {
             rows.forEach((r) => {
               addCell(r, m);
               if (r.suggest && r.suggest.tracks) r.suggest.tracks.add(m.i); // (a suggestion as those S014 gave)
             });
-            if (ev) ev.set(m.i, uniq(hit.map((r) => r.name)).join(', '));
+            if (ev) ev.set(m.i, hit.length ? uniq(hit.map((r) => r.name)).join(', ') : tr('pub.labelOfRelease'));
             on = true;
             did = true;
-          } else if (!hit.length && pubs.length) {
+          } else if (!hit.length && !own && pubs.length) {
             pubs.forEach((r) => removeCell(r, m));
             if (ev) ev.delete(m.i);
             on = st.existing.length > 0;
@@ -47603,6 +47702,13 @@
         const fitting = hit.filter(periodFits);
         if (fitting.length) evidence.set(t.idx, uniq(fitting.map((r) => r.name)).join(', '));
         else hints.set(t.idx, hit.map((r) => `${r.name} (${r.begin || '?'} – ${r.end || '?'})`).join(', '));
+      }
+      // [Z-PUBLABEL] (3.212.0, S425) the publisher is a label of the release (a small label that publishes its own music): the works of the
+      // tracks without a work in MusicBrainz – the new works – are its too (an existing work is never supplemented, S083)
+      if (ruleOn('S425') && (S.releaseLabels || []).includes(col.mbid)) {
+        for (const t of S.mbTracks) {
+          if (!evidence.has(t.idx) && !(t.works || []).length) evidence.set(t.idx, tr('pub.labelOfRelease'));
+        }
       }
       for (const row of col.rows) {
         // [S022] Tracks the Discogs notes give for this publisher come first; evidence is a suggestion

@@ -269,7 +269,8 @@ def ws_release(full=False):
                        **({'artist-credit': [{'name': n, 'joinphrase': '', 'artist': {'id': g, 'name': n}} for g, n in TRACK_AC[i]]} if i in TRACK_AC else {})})
     return {'id': REL, 'title': REL_TITLE, 'date': '2001', 'text-representation': {'language': 'eng'},
             'release-group': {'id': RG, 'title': 'Testalbum', 'relations': MB_EXTRA.get(RG, [])},
-            'artist-credit': [{'name': n, 'joinphrase': j, 'artist': {'id': g, 'name': mbn}} for g, mbn, n, j in RELEASE_AC],
+            # ((3.212.0) a fifth value: the artist's type – "Group", "Person" …)
+            'artist-credit': [{'name': x[2], 'joinphrase': x[3], 'artist': {'id': x[0], 'name': x[1], **({'type': x[4]} if len(x) > 4 else {})}} for x in RELEASE_AC],
             # ([3.124.0] Z-CATNO: a third value, its catalogue number)
             **({'label-info': [{'catalog-number': x[2] if len(x) > 2 else '', 'label': {'id': x[0], 'name': x[1]}} for x in RELEASE_LABELS]} if RELEASE_LABELS else {}),
             'relations': [{'target-type': 'url', 'type': 'discogs', 'url': {'resource': f'https://www.discogs.com/release/{DISCOGS_ID}'}}]
