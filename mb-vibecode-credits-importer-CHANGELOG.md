@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-23 | 3.210.0 – 3.211.0 | – |
+| 2026-11-23 | 3.210.0 – 3.212.0 | – |
 | 2026-11-22 | 3.197.0 – 3.209.0 | – |
 | 2026-11-21 | 3.193.0 – 3.196.0 | – |
 | 2026-11-20 | 3.185.0 – 3.192.0 | 1.23.0 |
@@ -137,6 +137,19 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.212.0
+
+**Kind Of Shadow read right; publishers of the release's label, their year; "member of" filled in when creating a player.**
+
+- **A date right after the verb** (rule S419): "Recorded 17 of October 2021 at … Concert Hall, Warsaw by Kuba Sosulski" gives Kuba Sosulski recording. Until 3.211.0 the name was lost.
+- **A year and a place after the name** (rule S420): "Mixed by Artur Majewski 2022, Wrocław" gives Artur Majewski mix, mixed in Wrocław; "Mastered by Grzegorz Piwkowski, Hi End Studio 2022, Warsaw" the place Hi End Studio in Warsaw. Until 3.211.0 the city became a person.
+- **The release's artists as a line** (rule S421): "Izumi Kimura / Artur Majewski / Barry Guy / Ramon Lopez" above a track list is left out.
+- **A publisher's year** (rule S422): "Published by Fundacja Słuchaj 2023" gives the publisher, 2023 the date of its publishing.
+- **The notice with label and catalogue number** (rule S423): "All Rights Reserved Fundacja Słuchaj! FSR 01/2023" is left out.
+- **A place with its town** (rule S424): Discogs's "Recorded At – Agnieszka Osiecka Polish Radio Concert Hall, Warsaw" is the place without ", Warsaw" (searched, credited and created so), Warsaw its area.
+- **The release's label as publisher** (rule S425): a publisher that is a label of the release is ticked on all new works (an existing work is never supplemented). The level of a publisher's row switches between Work and Release (MusicBrainz has no publishing of a label on recordings any more).
+- **"member of" when creating a player** (rule S426): "Create artist" for a player of a release whose one artist is a group of MusicBrainz (group, orchestra, choir …) fills in "member of" with that group and the player's instruments and voices – not for guests, additional or session players, "featuring", "with", nor for someone on less than half the tracks; the dialog says so.
 
 ### Import 3.211.0
 
