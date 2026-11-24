@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.212.0
+// @version      3.213.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.212.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.212.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.213.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.213.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.212.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.213.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -4514,6 +4514,13 @@
       "drop.noTracks": "{name}: none of its tracks is on the media chosen – nothing changed",
       "drop.tracksAdded": "{group} added to the tracks of {name}",
       "drop.tracksReplaced": "{group} replaces the tracks of {name}",
+      "recdis.poolName": "Recording comment {pos}",
+      "recdis.item": "{pos} “{title}”: {what}",
+      "log.recDisamb": "From the disambiguation of recordings (MusicBrainz has it not at the recording): {list}",
+      "msg.recDisamb": "The disambiguation of recordings says what MusicBrainz has not at the recording – suggestions (dates in the pool): {list}",
+      "log.videoPlace": "Places and areas on videos: “video shot at / in” on the videos, “recorded at / in” on the audio tracks",
+      "drop.newEvent": "{group}: a new event column for {name} ({date}) – tick its roles into it",
+      "log.emNewEvent": "New event column for {name}: tracks of {group}, date {date}",
       "drop.chipBoth": "{name}: the role is in both events now",
       "drop.chipMoved": "{name}: the role moved to the other event",
       "drop.merged": "{a} + {b} → {date}",
@@ -5739,6 +5746,11 @@
     { id: 'S424', where: 'addCompanyEntry (headName)', note: 'Companies (3.212.0; collected item Z-PLACECREDITAREA): a place of the source with its town after a comma – Discogs\'s "Recorded At – Agnieszka Osiecka Polish Radio Concert Hall, Warsaw" – is the place without it: searched, credited and created so; the town its area, the whole name one of its names' },
     { id: 'S425', where: 'computePublisherEvidence', note: 'Publishers (3.212.0; collected item Z-PUBLABEL): a publisher that is a label of the release (a small label publishing its own music) is ticked on the works of the tracks without a work in MusicBrainz – the new works; an existing work is never supplemented (S083). Other publishers of the whole release as before (S014: only with a personal publisher of a writer)' },
     { id: 'S426', where: 'releaseBandOf, startArtistCreate', note: 'Members (3.212.0; collected item Z-CREATEMEMBER2): "Create artist" for a player of the release whose one artist is a group of MusicBrainz (group, orchestra, choir …) fills in "member of band" with that group and the instruments and voices of this release as its attributes – only a person with rows of playing, singing or performing on half the tracks or more (or on the release), none of them a guest\'s, additional, a session player\'s, "featuring" or "with"; not the band itself; no date. The dialog says so; it can be taken out of the form' },
+    { id: 'S427', where: 'handGroupDate, matrixEntryFor, autoGroupDate', note: 'Dates (3.213.0; collected item Z-PCHANDDATE): a row added by hand ("＋ Another role": a copyright of a person or a label, a recording engineer, an instrument …) gets the date of its column of the date matrix – the date of its tracks and its level (release or recordings, as the switch of the grouping put it), as "Apply" would give it; without a cell, the date the other rows of the group use. The date of the event chosen stays only when it is one of the group\'s (an event dated by the release gives a copyright not the release date). Off (as until 3.212.0): the event\'s date or none' },
+    { id: 'S428', where: 'dmTargetOf (em-newev), emNewEventFromGroup', note: 'Entries (3.213.0; collected item Z-TGDROPCOL): a track group of the pool dropped onto an entry\'s matrix – not onto the tracks of an event (S400) – makes a new event column on the recordings with the group\'s tracks (empty, grey, its roles ticked into it); its date the one the date matrix gives this group in a column of the entry\'s roles, else none (a date can be dropped onto its head). Off (as until 3.212.0): nothing happens' },
+    { id: 'S429', where: 'recordingDateOf, sharedDateOf', note: 'Works (3.213.0; collected items Z-WORKPERFDATE, Z-SUPPDATEWORKS): the date of a track\'s performance for its work (recording of, "⌚ Performance dates onto linked works") comes also from the date matrix before "Apply" – the column Performance\'s date of the track; with the days only on the release (Z-DATELEVEL) or several dates, what they share (the month 2022-10 of 1, 2 and 4 October 2022) – and from a date of another source taken in the box "Compared with MusicBrainz". Off (as until 3.212.0): only the dates applied to rows of the recordings' },
+    { id: 'S430', where: 'videoPlacePass (refresh)', note: 'Places and areas (3.213.0; collected item Z-VIDEOPLACE): on a release with videos – MusicBrainz\'s video flag of the recording (enough on its own), or the title (S132) – "recorded at" / "recorded in" stays on the audio tracks and the videos get "video shot at" / "video shot in" (a row each; only videos: only that), as events have it (S132, S136); "filmed at", "shot at" of a source only on the videos. A type chosen by hand stays. Off (as until 3.212.0): "recorded at/in" on all tracks' },
+    { id: 'S431', where: 'recDisambSuggest (mbTracks: mbWhere, mbDated, mbLive)', note: 'Recordings (3.213.0; collected item Z-RECDISAMB): the disambiguation of a recording written as the live comments are ("live, 2008-05-21: Schaffhauser Jazzfestival 2008, Schaffhausen, Switzerland") is a suggestion for what MusicBrainz has not at the recording – its date (no relationship of it has one) into the pool for the column Performance, its place or event (no place, area or event) and "live" (no "live" on its work) said in a message. Nothing when MusicBrainz has them. Off (as until 3.212.0): not read' },
     { id: 'S410', where: 'freshForget, repeatImport, loadRelease', note: '"↻ Repeat import" (3.209.0; collected item Z-FRESHALL): "Start afresh" forgets everything the dashboard holds of the release – not only the changes of the rows and the choices of the works matrix (Z-RI, 3.40.16), also the date pool, the track pool and the date matrix, the choices of the box "Dedications & tributes", "✕ No suite", texts and parts of sources switched off, "skip the works", entries joined by hand, the ticks of suggestions, what is remembered of the release ("Remember changes"; nothing of the import before is stored on the way). Kept: what was created in MusicBrainz through the dashboard (the lists of created works and suites), the source and the media chosen, the log' },
     { id: 'S409', where: 'mergeEntries, joinEntry, applyEntryMerges, dmTargetOf (entry-merge), groupHtml (grip)', note: 'Entries (3.208.0; collected item Z-ENTITYMERGE): two entries of the same kind that are one – from different sources, written otherwise – are joined by hand: the grip ⠿ before the kind of an entry dropped onto another entry. The entry dropped onto stays (its link to MusicBrainz counts; without one it takes the other\'s), the rows of the other come to it – the same role once, each row credited as its source writes it, the other\'s name one of its names. Two different entries of MusicBrainz, or entries of different kinds: not joined, a message says why. Remembered for the release (joined again at the next import); ↶ in the message undoes it' },
     { id: 'S408', where: 'renderDedBox (ded-kind), emChipHtml, toggleDedication', note: 'Dedications (3.207.0; collected item Z-DEDKINDSWITCH): each row of the box "Dedications & tributes" has two buttons "Dedication | Tribute" – the chosen one filled in its colour (dedication old rose, tribute gold), a click switches (as "⇄" at the row and the chip did); the chips of these relationships have the colours too. A kind MusicBrainz has not for this target (a tribute of a place) is greyed out' },
@@ -8287,6 +8299,7 @@
     { id: 'D037', note: 'Media as a heading (3.178.0; collected item Z-MEDIAHEAD): a line only of media – "CD#1, CD#2, CD#3, CD#4", "CD 5", "Disc 1–3:" – right above a date\'s line: the date is that of the tracks of those media (a track group "Media 1–4"), on a release with several media. The text reader gives the lines below such a heading its tracks as well (S312)' },
     { id: 'D038', note: 'A date that only sums up others (3.187.0; collected item Z-WIKISEMI): a date for all tracks whose days are each named for a group of tracks elsewhere in the texts – "May 26–27, 2016" of Wikipedia\'s infobox beside "May 27, 2016 (Disc 1), May 26, 2016 (Disc 2)" of the notes – says nothing new: it is neither placed in the date matrix nor put into the pool (placed, it would give every track both days)' },
     { id: 'D039', where: 'DATE_GROUPS (performance)', note: 'Dates (3.210.0; collected item Z-FIELDRECDATE): the field recordings (field recordist: "Alio Die: Drones and loops, zither, …, field recordings") belong to the column Performance of the date matrix – a date of the recording ("composed and recorded by Stefano Musso in Spring 2023") is theirs too. Off (as until 3.209.0): they got no date' },
+    { id: 'D040', where: 'findDates (DATE_TYPO_WORDS)', note: 'Dates (3.213.0; collected item Z-MASTERDATETYPO): a word one letter off a word of a date group – "Masterded by Grzegorz Piwkowski, Hi End Studio 2022" – is read as that word (as the credits are, S050): the date goes to its group (Mastering 2022). Only recorded, recording, (re)mastered, (re)mastering; words of seven letters or more. Off (as until 3.212.0): the date without a group' },
     { id: 'D034', note: 'Relative dates (3.132.0; collected item Z-RELDATE; a quick switch): "last September", "earlier this year", "the following spring", "that summer", "two years ago", "letzten September", "im Frühjahr darauf", "vor zwei Jahren", "el pasado septiembre", "hace dos años", "en septembre dernier", "il y a deux ans" – reckoned from a date of the text itself: a dateline ("Berlin, June 2019") or a date of the same paragraph, never the date of the release (a text of a reissue belongs to the original); two possible dates or none: nothing. A season is a period (spring March–May, summer June–August, autumn September–November, winter December–February); "earlier this year" the year only' },
     { id: 'D025', note: 'The kinds of the artwork (3.73.0): a date of the column Artwork goes to the kind its words name – "Cover Painting: “View at Nice” (1992)" to the illustration only (not to design), "Cover Photo: “…” (1985)" to the photography, "Cover design … 1992" to design; "cover art", "artwork": illustration and design. Each date of the column says its kind (to change). The date of a concert is no date the photographs get by themselves: it goes into the pool named for them ("Photography By") and is suggested at their row' },
   ];
@@ -8661,6 +8674,9 @@
     ...REL_DATE_FORMS.map(([re, spec]) => ({ id: 'D034', re: re.replace(/\\b(?=\||$)/g, '(?![\\p{L}\\p{N}])').replace(/\\b/g, '(?<![\\p{L}\\p{N}])'), make: (m, o) => relDate(m, o, spec) })),
   ].map((x) => ({ ...x, rx: new RegExp(x.re, 'giu') }));
 
+  /** [Z-MASTERDATETYPO] (3.213.0, D040) The words of the date groups a typo is read as ("Masterded" → "mastered"). */
+  const DATE_TYPO_WORDS = ['recorded', 'recording', 'mastered', 'mastering', 'remastered', 'remastering'];
+
   /** ℗ and © signs (also as (P), (C) and the doubled "©©" that Discogs often has for ℗ ©). */
   const COPYRIGHT_SIGN = /℗|©|\(p\)|\(c\)/i;
 
@@ -8811,6 +8827,23 @@
               hintWord = h[0];
             }
             if (!h[0]) break;
+          }
+        }
+        // [Z-MASTERDATETYPO] (3.213.0, D040) a word of a group one letter off ("Masterded by X, Hi End Studio 2022"): read as that word, as
+        // the credits are (S050) – only words of seven letters or more that name no group as they are
+        if (ruleOn('D040')) {
+          for (const w of before.matchAll(/\p{L}{7,}/gu)) {
+            const low = w[0].toLowerCase();
+            if (words.some((x) => x.index <= w.index && x.end >= w.index + w[0].length)) continue;
+            const read = DATE_TYPO_WORDS.find((v) => oneEditApart(low, v));
+            const key = read && (DATE_HINTS.find(([k, re]) => (k !== 'composition' && k !== 'production') && new RegExp(re.source, 'i').test(read)) || [])[0];
+            if (!key) continue;
+            words.push({ key, index: w.index, end: w.index + w[0].length });
+            if (w.index > at) {
+              at = w.index;
+              hint = key;
+              hintWord = w[0];
+            }
           }
         }
         // [D020] (3.28.5) words joined by "and", "&" or commas before it: each names a group of the date
@@ -28540,6 +28573,10 @@
           })(),
           // [Z-EVQ] (3.73.0) a video ("video shot at" only then)
           video: !!(track.recording && track.recording.video),
+          // [Z-RECDISAMB] (3.213.0, S431) what MusicBrainz has of the recording's performance: a place, area or event; a date; "live"
+          mbWhere: rels.some((r) => ['event', 'place', 'area'].includes(r['target-type'])),
+          mbDated: rels.some((r) => (r.begin || r.end) && ['event', 'place', 'area', 'work', 'artist'].includes(r['target-type'])),
+          mbLive: rels.some((r) => r['target-type'] === 'work' && (r.attributes || []).map(norm).includes('live')),
           // [Z-EVR] (3.88.0) the events MusicBrainz has for the recording (recorded at, video shot at …)
           mbEvents: rels.filter((r) => r['target-type'] === 'event' && r.event).map((r) => ({ id: r.event.id, name: r.event.name || '', type: norm(r.type || '') })),
           // [S078] (3.50.0; Z-TAR) their names as credited and in MusicBrainz (an entry of the source is found by its name)
@@ -32171,6 +32208,7 @@
             renderDates();
           }
         }
+        if (recDisambSuggest()) renderDates(); // [Z-RECDISAMB] (3.213.0, S431)
         log('ok', 'importDone', { rows: S.rows.length, entries: S.artists.size, existing: S.rows.filter((r) => r.existingAll).length });
         renderSync(); // [Z-NOTABSRC] (3.157.0) the status names the source of this import
         wikiBackground(seq); // [Z-WIKIBG] (3.149.0)
@@ -33224,6 +33262,62 @@
   const VIDEO_TITLE = /\((?:official\s+)?(?:music\s+|lyric\s+|live\s+)?video\)|\[(?:official\s+)?(?:music\s+|lyric\s+)?video\]|\bofficial\s+(?:music\s+)?video\b/i;
   const trackIsVideo = (t) => !!t && (t.video || (ruleOn('S132') && VIDEO_TITLE.test(t.title || '')));
   const videoByTitleOnly = (t) => !!t && !t.video && ruleOn('S132') && VIDEO_TITLE.test(t.title || '');
+
+  /**
+   * [Z-VIDEOPLACE] (3.213.0, S430) Places and areas as events are (S132): on a release with videos (MusicBrainz's flag of the recording, or
+   * the title – S132) "recorded at/in" stays on the audio tracks and the videos get "video shot at/in" (a row each; all videos: only that);
+   * "filmed at", "shot at" of a source ("video shot at/in") only on the videos. A type chosen by hand stays; each row once.
+   * True when a row changed.
+   */
+  const VIDEO_PLACE_TYPES = { 'recorded at': 'video shot at', 'recorded in': 'video shot in' };
+  function videoPlacePass() {
+    if (!ruleOn('S430') || !S.mbTracks || !S.mbTracks.some(trackIsVideo)) return false;
+    let changed = false;
+    const retype = (r, name) => {
+      const lt = typesFor('recording', r.entityType).find((x) => norm(x.name) === name);
+      if (!lt) return false;
+      r.linkTypeId = lt.id;
+      r.types = [lt.name, ...r.types.filter((n) => norm(n) !== name && !VIDEO_PLACE_TYPES[norm(n)])];
+      // (a company's types by its kind: the place's or the area's – the other kept)
+      if (r.typeOptions) r.typeOptions = { ...r.typeOptions, [r.entityType]: [lt.name] };
+      refreshRowDetails(r);
+      return true;
+    };
+    for (const r of [...S.rows]) {
+      if (r.vpSeen || r.level !== 'recording' || !r.tracks || !r.tracks.size) continue;
+      const a = S.artists.get(r.artistKey);
+      if (!a) continue;
+      if (!r.entityType && a.entityType) r.entityType = a.entityType;
+      if (r.entityType !== 'place' && r.entityType !== 'area') continue;
+      const n = norm(rowTypeName(r) || '');
+      const video = VIDEO_PLACE_TYPES[n];
+      if (!video && !Object.values(VIDEO_PLACE_TYPES).includes(n)) continue;
+      r.vpSeen = true;
+      if (r.typePicked || r.statTypeHand) continue;
+      const vids = [...r.tracks].filter((i) => trackIsVideo(S.mbTracks[i]));
+      const audio = [...r.tracks].filter((i) => !trackIsVideo(S.mbTracks[i]));
+      if (!vids.length) continue;
+      if (!video) {
+        // "filmed at" / "shot at": only the videos
+        if (audio.length) {
+          Object.assign(r, { tracks: new Set(vids), suggested: new Set(vids) });
+          changed = true;
+        }
+        continue;
+      }
+      if (!audio.length) {
+        changed = retype(r, video) || changed;
+        continue;
+      }
+      if (!typesFor('recording', r.entityType).some((x) => norm(x.name) === video)) continue;
+      const v = cloneRow(r, { tracks: new Set(vids), suggested: new Set(vids), vpSeen: true });
+      Object.assign(r, { tracks: new Set(audio), suggested: new Set(audio) });
+      retype(v, video);
+      changed = true;
+    }
+    if (changed) log('info', 'videoPlace', {});
+    return changed;
+  }
 
   /** [Z-EVQ] (3.73.0, S108) The question below "Add entry manually" for an event just added: its relationship, one click. */
   function evAskTypes() {
@@ -35910,6 +36004,37 @@
     if (list.length) S.emGhost.set(a.key, list);
     return out;
   }
+  /**
+   * [Z-TGDROPCOL] (3.213.0, S428) A track group dropped onto an entry's matrix (not onto an event's tracks): a new event column on the
+   * recordings with the group's tracks – an empty column (as "＋ New event" would make), its roles ticked into it as usual. Its date:
+   * the date the date matrix gives these tracks in a column of the entry's roles (one date only), else none – a date dropped onto its
+   * head later as on any event. Returns {group, date} or null.
+   */
+  function emNewEventFromGroup(a, groupId) {
+    const g = S.trackPool.find((x) => x.id === groupId);
+    if (!g) return null;
+    const tracks = g.tracks.filter((i) => i < S.mbTracks.length && inSelection(i));
+    if (!tracks.length) {
+      showMessage('info', 'drop.noTracks', { name: g.name });
+      return null;
+    }
+    const cols = new Set(S.rows.filter((r) => r.artistKey === a.key && r.level !== 'skip').map((r) => (dateGroupOf(r) || {}).key).filter(Boolean));
+    const ids = [...new Set(dm().cells.filter((c) => cols.has(c.col) && !c.alt && (c.tgs || []).includes(g.id) && cellEntry(c)).map((c) => c.date))];
+    const entry = ids.length === 1 ? S.datePool.find((x) => x.id === ids[0]) : null;
+    const date = entry ? { ...fieldsFromDate(entry), poolId: entry.id } : null;
+    const key = eventKeyOf({ level: 'recording', tracks: new Set(tracks), date });
+    const exists = S.rows.some((r) => r.artistKey === a.key && r.level !== 'skip' && r.level !== 'work' && eventKeyOf(r) === key);
+    const list = S.emGhost.get(a.key) || [];
+    if (!exists && !list.some((x) => x.key === key)) {
+      list.push({ key, level: 'recording', tracks: [...tracks], date });
+      S.emGhost.set(a.key, list);
+    }
+    if (mxCompact(a)) S.emWide.add(a.key);
+    rerenderGroup(a);
+    log('info', 'emNewEvent', { name: a.mbName || a.name, group: g.name, date: entry ? poolLabel(entry) : '–' });
+    return { group: g.name, date: entry ? poolLabel(entry) : '' };
+  }
+
   /** An empty event column taken away (✕ in its head). */
   function emGhostDrop(a, key) {
     const list = (S.emGhost.get(a.key) || []).filter((g) => g.key !== key);
@@ -38148,7 +38273,39 @@
       const value = r.date && validateDateFields(r.date).value;
       if (value) return { value, pool: r.date.poolId && S.datePool.find((d) => d.id === r.date.poolId) };
     }
-    return null;
+    if (!ruleOn('S429')) return null;
+    // [Z-SUPPDATEWORKS] (3.213.0, S429) a date of another source taken in the box "Compared with MusicBrainz" (a relationship MusicBrainz
+    // has, its date added): the performance of the track too
+    for (const a of S.artists.values()) {
+      for (const y of a.dsupDates || []) {
+        const r = y.row;
+        if (!r || !r.tracks || !r.tracks.has(i) || (dateGroupOf(r) || {}).key !== 'performance' || !dsupTaken(y.key, y.sug.kind)) continue;
+        const value = r.date && validateDateFields(r.date).value;
+        if (value) return { value, pool: r.date.poolId && S.datePool.find((d) => d.id === r.date.poolId) };
+      }
+    }
+    // [Z-WORKPERFDATE] (3.213.0, S429) the date matrix before it is applied: the column Performance's date of the track; days only on the
+    // release (Z-DATELEVEL) or several dates of the track: what they share (the month 2022-10 of 1, 2 and 4 October 2022)
+    const group = DATE_GROUPS.find((g) => g.key === 'performance');
+    const cells = matrixCellsOf(group).filter((c) => { const t = cellTracks(c); return !t || t.has(i); });
+    const of = (list) => list.map(cellEntry).filter((e, k, l) => e && l.findIndex((x) => x && x.id === e.id) === k);
+    const recs = of(cells.filter((c) => !c.rel));
+    if (recs.length === 1) {
+      const value = validateDateFields(fieldsFromDate(recs[0])).value;
+      if (value) return { value, pool: recs[0] };
+    }
+    const shared = sharedDateOf(recs.length ? recs : of(cells.filter((c) => c.rel)));
+    return shared ? { value: shared, pool: null } : null;
+  }
+
+  /** [Z-WORKPERFDATE] (3.213.0, S429) What dates of the pool share: their year, and their month when it is the same (null: nothing). */
+  function sharedDateOf(entries) {
+    const ds = entries.flatMap((e) => [e.begin, e.end]).filter((d) => d && d.year);
+    if (!ds.length || ds.some((d) => d.year !== ds[0].year)) return null;
+    const month = ds.every((d) => d.month && d.month === ds[0].month) ? ds[0].month : null;
+    const day = month && ds.every((d) => d.day && d.day === ds[0].day) ? ds[0].day : null;
+    const one = { year: ds[0].year, ...(month ? { month } : {}), ...(day ? { day } : {}) };
+    return validateDateFields(fieldsFromDate({ begin: one, end: one })).value;
   }
 
   function workDateCell(i, plan) {
@@ -39131,6 +39288,40 @@
       if (line) log('info', 'dateFrom', { line: line.length > 160 ? `${line.slice(0, 160)} …` : line });
     }
     return e;
+  }
+
+  /**
+   * [Z-RECDISAMB] (3.213.0, S431) The disambiguation of a recording as the live comments write it ("live, 2008-05-21: Schaffhauser
+   * Jazzfestival 2008, Schaffhausen, Switzerland"): what it says MusicBrainz has not at the recording – its date (none on its
+   * relationships), its place or event (no place, area or event), "live" (no "live" on its work) – is suggested: the date into the pool
+   * (for the column Performance), the rest in a message. Nothing when MusicBrainz has it all. True when a date came into the pool.
+   */
+  function recDisambSuggest() {
+    if (!ruleOn('S431') || !S.mbTracks) return false;
+    const got = [];
+    let added = false;
+    for (const t of selTracks()) {
+      const c = String(t.recordingComment || '').replace(/[‐‑‒–]/g, '-').trim();
+      if (!c) continue;
+      const m = c.match(/^(live)?\s*,?\s*([^:]*?)\s*(?::\s*(.+))?$/i);
+      if (!m) continue;
+      const live = !!m[1];
+      const date = !t.mbDated && m[2] ? (findDates(m[2]) || []).find((d) => d.value && d.value.begin && d.value.begin.year && !d.alt) : null;
+      const where = !t.mbWhere && m[3] && (live || date) ? m[3].trim() : '';
+      if (!date && !where && !(live && !t.mbLive)) continue;
+      const pos = multiMedium() ? `${t.medium}.${t.number}` : String(t.number);
+      if (date) {
+        const before = S.datePool.length;
+        poolDateFor(date.value, null, `recdis:${t.idx}`, tr('recdis.poolName', { pos }));
+        if (S.datePool.length > before) added = true;
+      }
+      got.push(tr('recdis.item', { pos, title: t.title, what: [date ? formatDateValue(date.value) : '', where, live && !t.mbLive ? 'live' : ''].filter(Boolean).join(' · ') }));
+    }
+    if (got.length) {
+      log('info', 'recDisamb', { list: got.join('; ') });
+      showMessage('info', 'msg.recDisamb', { list: got.join('; ') });
+    }
+    return added;
   }
 
   /**
@@ -41601,6 +41792,7 @@
     dropStaleEntrySkip(); // [Z-SK] (3.40.17, review)
     memberRecheck(); // [Z-MEMBERINST] (3.141.0, S239)
     plateNone(); // [Z-PLT] (3.89.0, S141)
+    if (videoPlacePass()) renderGroups(); // [Z-VIDEOPLACE] (3.213.0, S430)
     // [Z-WEBDOM] (3.124.0, S198) the linked entries whose site the text names: MusicBrainz's addresses of each looked up once
     if (ruleOn('S198')) S.artists.forEach((a) => siteHintRun(a));
     // [Z-DATEORDER] ((3.121.0, review) S190) a date changed elsewhere asks or answers a row of another entry: the entries drawn again
@@ -47259,6 +47451,8 @@
       r.arhl = true; // [Z-ARHL] (3.103.0)
       S.rows.push(r);
       added.push(r);
+      // [Z-PCHANDDATE] (3.213.0, S427) the date of its column of the date matrix (a copyright added by hand: the ℗/© date)
+      if (ruleOn('S427') && level !== 'work') handGroupDate(r);
     }
     S.arq = null;
     log('info', 'arqAdded', { name: a.mbName || a.name, type: name, n: added.length });
@@ -53413,6 +53607,52 @@
     return true;
   }
 
+  /** [Z-PCHANDDATE] (3.213.0, S427) The cells of a column of the date matrix with a date (not one to choose from). */
+  const matrixCellsOf = (group) => dmClean().cells.filter((c) => c.col === group.key && cellEntry(c) && !c.alt);
+
+  /**
+   * [Z-PCHANDDATE] (3.213.0, S427) A row added by hand ("＋ Another role") gets the date of its group: the date of the event chosen
+   * only when it is one of the group's (a copyright's event at the release level dated by the release: not the ℗/© date), else the
+   * column's date of the matrix, else what autoGroupDate finds. Persons, labels and other companies alike.
+   */
+  /** [Z-PCHANDDATE] (3.213.0, S427) The matrix's date of a row of a group: a pool entry, 'split' (different ones for its tracks) or null. */
+  function matrixEntryFor(row, group) {
+    const cells = matrixCellsOf(group).filter((c) => group.key !== 'artwork' || artFits(c, row));
+    if (!cells.length) return null;
+    const uniq = (list) => list.map(cellEntry).filter((e, k, l) => e && l.findIndex((x) => x && x.id === e.id) === k);
+    const own = row.tracks && row.tracks.size ? row.tracks : null;
+    const touches = (c) => { const t = cellTracks(c); return !t || !own || [...t].some((i) => own.has(i)); };
+    let list;
+    if (row.level !== 'recording' || group.releaseOnly) {
+      const rel = cells.filter((c) => c.rel);
+      const whole = cells.filter((c) => !cellTracks(c));
+      list = uniq(rel.length ? rel : whole.length ? whole : cells.filter(touches));
+      return list.length > 1 && !rel.length && !whole.length ? 'split' : list[0] || null;
+    }
+    list = uniq(cells.filter((c) => !c.rel && touches(c)));
+    if (list.length <= 1) return list[0] || null;
+    // one date for all its tracks: that one; different ones: split
+    const all = list.filter((e) => cells.some((c) => cellEntry(c) === e && (!cellTracks(c) || !own || [...own].every((i) => cellTracks(c).has(i)))));
+    return all.length === 1 ? all[0] : 'split';
+  }
+
+  function handGroupDate(r) {
+    const group = dateGroupOf(r);
+    if (!group) return;
+    if (r.date && r.date.poolId) {
+      const id = r.date.poolId;
+      const entry = S.datePool.find((d) => d.id === id);
+      const mine = dm().cells.some((c) => c.col === group.key && c.date === id)
+        || S.rows.some((x) => x !== r && x.date && x.date.poolId === id && (dateGroupOf(x) || {}).key === group.key)
+        || (entry && String(entry.name || '').startsWith(`${group.label} `));
+      if (!mine) r.date = null;
+    }
+    if (!hasDateInput(r.date)) {
+      r.date = null;
+      autoGroupDate(r);
+    }
+  }
+
   /**
    * A row added by hand gets the date its date group currently uses, as soon as it has its role: the pool
    * entry most rows of the group refer to (otherwise the newest entry named after the group).
@@ -53421,6 +53661,21 @@
     if (!row.manual || hasDateInput(row.date)) return;
     const group = dateGroupOf(row);
     if (!group) return;
+    // [Z-PCHANDDATE] (3.213.0, S427) the dates of its column of the date matrix first – its tracks, its level (as "Apply" would)
+    if (ruleOn('S427') && S.rows.includes(row)) {
+      const entry = matrixEntryFor(row, group);
+      if (entry === 'split') {
+        // its tracks have different dates: the column applied as "Apply" does (rows split by date)
+        row.date = { mx: true };
+        matrixDateForLevel(row);
+      } else if (entry) row.date = { ...fieldsFromDate(entry), poolId: entry.id, mx: true };
+      if (hasDateInput(row.date)) {
+        row.dateOpen = true;
+        log('info', 'dateApplied', { n: 1, date: entry && entry !== 'split' ? poolLabel(entry) : '' });
+        return;
+      }
+      row.date = null;
+    }
     // ([Z-CPI] 3.73.0, review) of the artwork: only the dates of its kind (a row's own, a cell of the column that fits it)
     const art = group.key === 'artwork' && ruleOn('D025');
     const fits = (id) => !art || dm().cells.some((c) => c.col === 'artwork' && c.date === id && artFits(c, row));
@@ -54039,7 +54294,14 @@
       // [3.27.0] also the tracks of the compact line
       const place = t.closest('tr[data-row] .dci-c-tracks, tr[data-tracksrow], tr[data-row] .dci-cl-tracks');
       const row = place && rowOf(place);
-      return row && tracksDropFits(row) ? { el: place, kind: 'row-tracks' } : null;
+      if (row && tracksDropFits(row)) return { el: place, kind: 'row-tracks' };
+      // [Z-TGDROPCOL] (3.213.0, S428) elsewhere on an entry's matrix: a new event column with the group's tracks
+      if (d.kind === 'tg' && ruleOn('S428')) {
+        const em = t.closest('#dci-overlay section.dci-group[data-group] .dci-em[data-em]');
+        const a = em && S.artists.get(em.dataset.em);
+        if (a && mxOn(a)) return { el: em, kind: 'em-newev' };
+      }
+      return null;
     }
     // [AE-2] (3.35.3) a line of an entry's matrix: onto another line of its block – before it (upper half) or after it
     if (d.kind === 'em-line') {
@@ -54351,6 +54613,14 @@
       const next = new Set(add ? [...rows.flatMap((r) => [...r.tracks]), ...g.tracks] : g.tracks);
       emEventTracks(a, key, next);
       dropDone(snap, add ? 'drop.tracksAdded' : 'drop.tracksReplaced', { group: g.name, name: a.mbName || a.name });
+      return;
+    }
+    // [Z-TGDROPCOL] (3.213.0, S428) a track group onto an entry's matrix outside the tracks of an event: a new (empty) event column
+    if (t.kind === 'em-newev') {
+      const a = S.artists.get(t.el.dataset.em);
+      const snap = dropSnapshot();
+      const ev = a && emNewEventFromGroup(a, d.id);
+      if (ev) dropDone(snap, 'drop.newEvent', { group: ev.group, name: a.mbName || a.name, date: ev.date || tr('cl.noDate') });
       return;
     }
     if (t.kind === 'row-tracks' || t.kind === 'mx-col' || t.kind === 'mx-role' || t.kind === 'mx-attr' || t.kind === 'mx-allworks') {

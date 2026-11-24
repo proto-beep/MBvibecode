@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.212.0, Companion 1.6.0 – 1.23.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.213.0, Companion 1.6.0 – 1.23.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,16 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.213.0 · 2026-11-24
+
+- S427: `arqPick` → `handGroupDate` (an event's date of another group cleared); `autoGroupDate` first `matrixEntryFor` (the matrix's cell for the row's tracks and level; `'split'` → `matrixDateForLevel`); `matrixCellsOf`.
+- S428: `dmTargetOf` – kind `em-newev` (a track group on `.dci-em[data-em]`, not on a row's or event's tracks); `emNewEventFromGroup` adds a ghost event (`S.emGhost`) with the group's tracks and its one matrix date.
+- S429: `recordingDateOf` – taken dates of `dsupDates` (`dsupTaken`), then the column Performance of the matrix (`matrixCellsOf`, `cellTracks`), `sharedDateOf` for several dates or the release's days.
+- D040: `findDates` – `DATE_TYPO_WORDS` with `oneEditApart` (words of seven letters or more not matched by `DATE_HINTS`).
+- S430: `videoPlacePass` (in `refresh`) – place/area rows with "recorded at/in" split by `trackIsVideo` (`cloneRow`, the type and `typeOptions` set); "video shot at/in" limited to the videos; `vpSeen` once per row.
+- S431: `mbTracks` get `mbWhere`, `mbDated`, `mbLive`; `recDisambSuggest` after the import (pool date `recdis:<idx>`, message `msg.recDisamb`).
+- Tests: `case_handdate3213`, `case_tgdropcol3213` (t_entries), `case_workperfdate3213` (t_works_matrix), `case_mastertypo3213`, `case_recdisamb3213` (t_notes_dates), `case_videoplace3213` (t_notes_companies).
 
 ## Import 3.212.0 · 2026-11-23
 

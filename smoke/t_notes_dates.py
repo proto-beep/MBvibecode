@@ -1570,4 +1570,111 @@ def case_fieldrec3210():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_mastertypo3213():
+    """Credits Importer 3.213.0 (collected item Z-MASTERDATETYPO, rule D040): the Discogs notes "Masterded by Grzegorz Piwkowski, Hi End
+    Studio 2022, Warsaw" – the typo read as "mastered" (as the credits are, S050).
+    A) The date 2022 in the column Mastering of the date matrix (until 3.212.0: in the pool only, without a group).
+    B) D040 off: no date in the column Mastering."""
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['notes'] = 'Recorded March 1–3, 2001 at Abbey Road Studios.\nMasterded by Grzegorz Piwkowski, Hi End Studio 2022, Warsaw'
+        return d
+    main0 = H.MAIN
+    H.MAIN = H.MAIN.replace('  const S = {', '  const S = window.__S = {', 1)
+    CELLS = """() => (window.__S.dm ? window.__S.dm.cells : []).filter(c => c.col === 'mastering').map(c => { const d = window.__S.datePool.find(x => x.id === c.date); return d && d.begin ? d.begin.year : null; })"""
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(1200)
+        out = pg.evaluate(CELLS)
+        b.close()
+        return out, errs
+    results = []
+    H.discogs_release = rel
+    try:
+        with sync_playwright() as p:
+            a, errs = run(p)
+            print('A)', a, errs)
+            results.append(a == [2022] and not errs)
+            b2, errs2 = run(p, off=['D040'])
+            print('B)', b2)
+            results.append(2022 not in b2 and not errs2)
+    finally:
+        H.discogs_release = orig
+        H.MAIN = main0
+        H.RULES_OFF = []
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_recdisamb3213():
+    """Credits Importer 3.213.0 (collected item Z-RECDISAMB, rule S431): the recording of track 1 has the disambiguation "live,
+    2008-05-21: Schaffhauser Jazzfestival 2008, Schaffhausen, Switzerland".
+    A) MusicBrainz has no place and no date at the recording: the date 2008-05-21 in the pool ("Recording comment 1"), a message
+       names the festival and "live".
+    B) The recording has "recorded at" a place, dated 2008-05-21, and "live" on its work: nothing.
+    C) S431 off: nothing."""
+    orig_ws = H.ws_release
+    main0 = H.MAIN
+    H.MAIN = H.MAIN.replace('  const S = {', '  const S = window.__S = {', 1)
+    COMMENT = 'live, 2008‐05‐21: Schaffhauser Jazzfestival 2008, Schaffhausen, Switzerland'
+
+    def ws_with(has):
+        def ws(full=False):
+            d = orig_ws(full)
+            t = d['media'][0]['tracks'][0]
+            t['recording']['disambiguation'] = COMMENT
+            if has:
+                rels = t['recording'].setdefault('relations', [])
+                rels.append({'target-type': 'place', 'type': 'recorded at', 'begin': '2008-05-21', 'end': '2008-05-21',
+                             'place': {'id': H.uid('abababab', 1), 'name': 'Schaffhausen Kammgarn'}})
+                for r in rels:
+                    if r.get('target-type') == 'work':
+                        r['attributes'] = ['live']
+            return d
+        return ws
+    OUT = """() => [window.__S.datePool.filter(d => /Recording comment/.test(d.name)).map(d => d.name + ' ' + [d.begin.year, d.begin.month, d.begin.day].join('-')),
+      [...document.querySelectorAll('#dci-log li')].some(li => /Schaffhauser/.test(li.textContent))]"""
+
+    def run(p, has=False, off=()):
+        H.RULES_OFF = list(off)
+        H.ws_release = ws_with(has)
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(800)
+        out = pg.evaluate(OUT)
+        b.close()
+        return out, errs
+    results = []
+    try:
+        with sync_playwright() as p:
+            a, errs = run(p)
+            print('A)', a, errs)
+            results.append(a == [['Recording comment 1 2008-5-21'], True] and not errs)
+            b2, errs2 = run(p, has=True)
+            print('B)', b2)
+            results.append(b2 == [[], False] and not errs2)
+            c, errs3 = run(p, off=['S431'])
+            print('C)', c)
+            results.append(c == [[], False] and not errs3)
+    finally:
+        H.ws_release = orig_ws
+        H.MAIN = main0
+        H.RULES_OFF = []
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

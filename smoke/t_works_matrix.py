@@ -744,7 +744,8 @@ def case_statgaps():
         r = recs[0] if recs else {}
         sup = [[it.get('lt'), it.get('f')] for it in r.get('rels', []) if it.get('k') == 's']
         print('A) Datensätze:', len(recs), '| ergänzt:', sup, '| gaps:', (r.get('x') or {}).get('gaps'))
-        results.append(len(recs) == 1 and sup == [['performance', ['attrs']]] and (r.get('x') or {}).get('gaps') == {'credits': 0, 'dates': 0, 'attrs': 1})
+        # ((3.213.0, S429) the matrix's performance date goes onto the link before "Apply" too: a date closed as well)
+        results.append(len(recs) == 1 and sup == [['performance', ['attrs', 'dates']]] and (r.get('x') or {}).get('gaps') == {'credits': 0, 'dates': 1, 'attrs': 1})
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
@@ -2020,6 +2021,46 @@ def case_workdaterem3135():
     finally:
         H.REMEMBER = rem0
         H.ws_release = orig_ws
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_workperfdate3213():
+    """Credits Importer 3.213.0 (collected item Z-WORKPERFDATE, rule S429): track 1 linked to a work in MusicBrainz (its link without a
+    date); the dates of the Discogs notes in the date matrix but not applied ("Apply" not clicked).
+    A) Below the linked work: "⌚ 2001-03 onto the link (MusicBrainz has none) ×" – the matrix's date of the recordings (until 3.212.0
+       nothing before "Apply").
+    B) S429 off: nothing to put onto the link."""
+    LINE = "(() => { const x = document.querySelector('tr[data-work=\"0\"] .dci-wd-linked'); return x ? [x.className.includes('dci-wd-empty'), x.textContent.replace(/\\s+/g, ' ').trim()] : null; })()"
+    ROWDATES = "(() => window.__S.rows.filter(r => r.level === 'recording' && r.date && (r.date.by || r.date.poolId)).length)()"
+    main0 = H.MAIN
+    H.MAIN = H.MAIN.replace('  const S = {', '  const S = window.__S = {', 1)
+    results = []
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(1200)
+        n = pg.evaluate(ROWDATES)
+        line = pg.evaluate(LINE)
+        b.close()
+        return n, line, errs
+    try:
+        with sync_playwright() as p:
+            n, a, errs = run(p)
+            print('A)', n, a, errs)
+            results.append(n == 0 and a == [False, '⌚ 2001-03 onto the link (MusicBrainz has none) ×'] and not errs)
+            n2, b2, errs2 = run(p, off=['S429'])
+            print('B)', n2, b2)
+            results.append(n2 == 0 and (b2 is None or b2[0] or '2001' not in b2[1]) and not errs2)
+    finally:
+        H.MAIN = main0
+        H.RULES_OFF = []
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

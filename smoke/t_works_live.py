@@ -301,8 +301,10 @@ def case_liveoffer():
         stage(pg)
         job = pg.evaluate(JOB)
         print('B) Liste:', b_list, '| Angebot:', b_offer, '| Einstellung:', stored, sw_on, '\n   Protokoll:', b_logs, '\n   Auftrag:', job and [(x['pos'], x['comment']) for x in job['items']])
+        # ((3.213.0, S429) staged, the links with the works carry the performance date of the matrix: the seed script's comment has it)
+        dated = base.replace('live: ', 'live, 2001‐03: ', 1)
         ok_b = b_list == [['2', base, True], ['3', base, True], ['4', base, False]] and b_offer is None and stored is None and sw_on is False \
-            and any('proposed for this release' in t for t in b_logs) and bool(job) and [(x['pos'], x['comment']) for x in job['items']] == [('2', base), ('3', base)]
+            and any('proposed for this release' in t for t in b_logs) and bool(job) and [(x['pos'], x['comment']) for x in job['items']] == [('2', dated), ('3', dated)]
         # C) loaded again, ✕
         pg.reload(); pg.add_script_tag(content=H.MAIN)
         pg.wait_for_selector('#dci-open', timeout=20000)

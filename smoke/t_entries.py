@@ -501,7 +501,8 @@ def case_compact():
             pg.click('.dci-set-pane [data-act=em-by-default][data-by=event]')
             pg.wait_for_timeout(300)
             print('F) Standard by role:', f_part['by'], stored, '| G) Summe:', summ)
-            results.append(f_part['by'] == 'role' and stored == '"role"' and 'a relationship per instrument would be 33' in summ)
+            # ((3.213.0, S429) 34: the link of track 1 with its work gets the matrix's performance date before "Apply" – one edit more)
+            results.append(f_part['by'] == 'role' and stored == '"role"' and 'a relationship per instrument would be 34' in summ)
             print('Fehler:', errs)
             results.append(not errs)
             ctx.close()
@@ -5952,6 +5953,130 @@ def case_entityask3210():
         H.discogs_release = orig
         H.MAIN = main0
         H.RULES_OFF = []
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_handdate3213():
+    """Credits Importer 3.213.0 (collected item Z-PCHANDDATE, rule S427): "＋ Another role" adds a copyright by hand – the notes give
+    "℗ 1999 Sony", the release was recorded in March 2001.
+    A) Pub Co (a company): "copyright" on the release – the date 1999 of the column ℗/© (until 3.212.0 none).
+    B) Guitar Guy (a person): "mix" on the recordings – the date of the column Mix (May 2001).
+    C) Guitar Guy: "instrument" on the recordings – the date of the recording (March 2001), not the copyright's.
+    D) Rule S427 off: the copyright and the mix without a date."""
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['notes'] = 'Recorded March 1–3, 2001 at Abbey Road Studios. Mixed May 2001.\n℗ 1999 Sony'
+        return d
+    main0 = H.MAIN
+    H.MAIN = H.MAIN.replace('  const S = {', '  const S = window.__S = {', 1)
+    sel = lambda name: f"[...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname').textContent.includes({name!r}))"
+    NEW = """(name) => window.__S.rows.filter(r => r.manual && (window.__S.artists.get(r.artistKey) || {}).name === name)
+      .map(r => [(r.types || [])[0] || '', r.level, r.date ? [r.date.by || '', r.date.bm || ''].join('-') : ''])"""
+
+    def add(pg, name, level, typ):
+        pg.evaluate(f"{sel(name)}.querySelector('[data-act=add-role]').click()")
+        H.wait_for(pg, "!!document.querySelector('[data-el=arq]')", 10)
+        pg.keyboard.type(typ)
+        pg.wait_for_timeout(200)
+        pg.locator(f'[data-el=arq] [data-arqlv={level}] [data-act=arq-pick][data-type="{typ}"]').first.click()
+        H.wait_still(pg, "document.body.innerHTML", 10, 200)
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        H.ENTRIES_VIEW = 'legacy'
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.wait_still(pg, "document.body.innerHTML", 10, 400)
+        pool = pg.evaluate("window.__S.datePool.map(d => d.name + ' ' + (d.begin ? d.begin.year : ''))")
+        add(pg, 'Guitar Guy', 'recording', 'mix')
+        add(pg, 'Pub Co', 'release', 'copyright')
+        add(pg, 'Guitar Guy', 'recording', 'instrument')
+        out = pg.evaluate(NEW, 'Guitar Guy') + pg.evaluate(NEW, 'Pub Co')
+        b.close()
+        return pool, out, errs
+
+    results = []
+    H.discogs_release = rel
+    try:
+        with sync_playwright() as p:
+            pool, out, errs = run(p)
+            print('A-C)', pool, out, errs)
+            get = lambda t: [x for x in out if x[0] == t]
+            results.append(get('copyright') and get('copyright')[0][2].startswith('1999'))
+            results.append(get('mix') and get('mix')[0][2] == '2001-05')
+            results.append(get('instrument') and get('instrument')[0][2].startswith('2001'))
+            results.append(not errs)
+            pool2, out2, errs2 = run(p, off=['S427'])
+            print('D)', out2)
+            results.append(all(x[2] == '' for x in out2 if x[0] in ('copyright', 'mix')) and not errs2)
+    finally:
+        H.discogs_release = orig
+        H.MAIN = main0
+        H.RULES_OFF = []
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_tgdropcol3213():
+    """Credits Importer 3.213.0 (collected item Z-TGDROPCOL, rule S428): a group of the track pool ("Side A": tracks 1, 2) dropped onto
+    Drum Guy's matrix – onto his line, not onto the tracks of an event.
+    A) A new event column (grey, on the recordings, tracks 1–2, no date); its box ticked: Drum Guy's drums get a row with tracks 1, 2
+       (until 3.212.0 nothing happened).
+    B) S428 off: no new column."""
+    from common_rows import drag
+    main0 = H.MAIN
+    H.MAIN = H.MAIN.replace('  const S = {', '  const S = window.__S = {', 1)
+    ROWS = """() => window.__S.rows.filter(r => (window.__S.artists.get(r.artistKey) || {}).name === 'Drum Guy' && r.level === 'recording').map(r => [...(r.tracks || [])].sort())"""
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        H.ENTRIES_VIEW = 'matrix'
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.wait_still(pg, "document.body.innerHTML", 10, 400)
+        pg.click('[data-act=tg-new]')
+        pg.fill('[data-f=tg-name]', 'Side A')
+        pg.check('[data-f=tg-track][data-i="0"]')
+        pg.check('[data-f=tg-track][data-i="1"]')
+        pg.click('[data-act=tg-save]')
+        pg.wait_for_timeout(300)
+        gid = pg.evaluate("[...document.querySelectorAll('.dci-pools-body .dci-pchip-tg')].find(c => c.textContent.includes('Side A')).dataset.id")
+        drum = sec_sel(pg, 'Drum Guy')
+        drag(pg, f'.dci-pools-body .dci-pchip-tg[data-id="{gid}"] .dci-chip-main', f'{drum} .dci-em[data-em] tr.dci-em-line td:first-child')
+        pg.wait_for_timeout(500)
+        heads = pg.evaluate(f"[...document.querySelectorAll('{drum} th.dci-em-evghost')].map(th => th.textContent.replace(/\\s+/g, ' ').trim())")
+        rows = None
+        if heads:
+            pg.locator(f'{drum} tr.dci-em-line td.dci-em-c-ghost input[data-f=em-tick]').first.click()
+            pg.wait_for_timeout(500)
+            rows = pg.evaluate(ROWS)
+        b.close()
+        return heads, rows, errs
+
+    results = []
+    try:
+        with sync_playwright() as p:
+            heads, rows, ea = run(p)
+            print('A)', heads, rows, ea)
+            results.append(len(heads) == 1 and rows and [0, 1] in rows and not ea)
+            heads2, rows2, eb = run(p, off=['S428'])
+            print('B)', heads2, eb)
+            results.append(not heads2 and not eb)
+    finally:
+        H.MAIN = main0
+        H.RULES_OFF = []
+        H.ENTRIES_VIEW = 'legacy'
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
