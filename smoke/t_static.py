@@ -598,7 +598,8 @@ console.log(JSON.stringify(JSON.parse(process.argv[2]).map(run)));
         if js.returncode:
             print(js.stderr[-400:])
         return json.loads(js.stdout) if not js.returncode else [{'credits': [], 'companies': [], 'ignored': [], 'unrecognized': []}] * len(texts)
-    on, off = run([]), run(['S300', 'S301', 'S302', 'S303', 'S304', 'S305', 'S306', 'S307'])
+    # ((3.216.0) S445 too: it reads "Nele Vertommen oboe, recorder & direction" as a name and its roles, "direction" a guessed instrument)
+    on, off = run([]), run(['S300', 'S301', 'S302', 'S303', 'S304', 'S305', 'S306', 'S307', 'S445'])
     a = on[0]['credits']
     print('A)', a, '|', on[1])
     ok_a = (['Robin Ticciati', 'conductor', 'all'] in a and ['Nils Mönkemeyer', 'Viola', 'all'] in a and ['Maria Ladurner', 'soprano', 'all'] in a and ['Ella Marshall Smith', 'soprano', 'all'] in a

@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.215.0, Companion 1.6.0 – 1.23.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.216.0, Companion 1.6.0 – 1.23.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,18 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.216.0 · 2026-11-24
+
+- S441: `bookletMedia` – media in brackets at the end of a line (`mediaOfHeading`) → "(tracks …)"; `datesWithContext` – the same for the date's line; `lineOfItsOwn` – `P.verbHead` (reset on an empty line) for a line that begins with a date and "at".
+- D042: `findDates` – a date at the start of a line below "Recorded: …" takes that group.
+- S442: `suggestByName` – `inRel` entries found only by another name move behind an exact-name hit (`linkedAs`, `match.markOtherName`).
+- S443: `notesNamed` (`ELIDED`) before `TEXT.parse` of the notes; `addNotesPersons` gives the placeholder the persons of Discogs's credits of the same kind (`sameKind`), else `rel.ignored` (`elided`).
+- S444: `readLine0` – a unit of only ©/℗ and a year → `copyrightYear`, once.
+- S445: `nameRoles` – a list with an unknown lower-case word still "Name - roles"; `addCredit` refuses names beginning with "&", "+", "and".
+- S446: `lineOfItsOwn` – "<word> recorded/mixed … (by X) at Y" → the person as before, the place with `roleCredit`; `addNotesCompanies` carries `roleCredit`.
+- S447: `moreTextLine` – bonus lines (`why: 'bonus'`, `titles`); `addNotesCompanies` keeps them in `rel.ignored`; `bonusCheck` after the import and for a source added.
+- Tests: `case_krakow3216`, `case_legalname3216` (t_notes_companies); `booklet3176` G with S445 off; `parse_golden.json` B written anew (one text: "& TRUMPET" no longer a name).
 
 ## Import 3.215.0 · 2026-11-24
 

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.215.0
+// @version      3.216.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.215.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.215.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.216.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.216.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.215.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.216.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -929,6 +929,15 @@
       "ignored.why.tracklist": "a line of the track list",
       "ignored.why.scantrack": "a line of the track list (compared with MusicBrainz above the entries)",
       "ignored.why.edition": "the edition (no relationship)",
+      "ignored.why.elided": "a name the notes leave out (“[...]”) – Discogs credits nobody with these roles",
+      "ignored.why.copyrightYear": "© / ℗ and a year without a name",
+      "ignored.why.bonus": "the bonus tracks of an edition",
+      "log.elidedName": "“[...]” in the notes: {names} (Discogs's credits of these roles) – {line}",
+      "log.legalNameFirst": "{name}: MusicBrainz's entry of exactly this name first – {other} (in this release) is another name of the person",
+      "match.markOtherName": "in this release as another name of {name}: {where}",
+      "log.bonusHere": "Bonus tracks of this release named in the text: {list}",
+      "log.bonusOther": "{from} names bonus tracks this release does not have: {list}",
+      "msg.bonusOther": "{from} names bonus tracks this release does not have ({list}) – the text of another edition: what it says of them is not for this release.",
       "ignored.why.translation": "a translation of the line beside it",
       "ignored.why.prose": "prose (no credit)",
       "ignored.why.aside": "an aside between dashes (no credit)",
@@ -5780,6 +5789,13 @@
     { id: 'S438', where: 'TEXT.parse (moreTextLine), addCreditRows (videoProse), findConcertEvents', note: 'Texts (3.215.0; collected item Z-RAMMSTEIN): "The director is Paul Dugdale" in a sentence is the video director – only on a release with videos (else left out). "… three concerts at the Foro Sol in Mexico City on 1, 2 and 4 October 2022": MusicBrainz\'s events of that place on exactly those days are offered (its name or one of its other names, the day of the event the day of the text); nothing else. Off (as until 3.214.0): not read' },
     { id: 'S439', where: 'TEXT.parse (moreTextLine)', note: 'Texts (3.215.0; collected item Z-INSERTLINES): "drawings & texts by Florence Giroud" – illustration credited "drawings" (for vinyl only, S026) and the lyricist of the works. Off (as until 3.214.0): not recognized' },
     { id: 'S440', where: 'TEXT.parse (moreTextLine)', note: 'Texts (3.215.0; collected item Z-SHIPP): "Recorded (June 25, 2025), mixed, and mastered by Jim Clouse" – the date in brackets is no part of the list of verbs (all three his; the date read as before); "Insert photographs of … by Anna Yatskevich" – photography credited "insert photographs", for vinyl only, "(@jazzaddikt on IG)" after her name in the text her Instagram; "// Edition of 500 //", "Vinyl LP: // Edition of 500 //", "Compact Disc (CD): / Edition of 1000 /", "Ltd. Edition LP on Black Vinyl" left out (the edition); "Side A: Deeper Fields / Notions of Order / Momenta" (also after "Vinyl LP:") left out as a track list. Off (as until 3.214.0): not recognized' },
+    { id: 'S441', where: 'TEXT.parse (bookletMedia, lineOfItsOwn: verbHead), datesWithContext', note: 'Texts (3.216.0; collected item Z-RECCONT): media in brackets at the end of a line – "Recorded: October 11-12, 2018 at the Alchemia Club, Kraków (CD#1, CD#2, CD#3, CD#4)", "… (CD#5)", "(Disc 1-3)" – are the tracks of that line, for its place and its date (a track group of those media, as a heading of media does: S312, D037); a line that begins with a date and "at" right below "Recorded: …" goes on with that verb ("October 13, 2018 at Radio Kraków (CD#5)": recorded at Radio Kraków, on CD 5). Off (as until 3.215.0): the media left to the whole release, the second line not recognized' },
+    { id: 'S442', where: 'suggestByName (inRel)', note: 'Names (3.216.0; collected item Z-LEGALNAME): an entry of this release that MusicBrainz finds only by another name of it ("Stefano Musso" – Alio Die, the release artist, whose legal name it is) is no longer the first, highlighted suggestion when MusicBrainz has an entry of exactly the name of the text (the person Stefano Musso): that one first – the text credits him –, the release\'s one after it, marked "another name of the person here". Off (as until 3.215.0): the entry of this release first' },
+    { id: 'S443', where: 'notesNamed, addNotesPersons (ELIDED)', note: 'Discogs notes (3.216.0; collected items Z-DTSSTUDIO, Z-ELIDEDNAME): a name Discogs links in its notes – "[a=Name]", "[a123]" – is read as that name; one left out as "[...]", "…" or "..." after "by" ("Recorded, mixed and mastered by [...] (DTS Studio)", "Mixed, edited and mastered by [...] at FCM Studio, Barcelona") is every person Discogs credits with one of the roles of that line, each with all of them; none: the line left out with that reason. The studio after the name is the place of every verb before it (recorded at, mixed at, mastered at …). Off (as until 3.215.0): no person' },
+    { id: 'S444', where: 'TEXT.parse (readLine0: copyrightYear)', note: 'Texts (3.216.0; collected item Z-COPYYEAR): "© ℗ 2022" – the signs and a year without a name – is left out once as a copyright line without a name (until 3.215.0 twice, as "only web addresses"); its year is a date of ℗/© as before' },
+    { id: 'S445', where: 'TEXT.parse (nameRoles, addCredit)', note: 'Texts (3.216.0; collected item Z-AMPNAME): "Name roles" whose list has a word no instrument of MusicBrainz (its list with aliases, the tree of the dump) or of the register knows – "Andrew Diamond guitar & percussion" without "percussion" – is still the name and its roles, the unknown word a guessed instrument that asks (137d); a name that begins with "&", "+" or "and" is never one (the line not recognized instead of turned round: "& percussion" a name, "Andrew Diamond guitar" a role)' },
+    { id: 'S446', where: 'TEXT.parse (lineOfItsOwn)', note: 'Texts (3.216.0; collected item Z-OVERDUBAT): a word before the verb – "Overdubs recorded by John Doe at Electric Lady and Sear Sound", "Strings recorded at Studio X" – no longer loses the place: the person as before (the word a detail), the place after "at" (recorded at, mixed at …; "and" as S435) credited with the word ("overdubs"). Off (as until 3.215.0): the place lost, or the line not recognized' },
+    { id: 'S447', where: 'TEXT.parse (moreTextLine: bonus), bonusCheck', note: 'Texts (3.216.0; collected item Z-BONUSLINE): "Compact Disc (CD): Incl. Bonustracks "Curved Nothing" and "Planet 18:34"" is left out as the bonus tracks of an edition ("18:34" no time); their titles compared with the release\'s tracks – those it has in the log, those it has not a hint (the bonus tracks of another edition: what the text of that edition says of them is not for this release), also for a source added. Off (as until 3.215.0): not recognized' },
     { id: 'S410', where: 'freshForget, repeatImport, loadRelease', note: '"↻ Repeat import" (3.209.0; collected item Z-FRESHALL): "Start afresh" forgets everything the dashboard holds of the release – not only the changes of the rows and the choices of the works matrix (Z-RI, 3.40.16), also the date pool, the track pool and the date matrix, the choices of the box "Dedications & tributes", "✕ No suite", texts and parts of sources switched off, "skip the works", entries joined by hand, the ticks of suggestions, what is remembered of the release ("Remember changes"; nothing of the import before is stored on the way). Kept: what was created in MusicBrainz through the dashboard (the lists of created works and suites), the source and the media chosen, the log' },
     { id: 'S409', where: 'mergeEntries, joinEntry, applyEntryMerges, dmTargetOf (entry-merge), groupHtml (grip)', note: 'Entries (3.208.0; collected item Z-ENTITYMERGE): two entries of the same kind that are one – from different sources, written otherwise – are joined by hand: the grip ⠿ before the kind of an entry dropped onto another entry. The entry dropped onto stays (its link to MusicBrainz counts; without one it takes the other\'s), the rows of the other come to it – the same role once, each row credited as its source writes it, the other\'s name one of its names. Two different entries of MusicBrainz, or entries of different kinds: not joined, a message says why. Remembered for the release (joined again at the next import); ↶ in the message undoes it' },
     { id: 'S408', where: 'renderDedBox (ded-kind), emChipHtml, toggleDedication', note: 'Dedications (3.207.0; collected item Z-DEDKINDSWITCH): each row of the box "Dedications & tributes" has two buttons "Dedication | Tribute" – the chosen one filled in its colour (dedication old rose, tribute gold), a click switches (as "⇄" at the row and the chip did); the chips of these relationships have the colours too. A kind MusicBrainz has not for this target (a tribute of a place) is greyed out' },
@@ -8330,6 +8346,7 @@
     { id: 'D039', where: 'DATE_GROUPS (performance)', note: 'Dates (3.210.0; collected item Z-FIELDRECDATE): the field recordings (field recordist: "Alio Die: Drones and loops, zither, …, field recordings") belong to the column Performance of the date matrix – a date of the recording ("composed and recorded by Stefano Musso in Spring 2023") is theirs too. Off (as until 3.209.0): they got no date' },
     { id: 'D040', where: 'findDates (DATE_TYPO_WORDS)', note: 'Dates (3.213.0; collected item Z-MASTERDATETYPO): a word one letter off a word of a date group – "Masterded by Grzegorz Piwkowski, Hi End Studio 2022" – is read as that word (as the credits are, S050): the date goes to its group (Mastering 2022). Only recorded, recording, (re)mastered, (re)mastering; words of seven letters or more. Off (as until 3.212.0): the date without a group' },
     { id: 'D041', where: 'findDates', note: 'Dates (3.215.0; collected item Z-RAMMSTEIN): a date in a sentence about the release, its announcement or a screening – "due for release on 20 November 2026", "Officially announced on 15 September 2026", "screened … in cinemas worldwide from 4 November 2026" – is an issue\'s date: not in the pool (D018). Off (as until 3.214.0): in the pool without a group' },
+    { id: 'D042', where: 'findDates', note: 'Dates (3.216.0; collected item Z-RECCONT): a line that begins with a date and a place ("October 13, 2018 at Radio Kraków (CD#5)") right below "Recorded: …" (or "Mixed: …", "Mastered: …") is the same group – Performance. Off (as until 3.215.0): the date without a group' },
     { id: 'D034', note: 'Relative dates (3.132.0; collected item Z-RELDATE; a quick switch): "last September", "earlier this year", "the following spring", "that summer", "two years ago", "letzten September", "im Frühjahr darauf", "vor zwei Jahren", "el pasado septiembre", "hace dos años", "en septembre dernier", "il y a deux ans" – reckoned from a date of the text itself: a dateline ("Berlin, June 2019") or a date of the same paragraph, never the date of the release (a text of a reissue belongs to the original); two possible dates or none: nothing. A season is a period (spring March–May, summer June–August, autumn September–November, winter December–February); "earlier this year" the year only' },
     { id: 'D025', note: 'The kinds of the artwork (3.73.0): a date of the column Artwork goes to the kind its words name – "Cover Painting: “View at Nice” (1992)" to the illustration only (not to design), "Cover Photo: “…” (1985)" to the photography, "Cover design … 1992" to design; "cover art", "artwork": illustration and design. Each date of the column says its kind (to change). The date of a concert is no date the photographs get by themselves: it goes into the pool named for them ("Photography By") and is suggested at their row' },
   ];
@@ -8873,6 +8890,21 @@
               at = w.index;
               hint = key;
               hintWord = w[0];
+            }
+          }
+        }
+        // [Z-RECCONT] (3.216.0, D042) a line that begins with the date and a place ("October 13, 2018 at Radio Kraków (CD#5)") right below
+        // "Recorded: …": it goes on with that verb – the date its group
+        if (!hint && ruleOn('D042')) {
+          const ls = src.lastIndexOf('\n', Math.max(0, a - 1)) + 1;
+          if (!src.slice(ls, a).trim() && /^\s*,?\s*(?:at|in)\s/i.test(src.slice(b, b + 6))) {
+            const prev = ls > 1 ? src.slice(src.lastIndexOf('\n', ls - 2) + 1, ls - 1).trim() : '';
+            const vm = prev.match(/^(recorded|recording|mixed|mastered|remastered)\b[^:]*:/i);
+            const key = vm && (DATE_HINTS.find(([k, re]) => k !== 'composition' && k !== 'production' && new RegExp(re.source, 'i').test(vm[1])) || [])[0];
+            if (key) {
+              hint = key;
+              at = 0;
+              words.push({ key, index: 0, end: 0 });
             }
           }
         }
@@ -9915,6 +9947,11 @@
     const at = (P) => ({ line: P.line0, part: P.part0, pi: P.pi0, n: P.n0 });
 
     const addCredit = (P, name, role0, scope, extra0 = {}) => {
+      // [Z-AMPNAME] (3.216.0, S445) a name that begins with "&", "+" or "and" is none: the line not recognized
+      if (ruleOn('S445') && /^\s*(?:&|\+|and\s)/i.test(String(name || ''))) {
+        if (P.curLine && !P.unrecognized.includes(P.curLine)) P.unrecognized.push(P.curLine);
+        return false;
+      }
       // [S050] (3.32.5) in typo mode the role as it is read, with what was written
       const { role: role1, typos } = readRole(P, role0);
       const aka0 = P.akaOf.get(norm(name));
@@ -11113,6 +11150,20 @@
             continue;
           }
           if (!t) scope = '';
+          // [Z-RECCONT] (3.216.0, S441) the media in brackets at the end of the line – "… Alchemia Club, Kraków (CD#1, CD#2, CD#3, CD#4)",
+          // "… at Radio Kraków (CD#5)": the tracks of those media for this line
+          // (not a medium right after a date – "… May 26, 2016 (Disc 2) and December 11 & 12, 2015 (Disc 3)": each date its own, D021 –
+          // nor a line of several such brackets)
+          const tail = ruleOn('S441') && t ? t.match(/^(.*\S)\s*\(([^()]+)\)\s*\.?$/) : null;
+          const tailOk = tail && !/(?:^|\D)(?:1[89]|20)\d{2}\s*$/.test(tail[1]) && !/\((?:cd|dis[ck]|lp|dvd)\s*#?\s*\d/i.test(tail[1]);
+          const tm = tailOk ? mediaOfHeading(tail[2]) : null;
+          const tSizes = tm ? tm.map(sizeOf) : [];
+          if (tm && tSizes.every(Boolean)) {
+            const runs = [];
+            tm.forEach((n, k) => { const r = runs[runs.length - 1]; if (r && n === r.to + 1) Object.assign(r, { to: n, size: tSizes[k] }); else runs.push({ from: n, to: n, size: tSizes[k] }); });
+            next.push(keep(`${tail[1].replace(/[.\s]+$/, '')} (tracks ${runs.map((r) => `${r.from}-1 to ${r.to}-${r.size}`).join(', ')})`, l));
+            continue;
+          }
           next.push(scope && t && !lineTracks(t, P.resolveTracks) && !BK_CD_TRACKS.test(t) ? keep(`${t.replace(/[.\s]+$/, '')} (tracks ${scope})`, l) : l);
         }
         out = next;
@@ -14176,6 +14227,17 @@
           return true;
         }
       }
+      // [Z-BONUSLINE] (3.216.0, S447) "Compact Disc (CD): Incl. Bonustracks "Curved Nothing" and "Planet 18:34"": the edition's bonus tracks –
+      // left out, their titles kept (compared with the release's tracks after the import: bonusCheck)
+      if (ruleOn('S447')) {
+        const bl = l.replace(/^(?:\d+\s*x\s*)?(?:vinyl\s+lp|lp|vinyl|compact\s+disc(?:\s*\(cd\))?|cd|cassette|digital(?:\s+album)?)\s*:\s*/i, '')
+          .match(/^(?:incl\.?|including|includes|with|plus|\+)\s*(?:\d+\s+|two\s+|three\s+)?(?:exclusive\s+)?bonus\s*-?\s*tracks?\s*:?\s*(.+)$/iu);
+        const titles = bl ? [...bl[1].matchAll(/["“„«‘']([^"”“»’']+)["”“»’']/gu)].map((x) => x[1].trim()) : [];
+        if (titles.length) {
+          P.ignored.push({ text: raw, why: 'bonus', titles });
+          return true;
+        }
+      }
       if (!ruleOn('S440')) return false;
       const vb = l.match(/^(\p{L}+ed)\s*\(([^()]*\d{4}[^()]*)\)\s*,\s*(.+)$/u);
       if (vb && /\bby\s+\p{Lu}/u.test(vb[3])) {
@@ -14223,13 +14285,45 @@
       if (!roles || /\s(?:by|at|for|to|with|from|on|in|of|plays?|playing|performs?|sings?)\s/i.test(` ${roles} `)) return null;
       // ((review) every part an instrument or a voice the register knows: not "plays guitar", "recording", nor a second name ("Eric Revis
       // bass and Nasheet Waits drums"))
-      return playRoles(P, roles) ? `${nr[1]} - ${nr[2]}` : null;
+      if (playRoles(P, roles)) return `${nr[1]} - ${nr[2]}`;
+      // [Z-AMPNAME] (3.216.0, S445) one word of the list no instrument MusicBrainz or the register knows ("Andrew Diamond guitar &
+      // percussion" without "percussion"): still the name and its roles – the unknown word asked as a guessed instrument (137d), not the
+      // line turned round ("& percussion" a name, "Andrew Diamond guitar" a role)
+      if (ruleOn('S445')) {
+        const parts = clean(roles).split(/\s*(?:,|&|\+|\band\b|\/)\s*/).filter(Boolean);
+        if (parts.length >= 2 && parts.some((x) => playable(P, x.toLowerCase())) && parts.every((x) => /^\p{Ll}[\p{Ll}-]*(?:\s\p{Ll}[\p{Ll}-]*)?$/u.test(x))) return `${nr[1]} - ${nr[2]}`;
+      }
+      return null;
     };
 
     const lineOfItsOwn = (P, line, raw) => {
       const l = clean(line);
+      // [Z-RECCONT] (3.216.0, S441) "Recorded: October 11-12, 2018 at …" / "October 13, 2018 at Radio Kraków (CD#5)": the second line goes on
+      // with the verb of the first
+      if (ruleOn('S441')) {
+        const head = l.match(/^(recorded|mixed|mastered|remastered|recording)\b[^:]{0,20}:\s/i);
+        if (P.verbHead && !head && /^(?:\p{L}+\.?\s+\d{1,2}(?:\s*[-–]\s*\d{1,2})?,?\s+\d{4}|\d{1,2}(?:\s*[-–]\s*\d{1,2})?\.?\s+\p{L}+\.?\s+\d{4}|\d{4}-\d{2}-\d{2})\s+(?:at|in)\s+\p{Lu}/u.test(l)) {
+          readLine0(P, `${P.verbHead}: ${l}`, true);
+          return true;
+        }
+        P.verbHead = head ? head[1] : null;
+      }
       if (ruleOn('S437') && dragonautLine(P, l, raw)) return true;
       if (moreTextLine(P, l, raw)) return true; // [Z-RAMMSTEIN] [Z-INSERTLINES] [Z-SHIPP] (3.215.0)
+      // [Z-OVERDUBAT] (3.216.0, S446) a word before the verb – "Overdubs recorded by John Doe at Electric Lady and Sear Sound", "Strings
+      // recorded at Studio X": the person as before (the word a detail), the place after "at" too, credited with the word
+      if (ruleOn('S446')) {
+        const od = l.match(/^((?:\p{L}+\s+){0,1}\p{L}+)\s+(recorded|mixed|mastered|edited|engineered|tracked)\s+(?:(by\s+.+?)\s+)?at\s+(\p{Lu}.+?)\s*\.?$/iu);
+        const word = od && od[1].toLowerCase();
+        if (od && (/^(?:overdubs?|additional(?:\s+\p{L}+)?|vocals?|strings|horns|brass|choir|drums|basic\s+tracks|tracking|live\s+tracks?)$/u.test(word) || playable(P, word))) {
+          const verb = od[2].charAt(0).toUpperCase() + od[2].slice(1).toLowerCase();
+          if (od[3]) readLine0(P, `${od[1]} ${od[2]} ${od[3]}`, true);
+          const k0 = P.companies.length;
+          readLine0(P, `${verb} at ${od[4]}`, true);
+          P.companies.slice(k0).forEach((c) => { if (!c.roleCredit) c.roleCredit = word; });
+          return true;
+        }
+      }
       // [Z-MEMBERINST] (3.141.0, S239) a band of the release with its members and their instruments in one line – "Band X: A (guitar),
       // B (bass)", "Band X (A – guitar, B – bass)", "Band X (A: guitar; B: bass)": each member's roles, and the members of the group
       // ("Create artist" fills in "member of band" with them)
@@ -14340,6 +14434,7 @@
         P.contWho = null;
         P.prevBy = null;
         P.definitionNext = false;
+        P.verbHead = null; // [Z-RECCONT] (3.216.0)
         // ((3.49.0, review) a title with its credits below an empty line keeps them: "Song Two" / "" / "Written by A")
         if (P.titleBlock && P.titleBlock.n) P.titleBlock = null;
         return;
@@ -14885,6 +14980,11 @@
         const bareSite = clean(unit).match(/^(?:https?:\/\/)?(?:www\.)?([a-z0-9-]+(?:\.[a-z0-9-]+)*\.[a-z]{2,24})\/?$/);
         if (ruleOn('S198') && bareSite) {
           P.ignored.push({ text: whole, why: 'web', sites: [bareSite[1]] });
+          continue;
+        }
+        // [Z-COPYYEAR] (3.216.0, S444) "© ℗ 2022" – signs and a year, no name: left out once as that (its year goes to the dates of ℗/©)
+        if (ruleOn('S444') && /^(?:\s*(?:[©℗]|\((?:c|p)\)|&|and|,))+\s*(?:(?:19|20)\d{2})?\s*\.?$/iu.test(clean(unit))) {
+          if (!P.ignored.some((x) => x.text === whole && x.why === 'copyrightYear')) P.ignored.push({ text: whole, why: 'copyrightYear' });
           continue;
         }
         const web = takeUrls(unit);
@@ -29373,6 +29473,7 @@
         S.ocrSuppLines = { text: input.ocrLines.text, lines: new Map([...((was && was.lines) || []), ...input.ocrLines.lines]) };
       }
       // ([Z-SRCTAG] 3.127.0, review) a text: its words (the badge 📄 shows them); read from images: so marked (🖼️)
+      bonusCheck(rel, source.name); // [Z-BONUSLINE] (3.216.0, S447)
       S.suppSources.set(source.short, { name: source.noteName, url: rel.noteSource || S.supp.url, ocr: !!S.supp.ocr, ...(input && input.text ? { text: input.text, origin: input.origin || '' } : {}) });
       await compareSupplement();
       // [Z-WIKIBG] (3.149.0) two languages of Wikipedia that contradict each other: said, both offered
@@ -30801,6 +30902,20 @@
    * it lists with another role keeps
    * Discogs's entry (its link). Marked `fromNotes`. [3.30.9] Also the label of "℗ / © Name Year" (only the signs named).
    */
+  /**
+   * [Z-ELIDEDNAME] (3.216.0, S443) Discogs's notes with the names Discogs links: "[a=Name]" the name, "[a123]" the name of that artist among
+   * the release's credits; "[...]", "…" or "..." after "by" (a name Discogs shows linked above) a placeholder, given its persons from Discogs's
+   * own credits of the same roles (addNotesPersons).
+   */
+  const ELIDED = 'Elided Credited';
+  function notesNamed(rel) {
+    const text = String(rel.notes || '');
+    if (!ruleOn('S443')) return text;
+    const byId = new Map((rel.credits || []).filter((c) => c.who && c.who.id).map((c) => [String(c.who.id), c.who.name]));
+    return text.replace(/\[a=([^\]]+)\]/g, '$1').replace(/\[a(\d+)\]/g, (m, id) => byId.get(id) || ELIDED)
+      .replace(/(\bby\s+)(?:\[(?:\.{3}|…)\]|\.{3}|…)(?=\s|$|[,;(])/gi, `$1${ELIDED}`);
+  }
+
   function addNotesCompanies(rel) {
     if (!(ruleOn('S042') || ruleOn('S054')) || !rel || !String(rel.notes || '').trim()) return;
     let res;
@@ -30809,8 +30924,11 @@
       const own = rel.tracks || [];
       // [Z-AP] (3.40.12) the places Discogs lists ("Recorded At – …"): "in Tokyo, Meguro Fukushi Center" is that place in Tokyo
       const placeNames = (rel.companies || []).filter((c) => /\b(?:at)$/i.test(String(c.role || '').trim())).map((c) => c.who && c.who.name).filter(Boolean);
-      res = TEXT.parse(rel.notes, { ...sourceContext(), resolveTracks: (spec) => tracksInText(`tracks ${spec}`, own), resolveTitles: (titles, o = {}) => tracksByTitles(titles, own, o), placeNames, trackTitles: own.map((t) => t.title || '') }); // ((Z-EXCEPTC 3.125.0, review) the titles resolveTitles knows
+      res = TEXT.parse(notesNamed(rel), { ...sourceContext(), resolveTracks: (spec) => tracksInText(`tracks ${spec}`, own), resolveTitles: (titles, o = {}) => tracksByTitles(titles, own, o), placeNames, trackTitles: own.map((t) => t.title || '') }); // ((Z-EXCEPTC 3.125.0, review) the titles resolveTitles knows
       rel.firstPerson = (res.firstPerson || []).map((x) => ({ ...x, from: 'notes' })); // [Z-PLAYS] (3.102.0, S168) the Discogs notes
+      // [Z-BONUSLINE] (3.216.0, S447) the bonus tracks the notes name: compared with the release's tracks after the import (bonusCheck)
+      const bonus = (res.ignored || []).filter((x) => x.why === 'bonus');
+      if (bonus.length) rel.ignored = [...(rel.ignored || []), ...bonus.filter((x) => !(rel.ignored || []).some((y) => y.text === x.text && y.why === 'bonus'))];
     } catch (e) {
       console.warn('[Discogs-Credits] notes', e);
       return;
@@ -30894,7 +31012,7 @@
       // place, credited as the notes write it
       const anv = (byPlace || (same.length && spelt(same[0]))) && norm(c.who.name) !== norm(same[0].who.name) ? c.who.name : '';
       rel.companies.push({ who, role: c.role, catno: '', tracks: c.tracks || null, fromNotes: true, line: c.line, ...(anv ? { anv } : {}), ...(c.date ? { date: c.date } : {}), ...(c.partScope ? { partScope: c.partScope } : {}), ...((c.pubBlock || ruleOn('S053')) && someTracks(c.tracks) ? { notesLine: c.line } : {}),
-        ...(c.medium ? { medium: c.medium } : {}) }); // ([Z-DRAGONAUT] 3.215.0) the medium the text gives it (a pressing: vinyl)
+        ...(c.medium ? { medium: c.medium } : {}), ...(c.roleCredit ? { roleCredit: c.roleCredit } : {}) }); // ([Z-DRAGONAUT] 3.215.0) the medium the text gives it (a pressing: vinyl); ([Z-OVERDUBAT] 3.216.0) its credit
       added.push(`${c.who.name} (${c.role})`);
     }
     if (added.length) log('info', 'notesCompanies', { n: added.length, list: added.join(', ') });
@@ -30959,6 +31077,25 @@
     const joinTracks = (a, b) => (!someTracks(a) || !someTracks(b) ? null : { ...a, indexes: uniq([...a.indexes, ...b.indexes]) });
     // [3.37.0] a company of the release ("Mastered At – Sterling Sound") is no person of the notes ("Mastered by Sterling Sound")
     const companyNames = new Set((rel.companies || []).map((d) => looseName(d.who.name)).filter(Boolean));
+    // [Z-ELIDEDNAME] (3.216.0, S443) a name the notes leave out ("by [...]"): the persons Discogs credits with one of the roles of that line –
+    // all of them, each with every role of the line; none: left out, said
+    const elided = (res.credits || []).filter((c) => c.who && c.who.name === ELIDED);
+    if (elided.length) {
+      const credits = (res.credits || []).filter((c) => !elided.includes(c));
+      for (const line of uniq(elided.map((c) => c.line || ''))) {
+        const ofLine = elided.filter((c) => (c.line || '') === line);
+        const people = uniq((rel.credits || []).filter((d) => !d.fromNotes && ofLine.some((c) => sameKind(d, c))).map((d) => d.who.name));
+        if (!people.length) {
+          rel.ignored = rel.ignored || [];
+          rel.ignored.push({ text: line || ofLine[0].role, why: 'elided' });
+          continue;
+        }
+        const pick = (n) => ((rel.credits || []).find((d) => d.who.name === n) || {}).who;
+        people.forEach((n) => ofLine.forEach((c) => credits.push({ ...c, who: { ...pick(n) } })));
+        log('info', 'elidedName', { line, names: people.join(', ') });
+      }
+      res = { ...res, credits };
+    }
     for (const c of res.credits || []) {
       const k = looseName(c.who.name);
       // a credit without a name (the band, "a human") is not taken from the notes, nor what a track list leaves of one
@@ -32486,6 +32623,7 @@
           }
         }
         if (recDisambSuggest()) renderDates(); // [Z-RECDISAMB] (3.213.0, S431)
+        bonusCheck(S.release, ''); // [Z-BONUSLINE] (3.216.0, S447)
         log('ok', 'importDone', { rows: S.rows.length, entries: S.artists.size, existing: S.rows.filter((r) => r.existingAll).length });
         renderSync(); // [Z-NOTABSRC] (3.157.0) the status names the source of this import
         wikiBackground(seq); // [Z-WIKIBG] (3.149.0)
@@ -32919,6 +33057,19 @@
           const had = a.nameHits.find((h) => h.mbid === mbid && !h.similar);
           if (!had && !(x.name && nameFit(x.name, a.name) === 'same')) continue;
           inRel.push({ ...(had || { mbid, name: x.name, similar: false, disambiguation: '' }), entityType: x.type, linked: x.where.slice(0, 3) });
+        }
+        // [Z-LEGALNAME] (3.216.0, S442) one of this release found only by another name of it ("Stefano Musso" – Alio Die, the release
+        // artist, whose legal name it is), while MusicBrainz has an entry of exactly the name of the text (the person Stefano Musso): that
+        // entry first – the release's one after it, as another name of the person, not highlighted
+        if (ruleOn('S442') && inRel.length) {
+          const exact = a.nameHits.filter((h) => !h.similar && h.name && nameFit(h.name, a.name) === 'same' && !inRel.some((x) => x.mbid === h.mbid));
+          const other = inRel.filter((x) => !(x.name && nameFit(x.name, a.name) === 'same'));
+          if (exact.length && other.length) {
+            const moved = other.map((x) => ({ ...x, linkedAs: x.linked, linked: undefined }));
+            inRel.splice(0, inRel.length, ...inRel.filter((x) => !other.includes(x)));
+            a.nameHits = [...exact, ...moved, ...a.nameHits.filter((h) => !exact.includes(h) && !moved.some((x) => x.mbid === h.mbid))];
+            log('info', 'legalNameFirst', { name: a.name, other: moved.map((x) => x.name).join(', ') });
+          }
         }
         if (inRel.length) {
           a.nameHits = [...inRel, ...a.nameHits.filter((h) => !inRel.some((x) => x.mbid === h.mbid))];
@@ -35329,7 +35480,7 @@
         : h.region ? `${head} ${tr('area.regionHit', { region: h.region })}` : `${head} ${tr(h.similar ? 'match.similarTitle' : 'match.nameUseTitle')}`);
       // [E5a] (3.37.1) linked in this release: highlighted, with where (the mark "release artist" is part of it then)
       a.nameHits.forEach((h) => items.push(item(`<button type="button" class="dci-textbtn dci-suggbtn${h.linked ? ' dci-sugg-linked' : ''}" data-act="name-use" data-mbid="${esc(h.mbid)}"
-        title="${esc(titleOf(h))}">${esc(h.name)}${h.disambiguation ? ` (${esc(h.disambiguation)})` : ''}${a.company ? ` – ${esc(tr(`entity.${h.entityType}`))}` : ''}${h.fnWhy ? ` <span class="dci-similar" data-el="fn-why">${esc(h.fnWhy)}</span>` : h.viaWeb ? mark('match.markWeb', { site: webShort(h.viaWeb).split('/')[0] }) : h.region ? mark('match.markRegion') : h.order ? mark('match.markOrder') : h.similar ? mark('match.similarName') : ''}${h.linked ? mark('match.markLinked', { where: h.linked.join(', ') }) : h.viaWeb ? '' : h.release && !why ? mark('match.markRelease') : why}</button>`,
+        title="${esc(titleOf(h))}">${esc(h.name)}${h.disambiguation ? ` (${esc(h.disambiguation)})` : ''}${a.company ? ` – ${esc(tr(`entity.${h.entityType}`))}` : ''}${h.fnWhy ? ` <span class="dci-similar" data-el="fn-why">${esc(h.fnWhy)}</span>` : h.viaWeb ? mark('match.markWeb', { site: webShort(h.viaWeb).split('/')[0] }) : h.region ? mark('match.markRegion') : h.order ? mark('match.markOrder') : h.similar ? mark('match.similarName') : ''}${h.linked ? mark('match.markLinked', { where: h.linked.join(', ') }) : h.linkedAs ? mark('match.markOtherName', { name: a.name, where: h.linkedAs.join(', ') }) : h.viaWeb ? '' : h.release && !why ? mark('match.markRelease') : why}</button>`,
         h.entityType || (a.company ? 'label' : 'artist'), h.mbid)));
     }
     if (!items.length) return '';
@@ -39015,6 +39166,14 @@
       let media = null;
       if (ruleOn('D037') && multiMedium() && !(tracks && tracks.size)) {
         media = mediaHeadAbove(src, x.index);
+        // [Z-RECCONT] (3.216.0, S441) or in brackets at the end of the date's own line ("… Kraków (CD#1, CD#2, CD#3, CD#4)")
+        if (!media && ruleOn('S441')) {
+          const ls = src.lastIndexOf('\n', Math.max(0, x.index - 1)) + 1;
+          const le = src.indexOf('\n', x.index) < 0 ? src.length : src.indexOf('\n', x.index);
+          const lineText = src.slice(ls, le).trim();
+          const tm = lineText.match(/^(.*\S)\s*\(([^()]+)\)\s*\.?$/);
+          media = tm && !/(?:^|\D)(?:1[89]|20)\d{2}\s*$/.test(tm[1]) && !/\((?:cd|dis[ck]|lp|dvd)\s*#?\s*\d/i.test(tm[1]) ? mediaOfHeading(tm[2]) : null;
+        }
         const of = media ? S.mbTracks.filter((t) => media.includes(Number(t.medium))).map((t) => t.idx) : [];
         if (of.length && of.length < S.mbTracks.length) {
           tracks = new Set(of);
@@ -39639,6 +39798,25 @@
    * relationships), its place or event (no place, area or event), "live" (no "live" on its work) – is suggested: the date into the pool
    * (for the column Performance), the rest in a message. Nothing when MusicBrainz has it all. True when a date came into the pool.
    */
+  /**
+   * [Z-BONUSLINE] (3.216.0, S447) The bonus tracks a text names ("Incl. Bonustracks "Curved Nothing" and …"): those the release has – in the
+   * log; those it has not – a hint (the bonus tracks of another edition: what the text says of them is not for this release).
+   */
+  function bonusCheck(rel, from) {
+    if (!ruleOn('S447') || !rel || !S.mbTracks) return;
+    const key = (t) => looseName(String(t || '').replace(/\s*[([][^)\]]*[)\]]\s*$/, ''));
+    const have = new Set(S.mbTracks.map((t) => key(t.title)));
+    for (const x of (rel.ignored || []).filter((y) => y.why === 'bonus' && (y.titles || []).length)) {
+      const missing = x.titles.filter((t) => !have.has(key(t)));
+      const there = x.titles.filter((t) => have.has(key(t)));
+      if (there.length) log('info', 'bonusHere', { list: there.join(', ') });
+      if (missing.length) {
+        log('info', 'bonusOther', { list: missing.join(', '), from: from || S.source.name });
+        showMessage('info', 'msg.bonusOther', { list: missing.join(', '), from: from || S.source.name });
+      }
+    }
+  }
+
   function recDisambSuggest() {
     if (!ruleOn('S431') || !S.mbTracks) return false;
     const got = [];

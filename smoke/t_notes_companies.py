@@ -3002,4 +3002,138 @@ def case_texts3215():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_krakow3216():
+    """Credits Importer 3.216.0 (collected items Z-RECCONT, Z-DTSSTUDIO/Z-ELIDEDNAME, Z-COPYYEAR, Z-AMPNAME, Z-OVERDUBAT, Z-BONUSLINE,
+    Z-LEGALNAME; rules S441 – S447, D042): Discogs notes of a release of four CDs (one track each).
+    A) "Recorded: October 11-12, 2018 at the Alchemia Club, Kraków (CD#1, CD#2, CD#3)" / "October 13, 2018 at Radio Kraków (CD#4)":
+       Alchemia Club on tracks 1–3, Radio Kraków on track 4; 2018-10-13 a date of Performance.
+    B) "Recorded, mixed and mastered by [...] (DTS Studio)": Mix Guy (Discogs: Mixed By) recording, mix and mastering; DTS Studio recorded,
+       mixed and mastered at; no entry "Elided Credited".
+    C) "Andrew Diamond guitar & zither" (zither unknown here): Andrew Diamond guitar (no entry "& zither"); "Overdubs recorded at Electric
+       Lady": Electric Lady recorded at, credited "overdubs".
+    D) "Incl. Bonustracks "Curved Nothing" and "Song One"": a message names "Curved Nothing" (not on the release), not "Song One".
+    E) The rules off (as 3.215.0): no Radio Kraków, no DTS Studio rows for Mix Guy's recording."""
+    orig = H.discogs_release
+    NOTES = ('Recorded: October 11-12, 2018 at the Alchemia Club, Kraków (CD#1, CD#2, CD#3)\nOctober 13, 2018 at Radio Kraków (CD#4)\n\n'
+             'Recorded, mixed and mastered by [...] (DTS Studio)\n\n© ℗ 2022\n\nAl Cisneros bass & vocals\nAndrew Diamond guitar & zither\n\n'
+             'Overdubs recorded at Electric Lady\nCompact Disc (CD): Incl. Bonustracks "Curved Nothing" and "Song One"\n')
+
+    def rel():
+        d = orig()
+        d['notes'] = NOTES
+        d['companies'] = []
+        d['extraartists'] = [{'name': 'Mix Guy', 'anv': '', 'role': 'Mixed By', 'tracks': '', 'id': 3501, 'join': ''}]
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    main0, media0 = H.MAIN, H.MEDIA
+    H.MAIN = H.MAIN.replace('  const S = {', '  const S = window.__S = {', 1)
+    H.MEDIA = [1, 1, 1, 1]
+    H.ARTISTS[3501] = (H.uid('dddddddd', 3501), 'Mix Guy')
+    ROWS = """() => window.__S.rows.filter(r => r.level !== 'skip').map(r => [(window.__S.artists.get(r.artistKey) || {}).name, (r.types || []).join('|'), [...(r.tracks || [])].sort(), r.roleCredit || ''])"""
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        H.ENTRIES_VIEW = 'legacy'
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.wait_still(pg, "document.body.innerHTML", 10, 400)
+        rows = pg.evaluate(ROWS)
+        pool = pg.evaluate("window.__S.datePool.map(d => [d.name, d.begin ? [d.begin.year, d.begin.month, d.begin.day].join('-') : ''])")
+        msgs = pg.evaluate("[...document.querySelectorAll('.dci-msg')].map(m => m.textContent)")
+        ign = pg.evaluate("JSON.stringify((window.__S.release || {}).ignored || [])")
+        b.close()
+        return rows, pool, msgs, ign, errs
+    has = lambda rows, name, t: any(r[0] == name and t in r[1] for r in rows)
+    results = []
+    H.discogs_release = rel
+    try:
+        with sync_playwright() as p:
+            rows, pool, msgs, ign, errs = run(p)
+            names = sorted({r[0] for r in rows})
+            print('A)', [r for r in rows if r[0] in ('Alchemia Club', 'Radio Kraków')], pool)
+            results.append(any(r[0] == 'Alchemia Club' and r[2] == [0, 1, 2] for r in rows) and any(r[0] == 'Radio Kraków' and r[2] == [3] for r in rows)
+                           and any(x[1] == '2018-10-13' and x[0].startswith('Performance') for x in pool))
+            print('B)', [r for r in rows if r[0] in ('Mix Guy', 'DTS Studio')], names, ign.count('copyrightYear'))
+            results.append(has(rows, 'Mix Guy', 'recording') and has(rows, 'Mix Guy', 'mix') and has(rows, 'Mix Guy', 'mastering') and has(rows, 'DTS Studio', 'recorded at')
+                           and has(rows, 'DTS Studio', 'mastered at') and 'Elided Credited' not in names)
+            print('C)', [r for r in rows if r[0] in ('Andrew Diamond', 'Electric Lady')], [n for n in names if n.startswith('&')])
+            results.append(has(rows, 'Andrew Diamond', 'instrument') and not [n for n in names if n.startswith('&')] and any(r[0] == 'Electric Lady' and r[3] == 'overdubs' for r in rows))
+            print('D)', msgs, errs)
+            results.append(any('Curved Nothing' in m and 'Song One' not in m for m in msgs) and not errs)
+            rows2, pool2, msgs2, ign2, errs2 = run(p, off=['S441', 'S442', 'S443', 'S444', 'S445', 'S446', 'S447', 'D042'])
+            names2 = sorted({r[0] for r in rows2})
+            print('E)', names2)
+            results.append('Radio Kraków' not in names2 and not has(rows2, 'Mix Guy', 'recording') and not errs2)
+    finally:
+        H.discogs_release = orig
+        H.MAIN = main0
+        H.MEDIA = media0
+        H.RULES_OFF = []
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_legalname3216():
+    """Credits Importer 3.216.0 (collected item Z-LEGALNAME, rule S442): the release artist Alio Die, whose other name in MusicBrainz is
+    "Stefano Musso"; MusicBrainz has the person Stefano Musso too. The notes: "All music composed and recorded by Stefano Musso".
+    A) The entry Stefano Musso: the first suggestion is Stefano Musso (the person), Alio Die after it, marked as another name in this release
+       (until 3.215.0 Alio Die first, highlighted).
+    B) S442 off: Alio Die first."""
+    orig = H.discogs_release
+    ALIO, SM = H.uid('abcdabcd', 1), H.uid('abcdabcd', 2)
+
+    def rel():
+        d = orig()
+        d['notes'] = 'All music composed and recorded by Stefano Musso'
+        d['companies'] = []
+        d['extraartists'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    main0, ac0 = H.MAIN, list(H.RELEASE_AC)
+    s0 = {k: list(v) for k, v in H.MB_SEARCH.items()}
+    H.MAIN = H.MAIN.replace('  const S = {', '  const S = window.__S = {', 1)
+    H.RELEASE_AC[:] = [(ALIO, 'Alio Die', 'Alio Die', '')]
+    H.MB_SEARCH['artist'] = [{'id': ALIO, 'name': 'Alio Die', 'disambiguation': 'Italian ambient', 'score': 100, 'aliases': [{'name': 'Stefano Musso'}]},
+                             {'id': SM, 'name': 'Stefano Musso', 'disambiguation': 'Italian ambient producer', 'score': 100}]
+    HITS = """() => { const a = [...window.__S.artists.values()].find(x => x.name === 'Stefano Musso'); return a ? (a.nameHits || []).map(h => [h.name, !!h.linked, !!h.linkedAs]) : null; }"""
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        H.ENTRIES_VIEW = 'legacy'
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.wait_still(pg, "document.body.innerHTML", 10, 400)
+        hits = pg.evaluate(HITS)
+        b.close()
+        return hits, errs
+    results = []
+    H.discogs_release = rel
+    try:
+        with sync_playwright() as p:
+            hits, errs = run(p)
+            print('A)', hits, errs)
+            results.append(bool(hits) and hits[0][0] == 'Stefano Musso' and ['Alio Die', False, True] in hits and not errs)
+            hits2, errs2 = run(p, off=['S442'])
+            print('B)', hits2)
+            results.append(bool(hits2) and hits2[0][:2] == ['Alio Die', True] and not errs2)
+    finally:
+        H.discogs_release = orig
+        H.MAIN = main0
+        H.RELEASE_AC[:] = ac0
+        H.MB_SEARCH.clear(); H.MB_SEARCH.update(s0)
+        H.RULES_OFF = []
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
