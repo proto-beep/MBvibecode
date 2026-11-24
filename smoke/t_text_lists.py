@@ -2552,4 +2552,78 @@ def case_texts3205():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_quoteworks3217():
+    """Credits Importer 3.217.0 (collected item Z-QUOTEWORKS, rule S453): a pasted text – "György Kurtág's miniatures as they appear within
+    "Song One":" and below it "Elegie", "Hommage à J.S.B.", "Missing Piece". Track 1 is linked to a work in MusicBrainz; MusicBrainz has
+    Kurtág's Elegie once and two works "Hommage à J.S.B.".
+    A) At track 1 of the works matrix: "quotes music from" Elegie and Hommage à J.S.B. (a list of the two), each with ✓; none for
+       "Missing Piece"; no entry György Kurtág.
+    B) Both confirmed and staged: two relationships "quotes music from" (the work of track 1 with each) – on a work MusicBrainz has; the
+       edit note names "Missing Piece" as not found.
+    C) S453 off: nothing of it."""
+    KURTAG = H.uid('5a5a5a5a', 30)
+    EL, H1, H2 = H.uid('cccccccc', 130), H.uid('cccccccc', 131), H.uid('cccccccc', 132)
+    lts0 = dict(H.LTS)
+    H.lt(1050, 'c8283596-6ad1-4e09-8d49-3a7f7a1b1050', 'musical quotation', 'work', 'work', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    k = lambda: [{'target-type': 'artist', 'type': 'composer', 'artist': {'id': KURTAG, 'name': 'György Kurtág'}}]
+    ws0 = list(H.WORK_SEARCH)
+    H.WORK_SEARCH[:] = [{'id': EL, 'title': 'Elegie', 'aliases': [], 'relations': k()},
+                        {'id': H1, 'title': 'Hommage à J.S.B.', 'disambiguation': 'Játékok I', 'aliases': [], 'relations': k()},
+                        {'id': H2, 'title': 'Hommage à J.S.B.', 'disambiguation': 'Játékok III', 'aliases': [], 'relations': k()}]
+    H.JS_WORKS.update({EL: (7130, 'Elegie'), H1: (7131, 'Hommage à J.S.B.'), H2: (7132, 'Hommage à J.S.B.')})
+    TEXT = 'Piano: Ann Key\n\nGyörgy Kurtág\'s miniatures as they appear within "Song One":\n"Elegie", "Hommage à J.S.B.", "Missing Piece".'
+    LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
+    SUGG = "[...document.querySelectorAll('tr[data-work=\"0\"] .dci-mx-arrsugg')].map(n => [n.textContent.replace(/\\s+/g, ' ').trim(), n.querySelectorAll('select option').length])"
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, f"{LOGS}.filter(x => /Import complete/.test(x)).length >= 2", 60)
+        pg.wait_for_timeout(3000)
+        sugg = pg.evaluate(SUGG)
+        names = pg.evaluate("[...document.querySelectorAll('section.dci-group .dci-gname strong')].map(s => s.textContent.trim())")
+        st = None
+        if sugg:
+            for _ in range(4):
+                btn = pg.query_selector('tr[data-work="0"] .dci-mx-arrsugg [data-act=arr-ok]')
+                if not btn:
+                    break
+                btn.click()
+                pg.wait_for_timeout(300)
+            H.stage_click(pg, least=3500)
+            pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+            pg.wait_for_timeout(800)
+            st = pg.evaluate("""(() => ({ q: MB.relationshipEditor.state.added.filter(x => x.linkTypeID === 1050).map(x => [x.entity0 && x.entity0.gid, x.entity1 && x.entity1.gid]),
+              note: (document.getElementById('edit-note-text') || { value: '' }).value }))()""")
+        b.close()
+        return sugg, names, st, errs
+    results = []
+    try:
+        with sync_playwright() as p:
+            sugg, names, st, errs = run(p)
+            print('A)', sugg, [n for n in names if 'Kurt' in n])
+            results.append(len(sugg) == 2 and any('Elegie' in x[0] for x in sugg) and any(x[1] == 2 for x in sugg) and not any('Missing' in x[0] for x in sugg)
+                           and not [n for n in names if 'Kurt' in n])
+            print('B)', st and st['q'], st and [ln for ln in st['note'].split('\n') if 'Quotes music' in ln], errs)
+            results.append(bool(st) and len(st['q']) == 2 and all(H.WORK1 in pair for pair in st['q']) and 'Quotes music from “Missing Piece”' in st['note'] and not errs)
+            sugg2, names2, st2, errs2 = run(p, off=['S453'])
+            print('C)', sugg2)
+            results.append(not sugg2 and not errs2)
+    finally:
+        H.WORK_SEARCH[:] = ws0
+        H.LTS.clear(); H.LTS.update(lts0)
+        H.LINKED['link_type'] = {str(k2): v for k2, v in H.LTS.items()}
+        H.RULES_OFF = []
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
