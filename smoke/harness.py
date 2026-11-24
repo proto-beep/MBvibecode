@@ -807,7 +807,7 @@ def open_mb_any(ctx, url, gm_xhr=True, all_tabs=False):
     # [3.19.2] GM_openInTab: the tabs the script opens are recorded in window.__gmTabs ([url, options])
     tabs = "window.__gmTabs = []; window.GM_openInTab = (url, opts) => { window.__gmTabs.push([url, opts || null]); return null; };"
     view = "if (/^musicbrainz\\.org$/.test(location.hostname)) { (%s)('full'); (%s)(%s); (%s)(%s); (%s)(%s); %s }" % (VIEW_PRESET, ENTRIES_PRESET, json.dumps(ENTRIES_VIEW), REMEMBER_PRESET, json.dumps(REMEMBER), DM_FOLD_PRESET, json.dumps(DM_FOLD),
-                                                                                                               ('(%s)(%s);' % (MX_HEADS_PRESET, json.dumps(MX_HEADS)) if MX_HEADS else '') + ('(%s)(%s);' % (CHROME_PRESET, json.dumps(CHROME)) if CHROME else ''))
+                                                                                                               ('(%s)(%s);' % (IGN_ORDER_PRESET, json.dumps(IGN_ORDER)) if IGN_ORDER else '') + ('(%s)(%s);' % (MX_HEADS_PRESET, json.dumps(MX_HEADS)) if MX_HEADS else '') + ('(%s)(%s);' % (CHROME_PRESET, json.dumps(CHROME)) if CHROME else ''))
     codes = ([GM_XHR_SHIM] if gm_xhr else []) + [tabs, view, MAIN]
     (ctx if all_tabs else pg).add_init_script(script="if (window.top === window && /^(musicbrainz\\.org|harmony\\.pulsewidth\\.org\\.uk)$/.test(location.hostname)) window.addEventListener('DOMContentLoaded', () => {"
                        " for (const code of %s) { const s = document.createElement('script'); s.textContent = code; document.documentElement.appendChild(s); } });"
@@ -1336,6 +1336,10 @@ REMEMBER_PRESET = "(on) => { if (!on || localStorage.getItem('dci-remember-on') 
 # [3.40.9] "Fold bar after Apply" (Z-PF, on in the script) off for the cases written before it: they work on in the open bar
 # after "Apply"; a case of the folding sets DM_FOLD = True
 DM_FOLD = False
+# [3.217.0] the lines left out are grouped by reason by default (S449); the cases written before read them as one list in the
+# order of the page – IGN_ORDER = 'why' (or None) for the cases of the grouping
+IGN_ORDER = 'page'
+IGN_ORDER_PRESET = "(v) => { if (v && localStorage.getItem('dci-ign-order') === null) localStorage.setItem('dci-ign-order', JSON.stringify(v)); }"
 DM_FOLD_PRESET = "(on) => { if (on || localStorage.getItem('dci-dm-fold') !== null) return; if (!localStorage.getItem('dci-store-epoch')) localStorage.setItem('dci-store-epoch', '4'); localStorage.setItem('dci-dm-fold', 'false'); }"
 
 # [3.57.0] rule S083 (an existing work is not supplemented) was off for every case: many cases stage work credits on WORK1, a work
@@ -1374,6 +1378,8 @@ def open_mb_edit(ctx, companion=True, gm_xhr=False, view='full'):
         pg.evaluate(MX_HEADS_PRESET, MX_HEADS)
     if CHROME:
         pg.evaluate(CHROME_PRESET, CHROME)
+    if IGN_ORDER:
+        pg.evaluate(IGN_ORDER_PRESET, IGN_ORDER)
     if RULES_OFF:
         pg.evaluate(RULES_PRESET, RULES_OFF)
     if companion:

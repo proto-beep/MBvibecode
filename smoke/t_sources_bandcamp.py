@@ -2529,4 +2529,61 @@ def case_scope3197():
         H.ws_release = orig_ws
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+def case_titleinfo3217():
+    """Credits Importer 3.217.0 (collected item Z-TITLEINFO, rules S450 – S452): a digital release, Bandcamp its source; the album credits
+    "Barry Guy – double bass", "Ramón López – drums"; the titles of the tracks name the lineup: "Album 1: Improv 1 (Lopez dr// Guy, db)",
+    "Improv 2 Guy db // Mazur, el-b", the others none.
+    A) Ramón López drums and Barry Guy double bass on track 1, Barry Guy also on track 2 (from the titles); "Mazur" has no entry – said,
+       none made; a message says the credits came from the titles and that the quick switch turns it off.
+    B) The quick switch "Read from titles" (S450) off: Ramón López's drums on all tracks as the album credits say, nothing from titles."""
+    ALBUM = 'https://titleband.bandcamp.com/album/improv'
+    titles = ['Album 1: Improv 1 (Lopez dr// Guy, db)', 'Improv 2 Guy db // Mazur, el-b', 'Song Three', 'Song Four']
+    H.BC_PAGES[ALBUM] = H.bc_page({'artist': 'Test Band', 'current': {'title': 'Testalbum', 'credits': 'Barry Guy – double bass (3, 4)\nRamón López – drums (3)', 'about': ''},
+                                   'trackinfo': [{'track_num': i + 1, 'title': t, 'duration': 180.0} for i, t in enumerate(titles)]})
+    orig_ws = H.ws_release
+    main0 = H.MAIN
+    H.MAIN = H.MAIN.replace('  const S = {', '  const S = window.__S = {', 1)
+
+    def ws():
+        d = orig_ws()
+        d['relations'].append({'target-type': 'url', 'type': 'purchase for download', 'url': {'resource': ALBUM}})
+        for m in d['media']:
+            m['format'] = 'Digital Media'
+        return d
+    H.ws_release = ws
+    ROWS = """() => window.__S.rows.filter(r => r.level !== 'skip').map(r => [(window.__S.artists.get(r.artistKey) || {}).name, r.primaryText || (r.types || [])[0], [...r.tracks].sort().join(',')])"""
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        H.ENTRIES_VIEW = 'legacy'
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
+        H.wait_still(pg, "document.body.innerHTML", 10, 400)
+        rows = pg.evaluate(ROWS)
+        msgs = pg.evaluate("[...document.querySelectorAll('.dci-msg')].map(m => m.textContent)")
+        b.close()
+        return rows, msgs, errs
+    results = []
+    try:
+        with sync_playwright() as p:
+            rows, msgs, errs = run(p)
+            print('A)', rows, msgs, errs)
+            results.append(['Ramón López', 'drums', '0,2'] in rows or (any(r[0] == 'Ramón López' and '0' in r[2].split(',') for r in rows)))
+            results.append(any(r[0] == 'Barry Guy' and set(r[2].split(',')) >= {'0', '1'} for r in rows) and 'Mazur' not in {r[0] for r in rows})
+            results.append(any('titles of the tracks' in m and 'Read from titles' in m for m in msgs) and any('Mazur' in m for m in msgs) and not errs)
+            rows2, msgs2, errs2 = run(p, off=['S450'])
+            print('B)', rows2, msgs2)
+            results.append(not any(r[0] == 'Ramón López' and '0' in r[2].split(',') for r in rows2) and not any('titles of the tracks' in m for m in msgs2) and not errs2)
+    finally:
+        H.ws_release = orig_ws
+        H.MAIN = main0
+        H.RULES_OFF = []
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

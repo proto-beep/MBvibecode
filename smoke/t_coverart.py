@@ -1873,7 +1873,7 @@ def case_ocrlinepeek():
                         {'text': 'Qqzx Vrrt Plmnk\n', 'bbox': {'x0': 40, 'y0': 400, 'x1': 700, 'y1': 450}},
                         {'text': 'Thanks to all our friends\n', 'bbox': {'x0': 40, 'y0': 900, 'x1': 1100, 'y1': 950}}], 'words': []}]
     LISTS = """(() => ['.dci-unrec', '.dci-ignored'].map(sel => { const d = document.querySelector(sel); if (!d) return null;
-      return { lines: [...d.querySelectorAll('li')].map(li => [li.textContent.replace(/\\s+/g, ' ').trim(), li.dataset.linePeek || '', li.tabIndex]),
+      return { lines: [...d.querySelectorAll('li:not(.dci-ign-group)')].map(li => [li.textContent.replace(/\\s+/g, ' ').trim(), li.dataset.linePeek || '', li.tabIndex]),
         hint: !!d.querySelector('.dci-linepeek-hint') }; }))()"""
     PEEK = """(() => { const el = document.getElementById('dci-line-peek'); if (!el || el.hidden) return null; const im = el.querySelector('img');
       return { n: el.querySelectorAll('figure').length, src: im.src.slice(0, 23), w: im.naturalWidth, h: im.naturalHeight, cap: el.querySelector('figcaption').textContent,

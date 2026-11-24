@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-24 | 3.213.0 – 3.216.0 | – |
+| 2026-11-24 | 3.213.0 – 3.217.0 | – |
 | 2026-11-23 | 3.210.0 – 3.212.0 | – |
 | 2026-11-22 | 3.197.0 – 3.209.0 | – |
 | 2026-11-21 | 3.193.0 – 3.196.0 | – |
@@ -138,6 +138,14 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.217.0
+
+**Quoted works, one switch for track titles, the lines left out grouped.**
+
+- **Music quoted from other works** (rule S453): "György Kurtág's miniatures as they appear within "For To End Yet Again":" and the titles below it – the work of that track "quotes music from" each work of that composer of exactly that title MusicBrainz has (several of one title to choose from), in yellow, staged once confirmed (✓) – also on a work MusicBrainz has. The composer is not credited on the quoting work; works MusicBrainz has not are not created.
+- **"Read from titles"** (rules S450 – S452): one quick switch (on) for credits and dates from the titles of the tracks, with ticks: dates (D023, as before), the lineup (new: "(Lopez dr // Mazur, el-b // Pursglove, tp)" – surnames given the entries of the release, abbreviations of instruments; a name without an entry only said), composers in brackets (S088), MusicBrainz's titles too (off). What comes from the titles is said, with the switch that turns it off. Live, videos, remixes and the same work stay as they are.
+- **The lines left out, grouped** (rules S448, S449): by reason with their number (the default) or in the order of the page – "by reason | in page order", remembered; the same line with the same reason once.
 
 ### Import 3.216.0
 

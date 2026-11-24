@@ -2889,4 +2889,63 @@ console.log(JSON.stringify(out));
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_igngroup3217():
+    """Credits Importer 3.217.0 (collected items Z-IGNGROUP, Z-IGNDUP; rules S448, S449): a pasted text with lines left out for two
+    reasons; its first line put into the list twice (as two lines of one edition give it).
+    A) The list "lines left out on purpose": grouped by reason (the default) – each group with its number; the line once.
+    B) "in page order": the lines one after another as on the page; the choice kept after the dashboard is drawn again.
+    C) S448, S449 off: in page order."""
+    TEXT = 'Bass: Ann Low\n\nThanks to all our friends.\n\nThanks Mom.\n\nIncluding a 52 p. booklet.'
+    LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
+    LIST = """(() => { const d = document.querySelector('.dci-ignored'); if (!d) return null; d.open = true;
+      return { groups: [...d.querySelectorAll('.dci-ign-group > details > summary')].map(x => x.textContent.trim()),
+        lines: [...d.querySelectorAll('li:not(.dci-ign-group)')].map(li => li.querySelector('.dci-ign-text') ? li.querySelector('.dci-ign-text').textContent.trim() : li.textContent.trim()) }; })()"""
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        H.IGN_ORDER = None  # the default of the script: by reason
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, f"{LOGS}.filter(x => /Import complete/.test(x)).length >= 2", 60)
+        pg.wait_for_timeout(800)
+        # (the same line twice, as two lines of one edition give it: put into the list, drawn again)
+        pg.evaluate("window.__S.release.ignored.push({ ...window.__S.release.ignored[0] })")
+        if not off:
+            pg.evaluate("document.querySelector('[data-act=ign-order][data-order=why]').click()")
+            pg.wait_for_timeout(300)
+        a = pg.evaluate(LIST)
+        b2 = None
+        if not off:
+            pg.evaluate("document.querySelector('[data-act=ign-order][data-order=page]').click()")
+            pg.wait_for_timeout(300)
+            b2 = pg.evaluate(LIST)
+            b2['stored'] = pg.evaluate("localStorage.getItem('dci-ign-order')")
+        b.close()
+        return a, b2, errs
+    results = []
+    main0 = H.MAIN
+    H.MAIN = H.MAIN.replace('  const S = {', '  const S = window.__S = {', 1)
+    try:
+        with sync_playwright() as p:
+            a, b2, errs = run(p)
+            print('A)', a)
+            print('B)', b2, errs)
+            results.append(a and a['groups'] == ['thanks (2)', 'about the package (1)'] and a['lines'].count('Thanks to all our friends.') == 1)
+            results.append(b2 and not b2['groups'] and b2['lines'][0].startswith('Thanks to all') and b2['stored'] == '"page"' and not errs)
+            c, _, errs3 = run(p, off=['S448', 'S449'])
+            print('C)', c)
+            results.append(c and not c['groups'] and c['lines'][0].startswith('Thanks to all') and not errs3)
+    finally:
+        H.MAIN = main0
+        H.RULES_OFF = []
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
