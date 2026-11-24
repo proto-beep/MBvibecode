@@ -998,10 +998,11 @@ Bob Blue on Piano and Saxophone"""
         pg.wait_for_timeout(500)
         g = pg.evaluate(GROUPS)
         unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(l => l.textContent.trim())")
-        for k in ('loudsprecher', 'Photorama International', 'Dirk Glawe', 'Payola', 'Bernd Struckmeyer', 'M. Osswald', 'Jane Roe', 'Ann Blow', 'Bob Blue', 'Special Guest'):
+        for k in ('Loudsprecher', 'Photorama International', 'Dirk Glawe', 'Payola', 'Bernd Struckmeyer', 'M. Osswald', 'Jane Roe', 'Ann Blow', 'Bob Blue', 'Special Guest'):
             print(f'  {k}:', g.get(k))
         print('nicht erkannt:', unrec)
-        results.append(g.get('loudsprecher') and [r[1] for r in g['loudsprecher']] == ['phonographic copyright', 'copyright'])
+        # ((3.215.0, S436) a name in small letters searched with a capital)
+        results.append(g.get('Loudsprecher') and [r[1] for r in g['Loudsprecher']] == ['phonographic copyright', 'copyright'])
         results.append(g.get('Photorama International', [[0, '', '']])[0][1:3] == ['photography', 'cover photo'] and g.get('Dirk Glawe', [[0, '']])[0][1] == 'photography'
                        and g.get('Payola', [[0, '', '']])[0][1:3] == ['design', 'cover design'] and g.get('Bernd Struckmeyer', [[0, '']])[0][1] == 'design')
         osw = g.get('M. Osswald') or []

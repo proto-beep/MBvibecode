@@ -2912,4 +2912,94 @@ def case_videoplace3213():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_texts3215():
+    """Credits Importer 3.215.0 (collected items Z-ANDPLACE, Z-LOWERCASECO, Z-DRAGONAUT, Z-RAMMSTEIN, Z-INSERTLINES, Z-SHIPP; rules S435 –
+    S440, D041): lines of the Bandcamp texts as Discogs notes of a CD release.
+    A) Places: "Friends and Neighbors" one place; "Abbey Road & Olympic Studios" two; "Electric Lady and Sear Sound" – MusicBrainz has
+       both, not the whole – two entries; "Supported by: cnm" – CNM.
+    B) Dragonaut: Bingy drums; recorded in Albuquerque and San Jose; Sub 80 engineered at; Sinai mixed at; Ventura mastered in; Kevin Gray
+       (lacquer cut), Cohearent and Fidelity Record Press left out (a CD); the biography left out.
+    C) Shipp: Jim Clouse recording, mix and mastering; Anna Yatskevich and the drawings of Florence Giroud left out (a CD), Florence Giroud
+       lyricist; the editions and the sides left out.
+    D) Rammstein: Paul Dugdale left out (no videos); no 2026 date in the pool; MusicBrainz's event of 1 October 2022 at Foro Sol offered
+       (not the one of 3 October, nor one of another place).
+    E) The rules off (as 3.214.0): "Friends" and "Neighbors" two places, no Bingy, no Jim Clouse, "cnm"."""
+    orig = H.discogs_release
+    NOTES = ('Mixed by Nathaniel Morgan at Friends and Neighbors, Brooklyn\nRecorded at Abbey Road & Olympic Studios, London\n'
+             'Recorded by John Doe at Electric Lady and Sear Sound\nSupported by: cnm\n\n'
+             'Al Cisneros bass & vocals\nBingy drums\n\n'
+             'recorded Albuquerque & San Jose, 2024 & 2025\nengineer Andrew Seidel (Sub 80)\nmix Bassy (Sinai, Albuquerque)\nmastering JJ Golden (Ventura)\n'
+             'lacquers Kevin Gray\n\nLacquer cut at 45rpm by Kevin Gray at Cohearent & audiophile vinyl pressed by Fidelity Record Press to ensure sound.\n'
+             'Al Cisneros is a founding member of the bands Sleep & OM.\n\n'
+             'Recorded (June 25, 2025), mixed, and mastered by Jim Clouse\nInsert photographs of Matthew & William by Anna Yatskevich\n'
+             'drawings & texts by Florence Giroud\nVinyl LP: // Edition of 500 //\nLtd. Edition LP on Black Vinyl\n'
+             'Side A: Deeper Fields / Notions of Order / Momenta\n\n'
+             'It captures their three concerts at the Foro Sol in Mexico City on 1, 2 and 4 October 2022. The director is Paul Dugdale.\n'
+             'Officially announced on 15 September 2026 after a long wait.\n')
+
+    def rel():
+        d = orig()
+        d['notes'] = NOTES
+        d['companies'] = []
+        d['extraartists'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    main0 = H.MAIN
+    H.MAIN = H.MAIN.replace('  const S = {', '  const S = window.__S = {', 1)
+    ROWS = """() => window.__S.rows.filter(r => r.level !== 'skip').map(r => [(window.__S.artists.get(r.artistKey) || {}).name, (r.types || []).join('|'), r.raw || ''])"""
+    pl = lambda i, n: {'id': H.uid('a1a1a1a1', i), 'name': n, 'score': 100, 'disambiguation': ''}
+    ev = lambda i, n, day, place: {'id': H.uid('e2e2e2e2', i), 'name': n, 'score': 100, 'life-span': {'begin': day, 'end': day},
+                                    'relations': [{'type': 'held at', 'place': {'id': H.uid('a1a1a1a1', 50 + i), 'name': place}}]}
+    s0 = {k: list(v) for k, v in H.MB_SEARCH.items()}
+    H.MB_SEARCH['place'] = [pl(1, 'Electric Lady'), pl(2, 'Sear Sound')]
+    H.MB_SEARCH['event'] = [ev(1, 'Rammstein at Foro Sol', '2022-10-01', 'Foro Sol'), ev(2, 'Rammstein at Foro Sol (3)', '2022-10-03', 'Foro Sol'),
+                            ev(3, 'Foro Sol Fest', '2022-10-02', 'Estadio Azteca')]
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        H.ENTRIES_VIEW = 'legacy'
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.wait_still(pg, "document.body.innerHTML", 10, 400)
+        pg.wait_for_timeout(2500)
+        rows = pg.evaluate(ROWS)
+        pool = pg.evaluate("window.__S.datePool.map(d => d.begin ? d.begin.year : null)")
+        fest = pg.evaluate("(window.__S.festivals || []).map(f => [f.name, f.offers.map(o => o.name)])")
+        b.close()
+        return rows, pool, fest, errs
+    has = lambda rows, name, t: any(r[0] == name and t in r[1] for r in rows)
+    results = []
+    H.discogs_release = rel
+    try:
+        with sync_playwright() as p:
+            rows, pool, fest, errs = run(p)
+            names = sorted({r[0] for r in rows})
+            print('A-C)', names)
+            print('   ', rows)
+            print('D)', pool, fest, errs)
+            results.append('Friends and Neighbors' in names and 'Friends' not in names and {'Abbey Road', 'Olympic Studios', 'Electric Lady', 'Sear Sound', 'CNM'} <= set(names))
+            results.append(has(rows, 'Bingy', 'instrument') and has(rows, 'Albuquerque', 'recorded in') and has(rows, 'San Jose', 'recorded in') and has(rows, 'Sub 80', 'engineered at')
+                           and has(rows, 'Sinai', 'mixed at') and has(rows, 'Ventura', 'mastered in') and 'Kevin Gray' not in names and 'Cohearent' not in names
+                           and 'Fidelity Record Press' not in names)
+            results.append(has(rows, 'Jim Clouse', 'recording') and has(rows, 'Jim Clouse', 'mix') and has(rows, 'Jim Clouse', 'mastering') and 'Anna Yatskevich' not in names
+                           and has(rows, 'Florence Giroud', 'lyricist') and not has(rows, 'Florence Giroud', 'illustration'))
+            results.append('Paul Dugdale' not in names and 2026 not in pool and fest == [['Foro Sol', ['Rammstein at Foro Sol']]] and not errs)
+            rows2, pool2, fest2, errs2 = run(p, off=['S435', 'S436', 'S437', 'S438', 'S439', 'S440', 'D041'])
+            names2 = sorted({r[0] for r in rows2})
+            print('E)', names2, pool2, fest2)
+            results.append('Friends' in names2 and 'Bingy' not in names2 and 'Jim Clouse' not in names2 and 'cnm' in names2 and not errs2)
+    finally:
+        H.discogs_release = orig
+        H.MAIN = main0
+        H.RULES_OFF = []
+        H.MB_SEARCH.clear(); H.MB_SEARCH.update(s0)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

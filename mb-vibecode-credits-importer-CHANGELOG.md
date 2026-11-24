@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-24 | 3.213.0 – 3.214.0 | – |
+| 2026-11-24 | 3.213.0 – 3.215.0 | – |
 | 2026-11-23 | 3.210.0 – 3.212.0 | – |
 | 2026-11-22 | 3.197.0 – 3.209.0 | – |
 | 2026-11-21 | 3.193.0 – 3.196.0 | – |
@@ -138,6 +138,17 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.215.0
+
+**Texts read better: places joined by "and", names in small letters, Bandcamp's short lines, concert films, inserts and editions.**
+
+- **"and" between places** (rule S435): split only when a part looks like a place – "Friends and Neighbors, Brooklyn" is one place, "Abbey Road & Olympic Studios" two. A name MusicBrainz does not know as a whole but knows each part of ("Electric Lady and Sear Sound") becomes two entries, said in a message.
+- **Names in small letters** (rule S436): a label or place written "cnm", "scpp", "chaudelande studio" is searched and created as CNM, SCPP, Chaudelande Studio (particles small); linked, MusicBrainz's name counts.
+- **Bandcamp's short lines** (rule S437): a one-word name in a lineup ("Bingy drums"); "recorded Albuquerque & San Jose, 2024 & 2025" (recorded in both); a studio or town in brackets after a name – "engineer Andrew Seidel (Sub 80)" engineered at Sub 80, "mix Bassy (Sinai, Albuquerque)" mixed at Sinai in Albuquerque, "mastering JJ Golden (Ventura)" mastered in Ventura; "lacquers Kevin Gray"; "Lacquer cut … at Cohearent & … pressed by Fidelity Record Press" (vinyl only); "1st 200 … copies include …" and a biography sentence left out.
+- **Concert films** (rules S438, D041): "The director is Paul Dugdale" – the video director, only on a release with videos; dates of the release, its announcement or a screening not in the pool; concerts "at the Foro Sol … on 1, 2 and 4 October 2022" offer MusicBrainz's events of that place on exactly those days.
+- **"drawings & texts by …"** (rule S439): illustration (vinyl only) and lyricist.
+- **A Whole System Of** (rule S440): "Recorded (June 25, 2025), mixed, and mastered by Jim Clouse" gives all three; "Insert photographs … by Anna Yatskevich" photography for vinyl only, her Instagram from "(@jazzaddikt on IG)"; edition lines ("// Edition of 500 //", "Ltd. Edition LP on Black Vinyl") and side lists ("Side A: … / … / …") left out.
 
 ### Import 3.214.0
 
