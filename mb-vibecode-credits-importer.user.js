@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.214.0
+// @version      3.215.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.214.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.214.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.215.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.215.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.214.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.215.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1376,6 +1376,11 @@
       "kind.event": "Event",
       "festival.title": "Festival recording:",
       "festival.hint": "“{name}”{date}. MusicBrainz prefers the event to the place – the event is linked to its place. Add the event with its MBID (“Add entry manually”), or one found below.",
+      "festival.concertTitle": "Concerts at a place (MusicBrainz's events of exactly those days):",
+      "log.concertEvents": "Concerts at {place}: {n} event(s) of MusicBrainz on those days",
+      "log.videoProseNoVideo": "“The director is {name}”: the release has no videos – left out",
+      "log.andPlaceSplit": "“{name}”: two places in MusicBrainz – {a} and {b}",
+      "msg.andPlaceSplit": "“{name}” is two places in MusicBrainz (not one of that name): {a} and {b} – split into two entries; check them.",
       "festival.from": "From: “{line}”",
       "festival.mention": "– only mentioned: check the context (nothing is set by itself)",
       "festival.byRecDate": "– named in another sentence; its event found by the date of the recording",
@@ -5769,6 +5774,12 @@
     { id: 'S432', where: 'suppNoteLines, editNoteBlock; stats/global_stats.py', note: 'Edit notes (3.214.0; collected item Z-NOTEALLSUPP): every source added is named – one that added or confirmed something "Also from: <address>" as before, one that added nothing "Also read: <address>"; a source without an address "Also from: text pasted in" or "Also from: text from images" (and "Also read: …" for them). The global statistics count them by kind (text, ocr) and the sources read without adding (supplements_read_only; format_version 3). Off (as until 3.213.0): only sources with an address that added something' },
     { id: 'S433', where: 'rgSourcesLoad, suppBarHtml (rg-src-toggle), compareSupplement (must)', note: 'Sources (3.214.0; collected item Z-RGSOURCES): the bar "Add a source:" has "＋ sources of other releases (n)" – folded, a click shows them: the Discogs releases, Bandcamp albums and YouTube videos the other releases of the release group link to, each with its release\'s format and catalogue number ("Discogs 1234 · CD · INTAKT 151"); each once, not the source loaded nor a link of this release; from eight on "+ n more". Added like a typed source; its rules for formats apply to its roles as always; its mix credits are not ticked and marked – another edition may have another mix. One lookup of the group after the import. Off (as until 3.213.0): only the release\'s own links' },
     { id: 'S434', where: 'dsupEntry (dsupAdd), dsupHtml (dsup-noadd, dsup-readd)', note: 'Compared with MusicBrainz (3.214.0; collected item Z-DSUPCLEAR; changes S328): a role only the source has, beside other roles MusicBrainz has of the person, is held and asked about only when it may be one of them – a word of the same kind a slip apart ("chaims" – "chimes"; the buttons say it: "“chaims” is the existing “chimes” – add nothing", "＋ Add “chaims” as a new role"). Another one ("acoustic guitar" beside "vocals") is added – the box says so ("Discogs names “acoustic guitar” … – it is added"), with "Leave out". MusicBrainz having a plain and a more precise role of the same kind ("vocals" on 12 recordings, "lead vocals" on 2) is a hint only, nothing changed (S174 offers more only where the source names one of them). Numbers as recordings. Off (as until 3.213.0): every such role held and asked' },
+    { id: 'S435', where: 'TEXT.parse (placeish, places), andPlaceSplit', note: 'Places of texts (3.215.0; collected item Z-ANDPLACE): "and" / "&" between two names after "at" splits them only when one looks like a place – a word of places with a name, or a place the source lists ("Abbey Road & Olympic Studios": two); "Mixed by Nathaniel Morgan at Friends and Neighbors, Brooklyn" is one place. The dashboard checks such a name against MusicBrainz: not found as a whole, but each part found by its name ("Electric Lady and Sear Sound"): two entries with the same rows, said in a message. Off (as until 3.214.0): split at every "and" before two words in capitals' },
+    { id: 'S436', where: 'addCompanyEntry, titleCaseName', note: 'Companies (3.215.0; collected item Z-LOWERCASECO): a label, place or other company written all in small letters ("cnm", "scpp", "chaudelande studio" on Bandcamp) is searched and created with capitals – each word with one, short words without vowels all in capitals (CNM, SCPP), particles small inside the name ("… de Música"); linked, the name of MusicBrainz counts. Off (as until 3.214.0): as written' },
+    { id: 'S437', where: 'TEXT.parse (dragonautLine, nameRoles: nrPrev)', note: 'Texts (3.215.0; collected item Z-DRAGONAUT): Bandcamp\'s short lines – in a lineup a name of one word before its roles ("Bingy drums", below "Al Cisneros bass & vocals"); "recorded Albuquerque & San Jose, 2024 & 2025": recorded in both; a bracket after a name – "engineer Andrew Seidel (Sub 80)", "mix Bassy (Sinai, Albuquerque)": the studio a place (engineered at, mixed at; a town after a comma its area), "mastering JJ Golden (Ventura)": a town alone an area (mastered in); "lacquers Kevin Gray": lacquer cut by; "Lacquer cut … by Kevin Gray at Cohearent & … pressed by Fidelity Record Press": lacquer cut by and at, pressed by (for vinyl only, S026); "1st 200 direct order copies include …" left out (a part of an edition); "X is a founding member of …" left out (a biography). Off (as until 3.214.0): not recognized' },
+    { id: 'S438', where: 'TEXT.parse (moreTextLine), addCreditRows (videoProse), findConcertEvents', note: 'Texts (3.215.0; collected item Z-RAMMSTEIN): "The director is Paul Dugdale" in a sentence is the video director – only on a release with videos (else left out). "… three concerts at the Foro Sol in Mexico City on 1, 2 and 4 October 2022": MusicBrainz\'s events of that place on exactly those days are offered (its name or one of its other names, the day of the event the day of the text); nothing else. Off (as until 3.214.0): not read' },
+    { id: 'S439', where: 'TEXT.parse (moreTextLine)', note: 'Texts (3.215.0; collected item Z-INSERTLINES): "drawings & texts by Florence Giroud" – illustration credited "drawings" (for vinyl only, S026) and the lyricist of the works. Off (as until 3.214.0): not recognized' },
+    { id: 'S440', where: 'TEXT.parse (moreTextLine)', note: 'Texts (3.215.0; collected item Z-SHIPP): "Recorded (June 25, 2025), mixed, and mastered by Jim Clouse" – the date in brackets is no part of the list of verbs (all three his; the date read as before); "Insert photographs of … by Anna Yatskevich" – photography credited "insert photographs", for vinyl only, "(@jazzaddikt on IG)" after her name in the text her Instagram; "// Edition of 500 //", "Vinyl LP: // Edition of 500 //", "Compact Disc (CD): / Edition of 1000 /", "Ltd. Edition LP on Black Vinyl" left out (the edition); "Side A: Deeper Fields / Notions of Order / Momenta" (also after "Vinyl LP:") left out as a track list. Off (as until 3.214.0): not recognized' },
     { id: 'S410', where: 'freshForget, repeatImport, loadRelease', note: '"↻ Repeat import" (3.209.0; collected item Z-FRESHALL): "Start afresh" forgets everything the dashboard holds of the release – not only the changes of the rows and the choices of the works matrix (Z-RI, 3.40.16), also the date pool, the track pool and the date matrix, the choices of the box "Dedications & tributes", "✕ No suite", texts and parts of sources switched off, "skip the works", entries joined by hand, the ticks of suggestions, what is remembered of the release ("Remember changes"; nothing of the import before is stored on the way). Kept: what was created in MusicBrainz through the dashboard (the lists of created works and suites), the source and the media chosen, the log' },
     { id: 'S409', where: 'mergeEntries, joinEntry, applyEntryMerges, dmTargetOf (entry-merge), groupHtml (grip)', note: 'Entries (3.208.0; collected item Z-ENTITYMERGE): two entries of the same kind that are one – from different sources, written otherwise – are joined by hand: the grip ⠿ before the kind of an entry dropped onto another entry. The entry dropped onto stays (its link to MusicBrainz counts; without one it takes the other\'s), the rows of the other come to it – the same role once, each row credited as its source writes it, the other\'s name one of its names. Two different entries of MusicBrainz, or entries of different kinds: not joined, a message says why. Remembered for the release (joined again at the next import); ↶ in the message undoes it' },
     { id: 'S408', where: 'renderDedBox (ded-kind), emChipHtml, toggleDedication', note: 'Dedications (3.207.0; collected item Z-DEDKINDSWITCH): each row of the box "Dedications & tributes" has two buttons "Dedication | Tribute" – the chosen one filled in its colour (dedication old rose, tribute gold), a click switches (as "⇄" at the row and the chip did); the chips of these relationships have the colours too. A kind MusicBrainz has not for this target (a tribute of a place) is greyed out' },
@@ -8318,6 +8329,7 @@
     { id: 'D038', note: 'A date that only sums up others (3.187.0; collected item Z-WIKISEMI): a date for all tracks whose days are each named for a group of tracks elsewhere in the texts – "May 26–27, 2016" of Wikipedia\'s infobox beside "May 27, 2016 (Disc 1), May 26, 2016 (Disc 2)" of the notes – says nothing new: it is neither placed in the date matrix nor put into the pool (placed, it would give every track both days)' },
     { id: 'D039', where: 'DATE_GROUPS (performance)', note: 'Dates (3.210.0; collected item Z-FIELDRECDATE): the field recordings (field recordist: "Alio Die: Drones and loops, zither, …, field recordings") belong to the column Performance of the date matrix – a date of the recording ("composed and recorded by Stefano Musso in Spring 2023") is theirs too. Off (as until 3.209.0): they got no date' },
     { id: 'D040', where: 'findDates (DATE_TYPO_WORDS)', note: 'Dates (3.213.0; collected item Z-MASTERDATETYPO): a word one letter off a word of a date group – "Masterded by Grzegorz Piwkowski, Hi End Studio 2022" – is read as that word (as the credits are, S050): the date goes to its group (Mastering 2022). Only recorded, recording, (re)mastered, (re)mastering; words of seven letters or more. Off (as until 3.212.0): the date without a group' },
+    { id: 'D041', where: 'findDates', note: 'Dates (3.215.0; collected item Z-RAMMSTEIN): a date in a sentence about the release, its announcement or a screening – "due for release on 20 November 2026", "Officially announced on 15 September 2026", "screened … in cinemas worldwide from 4 November 2026" – is an issue\'s date: not in the pool (D018). Off (as until 3.214.0): in the pool without a group' },
     { id: 'D034', note: 'Relative dates (3.132.0; collected item Z-RELDATE; a quick switch): "last September", "earlier this year", "the following spring", "that summer", "two years ago", "letzten September", "im Frühjahr darauf", "vor zwei Jahren", "el pasado septiembre", "hace dos años", "en septembre dernier", "il y a deux ans" – reckoned from a date of the text itself: a dateline ("Berlin, June 2019") or a date of the same paragraph, never the date of the release (a text of a reissue belongs to the original); two possible dates or none: nothing. A season is a period (spring March–May, summer June–August, autumn September–November, winter December–February); "earlier this year" the year only' },
     { id: 'D025', note: 'The kinds of the artwork (3.73.0): a date of the column Artwork goes to the kind its words name – "Cover Painting: “View at Nice” (1992)" to the illustration only (not to design), "Cover Photo: “…” (1985)" to the photography, "Cover design … 1992" to design; "cover art", "artwork": illustration and design. Each date of the column says its kind (to change). The date of a concert is no date the photographs get by themselves: it goes into the pool named for them ("Photography By") and is suggested at their row' },
   ];
@@ -8862,6 +8874,16 @@
               hint = key;
               hintWord = w[0];
             }
+          }
+        }
+        // [Z-RAMMSTEIN] (3.215.0, D041) a date of the release, its announcement or a screening ("due for release on 20 November 2026",
+        // "Officially announced on 15 September 2026", "screened … in cinemas worldwide from 4 November 2026"): an issue's date – not in the pool
+        if (!hint && ruleOn('D041')) {
+          const sent = src.slice(sentenceStartAt(src, a), Math.min(src.length, b + 120)).split(/(?<=[.!?])\s/)[0];
+          if (/\b(?:due\s+(?:for\s+release|out)|release[sd]?\s+(?:on|date)|(?:officially\s+)?announced|screen(?:ed|ings?)|in\s+cinemas|premiere[sd]?|in\s+stores|on\s+sale|pre-?orders?)\b/i.test(sent)) {
+            hint = 'issue';
+            at = 0;
+            words.push({ key: 'issue', index: 0, end: 0 });
           }
         }
         // [D020] (3.28.5) words joined by "and", "&" or commas before it: each names a group of the date
@@ -13122,6 +13144,12 @@
          * [3.43.0] (review) The places after "at": "Studio X and Studio Y" are two of the verb; "Studio X (Berlin), mixed at Studio Y
          * (Paris)" the second one of its own verb (before: one place "Studio X and Studio Y", or the mix place lost in the area).
          */
+        /** [Z-ANDPLACE] (3.215.0, S435) A name that looks like a place: a word of places with a word in capitals, or a place the source lists. */
+        const placeish = (x) => {
+          const t = clean(String(x || '')).replace(/^the\s+/i, '');
+          return (TEXT_PLACE_WORDS.test(t) && /\p{Lu}/u.test(t.replace(new RegExp(TEXT_PLACE_WORDS.source, 'giu'), '')))
+            || (ruleOn('S232') && TEXT_PLACE_WORDS_DE.test(t)) || P.placeNames.some((n) => norm(n) === norm(t));
+        };
         const places = (verb, tail) => {
           const own = String(tail || '').split(/,\s*(?=\p{L}+(?:ed|ing)\s+at\s)/iu);
           let any = false;
@@ -13130,7 +13158,14 @@
             const text = k === 0 ? part : part.replace(/^\p{L}+\s+at\s+/iu, '');
             const vb = k === 0 ? v : (v && v[1].replace(/ing$/i, 'ed')) || verb;
             // (3.43.5, counter-review) not at "and" when a sentence follows ("… and John Doe at Studio Y", "… and Dave played drums")
-            const pieces = text.split(/\s+(?:and|&|und|et)\s+(?:at\s+)?(?=\p{Lu}\S*\s+\p{Lu})/u);
+            let pieces = text.split(/\s+(?:and|&|und|et)\s+(?:at\s+)?(?=\p{Lu}\S*\s+\p{Lu})/u);
+            // [Z-ANDPLACE] (3.215.0, S435) "and" splits two places only when one of them looks like a place (a word of places, a place the
+            // source lists): "Friends and Neighbors, Brooklyn" is one place, "Abbey Road & Olympic Studios" two (the dashboard checks the
+            // others against MusicBrainz: andPlaceSplit)
+            if (pieces.length > 1 && ruleOn('S435') && !pieces.some((w) => placeish(String(w).split(/\s*,\s*/)[0]))) {
+              const one = text.split(/\s+(?:and|&|und|et)\s+(?:at\s+)?(?=\p{Lu})/u);
+              pieces = one.length > 1 && !one.slice(1).some((w) => /\sat\s|\s\p{Ll}+ed\b/u.test(w)) ? [text] : pieces;
+            }
             (pieces.slice(1).some((w) => /\sat\s|\s\p{Ll}+ed\b/u.test(w)) ? [text] : pieces).forEach((w) => { if (place(vb, placeOf(w))) any = true; });
           });
           return any;
@@ -14051,10 +14086,136 @@
      * [Z-TBY] (3.59.0, S085) "Eric Revis double bass", "Dana Murray percussion on “Dance Of The Evil Toys”": a name of two to four
      * words with capitals and its roles in small letters, without a dash or colon between them – read as "Name - roles".
      */
+    /**
+     * [Z-DRAGONAUT] (3.215.0, S437) Lines of a Bandcamp text written short:
+     * – "recorded Albuquerque & San Jose, 2024 & 2025": recorded in both cities (the years left to the dates);
+     * – "engineer Andrew Seidel (Sub 80)", "mix Bassy (Sinai, Albuquerque)", "mastering JJ Golden (Ventura)": the person, and in the
+     *   brackets the studio (a place: with a number, a word of places, or a town after a comma – its area) or a town alone (an area);
+     * – "lacquers Kevin Gray": lacquer cut by him;
+     * – "Lacquer cut … by Kevin Gray at Cohearent & … pressed by Fidelity Record Press …": lacquer cut by and at, pressed by (vinyl only,
+     *   as every such company: S026);
+     * – "1st 200 direct order copies include …": a part of an edition only – left out; "X is a founding member of …": a biography.
+     */
+    const DRAG_VERB = { engineer: 'Engineered', engineered: 'Engineered', engineering: 'Engineered', mix: 'Mixed', mixed: 'Mixed', mixing: 'Mixed',
+      mastering: 'Mastered', mastered: 'Mastered', master: 'Mastered', recording: 'Recorded', recorded: 'Recorded' };
+    const dragonautLine = (P, l, raw) => {
+      let m = l.match(/^recorded\s+(?:in\s+)?(\p{Lu}[\p{L}.'’ -]*?)\s*(?:&|\band\b)\s*(\p{Lu}[\p{L}.'’ -]*?)\s*,\s*(?:\d{4}(?:\s*(?:&|and|-|–|,)\s*\d{4})*)\s*\.?$/iu);
+      if (m) {
+        [m[1], m[2]].forEach((x) => readLine0(P, `Recorded in ${clean(x)}`, true));
+        return true;
+      }
+      m = l.match(/^(engineer(?:ing)?|mix(?:ing)?|mastering|recording)\s*:?\s+(\p{Lu}[^()]*?\S)\s*\((\p{Lu}[^()]+)\)\s*\.?$/u);
+      if (m && DRAG_VERB[m[1].toLowerCase()] && looksLikeName(clean(m[2])) && !/^(?:tracks?|side|cd|lp|vinyl|disc|digital|bonus)\b/i.test(m[3]) && !/\d\s*[,–-]\s*\d/.test(m[3])) {
+        const verb = DRAG_VERB[m[1].toLowerCase()];
+        const inner = clean(m[3]);
+        readLine0(P, `${cap(m[1])}: ${clean(m[2])}`, true);
+        const parts = inner.split(/\s*,\s*/);
+        const studio = parts.length > 1 || /\d/.test(parts[0]) || TEXT_PLACE_WORDS.test(parts[0]);
+        readLine0(P, studio ? `${verb} at ${inner}` : `${verb} in ${inner}`, true);
+        return true;
+      }
+      m = l.match(/^lacquers?\s*:?\s+(\p{Lu}.+)$/u);
+      if (m && looksLikeName(clean(m[1]))) {
+        readLine0(P, `Lacquer cut by ${clean(m[1])}`, true);
+        return true;
+      }
+      const lc = l.match(/\blacquer\s+cut\b[^.;]*?\bby\s+(\p{Lu}[\p{L}'’.-]*(?:\s+\p{Lu}[\p{L}'’.-]*){0,3})\s+at\s+(\p{Lu}[\p{L}\d'’.-]*(?:\s+\p{Lu}[\p{L}\d'’.-]*){0,4})/iu);
+      if (lc) {
+        readLine0(P, `Lacquer cut by ${lc[1]}`, true);
+        readLine0(P, `Lacquer cut at ${lc[2]}`, true);
+        const pr = l.match(/\bpressed\s+by\s+(\p{Lu}[\p{L}'’.-]*(?:\s+\p{Lu}[\p{L}'’.-]*){0,5})/u);
+        if (pr) {
+          const k0 = P.companies.length;
+          readLine0(P, `Pressed by ${pr[1]}`, true);
+          P.companies.slice(k0).forEach((c) => { c.medium = 'vinyl'; });
+        }
+        // the rest of the paragraph: prose (a part of an edition said as such)
+        l.split(/(?<=[.!?])\s+(?=\p{Lu}|\d)/u).filter((x) => !/\blacquer\s+cut\b/i.test(x))
+          .forEach((x) => P.ignored.push({ text: x, why: /^(?:the\s+)?(?:first|1st)\s+\d+\b[^.]*\bcopies\b/i.test(x) ? 'edition' : 'prose' }));
+        return true;
+      }
+      if (/^(?:the\s+)?(?:first|1st)\s+\d+\s+(?:[\p{L}-]+\s+){0,3}(?:copies|pressings?|orders?)\b/iu.test(l)) {
+        P.ignored.push({ text: raw, why: 'edition' });
+        return true;
+      }
+      if (/^\p{Lu}[\p{L}'’.-]*(?:\s+\p{Lu}[\p{L}'’.-]*){0,3}\s+(?:is|was)\s+(?:a|an|the)\s+(?:founding\s+|former\s+|longtime\s+|long-time\s+)?(?:member|co-?founder|founder)\s+of\b/u.test(l)) {
+        P.ignored.push({ text: raw, why: 'prose' });
+        return true;
+      }
+      return false;
+    };
+
+    /**
+     * [Z-RAMMSTEIN] [Z-INSERTLINES] [Z-SHIPP] (3.215.0) More lines of texts:
+     * – S438: "The director is Paul Dugdale" in a sentence – the video director (only on a release with videos: addCreditRows);
+     * – S439: "drawings & texts by Florence Giroud" – illustration (credited "drawings", for vinyl only, S026) and lyricist (the works);
+     * – S440: "Recorded (June 25, 2025), mixed, and mastered by Jim Clouse" – the date in brackets out of the list of verbs (the dates read
+     *   it); "Insert photographs of … by Anna Yatskevich" – photography credited "insert photographs", for vinyl only, "(@jazzaddikt on IG)"
+     *   after her name in the text her Instagram; "// Edition of 500 //", "Ltd. Edition LP on Black Vinyl", "Compact Disc (CD): / Edition of
+     *   1000 /" left out (the edition); "Side A: Deeper Fields / Notions of Order / Momenta" left out (a track list).
+     */
+    const IG_AFTER = /\bby\s+(?:photographer\s+|artist\s+)?(\p{Lu}[\p{L}'’.-]*(?:\s+\p{Lu}[\p{L}'’.-]*){1,3})\s*\(\s*@([\w.]{2,40})\s+on\s+(?:IG|Insta(?:gram)?)\s*\)/gu;
+    const moreTextLine = (P, l, raw) => {
+      if (ruleOn('S440')) {
+        if (!P.igOf) P.igOf = new Map();
+        for (const m of l.matchAll(IG_AFTER)) {
+          const url = `https://www.instagram.com/${m[2].replace(/\.+$/, '')}/`;
+          P.igOf.set(norm(m[1]), url);
+          P.credits.filter((c) => c.who && norm(c.who.name) === norm(m[1]) && !c.who.links.includes(url)).forEach((c) => c.who.links.push(url));
+        }
+      }
+      if (ruleOn('S438')) {
+        const d = l.match(/\b[Tt]he\s+(?:film\s+|video\s+|concert\s+film\s+)?director\s+(?:is|was)\s+(\p{Lu}[\p{L}'’.-]*(?:\s+\p{Lu}[\p{L}'’.-]*){1,3})/u);
+        if (d && !P.credits.some((c) => c.videoProse && c.who.name === d[1])) addCredit(P, d[1], 'Video Director', null, { videoProse: true });
+      }
+      if (ruleOn('S439')) {
+        const m = l.match(/^(drawings?|illustrations?|paintings?)\s*(?:&|and|\+)\s*(texts?|lyrics|words|poems)\s+by\s+(\p{Lu}[\p{L}'’.-]*(?:\s+\p{Lu}[\p{L}'’.-]*){1,3})\s*\.?$/iu);
+        if (m) {
+          addCredit(P, m[3], 'Illustration [Vinyl]', null, { roleCredit: m[1].toLowerCase() });
+          addCredit(P, m[3], 'Lyrics By', null);
+          return true;
+        }
+      }
+      if (!ruleOn('S440')) return false;
+      const vb = l.match(/^(\p{L}+ed)\s*\(([^()]*\d{4}[^()]*)\)\s*,\s*(.+)$/u);
+      if (vb && /\bby\s+\p{Lu}/u.test(vb[3])) {
+        readLine0(P, `${vb[1]}, ${vb[3]}`, true);
+        return true;
+      }
+      const ins = l.match(/^insert\s+(photo(?:graph)?s?)(?:\s+of\s+.+?)?\s+by\s+(\p{Lu}[\p{L}'’.-]*(?:\s+\p{Lu}[\p{L}'’.-]*){1,3})\s*\.?$/iu);
+      if (ins) {
+        const n0 = P.credits.length;
+        addCredit(P, ins[2], 'Photography [Vinyl]', null, { roleCredit: `insert ${ins[1].toLowerCase()}` });
+        const url = P.igOf && P.igOf.get(norm(ins[2]));
+        if (url) P.credits.slice(n0).forEach((c) => { if (!c.who.links.includes(url)) c.who.links.push(url); });
+        return true;
+      }
+      const bare = l.replace(/^(?:vinyl\s+lp|lp|vinyl|compact\s+disc(?:\s*\(cd\))?|cd|cassette|digital(?:\s+album)?)\s*:\s*/i, '').replace(/^[\s/]+|[\s/]+$/g, '');
+      if (/^edition\s+of\s+\d+$/i.test(bare) || /^(?:ltd\.?|limited)\s+edition\s+(?:\d+\s*(?:x|×)\s*)?(?:lp|cd|vinyl|cassette|2lp)\b[^.]*$/i.test(bare)) {
+        P.ignored.push({ text: raw, why: 'edition' });
+        return true;
+      }
+      const side = bare.match(/^side\s+[a-h1-8]\s*:\s*(.+)$/i);
+      if (side && side[1].split(/\s+\/\s+/).length >= 2 && !/\s(?:by|at)\s/i.test(side[1])) {
+        P.ignored.push({ text: raw, why: 'tracklist' });
+        return true;
+      }
+      return false;
+    };
+
     const nameRoles = (P, line) => {
       if (!ruleOn('S085') || /:|\s[–—-]\s/.test(line)) return null;
       // (a name with particles too: "Ludwig van Beethoven piano")
-      const nr = line.match(/^(\p{Lu}[\p{L}'’.-]*(?:\s+(?:\p{Lu}[\p{L}'’.-]*|van|von|de|der|den|da|di|del|della|la|le|du|dos|das|y|zu|ten|ter)){1,4})\s+(\p{Ll}.*)$/u);
+      let nr = line.match(/^(\p{Lu}[\p{L}'’.-]*(?:\s+(?:\p{Lu}[\p{L}'’.-]*|van|von|de|der|den|da|di|del|della|la|le|du|dos|das|y|zu|ten|ter)){1,4})\s+(\p{Ll}.*)$/u);
+      // [Z-DRAGONAUT] (3.215.0, S437) in a lineup (the line before read so): a name of one word ("Bingy drums") – three letters at least,
+      // no role, no word of places
+      if (!nr && P.nrPrev && ruleOn('S437')) {
+        const one = line.match(/^(\p{Lu}[\p{L}'’.-]{2,})\s+(\p{Ll}.*)$/u);
+        if (one && !isRole(P, cap(one[1])) && !TEXT_PLACE_WORDS.test(one[1]) && !P.titleNames.some((x) => norm(x) === norm(one[1]))) {
+          const roles1 = clean(one[2]);
+          if (roles1 && !/\s(?:by|at|for|to|with|from|on|in|of)\s/i.test(` ${roles1} `) && playRoles(P, roles1)) return `${one[1]} - ${one[2]}`;
+        }
+      }
       // ((review) a name as prose reads one – no make ("Fender Rhodes"), place ("New York"), instrument or role in it – not a title
       if (!nr || !proseName(P, nr[1].split(/\s+/)) || isRole(P, cap(nr[1])) || P.titleNames.some((x) => norm(x) === norm(nr[1]))) return null;
       const roles = clean(nr[2].replace(/\s*\([^)]*\)\s*\.?$/, '').replace(/\s+on\s+["“'‘„].+$/u, ''));
@@ -14067,6 +14228,8 @@
 
     const lineOfItsOwn = (P, line, raw) => {
       const l = clean(line);
+      if (ruleOn('S437') && dragonautLine(P, l, raw)) return true;
+      if (moreTextLine(P, l, raw)) return true; // [Z-RAMMSTEIN] [Z-INSERTLINES] [Z-SHIPP] (3.215.0)
       // [Z-MEMBERINST] (3.141.0, S239) a band of the release with its members and their instruments in one line – "Band X: A (guitar),
       // B (bass)", "Band X (A – guitar, B – bass)", "Band X (A: guitar; B: bass)": each member's roles, and the members of the group
       // ("Create artist" fills in "member of band" with them)
@@ -14523,6 +14686,8 @@
       // [Z-TBY] (3.59.0, S085) a name and its roles without a dash: as with one ((review) before the roles of a name above, S070: a
       // name as prose reads one – "Eric Revis double bass" below "Orrin Evans piano" is his –, a make is none: "Fender Rhodes piano")
       const asDash = !sub ? nameRoles(P, line) : null;
+      // [Z-DRAGONAUT] (3.215.0, S437) the line before was such a name and its roles: a lineup – one word may be a name there ("Bingy drums")
+      if (!sub) P.nrPrev = !!asDash || (P.bkLineup instanceof Map && P.bkLineup.has((line.match(/^(.+?)\s-\s/) || [])[1] || '\u0000'));
       if (asDash) line = asDash;
       // [Z-TBY] (3.59.0, S085) "Orrin Evans - piano (vocals on “Blessed Ones”)": a role with its own tracks in brackets after the roles
       // – both parts read on their own, from the same line ((review) only roles before "on": "(overdubs on track 3)" stays as it was)
@@ -14604,7 +14769,9 @@
       P.pi0 = 0;
       // [S070] (3.42.3) a line only of roles below "Name — roles" (no name, colon, dash or "by"): more roles of that name, until an
       // empty line ("Matt Glassmeyer — saxophones • 1, 8" / "Wurlitzer • 1, 8" / "organ • 1"; collected item Z-GON b)
-      if (ruleOn('S070') && cont && !/:|\s[–—-]\s/.test(line) && !/\sby\s/i.test(` ${line} `)) {
+      // ([Z-DRAGONAUT] 3.215.0, S437) not a line that begins with a name of its own ("Andrew Diamond guitar & percussion" below "Bingy drums")
+      if (ruleOn('S070') && cont && !/:|\s[–—-]\s/.test(line) && !/\sby\s/i.test(` ${line} `)
+        && !(ruleOn('S437') && /^\p{Lu}[\p{L}'’.-]*\s+\p{Lu}[\p{L}'’.-]*\s+\p{Ll}/u.test(line))) {
         const roles = listRoles(P, line);
         const list = roles ? null : playList(P, line);
         if (roles || list) {
@@ -16984,7 +17151,8 @@
             ...(c.pkgMedium ? { pkgMedium: c.pkgMedium, fromPkg: c.fromPkg } : {}), // [Z-VINYLONLY] (3.161.0, S293)
             ...(c.promo ? { promo: c.promo } : {}), // [Z-BCEDITION] (3.187.0, S320)
             ...(c.textConflict ? { textConflict: c.textConflict } : {}), // [Z-BCWHAT] (3.194.0, S349)
-            ...(c.partScope ? { partScope: c.partScope } : {}) }); // [Z-PARTSCOPE] (3.197.0, S361)
+            ...(c.partScope ? { partScope: c.partScope } : {}), // [Z-PARTSCOPE] (3.197.0, S361)
+            ...(c.videoProse ? { videoProse: true } : {}) }); // [Z-RAMMSTEIN] (3.215.0, S438)
         }
         const entry = group.roles.get(rKey);
         // [Z-TCP] (3.60.0) a name in brackets after a title only while every credit of the role is one
@@ -30725,7 +30893,8 @@
       // [Z-PLDUP] (3.111.0) the same place with another role ("Recorded at Tonart" – Discogs: "Mixed At – Tonart Studio, …"): Discogs's
       // place, credited as the notes write it
       const anv = (byPlace || (same.length && spelt(same[0]))) && norm(c.who.name) !== norm(same[0].who.name) ? c.who.name : '';
-      rel.companies.push({ who, role: c.role, catno: '', tracks: c.tracks || null, fromNotes: true, line: c.line, ...(anv ? { anv } : {}), ...(c.date ? { date: c.date } : {}), ...(c.partScope ? { partScope: c.partScope } : {}), ...((c.pubBlock || ruleOn('S053')) && someTracks(c.tracks) ? { notesLine: c.line } : {}) });
+      rel.companies.push({ who, role: c.role, catno: '', tracks: c.tracks || null, fromNotes: true, line: c.line, ...(anv ? { anv } : {}), ...(c.date ? { date: c.date } : {}), ...(c.partScope ? { partScope: c.partScope } : {}), ...((c.pubBlock || ruleOn('S053')) && someTracks(c.tracks) ? { notesLine: c.line } : {}),
+        ...(c.medium ? { medium: c.medium } : {}) }); // ([Z-DRAGONAUT] 3.215.0) the medium the text gives it (a pressing: vinyl)
       added.push(`${c.who.name} (${c.role})`);
     }
     if (added.length) log('info', 'notesCompanies', { n: added.length, list: added.join(', ') });
@@ -31550,6 +31719,12 @@
         resolveRowType(row);
       }
       videoLevelFor(row); // [F-VIDEOLEVEL] (3.164.0, S296)
+      // [Z-RAMMSTEIN] (3.215.0, S438) "The director is …" of a text: a video's director – only on a release with videos
+      if (c.videoProse && ruleOn('S438') && !selTracks().some(trackIsVideo)) {
+        log('info', 'videoProseNoVideo', { name: artist.name });
+        leftOutKeys.add(artist.key);
+        continue;
+      }
       // [F-DJMIX] (3.164.0, S296) "Mixed By" on a DJ mix (the release group's type): the engineer of the mix or the DJ? – asked (Q022)
       if (ruleOn('S296') && row.ruleId === 'R033' && rgIsDjMix()) row.djMixRg = true;
       if (!releaseLevelChosen(row) || noMediaFor(row)) continue;
@@ -31914,6 +32089,23 @@
     return said.some((x) => /\b(?:support(?:ed|s)?|unterst(?:u|ue)tz)/iu.test(x)) ? 'support' : 'funding';
   }
 
+  /**
+   * [Z-LOWERCASECO] (3.215.0, S436) A name of small letters in capitals: each word with a capital; a short word without vowels, or of
+   * two or three consonants and up to four letters, all in capitals ("cnm" → CNM, "scpp" → SCPP); particles small inside the name
+   * ("companhia nacional de música" → Companhia Nacional de Música).
+   */
+  const TITLE_PARTICLES = new Set(['de', 'da', 'do', 'das', 'dos', 'del', 'la', 'le', 'les', 'du', 'des', 'di', 'van', 'von', 'der', 'den', 'of', 'the', 'and', 'et', 'y', 'e', 'und', 'à', 'a', 'en', 'in', 'on', 'for']);
+  function titleCaseName(name) {
+    return String(name || '').split(/(\s+|-|\/)/).map((w, k) => {
+      if (!/\p{L}/u.test(w)) return w;
+      const low = w.toLowerCase();
+      if (k > 0 && TITLE_PARTICLES.has(low)) return low;
+      const letters = low.replace(/[^\p{L}]/gu, '');
+      if (letters.length >= 2 && letters.length <= 5 && !/[aeiouyàáâãäåèéêëìíîïòóôõöùúûüæœ]/u.test(letters)) return w.toUpperCase();
+      return low.charAt(0).toUpperCase() + low.slice(1);
+    }).join('');
+  }
+
   function addCompanyEntry(g, rel, leftOutKeys) {
     // [S007]
     const commissioned = (r) => norm(r.role) === 'commissioned by';
@@ -31933,6 +32125,9 @@
     const headName = ruleOn('S424') && g.roles.length && g.roles.every(placeRole) ? withoutAreaTail(String(g.name || '').replace(/\s*\(\d+\)$/, ''), '', '', true) : '';
     const cut = headName && headName !== String(g.name || '').replace(/\s*\(\d+\)$/, '') && headName.split(/\s+/).length >= 2 ? headName : '';
     if (cut) g = { ...g, name: cut, area: g.area || String(g.name).replace(/\s*\(\d+\)$/, '').slice(cut.length).replace(/^[\s,]+/, ''), altNames: uniq([...(g.altNames || []), g.name]) };
+    // [Z-LOWERCASECO] (3.215.0, S436) a name written all in small letters ("cnm", "chaudelande studio"): in capitals as names are written –
+    // searched and created so; the name of MusicBrainz wins once linked (the source's spelling is no credit of its own)
+    if (ruleOn('S436') && /\p{Ll}/u.test(g.name || '') && !/\p{Lu}/u.test(g.name || '')) g = { ...g, name: titleCaseName(g.name), lowerName: g.name };
     const company = {
       key: nextId('c'), dId: g.dId, links: g.links, name: g.name, rawName: g.rawName, status: 'pending', company: true,
       entityType: null, mbid: null, mbName: '', candidates: [], editing: false, error: '', anvs: [], area: g.area || '',
@@ -32853,11 +33048,39 @@
     await suggestByName(pending.filter((a) => a.status === 'missing' && (a.dId ? (!a.company || pubByName(a) || plateCompany(a) || bcPage(a) || wikiItem(a)) && !(a.nameHits || []).length
       : source.nameSearch || a.fromNotes || ruleOn('S242'))));
     linkInRelease(pending); // [Z-NOIDNAME] (3.144.0, S242)
+    await andPlaceSplit(pending); // [Z-ANDPLACE] (3.215.0, S435)
     for (const a of pending) {
       if (a.company) rerenderGroup(a);
       else updateGroupHeader(a);
     }
     refresh();
+  }
+
+  /**
+   * [Z-ANDPLACE] (3.215.0, S435) A place of a text named "A and B" (kept as one: no word of places in it) that MusicBrainz does not know as
+   * a whole, but knows A and B each by name ("Electric Lady and Sear Sound"): two places – the entry split in two, its rows on both, said in a
+   * message. A name MusicBrainz knows as it is stays one ("Friends and Neighbors").
+   */
+  async function andPlaceSplit(list) {
+    if (!ruleOn('S435')) return;
+    for (const a of list) {
+      if (!a.company || a.mbid || a.status !== 'missing' || a.dId || !S.artists.has(a.key)) continue;
+      const type = a.entityType || companyTypes(a)[0] || '';
+      if (type !== 'place') continue;
+      const parts = String(a.name || '').split(/\s+(?:and|&|und|et)\s+/u).map((x) => x.trim()).filter(Boolean);
+      if (parts.length !== 2 || (a.nameHits || []).some((h) => nameFit(h.name, a.name))) continue;
+      const probes = parts.map((name) => ({ name, company: true, entityType: 'place', key: '', area: a.area || '' }));
+      await suggestByName(probes);
+      if (!probes.every((pr) => (pr.nameHits || []).some((h) => nameFit(h.name, pr.name)))) continue;
+      const whole = a.name;
+      Object.assign(a, { name: parts[0], rawName: parts[0], nameHits: probes[0].nameHits, andSplit: whole });
+      const b = { ...a, key: nextId('c'), name: parts[1], rawName: parts[1], nameHits: probes[1].nameHits, candidates: [], anvs: [], andSplit: whole };
+      S.artists.set(b.key, b);
+      for (const r of S.rows.filter((x) => x.artistKey === a.key)) cloneRow(r, { artistKey: b.key, company: b });
+      log('info', 'andPlaceSplit', { name: whole, a: parts[0], b: parts[1] });
+      showMessage('info', 'msg.andPlaceSplit', { name: whole, a: parts[0], b: parts[1] });
+      renderGroups();
+    }
   }
 
   /**
@@ -32993,7 +33216,8 @@
       const date = (findDates(sentence, { usOrder: usDateOrder() })[0] || {}).value || null;
       S.festivals.push({ name, date, offers: [], line: sentence.trim(), index: m.index, ...(notRec && ruleOn('S220') ? { mention: true } : {}) });
     }
-    if (!S.festivals.length) return;
+    await findConcertEvents(seq, text); // [Z-RAMMSTEIN] (3.215.0, S438)
+    if (seq !== importSeq || !S.festivals.length) return;
     // [Z-LJTEXT] (3.140.0, S235) a festival named only in another sentence ("Our thanks go to … the artistic director of the Jazzfest Berlin"):
     // the date of the text's recording asks for its events – one whose time holds it makes it the festival of the recording
     const recDate = ruleOn('S235') ? (() => {
@@ -33008,6 +33232,7 @@
     renderSource();
     if (S.festivals.some((f) => f.mention)) renderDates(); // ((3.132.0, review) the chip "Mentioned dates" counts them
     for (const f of S.festivals) {
+      if (f.concert) continue; // [Z-RAMMSTEIN] (3.215.0) looked up by its place and days
       if (f.date && f.date.begin && f.date.begin.year) {
         const words = f.name.split(' ').filter((w) => !/^\d{4}$/.test(w) && !FEST_PARTICLE.test(w)).join(' ');
         const q = luceneWords(words);
@@ -33035,6 +33260,41 @@
       if (f.line) log('info', 'festivalFrom', { line: f.line.length > 160 ? `${f.line.slice(0, 160)} …` : f.line }); // [Z-LOGMORE] (3.128.0)
     }
     renderSource();
+  }
+
+  /**
+   * [Z-RAMMSTEIN] (3.215.0, S438) Concerts at a place on days the text names ("their three concerts at the Foro Sol in Mexico City on 1, 2 and
+   * 4 October 2022"): MusicBrainz's events held at that place (its name or one of its other names) on exactly one of those days – offered
+   * as a festival's are (a click adds one, "recorded at"); nothing on another day or at another place.
+   */
+  async function findConcertEvents(seq, text) {
+    if (!ruleOn('S438')) return;
+    for (const sent of String(text || '').split(/\n+|(?<=[.!?])\s+(?=\p{Lu})/u)) {
+      const m = sent.match(/\bconcerts?\s+(?:at|in)\s+(?:the\s+)?(\p{Lu}[\p{L}\d'’.-]*(?:\s+\p{Lu}[\p{L}\d'’.-]*){0,4})/u);
+      if (!m || storySentence(sent)) continue;
+      const place = m[1];
+      const d = findDates(sent, { usOrder: usDateOrder() }).find((x) => x.value && x.value.begin && x.value.begin.day && x.hint !== 'issue');
+      if (!d) continue;
+      const days = (d.days && d.days.length ? d.days : [d.value.begin]).filter((x) => x && x.year && x.month && x.day);
+      const iso = (x) => `${x.year}-${String(x.month).padStart(2, '0')}-${String(x.day).padStart(2, '0')}`;
+      const q = luceneWords(place);
+      if (!q || !days.length) continue;
+      const offers = [];
+      for (const day of days) {
+        const data = await mbWs(`event?query=${encodeURIComponent(`place:(${q}) AND begin:${iso(day)}`)}&limit=25`, { background: true }).catch(() => null);
+        if (seq !== importSeq) return;
+        for (const e of (data && data.events) || []) {
+          const ls = e['life-span'] || {};
+          if (String(ls.begin || '') !== iso(day) || offers.some((o) => o.mbid === e.id)) continue;
+          const places = (e.relations || []).filter((r) => r.place).map((r) => r.place);
+          const atPlace = places.some((pl) => nameFit(pl.name, place) || (pl.aliases || []).some((al) => nameFit(al.name, place)));
+          if (!atPlace) continue;
+          offers.push({ mbid: e.id, name: e.name, period: ls.begin, comment: [e.disambiguation, e.type].filter(Boolean).join(', ') });
+        }
+      }
+      if (offers.length) S.festivals.push({ name: place, date: d.value, offers, line: sent.trim(), concert: true });
+      log('info', 'concertEvents', { place, n: offers.length });
+    }
   }
 
   /**
@@ -33206,7 +33466,7 @@
       const mention = f.mention ? ` <span class="dci-warn dci-festival-mention">${esc(tr('festival.mention'))}</span>`
         // ([Z-LJTEXT] 3.140.0, S235) named in another sentence, its event found by the date of the recording: said so
         : f.byRecDate ? ` <span class="dci-sub dci-festival-recdate">${esc(tr('festival.byRecDate'))}</span>` : '';
-      return `<p><strong>${esc(tr('festival.title'))}</strong> ${esc(tr(f.offers.length ? 'festival.hint' : 'festival.hintNone', { name: f.name, date }))}${mention}${from}</p>${offers}`;
+      return `<p><strong>${esc(tr(f.concert ? 'festival.concertTitle' : 'festival.title'))}</strong> ${esc(tr(f.offers.length ? 'festival.hint' : 'festival.hintNone', { name: f.name, date }))}${mention}${from}</p>${offers}`;
     }).join('')}</div>`;
   }
 
