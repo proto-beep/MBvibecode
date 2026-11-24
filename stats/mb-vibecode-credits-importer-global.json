@@ -1,14 +1,14 @@
 {
  "$schema": "https://raw.githubusercontent.com/proto-beep/MBvibecode/main/schemas/mb-vibecode-credits-importer-global.schema.json",
  "format": "mb-vibecode-credits-importer-global",
- "format_version": 2,
+ "format_version": 3,
  "script": "MB x Vibecode: Credits Importer",
  "names": [
   "MB x Vibecode: Credits Importer",
   "MB x Vibecode: Import Discogs credits"
  ],
  "dump": "20261121-002203",
- "generated": "2026-11-21T22:38:13Z",
+ "generated": "2026-11-24T14:52:17Z",
  "since": "2026-09-01",
  "privacy": "numbers only: no editors, edits or URLs; \"editors\" is how many different ones; the records (core) name a release and a recording (their MBIDs and titles – public entries of MusicBrainz, no editor)",
  "totals": {
@@ -324,6 +324,7 @@
  "supplements": {
   "wikipedia": 1
  },
+ "supplements_read_only": {},
  "supplemented": {
   "n": 1,
   "of": 104
