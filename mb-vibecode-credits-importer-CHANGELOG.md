@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-24 | 3.213.0 – 3.215.0 | – |
+| 2026-11-24 | 3.213.0 – 3.216.0 | – |
 | 2026-11-23 | 3.210.0 – 3.212.0 | – |
 | 2026-11-22 | 3.197.0 – 3.209.0 | – |
 | 2026-11-21 | 3.193.0 – 3.196.0 | – |
@@ -138,6 +138,18 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.216.0
+
+**Kraków 2018 and more: media in brackets, the second line of "Recorded:", names Discogs's notes leave out, the person's own entry.**
+
+- **Media in brackets and a second line** (rules S441, D042): "Recorded: October 11-12, 2018 at the Alchemia Club, Kraków (CD#1, CD#2, CD#3, CD#4)" puts the place and the date on the tracks of those media (one track group of them); "October 13, 2018 at Radio Kraków (CD#5)" right below goes on with "Recorded": Radio Kraków recorded at on CD 5, the date one of Performance.
+- **The person's own entry** (rule S442): "composed and recorded by Stefano Musso" suggests MusicBrainz's Stefano Musso first – Alio Die, the release artist whose other name it is, comes after it, marked as such.
+- **Names the notes leave out** (rule S443): "by [...]", "by …", Discogs's "[a=Name]" and "[a123]" – the persons Discogs credits with those roles, each with all roles of the line; the studio after it ("(DTS Studio)", "at FCM Studio, Barcelona") the place of every verb before it.
+- **"© ℗ 2022"** (rule S444): left out once as a copyright line without a name (not twice as "web addresses").
+- **An unknown instrument in a list** (rule S445): "Andrew Diamond guitar & percussion" stays the name and its roles when a word is not known – that word asks; a name never begins with "&", "+" or "and".
+- **A word before the verb** (rule S446): "Overdubs recorded by John Doe at Electric Lady and Sear Sound", "Strings recorded at Studio X" keep the place, credited with the word.
+- **Bonus tracks** (rule S447): "Compact Disc (CD): Incl. Bonustracks "Curved Nothing" and …" is left out; bonus tracks the release does not have are said (the text of another edition).
 
 ### Import 3.215.0
 
