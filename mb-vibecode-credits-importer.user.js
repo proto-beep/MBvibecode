@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.213.0
+// @version      3.214.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.213.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.213.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.214.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.214.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.213.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.214.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1488,8 +1488,8 @@
       "suite.createBtnTitle.more": "Opens MusicBrainz's form for a new work in the dashboard, prefilled with the name, the type “Suite” and the writers credited for all of its tracks. Its “parts” are staged only once it exists: MusicBrainz does not create a new work that is linked by “parts” only.",
       "suite.pickTitle.more": "MusicBrainz has a work of this name by the writers of all its tracks – a click takes it as the suite instead of creating a new one",
       "settings.suiteNamingTitle.more": "How the new works of the parts of a suite are named: “Trisect: Transition” (as classical track titles are) or “Trisect, Transition”",
-      "settings.editNote.fullTitle.more": "Written into the edit note at each staging:\n– Source: the release imported\n– Also from: the other sources read for it\n– Script: its name and version\n– Done: what was added – credits by level, works linked and created, role credits, dates and attributes added to existing relationships\n– Supplemented / New: the release group, the release and the recordings added to – MusicBrainz had relationships of them or not\n– Dates entered in the dashboard\n– Not stored in MB: the wording that has no field in MusicBrainz\nIn the forms of new artists, works, labels …: Source and “Prefilled by …” with what was prefilled",
-      "settings.editNote.simpleTitle.more": "Written into the edit note at each staging:\n– Source: the release imported\n– Also from: the other sources read for it\n– Script: its name and version\nIn the forms of new artists, works, labels …: Source and Script",
+      "settings.editNote.fullTitle.more": "Written into the edit note at each staging:\n– Source: the release imported\n– Also from / Also read: the other sources read for it (those that added nothing as “Also read”)\n– Script: its name and version\n– Done: what was added – credits by level, works linked and created, role credits, dates and attributes added to existing relationships\n– Supplemented / New: the release group, the release and the recordings added to – MusicBrainz had relationships of them or not\n– Dates entered in the dashboard\n– Not stored in MB: the wording that has no field in MusicBrainz\nIn the forms of new artists, works, labels …: Source and “Prefilled by …” with what was prefilled",
+      "settings.editNote.simpleTitle.more": "Written into the edit note at each staging:\n– Source: the release imported\n– Also from / Also read: the other sources read for it (those that added nothing as “Also read”)\n– Script: its name and version\nIn the forms of new artists, works, labels …: Source and Script",
       "matrix.attrAllTitle.more": "{name}: {k} of {n} works. Click: for all works on (or off when all have it). Drop a track group here: only for its tracks.",
       "stack.flipTitle.more": "Reads the lines whose order was not clear the other way round – in the dashboard: what was changed in the other rows stays",
       "case.backTitle.more": "The source writes “{name}”; the dashboard in normal case (rule S060). A click takes the capitals – also as the “credited as” of its roles.",
@@ -2272,6 +2272,15 @@
       "dsup.mbOnly": "Only on MusicBrainz:",
       "dsup.mbOnlyTag": "only on MusicBrainz",
       "dsup.onTracks": "{name} ({n}×)",
+      "dsup.onRecs.one": "{name} ({n} recording)",
+      "dsup.onRecs.other": "{name} ({n} recordings)",
+      "dsup.addOn": "{src} names “{role}”; MusicBrainz has other roles of this person ({list}) – “{role}” is added.",
+      "dsup.addOff": "{src} names “{role}” – left out (MusicBrainz has {list}).",
+      "dsup.noAddBtn": "Leave out “{role}”",
+      "dsup.addBtn": "＋ Add “{role}”",
+      "dsup.mixedHint": "MusicBrainz has {list} – perhaps entered so on purpose; nothing is changed.",
+      "dsup.sameAsRole": "“{role}” is the existing “{mb}” – add nothing",
+      "dsup.addNew": "＋ Add “{role}” as a new role",
       "dsup.plainInstr": "instruments",
       "dsup.plainVocal": "vocals",
       "dsup.conflict": "“{role}” only in the source – held on Skip (MusicBrainz has other roles of this person)",
@@ -3505,6 +3514,12 @@
       "stats.more.gsupp": "With an added source",
       "stats.src.unknown": "unknown",
       "stats.global.supShare": "{pct} of the submissions with an added source ({s} of {n})",
+      "rgsrc.button": "sources of other releases ({n})",
+      "rgsrc.title": "The Discogs releases, Bandcamp albums and YouTube videos the other releases of this release group link to – with their format and catalogue number",
+      "rgsrc.more": "+ {n} more",
+      "rgsrc.mixMust": "Another edition ({format}): it may have another mix – decide yourself",
+      "log.rgSources": "Sources of other releases of the release group: {n} (under “＋ Source”)",
+      "stats.global.readOnly": "Read without adding anything (“Also read”):",
       "stats.global.supDates": "dates added to relationships in MusicBrainz",
       "stats.global.supCredits": "role credits added to relationships in MusicBrainz",
       "gap.importBgTitle": "Import credits … and open the {source} source tab in the background",
@@ -5751,6 +5766,9 @@
     { id: 'S429', where: 'recordingDateOf, sharedDateOf', note: 'Works (3.213.0; collected items Z-WORKPERFDATE, Z-SUPPDATEWORKS): the date of a track\'s performance for its work (recording of, "⌚ Performance dates onto linked works") comes also from the date matrix before "Apply" – the column Performance\'s date of the track; with the days only on the release (Z-DATELEVEL) or several dates, what they share (the month 2022-10 of 1, 2 and 4 October 2022) – and from a date of another source taken in the box "Compared with MusicBrainz". Off (as until 3.212.0): only the dates applied to rows of the recordings' },
     { id: 'S430', where: 'videoPlacePass (refresh)', note: 'Places and areas (3.213.0; collected item Z-VIDEOPLACE): on a release with videos – MusicBrainz\'s video flag of the recording (enough on its own), or the title (S132) – "recorded at" / "recorded in" stays on the audio tracks and the videos get "video shot at" / "video shot in" (a row each; only videos: only that), as events have it (S132, S136); "filmed at", "shot at" of a source only on the videos. A type chosen by hand stays. Off (as until 3.212.0): "recorded at/in" on all tracks' },
     { id: 'S431', where: 'recDisambSuggest (mbTracks: mbWhere, mbDated, mbLive)', note: 'Recordings (3.213.0; collected item Z-RECDISAMB): the disambiguation of a recording written as the live comments are ("live, 2008-05-21: Schaffhauser Jazzfestival 2008, Schaffhausen, Switzerland") is a suggestion for what MusicBrainz has not at the recording – its date (no relationship of it has one) into the pool for the column Performance, its place or event (no place, area or event) and "live" (no "live" on its work) said in a message. Nothing when MusicBrainz has them. Off (as until 3.212.0): not read' },
+    { id: 'S432', where: 'suppNoteLines, editNoteBlock; stats/global_stats.py', note: 'Edit notes (3.214.0; collected item Z-NOTEALLSUPP): every source added is named – one that added or confirmed something "Also from: <address>" as before, one that added nothing "Also read: <address>"; a source without an address "Also from: text pasted in" or "Also from: text from images" (and "Also read: …" for them). The global statistics count them by kind (text, ocr) and the sources read without adding (supplements_read_only; format_version 3). Off (as until 3.213.0): only sources with an address that added something' },
+    { id: 'S433', where: 'rgSourcesLoad, suppBarHtml (rg-src-toggle), compareSupplement (must)', note: 'Sources (3.214.0; collected item Z-RGSOURCES): the bar "Add a source:" has "＋ sources of other releases (n)" – folded, a click shows them: the Discogs releases, Bandcamp albums and YouTube videos the other releases of the release group link to, each with its release\'s format and catalogue number ("Discogs 1234 · CD · INTAKT 151"); each once, not the source loaded nor a link of this release; from eight on "+ n more". Added like a typed source; its rules for formats apply to its roles as always; its mix credits are not ticked and marked – another edition may have another mix. One lookup of the group after the import. Off (as until 3.213.0): only the release\'s own links' },
+    { id: 'S434', where: 'dsupEntry (dsupAdd), dsupHtml (dsup-noadd, dsup-readd)', note: 'Compared with MusicBrainz (3.214.0; collected item Z-DSUPCLEAR; changes S328): a role only the source has, beside other roles MusicBrainz has of the person, is held and asked about only when it may be one of them – a word of the same kind a slip apart ("chaims" – "chimes"; the buttons say it: "“chaims” is the existing “chimes” – add nothing", "＋ Add “chaims” as a new role"). Another one ("acoustic guitar" beside "vocals") is added – the box says so ("Discogs names “acoustic guitar” … – it is added"), with "Leave out". MusicBrainz having a plain and a more precise role of the same kind ("vocals" on 12 recordings, "lead vocals" on 2) is a hint only, nothing changed (S174 offers more only where the source names one of them). Numbers as recordings. Off (as until 3.213.0): every such role held and asked' },
     { id: 'S410', where: 'freshForget, repeatImport, loadRelease', note: '"↻ Repeat import" (3.209.0; collected item Z-FRESHALL): "Start afresh" forgets everything the dashboard holds of the release – not only the changes of the rows and the choices of the works matrix (Z-RI, 3.40.16), also the date pool, the track pool and the date matrix, the choices of the box "Dedications & tributes", "✕ No suite", texts and parts of sources switched off, "skip the works", entries joined by hand, the ticks of suggestions, what is remembered of the release ("Remember changes"; nothing of the import before is stored on the way). Kept: what was created in MusicBrainz through the dashboard (the lists of created works and suites), the source and the media chosen, the log' },
     { id: 'S409', where: 'mergeEntries, joinEntry, applyEntryMerges, dmTargetOf (entry-merge), groupHtml (grip)', note: 'Entries (3.208.0; collected item Z-ENTITYMERGE): two entries of the same kind that are one – from different sources, written otherwise – are joined by hand: the grip ⠿ before the kind of an entry dropped onto another entry. The entry dropped onto stays (its link to MusicBrainz counts; without one it takes the other\'s), the rows of the other come to it – the same role once, each row credited as its source writes it, the other\'s name one of its names. Two different entries of MusicBrainz, or entries of different kinds: not joined, a message says why. Remembered for the release (joined again at the next import); ↶ in the message undoes it' },
     { id: 'S408', where: 'renderDedBox (ded-kind), emChipHtml, toggleDedication', note: 'Dedications (3.207.0; collected item Z-DEDKINDSWITCH): each row of the box "Dedications & tributes" has two buttons "Dedication | Tribute" – the chosen one filled in its colour (dedication old rose, tribute gold), a click switches (as "⇄" at the row and the chip did); the chips of these relationships have the colours too. A kind MusicBrainz has not for this target (a tribute of a place) is greyed out' },
@@ -28067,7 +28085,9 @@
     const ns = noteStaged();
     // [stage 2] The sources that supplemented it, and what came from them
     const supp = suppNoteLines(ns);
-    supp.filter((l) => l.startsWith('Also from: ')).forEach((l) => lines.push(l));
+    // ([Z-NOTEALLSUPP] 3.214.0, S432) "Also read:" with them, at the top
+    const head = (l) => l.startsWith('Also from: ') || l.startsWith('Also read: ');
+    supp.filter(head).forEach((l) => lines.push(l));
     lines.push(`Script: ${EDIT_NOTE_SCRIPT_NAME} v${VERSION} (userscript, ${SCRIPT_URL})`);
     // [Z-EN] (3.41.9) "simple": only the sources and the script
     if (S.editNoteMode === 'simple') return lines.join('\n');
@@ -28097,7 +28117,7 @@
     // [Z-SUPPREL] (3.145.0) which levels MusicBrainz had something of (supplemented) and which were empty (new)
     const lvNote = suppLevelsNote();
     if (lvNote) lines.push(lvNote);
-    supp.filter((l) => !l.startsWith('Also from: ')).forEach((l) => lines.push(l));
+    supp.filter((l) => !head(l)).forEach((l) => lines.push(l));
     // [Z-EXC] (3.49.0) covers, arrangements and quotes as the source says them; a work not found in MusicBrainz is named (Q-fh)
     // ((3.49.0, review) only for tracks chosen, with the works matrix in use; a cover while "cover" is on one of its links)
     const noteTrack = (i) => !S.worksSkip && inSelection(i) && S.mbTracks[i];
@@ -28656,6 +28676,9 @@
       S.arq = null; // [Z-ARQ] (3.86.0) the question of "＋ Another role" of an entry of the import before
       // Every source this release links to (Discogs releases, Bandcamp albums); digital: all media are "Digital Media"
       S.sourceLinks = LINKED_SOURCES.flatMap((k) => SOURCES[k].releaseLinks(ws.relations).map((l) => ({ ...l, source: k })));
+      S.rgLinks = null; // [Z-RGSOURCES] (3.214.0) the sources of the other releases of the group: looked up after the import
+      S.rgOpen = false;
+      S.rgAll = false;
       // [Z-WIKI] (3.149.0) the Wikipedia articles of the release and its group; [Z-WIKIBG] the group's Wikidata item
       const rgRels = (ws['release-group'] && ws['release-group'].relations) || [];
       S.wikiLinks = WIKIPEDIA.releaseLinks([...(ws.relations || []), ...rgRels]).map((l) => ({ ...l, source: 'wikipedia' }));
@@ -29174,7 +29197,8 @@
       // [Z-SUPPNAV] (3.116.0) the text read from the cover art: its rows marked 🖼️, the images of its lines ((review) kept beside those
       // of a supplement read before)
       // ([Z-WIKI] 3.149.0, review) the badge's link one address (Wikipedia: its first article); the edit note names them all
-      S.supp = { source, id, rel, open: true, items: [], url: (source === WIKIPEDIA ? rel.url : rel.noteSource || rel.url) || '', typed, ocr: !!(input && input.ocr) };
+      S.supp = { source, id, rel, open: true, items: [], url: (source === WIKIPEDIA ? rel.url : rel.noteSource || rel.url) || '', typed, ocr: !!(input && input.ocr), rg: S.suppRgNext || null };
+      S.suppRgNext = null;
       S.suppOpen = true; // [Z-SUPPTOGGLE] (3.132.0) the bar shows what was loaded; the button folds it
       if (input && input.ocrLines) {
         const was = S.ocrSuppLines;
@@ -29481,6 +29505,16 @@
       }
       items.push({ id: id(), kind: 'unrec', sel: false, line: l });
     });
+    // [Z-RGSOURCES] (3.214.0, S433) a source of another edition: its mix credits are decided by hand (another edition may have another
+    // mix – MusicBrainz tells them apart): not ticked, marked
+    if (sp.rg && ruleOn('S433')) {
+      for (const it of items) {
+        if (it.kind === 'unrec' || it.kind === 'spell' || it.kind === 'name') continue;
+        const row = it.rowId ? S.rows.find((r) => r.id === it.rowId) : null;
+        const types = [...(it.types || []), ...((row && row.types) || [])].map(norm);
+        if (types.some((t) => /^(?:mix|mixed at|mixed in|mix-dj)$/.test(t)) || /\bmix(?:ed|ing)?\b/i.test(`${it.line || ''} ${it.rel || ''}`)) Object.assign(it, { sel: false, must: true });
+      }
+    }
     sp.items = items;
     // New entries: what MusicBrainz has for them (shown in the list; looked up again when taken over)
     for (const it of items.filter((x) => x.kind === 'entry')) {
@@ -29935,6 +29969,42 @@
   }
 
   /** "Supplement with …": the other linked sources and a text, or the supplement loaded now. */
+  /**
+   * [Z-RGSOURCES] (3.214.0, S433) The Discogs releases, Bandcamp albums and YouTube videos the other releases of the release group link to,
+   * each with its release's format and catalogue number – offered under "＋ sources of other releases" in the bar "Add a source:" (folded;
+   * not among the release's own links). Each once; not the source loaded nor a link of this release. One lookup after the import.
+   */
+  async function rgSourcesLoad(seq) {
+    const rg = S.releaseGroup && S.releaseGroup.id;
+    if (!ruleOn('S433') || !rg || !S.release) return;
+    const d = await mbWsIdle(`release?release-group=${rg}&inc=url-rels+labels+media&limit=100`);
+    if (seq !== importSeq) return;
+    const own = (l) => S.sourceLinks.some((x) => x.source === l.source && String(x.id) === String(l.id))
+      || (l.source === S.source.id && String(l.id) === String(S.release.id));
+    const out = [];
+    for (const r of (d && d.releases) || []) {
+      if (r.id === releaseMbid) continue;
+      const media = (r.media || []).map((m) => m.format || '').filter(Boolean);
+      const counts = new Map();
+      media.forEach((m) => counts.set(m, (counts.get(m) || 0) + 1));
+      const format = [...counts].map(([m, n]) => (n > 1 ? `${n}×${m}` : m)).join(' + ');
+      const catno = uniq((r['label-info'] || []).map((x) => x['catalog-number']).filter((x) => x && !/^\[none\]$/i.test(x))).join(', ');
+      const urls = (r.relations || []).filter((x) => x['target-type'] === 'url' && x.url).map((x) => x.url.resource);
+      for (const l of sourceLinksOf(urls)) {
+        if (own(l) || out.some((x) => x.source === l.source && String(x.id) === String(l.id))) continue;
+        out.push({ ...l, format, catno, rel: r.id, country: r.country || '', date: r.date || '' });
+      }
+    }
+    S.rgLinks = out;
+    if (out.length) {
+      log('info', 'rgSources', { n: out.length });
+      renderSource();
+    }
+  }
+  /** [Z-RGSOURCES] (3.214.0) The label of a source of another release: "Discogs 1234 · CD · INTAKT 151". */
+  const rgLinkLabel = (l) => [sourceLinkLabel(l), l.format, l.catno].filter(Boolean).join(' · ');
+  const RG_SHOWN = 8;
+
   function suppBarHtml() {
     if (!S.release || !S.rows.length) return '';
     const sp = S.supp;
@@ -29961,8 +30031,14 @@
     // text a supplement of this import)
     const images = !S.ocrOn ? '' : sp && sp.ocr ? on(tr('supp.images'), 'ocr')
       : `<button type="button" class="dci-supp-btn" data-act="ocr-open" title="${esc(tr('supp.imagesTitle'))}">＋ ${ico('ocr')}${esc(tr('supp.images'))}</button>`;
+    // [Z-RGSOURCES] (3.214.0, S433) the sources of the other releases of the group: folded behind a button of their own
+    const rgl = ruleOn('S433') ? (S.rgLinks || []).filter((l) => !(sp && sp.typed && sp.source.id === l.source && String(sp.id) === String(l.id))) : [];
+    const rgShown = S.rgAll ? rgl : rgl.slice(0, RG_SHOWN);
+    const rg = !rgl.length ? '' : `<button type="button" class="dci-supp-btn dci-supp-rgbtn" data-act="rg-src-toggle" aria-expanded="${!!S.rgOpen}" title="${esc(tr('rgsrc.title'))}">＋ ${esc(tr('rgsrc.button', { n: rgl.length }))}</button>`;
+    const rgList = !rgl.length || !S.rgOpen ? '' : `<div class="dci-supp-rg" role="group" aria-label="${esc(tr('rgsrc.title'))}">${rgShown.map((l) => `<button type="button" class="dci-supp-btn" data-act="supp-load" data-rg="1" data-link="${esc(`${l.source}|${l.id}`)}">＋ ${ico(SRC_OF_LINK[l.source])}${esc(rgLinkLabel(l))}</button>`).join(' ')}
+      ${rgl.length > rgShown.length ? `<button type="button" class="dci-textbtn" data-act="rg-src-all">${esc(tr('rgsrc.more', { n: rgl.length - rgShown.length }))}</button>` : ''}</div>`;
     return `<div class="dci-suppbar" role="group" aria-label="${esc(tr('supp.withAria'))}"><strong>${esc(tr('supp.with'))}</strong>
-      ${links.join(' ')} ${wikis.join(' ')} ${typedOn}${wikiTyped} ${text} ${images}
+      ${links.join(' ')} ${wikis.join(' ')} ${typedOn}${wikiTyped} ${text} ${images} ${rg}${rgList}
       <span class="dci-supp-url"><input type="text" data-f="supp-url" value="${esc((S.srcDraft || {}).supp || '')}" placeholder="${esc(tr('supp.urlPh'))}" aria-label="${esc(tr('supp.urlPh'))}">
         <button type="button" data-act="supp-url">${esc(tr('supp.urlLoad'))}</button></span>
       <span class="dci-sub">${esc(tr('supp.hint'))}</span></div>`;
@@ -30005,7 +30081,7 @@
       if (it.kind === 'name' || it.kind === 'spell') return esc(it.name);
       if (it.kind === 'unrec') return `<span class="dci-supp-line">${esc(it.line)}</span>`;
       // ([Z-WIKI] 3.149.0) not again for Wikipedia, whose lines name their tracks already
-      return `<span class="dci-supp-line">${esc(it.line)}</span>${it.kind === 'precise' ? `<div>${esc(it.rel)}</div>` : ''}${sp.source === WIKIPEDIA && /\(tracks [^()]*\)\s*$/.test(it.line || '') ? '' : tracksOf(it)}`;
+      return `<span class="dci-supp-line">${esc(it.line)}</span>${it.kind === 'precise' ? `<div>${esc(it.rel)}</div>` : ''}${sp.source === WIKIPEDIA && /\(tracks [^()]*\)\s*$/.test(it.line || '') ? '' : tracksOf(it)}${it.must ? `<div class="dci-supp-must">${esc(tr('rgsrc.mixMust', { format: (sp.rg && sp.rg.format) || '' }))}</div>` : ''}`;
     };
     const mbCell = (it) => {
       if (it.kind === 'unrec') return esc(tr('supp.byHand'));
@@ -30117,8 +30193,14 @@
       const differ = S.rows.filter((r) => r.differ && r.differ.short === short && can(r));
       const renamed = [...S.artists.entries()].filter(([key, a]) => a.suppNameTook && a.suppNameTook.short === short && a.mbid
         && (!ns || S.rows.some((r) => r.artistKey === key && ns.rows.has(r.id)))).map(([, a]) => a); // [Z-SUPPTABLE] (3.148.0)
-      if (!confirmed && !added.length && !took.length && !differ.length && !renamed.length) continue;
-      if (src.url) lines.push(`Also from: ${src.url}`);
+      // [Z-NOTEALLSUPP] (3.214.0, S432) every source read is named: one that added nothing as "Also read:", one without an address as the
+      // text pasted in or the text from images (the statistics count them by kind: text, ocr; read_only)
+      const where = src.url || (!ruleOn('S432') ? '' : src.ocr ? 'text from images' : 'text pasted in');
+      if (!confirmed && !added.length && !took.length && !differ.length && !renamed.length) {
+        if (ruleOn('S432') && where) lines.push(`Also read: ${where}`);
+        continue;
+      }
+      if (where) lines.push(`Also from: ${where}`);
       const nameOf = (r) => (S.artists.get(r.artistKey) || {}).name || '';
       const what = (r) => `${nameOf(r)}, ${r.primaryText || (r.types || [])[0] || r.raw}`;
       const parts = [];
@@ -32212,6 +32294,7 @@
         log('ok', 'importDone', { rows: S.rows.length, entries: S.artists.size, existing: S.rows.filter((r) => r.existingAll).length });
         renderSync(); // [Z-NOTABSRC] (3.157.0) the status names the source of this import
         wikiBackground(seq); // [Z-WIKIBG] (3.149.0)
+        rgSourcesLoad(seq).catch((e) => console.warn('[Credits-Importer] release group sources', e)); // [Z-RGSOURCES] (3.214.0)
         homeStudioFind(seq).catch((e) => console.warn('[Credits-Importer] home studio', e)); // [Z-HOMESTUDIO] (3.153.0)
         // ([Z-OCRSUPP] 3.115.0, review) the window of the text from cover art open at its result: its buttons as the import now is
         if (S.ocr && !S.ocr.hidden && S.ocr.step === 'result') renderOcr();
@@ -45776,7 +45859,7 @@
     for (const m of rows.length ? mbMains.values() : []) {
       const matched = rows.some((r) => kindOf(r) === m.kind && (norm(r.primaryText) === m.name || isAncestorOf(norm(r.primaryText), m.name)
         || isAncestorOf(m.name, norm(r.primaryText)) || (!m.name && norm(r.primaryText)) || !norm(r.primaryText)));
-      if (!matched) res.mbOnly.push({ name: m.name || tr(m.kind === 'vocal' ? 'dsup.plainVocal' : 'dsup.plainInstr'), kind: m.kind, n: m.targets.size });
+      if (!matched) res.mbOnly.push({ name: m.name || tr(m.kind === 'vocal' ? 'dsup.plainVocal' : 'dsup.plainInstr'), raw: m.name, kind: m.kind, n: m.targets.size });
     }
     // more precise ones of one group without tracks, on a release of several tracks: on the release
     const multi = S.mbTracks.length > 1;
@@ -45792,6 +45875,15 @@
       const c = cls.get(r);
       if (c.c === 'same' || r.level === 'skip' || r.primaryTouched || r.levelTouched) continue;
       if (c.c === 'other' && (!ruleOn('S173') || !res.mbOnly.length)) continue;
+      // [Z-DSUPCLEAR] (3.214.0, S434) a role only the source has is asked about only when it may be one MusicBrainz has – a word of the same
+      // kind a slip apart ("chaims" – "chimes"); another one ("acoustic guitar" beside "vocals") is added, said in the box (it can be left out)
+      if (c.c === 'other' && ruleOn('S434')) {
+        const w = norm(String((r.instrGuess && r.instrGuess.word) || r.primaryText || r.raw || '').replace(/\s*\[[^\]]*\]/g, ''));
+        if (!res.mbOnly.some((m) => m.kind === kindOf(r) && m.raw && typoNear(w, norm(m.raw)))) {
+          r.dsupAdd = { rk: kindOf(r) };
+          continue;
+        }
+      }
       if ((c.c === 'covered' || c.c === 'update') && !ruleOn('S174')) continue;
       if (c.c === 'update') {
         const sibs = byGroup.get(c.m) || [];
@@ -45805,6 +45897,7 @@
       Object.assign(r, { dsupHold: { kind: c.c === 'other' ? 'conflict' : c.c, level: r.level, mb: c.m ? c.m.name : '', rk: kindOf(r) }, level: 'skip' });
     }
     res.held = rows.filter((r) => r.dsupHold && r.level === 'skip');
+    res.added = rows.filter((r) => r.dsupAdd); // [Z-DSUPCLEAR] (3.214.0)
     res.upd = rows.filter((r) => r.dsupUpd != null && r.level !== 'skip');
     return res;
   }
@@ -45921,7 +46014,27 @@
     if (!e || (!e.mbOnly.length && !e.held.length && !dates.length && !S.rows.some((r) => r.artistKey === a.key && r.dsupRel))) return '';
     const name = (r) => r.primaryText || String(r.raw || '').replace(/\s*\[[^\]]*\]/g, '').trim() || rowTypeName(r);
     const parts = [];
-    if (e.mbOnly.length) parts.push(`<div class="dci-dsup-l" data-dsup="mbonly"><strong>${esc(tr('dsup.mbOnly'))}</strong> ${esc(e.mbOnly.map((m) => tr('dsup.onTracks', { name: m.name, n: m.n })).join(', '))}</div>`);
+    // ([Z-DSUPCLEAR] 3.214.0, S434) the numbers as recordings, not "12×"
+    const clear = ruleOn('S434');
+    const onRecs = (m) => tr(clear ? 'dsup.onRecs' : 'dsup.onTracks', { name: m.name, n: m.n });
+    if (e.mbOnly.length) parts.push(`<div class="dci-dsup-l" data-dsup="mbonly"><strong>${esc(tr('dsup.mbOnly'))}</strong> ${esc(e.mbOnly.map(onRecs).join(', '))}</div>`);
+    if (clear) {
+      // [Z-DSUPCLEAR] (3.214.0, S434) a role the source adds beside other roles MusicBrainz has: added – said, it can be left out
+      const src = S.source ? S.source.name : '';
+      for (const r of (e.added || []).filter((x) => S.rows.includes(x))) {
+        const role = (r.instrGuess && r.instrGuess.word) || name(r);
+        const off = r.level === 'skip' && r.dsupNoAdd;
+        if (r.level === 'skip' && !off) continue;
+        parts.push(`<div class="dci-dsup-l dci-dsup-add" data-dsup="add" data-row="${esc(r.id)}"><span>${esc(tr(off ? 'dsup.addOff' : 'dsup.addOn', { src, role, list: e.mbOnly.map(onRecs).join(', ') }))}</span>
+          <button type="button" class="dci-small" data-act="${off ? 'dsup-readd' : 'dsup-noadd'}" data-rows="${esc(r.id)}">${esc(tr(off ? 'dsup.addBtn' : 'dsup.noAddBtn', { role }))}</button></div>`);
+      }
+      // MusicBrainz has a plain and a more precise role of the same kind ("vocals" on 12 recordings, "lead vocals" on 2): a hint only –
+      // entered so on purpose, perhaps; nothing changed (an offer only where the source names one of them: S174)
+      for (const m of e.mbOnly) {
+        const finer = e.mbOnly.filter((x) => x !== m && x.kind === m.kind && ((!m.raw && x.raw) || (m.raw && x.raw && isAncestorOf(m.raw, x.raw))));
+        if (finer.length) parts.push(`<div class="dci-dsup-l dci-dsup-mixed" data-dsup="mixed"><span class="dci-sub">${esc(tr('dsup.mixedHint', { list: [m, ...finer].map(onRecs).join(', ') }))}</span></div>`);
+      }
+    }
     for (const r of e.held) {
       const h = r.dsupHold;
       const plain = tr(h.rk === 'vocal' ? 'dsup.plainVocal' : 'dsup.plainInstr');
@@ -45937,8 +46050,8 @@
         }
         const only = e.mbOnly.slice(0, 4);
         parts.push(`<div class="dci-dsup-l dci-dsup-ask" data-dsup="conflict" data-row="${esc(r.id)}"><span>${esc(tr('dsup.ask', { role, list: e.mbOnly.map((m) => m.name).join(', ') }))}</span>
-          ${only.map((m) => `<button type="button" class="dci-small" data-act="dsup-same" data-rows="${esc(r.id)}" data-mb="${esc(m.name)}">${esc(tr('dsup.sameAs', { mb: m.name }))}</button>`).join(' ')}
-          <button type="button" class="dci-small" data-act="dsup-take" data-rows="${esc(r.id)}">${esc(tr('dsup.takeAnyway'))}</button></div>`);
+          ${only.map((m) => `<button type="button" class="dci-small" data-act="dsup-same" data-rows="${esc(r.id)}" data-mb="${esc(m.name)}">${esc(tr(clear ? 'dsup.sameAsRole' : 'dsup.sameAs', { mb: m.name, role }))}</button>`).join(' ')}
+          <button type="button" class="dci-small" data-act="dsup-take" data-rows="${esc(r.id)}">${esc(tr(clear ? 'dsup.addNew' : 'dsup.takeAnyway', { role }))}</button></div>`);
         continue;
       }
       const text = h.kind === 'conflict' ? tr('dsup.conflict', { role: name(r) }) : h.kind === 'covered' ? tr('dsup.covered', { role: name(r) || plain, mb: h.mb || plain }) : tr('dsup.update', { role: name(r), mb: h.mb || plain });
@@ -55139,6 +55252,23 @@
         refresh();
         break;
       }
+      // [Z-DSUPCLEAR] (3.214.0, S434) a role the source adds: left out, or added again
+      case 'dsup-noadd':
+      case 'dsup-readd': {
+        const ids = new Set(String(btn.dataset.rows || '').split(','));
+        for (const r of S.rows.filter((x) => ids.has(String(x.id)) && x.dsupAdd)) {
+          if (act === 'dsup-noadd' && r.level !== 'skip') Object.assign(r, { dsupNoAdd: { level: r.level }, level: 'skip' });
+          else if (act === 'dsup-readd' && r.dsupNoAdd) {
+            levelOf(r, r.dsupNoAdd.level);
+            delete r.dsupNoAdd;
+          }
+        }
+        S.dsupSig = '';
+        renderGroups();
+        renderWorks();
+        refresh();
+        break;
+      }
       case 'dsup-take':
       case 'dsup-all': {
         const ids = new Set(String(btn.dataset.rows || '').split(','));
@@ -57161,9 +57291,20 @@
       // [E1] Credits from a pasted text
       case 'supp-load': {
         const [src, ...rest] = String(btn.dataset.link || '').split('|');
-        if (SOURCES[src]) loadSupplement(SOURCES[src], rest.join('|'));
+        // [Z-RGSOURCES] (3.214.0, S433) a source of another release of the group: added as one typed (not linked to this release)
+        const rgl = btn.dataset.rg && (S.rgLinks || []).find((l) => l.source === src && String(l.id) === rest.join('|'));
+        if (rgl) S.suppRgNext = { format: rgl.format, catno: rgl.catno, rel: rgl.rel };
+        if (SOURCES[src]) loadSupplement(SOURCES[src], rest.join('|'), null, !!rgl);
         break;
       }
+      case 'rg-src-toggle':
+        S.rgOpen = !S.rgOpen;
+        renderSource();
+        break;
+      case 'rg-src-all':
+        S.rgAll = true;
+        renderSource();
+        break;
       case 'supp-url': {
         const input = S.overlay.querySelector('[data-f="supp-url"]');
         const bc = BANDCAMP.pageUrl(input.value);
@@ -60384,7 +60525,7 @@
         return out.day || out.works ? out : null;
       })(),
       // [Z-GSTNEW] (3.139.0) supplemented instead of new, their sources, remixes and commissions (a file of before: none)
-      supplements: nums(d.supplements), supplemented: d.supplemented ? pair(d.supplemented) : null, source_mix: d.source_mix ? nums(d.source_mix) : null,
+      supplements: nums(d.supplements), supplements_read_only: d.supplements_read_only ? nums(d.supplements_read_only) : null, supplemented: d.supplemented ? pair(d.supplemented) : null, source_mix: d.source_mix ? nums(d.source_mix) : null,
       remixes: d.remixes ? { remixer: Number(obj(d.remixes).remixer) || 0, remix_of: Number(obj(d.remixes).remix_of) || 0, commissioned: Number(obj(d.remixes).commissioned) || 0 } : null,
       // [Z-UNIQ] (3.142.0) the different entries linked by kind (a file of before: none)
       linked: d.linked ? Object.fromEntries(['artist', 'label', 'place', 'area', 'event', 'work'].map((k) => [k, { n: Number(obj(obj(d.linked)[k]).n) || 0 }])) : null,
@@ -60535,7 +60676,10 @@
     if (d.created && Object.values(d.created).some(Boolean)) card('gcreated', kvo(Object.fromEntries(Object.entries(d.created).filter(([, v]) => v).map(([k, v]) => [tr(`entity.pl.${k}`), v]))));
     const su = d.supplemented;
     if (su && su.of) {
-      card('gsupp', `<p>${esc(tr('stats.global.supShare', { pct: `${statPct(su.n, su.of)} %`, s: num(su.n), n: num(su.of) }))}</p>${kvo(summed(d.supplements))}`);
+      // [Z-NOTEALLSUPP] (3.214.0) the sources read that added nothing ("Also read:"; format_version 3)
+      const ro = d.supplements_read_only && Object.values(d.supplements_read_only).some(Boolean)
+        ? `<p class="dci-sub">${esc(tr('stats.global.readOnly'))}</p>${kvo(summed(d.supplements_read_only))}` : '';
+      card('gsupp', `<p>${esc(tr('stats.global.supShare', { pct: `${statPct(su.n, su.of)} %`, s: num(su.n), n: num(su.of) }))}</p>${kvo(summed(d.supplements))}${ro}`);
       const dn = d.done || {};
       card('suppl', kvo({ [tr('stats.global.supDates')]: dn['dates added'] || 0, [tr('stats.global.supCredits')]: dn['role credits added'] || 0 }));
     }
@@ -65484,6 +65628,8 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       .dci-supp-conflict td { border-bottom: 0; }
       .dci-supp-why td { background: #fdf0e8; color: #6e2c0b; font-size: calc(var(--u, 1px) * 12); padding-top: 0; }
       .dci-srctrust-fixed { cursor: default; color: var(--muted); }
+      .dci-supp-rg { display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 6); flex-basis: 100%; padding-left: calc(var(--u, 1px) * 12); border-left: 3px solid var(--line); }
+      .dci-supp-must { margin-top: calc(var(--u, 1px) * 2); color: #8a4b00; font-size: calc(var(--u, 1px) * 12); }
       .dci-supp-kind { display: inline-block; padding: 0 calc(var(--u, 1px) * 8); border-radius: 999px; background: #fff; font-size: calc(var(--u, 1px) * 12); white-space: nowrap; }
       .dci-supp-role, .dci-supp-entry { border: 1px dashed var(--sugg-line); color: var(--sugg-ink); }
       .dci-supp-differ { border: 1px solid #e8a27f; color: #8a3a12; }

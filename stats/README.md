@@ -25,7 +25,7 @@ statistics (**This browser | Global**, from Credits Importer 3.47.0).
   Vibecode …"; such an edit counts, but is no submission).
 - **Format** (from 3.145.0, collected item Z-STATSJSON): JSON (RFC 8259) described by the JSON Schema (draft 2020-12)
   [`schemas/mb-vibecode-credits-importer-global.schema.json`](../schemas/mb-vibecode-credits-importer-global.schema.json) – the file
-  names it in `$schema`, with `format` `mb-vibecode-credits-importer-global` and `format_version` 2; `generated` in RFC 3339 (UTC).
+  names it in `$schema`, with `format` `mb-vibecode-credits-importer-global` and `format_version` 3 (from Import 3.214.0: `supplements_read_only` – sources read that added nothing, "Also read:" – and the kinds `text` and `ocr` of supplements); `generated` in RFC 3339 (UTC).
   Fields not in the schema may come with newer versions: readers ignore them. `test_global_stats.py` checks its result against the
   schema (with `jsonschema` installed).
 - **Privacy:** numbers, no editor names or ids, no edits, no URLs; "editors" is how many different ones. Since 3.195.0 the records (core pass) name one release and one recording – their MBIDs and titles, public entries of MusicBrainz; no editor is named with them.

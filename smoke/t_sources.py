@@ -2157,4 +2157,115 @@ def case_freshall3209():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_noteallsupp3214():
+    """Credits Importer 3.214.0 (collected item Z-NOTEALLSUPP, rule S432): the edit note names every source added – three added by hand to
+    the state: a Bandcamp album that added nothing, a text pasted in that confirmed Bass Man's bass, a text read from images that added
+    nothing.
+    A) "Also read: https://x.bandcamp.com/album/y", "Also from: text pasted in", "Also read: text from images" above "Script:" (until
+       3.213.0 only sources with an address that added something).
+    B) S432 off: none of them."""
+    main0 = H.MAIN
+    H.MAIN = H.MAIN.replace('  const S = {', '  const S = window.__S = {', 1)
+    SETUP = """() => { const S = window.__S;
+      S.suppSources.set('BCX', { name: 'Bandcamp', url: 'https://x.bandcamp.com/album/y', ocr: false });
+      S.suppSources.set('TXX', { name: 'the text', url: '', ocr: false, text: 'Bass Man – bass' });
+      S.suppSources.set('OCX', { name: 'the cover art', url: '', ocr: true });
+      const a = [...S.artists.values()].find(x => x.name === 'Bass Man');
+      S.rows.filter(r => r.artistKey === a.key && r.level !== 'skip').forEach(r => { r.confirmedBy = new Set(['TXX']); }); }"""
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(800)
+        pg.evaluate(SETUP)
+        H.stage_click(pg, least=3000)
+        pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
+        note = pg.evaluate("document.getElementById('edit-note-text').value").splitlines()
+        b.close()
+        return note, errs
+    results = []
+    try:
+        with sync_playwright() as p:
+            note, errs = run(p)
+            head = note[:note.index(next(l for l in note if l.startswith('Script:')))] if any(l.startswith('Script:') for l in note) else note
+            print('A)', head, errs)
+            results.append(head[1:] == ['Also read: https://x.bandcamp.com/album/y', 'Also from: text pasted in', 'Also read: text from images'] and not errs)
+            note2, errs2 = run(p, off=['S432'])
+            print('B)', [l for l in note2 if l.startswith('Also')])
+            results.append(not [l for l in note2 if l.startswith('Also')] and not errs2)
+    finally:
+        H.MAIN = main0
+        H.RULES_OFF = []
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_rgsources3214():
+    """Credits Importer 3.214.0 (collected item Z-RGSOURCES, rule S433): two other releases of the release group – a CD linking a Discogs
+    release (INTAKT 151) and a vinyl edition linking a Bandcamp album and the Discogs release once more.
+    A) "＋ Source": the bar has "＋ sources of other releases (2)", folded; a click shows "Discogs 7777 · CD · INTAKT 151" and the Bandcamp
+       album with "2×Vinyl"; the release's own links stay where they were.
+    B) The Bandcamp album of the other edition added: its mix credit not ticked, marked "Another edition … – decide yourself"; the
+       bass ticked as usual.
+    C) S433 off: no such button."""
+    import common_rows as C  # noqa: F401
+    ALBUM = 'https://otheredition.bandcamp.com/album/vinyl'
+    H.BC_PAGES[ALBUM] = H.bc_page({'artist': 'Test Band', 'current': {'title': 'Testalbum', 'credits': 'Mixed by Mix Person\nTrumpet: Guitar Guy (track 2)', 'about': ''},
+                                   'trackinfo': [{'track_num': i + 1, 'title': t} for i, t in enumerate(H.TITLES)]})
+    H.attr(9120, 'trumpet', 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    url = lambda u: {'target-type': 'url', 'type': 'discogs', 'url': {'resource': u}}
+    H.RG_BROWSE[:] = [
+        {'id': H.uid('cdcdcdcd', 1), 'country': 'CH', 'media': [{'format': 'CD'}], 'label-info': [{'catalog-number': 'INTAKT 151'}],
+         'relations': [url('https://www.discogs.com/release/7777-x')]},
+        {'id': H.uid('cdcdcdcd', 2), 'media': [{'format': 'Vinyl'}, {'format': 'Vinyl'}], 'label-info': [],
+         'relations': [url(ALBUM), url('https://www.discogs.com/release/7777-x')]}]
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(1500)
+        H.open_supp(pg)
+        btn = pg.evaluate("(document.querySelector('[data-act=rg-src-toggle]') || {}).textContent || ''").strip()
+        shown, items = [], []
+        if btn:
+            folded = pg.evaluate("!document.querySelector('.dci-supp-rg')")
+            pg.click('[data-act=rg-src-toggle]')
+            pg.wait_for_timeout(300)
+            shown = [folded] + pg.evaluate("[...document.querySelectorAll('.dci-supp-rg [data-act=supp-load]')].map(b => b.textContent.replace(/\\s+/g, ' ').trim())")
+            pg.locator('.dci-supp-rg [data-act=supp-load]', has_text='Bandcamp').first.click()
+            H.wait_for(pg, "document.querySelectorAll('.dci-supp-row').length > 0", 30)
+            pg.wait_for_timeout(500)
+            items = pg.evaluate("[...document.querySelectorAll('.dci-supp-row')].map(tr => [tr.textContent.includes('Mix Person') ? 'mix' : tr.textContent.includes('Guitar Guy') ? 'trumpet' : '?', !!(tr.querySelector('input') || {}).checked, !!tr.querySelector('.dci-supp-must')])")
+        b.close()
+        return btn, shown, items, errs
+    results = []
+    try:
+        with sync_playwright() as p:
+            btn, shown, items, errs = run(p)
+            print('A)', btn, shown, errs)
+            results.append(btn == '＋ sources of other releases (2)' and shown[:1] == [True] and len(shown) == 3
+                           and any('7777 · CD · INTAKT 151' in x for x in shown[1:]) and any('Bandcamp' in x and '2×Vinyl' in x for x in shown[1:]) and not errs)
+            print('B)', items)
+            results.append(['mix', False, True] in items and ['trumpet', True, False] in items)
+            btn2, _, _, errs2 = run(p, off=['S433'])
+            print('C)', repr(btn2))
+            results.append(btn2 == '' and not errs2)
+    finally:
+        H.RG_BROWSE[:] = []
+        H.RULES_OFF = []
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

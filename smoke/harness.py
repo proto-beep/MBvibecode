@@ -595,6 +595,8 @@ WIKI_QIDS = {}
 WIKI_HTML = {}
 # [3.150.0] (Z-QUICKFILL2) other releases of the release group: mbid → the release as the web service gives it
 GROUP_RELEASES = {}
+# [3.214.0] (Z-RGSOURCES) more releases of the group in the browse of the release group, as MusicBrainz gives them (url-rels, labels, media)
+RG_BROWSE = []
 WD_ITEMS = {}
 
 
@@ -965,7 +967,7 @@ def install_routes(ctx):
             hits = [r for r in RELEASE_SEARCH if r[2] == ar and (not yr or int(yr.group(1)) <= r[1] <= int(yr.group(2)))]
             return json_route(route, {'releases': [{'id': g, 'date': str(y), 'release-group': {'id': g}} for g, y, _ in hits], 'count': len(hits)})
         if p == '/ws/2/release' and 'release-group=' in u.query:
-            return json_route(route, {'releases': [{'id': REL}] + [{'id': k} for k in GROUP_RELEASES]})
+            return json_route(route, {'releases': [{'id': REL}] + [{'id': k} for k in GROUP_RELEASES] + RG_BROWSE})
         if p.startswith('/ws/2/release/') and p[len('/ws/2/release/'):] in GROUP_RELEASES:
             return json_route(route, GROUP_RELEASES[p[len('/ws/2/release/'):]])
         m = re.match(r'/ws/2/label/([0-9a-f-]{36})', p)

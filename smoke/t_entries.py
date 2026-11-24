@@ -3612,8 +3612,10 @@ def case_dsup3106():
     C) "Update", "Take", "Add anyway" and staged (the editor with MusicBrainz's relationships of Sax Man and Bass Man): Sax Man's four
        relationships of MusicBrainz now tenor saxophone (edited, not added),
        Bass Man's on track 1 with 2001-03, Drum Guy's electric guitar added; Fine Man nothing.
-    D) The matrix: compact, the line "only on MusicBrainz" with piano; full, a yellow line of its own."""
+    D) The matrix: compact, the line "only on MusicBrainz" with piano; full, a yellow line of its own.
+    (From 3.214.0 with S434 off – the electric guitar held and asked as until 3.213.0; see case_dsupclear3214.)"""
     import copy
+    H.RULES_OFF = ['S434']
     orig = H.discogs_release
     lts0, attrs0, extra0 = copy.deepcopy(H.LTS), copy.deepcopy(H.ATTRS), copy.deepcopy(H.MB_EXTRA)
     linked0 = copy.deepcopy({k: H.LINKED.get(k) for k in ('link_type', 'link_attribute_type')})
@@ -3735,6 +3737,7 @@ def case_dsup3106():
             results.append(line == 'only on MusicBrainz piano (1×)' and wide == ['only on MusicBrainz piano (1×)'] and not errs)
             b.close()
     finally:
+        H.RULES_OFF = []
         H.ENTRIES_VIEW = 'legacy'
         H.discogs_release = orig
         H.LTS.clear()
@@ -3935,8 +3938,10 @@ def case_dsupask3188():
        question. "Guitar" is a question with its answers: "The same as “chimes”", "The same as “piano”", "Add anyway"; the footer
        counts one question.
     B) "The same as “piano”" for the guitar: the line says it is the piano of MusicBrainz, the footer has no question.
-    C) "Not the same" for "Chaims": a question again."""
+    C) "Not the same" for "Chaims": a question again.
+    (From 3.214.0 with S434 off – the question for every role only the source has, as until 3.213.0; see case_dsupclear3214.)"""
     import copy
+    H.RULES_OFF = ['S434']
     orig = H.discogs_release
     lts0, attrs0, extra0 = copy.deepcopy(H.LTS), copy.deepcopy(H.ATTRS), copy.deepcopy(H.MB_EXTRA)
     linked0 = copy.deepcopy({k: H.LINKED.get(k) for k in ('link_type', 'link_attribute_type')})
@@ -3997,6 +4002,7 @@ def case_dsupask3188():
             results.append(sum(l[0] == 'conflict' for l in box) == 1 and q == '1' and not errs)
             b.close()
     finally:
+        H.RULES_OFF = []
         H.discogs_release = orig
         H.LTS.clear(); H.LTS.update(lts0)
         H.ATTRS.clear(); H.ATTRS.update(attrs0)
@@ -6077,6 +6083,85 @@ def case_tgdropcol3213():
         H.MAIN = main0
         H.RULES_OFF = []
         H.ENTRIES_VIEW = 'legacy'
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_dsupclear3214():
+    """Credits Importer 3.214.0 (collected item Z-DSUPCLEAR, rule S434): MusicBrainz has Chime Guy with chimes and piano on all four
+    recordings, plain vocals on three and lead vocals on one; Discogs names him with "Chaims, Guitar".
+    A) "Chaims" a slip of "chimes" (nothing to add, as in 3.188.0); "Guitar" no question: added – "Discogs names “guitar”; MusicBrainz
+       has other roles of this person (… (4 recordings) …) – “guitar” is added." with "Leave out “guitar”"; the footer counts no question;
+       a hint for vocals and lead vocals ("perhaps entered so on purpose; nothing is changed").
+    B) "Leave out": the row on Skip, the line "left out" with "＋ Add “guitar”"; again: back on the recordings."""
+    import copy
+    orig = H.discogs_release
+    lts0, attrs0, extra0 = copy.deepcopy(H.LTS), copy.deepcopy(H.ATTRS), copy.deepcopy(H.MB_EXTRA)
+    linked0 = copy.deepcopy({k: H.LINKED.get(k) for k in ('link_type', 'link_attribute_type')})
+    main0 = H.MAIN
+    H.MAIN = H.MAIN.replace('  const S = {', '  const S = window.__S = {', 1)
+    H.attr(9150, 'chimes', 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    H.ARTISTS[3335] = (H.uid('dddddddd', 3335), 'Chime Guy')
+    rel_ = lambda attrs, t='instrument', lt=148: {'target-type': 'artist', 'type': t, 'type-id': H.LTS[lt]['gid'], 'attributes': attrs, 'attribute-values': {},
+                                                   'artist': {'id': H.ARTISTS[3335][0], 'name': 'Chime Guy'}, 'begin': '', 'end': ''}
+    for k, rec in enumerate(H.REC):
+        H.MB_EXTRA[rec] = H.MB_EXTRA.get(rec, []) + [rel_(['chimes']), rel_(['piano']), rel_(['lead vocals'] if k == 0 else [], 'vocal', 149)]
+
+    def rel():
+        d = orig()
+        d['extraartists'] = [{'name': 'Chime Guy', 'anv': '', 'role': 'Chaims, Guitar', 'tracks': '', 'id': 3335, 'join': ''}]
+        d['companies'] = []
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = rel
+    BOX = """(name) => { const g = [...document.querySelectorAll('section.dci-group')].find(x => x.querySelector('.dci-gname strong').textContent.trim() === name);
+      const b = g && g.querySelector('[data-el=dsup]');
+      return b ? [...b.querySelectorAll('.dci-dsup-l')].map(l => [l.dataset.dsup, l.textContent.replace(/\\s+/g, ' ').trim(), [...l.querySelectorAll('button')].map(x => x.textContent.trim())]) : []; }"""
+    QUEST = "String(document.querySelectorAll('#dci-overlay [data-el=dsup] .dci-yell-must').length)"
+    GUITAR = "(() => window.__S.rows.filter(r => r.primaryText === 'guitar').map(r => r.level))()"
+    results = []
+    try:
+        with sync_playwright() as p:
+            H.ENTRIES_VIEW = 'legacy'
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            H.wait_still(pg, "document.body.innerHTML", 10, 400)
+            box = pg.evaluate(BOX, 'Chime Guy')
+            pg.wait_for_timeout(600)
+            q = pg.evaluate(QUEST)
+            print('A)', box, '| Fragen:', q, pg.evaluate(GUITAR))
+            same = [l for l in box if l[0] == 'same']
+            add = [l for l in box if l[0] == 'add']
+            mixed = [l for l in box if l[0] == 'mixed']
+            results.append(len(same) == 1 and not any(l[0] == 'conflict' for l in box) and len(add) == 1 and '“guitar” is added' in add[0][1]
+                           and '(4 recordings)' in add[0][1] and add[0][2] == ['Leave out “guitar”'] and len(mixed) == 1 and 'lead vocals (1 recording)' in mixed[0][1]
+                           and q == '0' and pg.evaluate(GUITAR) == ['recording'])
+            sec = sec_sel(pg, 'Chime Guy')
+            pg.click(f"{sec} [data-el=dsup] [data-act=dsup-noadd]")
+            H.wait_still(pg, "document.body.innerHTML", 10, 400)
+            box = pg.evaluate(BOX, 'Chime Guy')
+            g1 = pg.evaluate(GUITAR)
+            add = [l for l in box if l[0] == 'add']
+            pg.click(f"{sec} [data-el=dsup] [data-act=dsup-readd]")
+            H.wait_still(pg, "document.body.innerHTML", 10, 400)
+            g2 = pg.evaluate(GUITAR)
+            print('B)', add, g1, g2, errs)
+            results.append(len(add) == 1 and 'left out' in add[0][1] and add[0][2] == ['＋ Add “guitar”'] and g1 == ['skip'] and g2 == ['recording'] and not errs)
+            b.close()
+    finally:
+        H.discogs_release = orig
+        H.MAIN = main0
+        H.LTS.clear(); H.LTS.update(lts0)
+        H.ATTRS.clear(); H.ATTRS.update(attrs0)
+        H.MB_EXTRA.clear(); H.MB_EXTRA.update(extra0)
+        for k, v in linked0.items():
+            H.LINKED[k] = v
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

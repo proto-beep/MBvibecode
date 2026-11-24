@@ -62,7 +62,9 @@ def build(path, cut=None, skip=()):
              copy_line(111, json.dumps({'link': {'link_type': {'id': 2, 'name': 'performer'}}, 'new': {'link_type': {'id': 3, 'name': 'mix'}}}))]
     n1 = note('3.44.1', 'https://www.discogs.com/release/1-x', 'added 3 credit relationships from Discogs (2 recording, 1 release)',
               extra='Also from: https://x.bandcamp.com/album/y')
-    n2 = note('3.45.0', 'https://www.youtube.com/watch?v=a', 'added 1 credit relationship from a YouTube video description (1 recording); linked 1 work to recordings')
+    # ([3.214.0, Z-NOTEALLSUPP] a text pasted in added to it, a Discogs release read that added nothing)
+    n2 = note('3.45.0', 'https://www.youtube.com/watch?v=a', 'added 1 credit relationship from a YouTube video description (1 recording); linked 1 work to recordings',
+              extra='Also from: text pasted in\nAlso read: https://www.discogs.com/release/9-x')
     notes += [copy_line(1, 7, 101, n1, '2026-10-20 10:00:01+00'), copy_line(2, 7, 102, n1, '2026-10-20 10:00:01+00'), copy_line(3, 7, 105, n1, '2026-10-20 10:00:01+00'),
               copy_line(4, 8, 103, n2, '2026-11-02 09:00:05+00'), copy_line(5, 8, 104, n2, '2026-11-02 09:00:05+00'),
               copy_line(6, 9, 50, note('2.19.1', 'https://www.discogs.com/release/2-x', None, name='MB x Vibecode: Import Discogs credits'), '2026-08-01 09:00:01+00'),
@@ -238,10 +240,11 @@ def main():
         ('auto_edits', r['auto_edits'], {'voted': 8, 'auto-edit': 1}),
         ('by_relationship_type', r['by_relationship_type'], {'instrument': 3, 'vocal': 2, 'producer': 1, 'mix': 1}),
         ('by_source', r['by_source'], {'discogs': 2, 'youtube': 1}),
-        ('supplements', r['supplements'], {'bandcamp': 2}),
+        ('supplements', r['supplements'], {'bandcamp': 2, 'text': 1}),
+        ('supplements_read_only', r['supplements_read_only'], {'discogs': 1}),
         # [3.139.0, Z-GSTNEW] the two Discogs submissions of editor 7 with a supplement of Bandcamp; their sources together
-        ('supplemented', r['supplemented'], {'n': 2, 'of': 3}),
-        ('source_mix', r['source_mix'], {'discogs+bandcamp': 2, 'youtube': 1}),
+        ('supplemented', r['supplemented'], {'n': 3, 'of': 3}),
+        ('source_mix', r['source_mix'], {'discogs+bandcamp': 2, 'youtube+text': 1}),
         ('remixes (none)', r['remixes'], {'remixer': 0, 'remix_of': 0, 'commissioned': 0}),
         ('remixes', [rx['remixes'], rx['supplemented'], rx['source_mix']], [{'remixer': 1, 'remix_of': 1, 'commissioned': 1}, {'n': 1, 'of': 1}, {'bandcamp+discogs': 1}]),
         # [3.142.0, Z-UNIQ] the different entries linked: the artist 1 (its remixer and its commission of work 2 – a work with a writer counts as the
@@ -252,7 +255,7 @@ def main():
         ('levels', rx['levels'], {'release_group': {'new': 0, 'supplemented': 1}, 'release': {'new': 1, 'supplemented': 0}, 'recording': {'new': 1, 'supplemented': 2}}),
         ('levels (none before 3.145.0)', r['levels']['recording'], {'new': 0, 'supplemented': 0}),
         ('created', rx['created'], {'artist': 1, 'label': 0, 'place': 0, 'series': 1, 'event': 0, 'work': 0}),
-        ('format', [r['$schema'].endswith('/schemas/mb-vibecode-credits-importer-global.schema.json'), r['format'], r['format_version']], [True, 'mb-vibecode-credits-importer-global', 2]),
+        ('format', [r['$schema'].endswith('/schemas/mb-vibecode-credits-importer-global.schema.json'), r['format'], r['format_version']], [True, 'mb-vibecode-credits-importer-global', 3]),
         ('done_by_level', r['done_by_level'], {'recording': 5, 'release': 2}),  # (the second Discogs submission: "0 credit … (2 recording, 1 release)")
         ('rows_read', r['rows_read'].get('notes on edits before "since"'), 1),
         ('cut off / without edit_note / without vote', bad_runs, [[True, False], [True, False], [True, False]]),

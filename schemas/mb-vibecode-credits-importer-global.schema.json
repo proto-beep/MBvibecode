@@ -20,7 +20,8 @@
    "const": "mb-vibecode-credits-importer-global"
   },
   "format_version": {
-   "const": 2
+   "const": 3,
+   "description": "3 (Import 3.214.0): supplements_read_only; the kinds text and ocr of supplements"
   },
   "script": {
    "type": "string"
@@ -108,7 +109,14 @@
    "additionalProperties": {
     "type": "number"
    },
-   "description": "Added sources by kind"
+   "description": "Added sources by kind (also text: a text pasted in, ocr: text read from images)"
+  },
+  "supplements_read_only": {
+   "type": "object",
+   "additionalProperties": {
+    "type": "number"
+   },
+   "description": "Sources read that added nothing (\"Also read:\"), by kind"
   },
   "supplemented": {
    "type": "object",
