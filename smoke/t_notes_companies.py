@@ -2868,4 +2868,48 @@ def case_kindofshadow3212():
         H.RULES_OFF = []
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+def case_videoplace3213():
+    """Credits Importer 3.213.0 (collected item Z-VIDEOPLACE, rule S430): track 2 is a video in MusicBrainz (its recording's flag);
+    Discogs "Recorded At – Abbey Road Studios" (a place).
+    A) Abbey Road Studios: "recorded at" on tracks 1, 3, 4 and "video shot at" on track 2 (until 3.212.0 "recorded at" on all).
+    B) S430 off: "recorded at" on all four tracks."""
+    main0 = H.MAIN
+    H.MAIN = H.MAIN.replace('  const S = {', '  const S = window.__S = {', 1)
+    H.lt(9006, H.uid('9e9e9e9e', 6), 'video shot at', 'place', 'recording', ())
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.VIDEO_TRACKS.add(1)
+    ROWS = """() => window.__S.rows.filter(r => r.level !== 'skip' && (window.__S.artists.get(r.artistKey) || {}).name === 'Abbey Road Studios')
+      .map(r => [(r.types || [])[0] || '', [...r.tracks].sort()])"""
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.wait_still(pg, "document.body.innerHTML", 10, 400)
+        out = sorted(pg.evaluate(ROWS))
+        b.close()
+        return out, errs
+    results = []
+    try:
+        with sync_playwright() as p:
+            a, errs = run(p)
+            print('A)', a, errs)
+            results.append(a == [['recorded at', [0, 2, 3]], ['video shot at', [1]]] and not errs)
+            b2, errs2 = run(p, off=['S430'])
+            print('B)', b2)
+            results.append(b2 == [['recorded at', [0, 1, 2, 3]]] and not errs2)
+    finally:
+        H.MAIN = main0
+        H.RULES_OFF = []
+        H.VIDEO_TRACKS.discard(1)
+        H.LTS.pop(9006, None)
+        H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

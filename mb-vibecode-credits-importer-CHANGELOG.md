@@ -13,6 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
+| 2026-11-24 | 3.213.0 | – |
 | 2026-11-23 | 3.210.0 – 3.212.0 | – |
 | 2026-11-22 | 3.197.0 – 3.209.0 | – |
 | 2026-11-21 | 3.193.0 – 3.196.0 | – |
@@ -137,6 +138,17 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.213.0
+
+**Dates where they belong: rows added by hand, new event columns from track groups, works before "Apply"; typos in the date finder; places on videos; the disambiguation of recordings.**
+
+- **A row added by hand gets its group's date** (rule S427): "＋ Another role" – a copyright of a person or a label, a recording engineer, an instrument … – takes the date of its column of the date matrix (its tracks, its level), else the date the other rows of the group use. The date of the event chosen stays only when it is one of the group's (a copyright gets the ℗/© date, not the release's). Until 3.212.0 it got the event's date or none.
+- **A track group onto an entry's matrix** (rule S428): dropped outside the tracks of an event, it makes a new event column on the recordings with the group's tracks (its date the one the date matrix gives the group, else none; a date can be dropped onto it later). Until 3.212.0 nothing happened.
+- **Performance dates onto the works before "Apply"** (rule S429): the date of a track's performance for its work comes also from the date matrix (with the days only on the release: what they share, e.g. 2022-10) and from a date of another source taken in the box "Compared with MusicBrainz".
+- **"Masterded"** (rule D040): a word one letter off "recorded", "mastered", "remastered" (and their -ing forms) names its date group – "Masterded by …, Hi End Studio 2022" is Mastering 2022.
+- **Places and areas on videos** (rule S430): on a release with videos (MusicBrainz's video flag, or the title) "recorded at/in" stays on the audio tracks, the videos get "video shot at/in"; "filmed at" only on the videos.
+- **The disambiguation of a recording** (rule S431): "live, 2008-05-21: Schaffhauser Jazzfestival 2008, Schaffhausen, Switzerland" – what MusicBrainz has not at the recording (date, place or event, "live") is suggested: the date in the pool, the rest in a message.
 
 ### Import 3.212.0
 
