@@ -82,6 +82,11 @@ def unescape(v):
 
 def source_kind(url):
     u = (url or '').lower()
+    # [3.214.0, Z-NOTEALLSUPP] sources without an address: the text pasted in, the text read from images
+    if u.startswith('text pasted in'):
+        return 'text'
+    if u.startswith('text from images'):
+        return 'ocr'
     for host, kind in (('discogs.com', 'discogs'), ('bandcamp.com', 'bandcamp'), ('youtube.com', 'youtube'), ('youtu.be', 'youtube'),
                        ('wikipedia.org', 'wikipedia'), ('wikidata.org', 'wikipedia')):  # (3.151.0, Fable review: Wikipedia since 3.149.0)
         if host in u:
@@ -271,7 +276,7 @@ class Stats:
             self.notes[edit_id] = (nid, text, f[4])
 
     def result(self, dump):
-        out = {'$schema': OUT_SCHEMA, 'format': OUT_FORMAT, 'format_version': 2,
+        out = {'$schema': OUT_SCHEMA, 'format': OUT_FORMAT, 'format_version': 3,
                'script': SCRIPT, 'names': list(NAMES), 'dump': dump, 'generated': dt.datetime.now(dt.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
                'since': self.since, 'privacy': 'numbers only: no editors, edits or URLs; "editors" is how many different ones; the records (core) name '
                'a release and a recording (their MBIDs and titles – public entries of MusicBrainz, no editor)'}
@@ -333,6 +338,7 @@ class Stats:
         # [3.91.0, Z-SRR] per release (all its submissions): its credit relationships, also by level ("Done:")
         per_rel = defaultdict(Counter)
         sources, supps, done, levels = Counter(), Counter(), Counter(), Counter()
+        read_only = Counter()  # [3.214.0, Z-NOTEALLSUPP] sources read that added nothing ("Also read: …")
         mix = Counter()  # [3.139.0, Z-GSTNEW] the source of a submission with its supplements ("discogs+bandcamp")
         supplemented = 0
         lv_new = {k: {'new': 0, 'supplemented': 0} for k in ('release_group', 'release', 'recording')}  # [3.145.0, Z-SUPPREL]
@@ -348,6 +354,8 @@ class Stats:
                 elif line.startswith('Also from: '):
                     supps[source_kind(line[11:]) or 'other'] += 1
                     also.append(source_kind(line[11:]) or 'other')
+                elif line.startswith('Also read: '):
+                    read_only[source_kind(line[11:]) or 'other'] += 1
             m = DONE_RE.search(text)
             if m:
                 done['credit relationships'] += int(m.group(1))
@@ -387,6 +395,7 @@ class Stats:
         out['by_relationship_type'] = dict(ltypes.most_common(60))
         out['by_source'] = dict(sources.most_common())
         out['supplements'] = dict(supps.most_common())
+        out['supplements_read_only'] = dict(read_only.most_common())
         # [3.139.0, Z-GSTNEW] as the statistics of this browser (3.131.0): submissions supplemented by another source, their sources
         # together, remixes and commissions among the relationships added
         out['supplemented'] = {'n': supplemented, 'of': len(subs)}

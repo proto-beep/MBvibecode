@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-24 | 3.213.0 | – |
+| 2026-11-24 | 3.213.0 – 3.214.0 | – |
 | 2026-11-23 | 3.210.0 – 3.212.0 | – |
 | 2026-11-22 | 3.197.0 – 3.209.0 | – |
 | 2026-11-21 | 3.193.0 – 3.196.0 | – |
@@ -138,6 +138,14 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.214.0
+
+**Every source in the edit note; sources of the other editions; clearer comparison with MusicBrainz.**
+
+- **Every source added is named in the edit note** (rule S432): a source that added nothing as "Also read: <address>"; a text pasted in and a text read from images as "Also from: text pasted in" / "Also from: text from images". The global statistics count them by kind and the sources read without adding (`supplements_read_only`, format_version 3). Until 3.213.0 only sources with an address that added something were named.
+- **Sources of the other releases of the release group** (rule S433): the bar "Add a source:" has "＋ sources of other releases (n)", folded – the Discogs releases, Bandcamp albums and YouTube videos of the other editions, each with format and catalogue number ("Discogs 1234 · CD · INTAKT 151"). Added like any source; its mix credits are not ticked and marked (another edition may have another mix).
+- **Compared with MusicBrainz, clearer** (rule S434): a role only the source has beside other roles MusicBrainz has ("acoustic guitar" beside "vocals") is added – the box says so, with "Leave out"; asked only when it may be one of MusicBrainz's roles (a slip of spelling of the same kind: "“chaims” is the existing “chimes” – add nothing" / "＋ Add “chaims” as a new role"). MusicBrainz having "vocals" and "lead vocals" side by side is a hint only. Numbers as recordings ("12 recordings", not "12×").
 
 ### Import 3.213.0
 
