@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer Companion
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      1.23.0
+// @version      1.24.0
 // @date         2026-11-03
 // @description  Companion for "MB x Vibecode: Credits Importer": connects the import dashboard with a Discogs, Bandcamp or YouTube tab (e.g. the other half of a split view), loads the release there and highlights where each credit comes from.
 // @description:de Ergänzung zu „MB x Vibecode: Credits Importer“: verbindet das Import-Dashboard mit einem Discogs-, Bandcamp- oder YouTube-Tab (z. B. der anderen Hälfte einer geteilten Ansicht), lädt dort das Release und markiert, woher jeder Credit stammt.
@@ -50,7 +50,7 @@
   // The main script never needs special permissions; only this companion does.
 
   // [1.10.0] sent with each status (the dashboard names an older companion: several imports at once need 1.10.0)
-  const COMPANION_VERSION = '1.23.0';
+  const COMPANION_VERSION = '1.24.0';
   const HEARTBEAT_MS = 2000;
   const STALE_MS = 7000;
   // [1.8.2] how long the status of an edit or release page in a background tab counts as alive without a new beat;
@@ -1273,7 +1273,27 @@
     if (e.key === 'Escape') {
       e.preventDefault();
       artBigClose();
+      return;
     }
+    // [1.24.0] (Credits Importer 3.220.0, Z-IMGARROWS2) ← / → the image before / after, after the last the first again (artShow counts
+    // round); not while typing in a field of the page
+    if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey && !artTyping(e.target)) {
+      const box = document.getElementById('dci-artwork');
+      if (!box || !document.getElementById('dci-art-big')) return;
+      e.preventDefault();
+      e.stopPropagation();
+      artShow(box, Number(box.dataset.i || 0) + (e.key === 'ArrowLeft' ? -1 : 1));
+    }
+  }
+  /** [1.24.0] Whether a key goes to a field of the page (an input, a text area, something editable). */
+  const artTyping = (el) => !!(el && (el.isContentEditable || /^(?:input|textarea|select)$/i.test(el.tagName || '')));
+  /** [1.24.0] (Z-IMGARROWS2) ← / → on the miniature itself (its image or its ‹ › focused): the image before / after. */
+  function artBoxKey(e) {
+    if ((e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+    const box = document.getElementById('dci-artwork');
+    if (!box || !box.contains(e.target)) return;
+    e.preventDefault();
+    artShow(box, Number(box.dataset.i || 0) + (e.key === 'ArrowLeft' ? -1 : 1));
   }
 
   function renderArtwork(map) {
@@ -1311,6 +1331,7 @@
         artBigOpen(box);
       });
       makeArtMovable(box);
+      box.addEventListener('keydown', artBoxKey); // [1.24.0] (Z-IMGARROWS2)
       box.querySelector('.dci-art-toggle').addEventListener('click', () => {
         const collapsed = !box.classList.contains('dci-art-collapsed');
         box.classList.toggle('dci-art-collapsed', collapsed);

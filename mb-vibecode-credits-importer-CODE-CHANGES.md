@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.219.0, Companion 1.6.0 – 1.23.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.220.0, Companion 1.6.0 – 1.24.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,16 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.220.0 · Companion 1.24.0 · 2026-11-25
+
+- S466: `showMessage(kind, key, params, { aw })`, `renderMessages` appends `awButtonsHtml()` (actions `mx-aw-stop`, `mx-aw-go`) to a message with `aw`; `tributeCandidates` sets `S.awLong` before `ded.manyNames` and calls `renderWorksBackground`; `msg.artistWorksSlow` with `aw`; `awLineHtml` also while `S.awLong`; `awStop`, `awGo` render the messages; the end of `runArtistWorks` clears `S.awLong` and the buttons.
+- S467: `magicPlan` – items with `group`, `groupName`, `short`, `coverToggle` (a tribute's work: planned with `attrStepOf(i, …, 'cover')` unless `S.magicNoCover` has it); `attrStep` now the hoisted `attrStepOf`; groups `same`, `new`, `part` on the other work answers; `magicPopHtml` – `textOf` (short text, the "cover" button `magic-nocover`, `.dci-struck`), the answers of a kind grouped by reason (`magic.group.*`, `.dci-mx-magicgroup`) and sorted by track; `S.magicNoCover` (cleared at `magic-open`); texts `magic.what.*`, `magic.group.*`, `magic.coverWord`, `magic.cover{On,Off}Title`, `matrix.tributeTag{By,Performed}`; `tributeBy` (the artist's own work: `composer` from the artist's page, `tributeWriter` from `runWorkSearch`, or a writer of that name) decides between "by" and "performed by".
+- S468: `dgLineupHtml` – `dgl.title2Bc` / `dgl.title2`, buttons `dgl.{precise,track,lineup}2` in `ul.dci-dgl-opts`, each with `dgl.<choice>Line`; CSS `.dci-dgl-opts`.
+- S469: `dgLineupApply` – the places (`srcRefs`) of rows the answer leaves out go to `row.dglRefs` of the person's row still there (cleared when the answer is applied again); `sendDiscogsStatus` and `bandcampPayloadForRows` use `srcRefs` and `dglRefs`.
+- S470: `tidyLines` (S278) – a ℗ without its year before "© 2026" is one line with it; `readUnit` (S369) – the release's label before the signs ("Blue Note Records, ℗ © …") left out, "under exclusive license to", names split without the company's form after a comma ("UMG Recordings, Inc."); `loadSupplement` adds the ℗/© years of the added source (`dateSuggestions`) as `copyrightSupp` suggestions; text `date.sugg.copyrightSupp`.
+- Companion 1.24.0: `artBigKey` – ← / → show the previous / next image (`artShow`, wrapping), not while typing (`artTyping`); `artBoxKey` on the small view; `COMPANION_VERSION` 1.24.0.
+- Tests: `case_awstop3220`, `case_pcyear3220`, `case_magicwords3220` (t_notes_companies), `case_lopez3220` (t_sources_bandcamp); `cocrbc3119` (t_companion_bandcamp) with the arrow keys; `magic3155`, `samework3192`, `parthead3196` (t_works_more), `tribute3206`, `tribute3207` (t_notes_companies), `dgexcl3134` (t_text_lists) and `dglineup3130` (t_entries) with the new wordings (S467, S468; the old ones with the rules off).
 
 ## Import 3.219.0 · 2026-11-25
 

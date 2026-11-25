@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-25 | 3.218.0, 3.219.0 | – |
+| 2026-11-25 | 3.218.0 – 3.220.0 | 1.24.0 |
 | 2026-11-24 | 3.213.0 – 3.217.0 | – |
 | 2026-11-23 | 3.210.0 – 3.212.0 | – |
 | 2026-11-22 | 3.197.0 – 3.209.0 | – |
@@ -139,6 +139,17 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.220.0 · COMPANION 1.24.0
+
+**Clearer answers of "✨ Answer all" and of the lineup question, Stop at the message of a long search, ℗/© of an added source, a lineup line kept marked; arrow keys in the companion's artwork view.**
+
+- **"✨ Answer all" in plain words** (rule S467): the answers of a kind are grouped by their reason – "Covers of works by Sonny Rollins", "Covers of songs performed by Sonny Rollins", "Same title, same writers", "New works" … – each sorted by track: "1.2 – cover of “Doxy”", "1.3 – link “Song Two”", "1.4 – create a new work “Song Four”". A work of the artist of a tribute is linked and "cover" set on its link in one answer; a click on the word "cover" strikes it (linked only). The yellow tag at the track asks "cover of a work by …?" or "cover of a song performed by …?".
+- **"Who plays on which tracks?"** (rule S468): the question of lineup and track credits in plain words ("… (Bandcamp: lineup and track pages)"), its buttons "Combine both (recommended)", "Only what the tracks say", "Only the lineup", each with a line saying what it does.
+- **Stop at the message** (rule S466): "“Rollins”: 86 artists … this can take a while" and "Looking up the works of … takes a while" have the buttons Stop / Continue / Stop and discard / Read again themselves, at once.
+- **A lineup line keeps its mark** (rule S469): "Ramón López – percussion", where the track titles give him drums on all of his tracks (the lineup row left out): his row keeps the line, so the companion marks it on the Bandcamp page.
+- **℗ © of an added source** (rule S470): "Blue Note Records, ℗ © 2026 Creative Control Corp. under exclusive license to UMG Recordings, Inc." – ℗ and © of Creative Control Corp. (the release's label before the signs is no part of it; a ℗ without its year shares the ©'s), licensed to "UMG Recordings, Inc." (one name); the ℗/© years of a source added with "+ Source" are suggested in the date pool too ("℗/© year in the notes of Discogs 2026").
+- **COMPANION 1.24.0:** the big view of the artwork (Bandcamp, Discogs) goes to the previous / next image with ← / → (after the last the first again), also from the small view once clicked. Install the companion anew for it.
 
 ### Import 3.219.0
 

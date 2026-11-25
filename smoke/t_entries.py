@@ -4939,7 +4939,9 @@ def case_dglineup3130():
        1, 2, 4, Drum Guy one on 1, 3, 4, Guitar Guy one acoustic guitar on all four – no row credited "B.Man"; its rows wait for the answer.
     B) "Per track": Bass Man bass on 1, 4 and a row of track 2 without the credit "B.Man"; Guitar Guy guitar on 1, 3, 4 (track 3's credit
        the same as the lineup's), acoustic guitar on 2. C) "The lineup's": each on all four tracks, one row each. D) "More precise everywhere" again: as A, the question answered
-       (✓, nothing waits). E) Rule S217 off: no question, two rows of Bass Man (as before)."""
+       (✓, nothing waits). E) Rule S217 off: no question, two rows of Bass Man (as before).
+    (3.220.0, S468) A) the question "Who plays on which tracks? (Discogs: lineup and track credits)", its buttons "Combine both (recommended)",
+    "Only what the tracks say", "Only the lineup", each with its line below it. F) S468 off: "More precise everywhere", "Per track", "The lineup's"."""
     orig = H.discogs_release
     ex = lambda name, role, i, anv='': {'name': name, 'anv': anv, 'role': role, 'tracks': '', 'id': i, 'join': ''}
 
@@ -4957,7 +4959,8 @@ def case_dglineup3130():
       if (!g) return null; return [...g.querySelectorAll('tr.dci-row')].map(tr => { const lv = tr.querySelector('[data-act=level][aria-pressed=true]');
         const tracks = [...document.querySelectorAll(`tr[data-tracksrow="${tr.dataset.row}"] input[data-f=track]:checked`)].map(c => Number(c.dataset.i) + 1);
         return [(tr.querySelector('[data-f=primary]') || {}).value || '', tracks, (tr.querySelector('[data-f=credit]') || { value: '' }).value, lv ? lv.dataset.level : '']; }); }"""
-    BOX = """(() => { const b = document.querySelector('[data-el=dglineup]'); return b ? { lines: [...b.querySelectorAll('li')].map(l => l.textContent.replace(/\\s+/g, ' ').trim()),
+    BOX = """(() => { const b = document.querySelector('[data-el=dglineup]'); return b ? { lines: [...b.querySelectorAll('.dci-dgl-list li')].map(l => l.textContent.replace(/\\s+/g, ' ').trim()),
+      title: (b.querySelector('p strong') || {}).textContent || '', opts: [...b.querySelectorAll('[data-act=dgl-pick]')].map(x => (x.closest('li') || x).textContent.replace(/\\s+/g, ' ').trim()),
       pressed: [...b.querySelectorAll('[data-act=dgl-pick]')].filter(x => x.getAttribute('aria-pressed') === 'true').map(x => x.dataset.choice), done: b.classList.contains('dci-dgl-done') } : null; })()"""
     NAMES = ['Bass Man', 'Guitar Guy', 'Drum Guy']
     results = []
@@ -4996,7 +4999,11 @@ def case_dglineup3130():
         print('A)', box, '\n  ', r, '\n   Status:', st[:300])
         results.append(box and box['lines'] == ['Bass Man: all tracks except 3', 'Guitar Guy: “guitar” in the lineup, “acoustic guitar” on tracks 2', 'Drum Guy: all tracks except 2']
                        and not box['done'] and r['Bass Man'] == [['bass', [1, 2, 4], '', 'recording']] and r['Drum Guy'] == [['drums (drum set)', [1, 3, 4], '', 'recording']]
-                       and r['Guitar Guy'] == [['acoustic guitar', [1, 2, 3, 4], '', 'recording']] and 'Discogs' in st and not errs)
+                       and r['Guitar Guy'] == [['acoustic guitar', [1, 2, 3, 4], '', 'recording']] and 'Discogs' in st and not errs
+                       and box['title'] == 'Who plays on which tracks? (Discogs: lineup and track credits)'
+                       and box['opts'] == ['Combine both (recommended) everyone on their tracks, with the more precise instrument',
+                                           'Only what the tracks say tracks with credits as their credits say, the lineup elsewhere',
+                                           'Only the lineup everyone on all tracks, the track credits left out'])
         print('B)', r2)
         results.append(sorted(r2['Bass Man']) == [['bass', [1, 4], '', 'recording'], ['bass', [2], '', 'recording']]
                        and sorted(r2['Guitar Guy']) == [['acoustic guitar', [2], '', 'recording'], ['guitar', [1, 3, 4], '', 'recording']]
@@ -5008,6 +5015,9 @@ def case_dglineup3130():
         out5, _ = run(off=['S217'])
         print('E)', out5[0][0], out5[0][1]['Bass Man'])
         results.append(out5[0][0] is None and len(out5[0][1]['Bass Man']) == 2)
+        out6, _ = run(off=['S468'])
+        print('F)', out6[0][0]['title'], out6[0][0]['opts'])
+        results.append(out6[0][0]['opts'] == ['More precise everywhere', 'Per track', "The lineup's"])
     finally:
         H.discogs_release = orig
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
@@ -5043,7 +5053,8 @@ def case_dglineup3130r():
       if (!g) return null; return [...g.querySelectorAll('tr.dci-row')].map(tr => {
         const tracks = [...document.querySelectorAll(`tr[data-tracksrow="${tr.dataset.row}"] input[data-f=track]:checked`)].map(c => Number(c.dataset.i) + 1);
         return [(tr.querySelector('[data-f=primary]') || {}).value || '', tracks]; }).sort(); }"""
-    BOX = """(() => { const b = document.querySelector('[data-el=dglineup]'); return b ? { lines: [...b.querySelectorAll('li')].map(l => l.textContent.replace(/\\s+/g, ' ').trim()),
+    BOX = """(() => { const b = document.querySelector('[data-el=dglineup]'); return b ? { lines: [...b.querySelectorAll('.dci-dgl-list li')].map(l => l.textContent.replace(/\\s+/g, ' ').trim()),
+      title: (b.querySelector('p strong') || {}).textContent || '', opts: [...b.querySelectorAll('[data-act=dgl-pick]')].map(x => (x.closest('li') || x).textContent.replace(/\\s+/g, ' ').trim()),
       pressed: [...b.querySelectorAll('[data-act=dgl-pick]')].filter(x => x.getAttribute('aria-pressed') === 'true').map(x => x.dataset.choice), done: b.classList.contains('dci-dgl-done') } : null; })()"""
     import json as _jj
     results = []
