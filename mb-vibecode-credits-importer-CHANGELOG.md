@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-25 | 3.218.0 – 3.221.0 | 1.24.0 |
+| 2026-11-25 | 3.218.0 – 3.222.0 | 1.24.0 |
 | 2026-11-24 | 3.213.0 – 3.217.0 | – |
 | 2026-11-23 | 3.210.0 – 3.212.0 | – |
 | 2026-11-22 | 3.197.0 – 3.209.0 | – |
@@ -139,6 +139,17 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.222.0
+
+**Releases of concerts by their tracks, credits per track under the titles, footnotes of writers, lists of players, more lines read or left out; drums and percussion kept on the tracks.**
+
+- **Tracks with places and days** (rules S491 – S494): "Track 1-10 / CD1:" holds for the lines below it up to the next such heading; "Track 1, 3-6 MS Stubnitz/Hamburg/Germany Oct 7" – the place recorded at on track 1 and tracks 3 to 6 (as the text counts, not medium 3 track 6), the day a date of those tracks, its year from "Recordings from the Northern Excavation Tour 2025"; "and Ambientalika V/KIC/Zagreb/Croatia Apr 11, 2026" another place and day of the same tracks; "at The Alte Feuerwache Loschwitz, Dresden, Germany." and "August 2, 2025." below a heading – the place and day of its tracks (until now the place went on all tracks). An event ("Rituals Over Limburg III Festival", "Ambientalika V") is said at its place – MusicBrainz prefers the event; a festival with its day gets MusicBrainz's events offered. A year alone of the about text is not placed when the credits give days with tracks.
+- **Credits under the track titles** (rule S480): "Hang Up (Pt 2) (*)" above "Serra Petale (Guitar, Programming, Percussion), …" – these credits on that track (also when the source's title adds "(feat. …)", or "(Instrumental)" follows). **Footnotes**: "Written by Serra Petale except, (*) written with Adrian Quesada and Sinkane, (**) …" – the first name on all tracks, the others on the tracks with their mark.
+- **Lists of players** (rule S479): "Name (roles), Name (roles) …" with a full stop at the end, without a comma between the people, with an unknown role ("Phone Call Voice") – each person keeps their own roles (until now everyone could get the last one, "Drums"); "Additional Synthesizer Programming", "Wurly" (Wurlitzer electric piano).
+- **More lines read** (rules S481 – S489, S495): "Assisted by …" below "Engineered by" (assistant engineers); "Additional production by …" (an additional producer, on the producers' level); "Recorded at 5db, London, Dooboire Studios, London and our collaborators studios around the world" (two places); "(c) (p) 2026 GREAT! Records in association with !K7 Music" and "Released by RR GEMS Records ℗ ©" (℗ and ©); "Images from the work of …" and "Woodblock printing album artwork by …" (artwork, credited "images" / "woodblock printing"); "Lacquered for vinyl by X at Y" (lacquer cut); "beats on MPC 3000" (sampler credited "MPC 3000" – a known model is the instrument); "Composition by A and B" when the release's artist is "A & B" and both have lines of their own (two composers); "Pressed by Les Disques Garcia, France" (no company "France").
+- **Left out** (rule S485): an edition's lines ("140g 12 inch 1xLP", "Stand. Black Variant"), packages ("The triple-CD comes in … digisleeve", "Jackets made in Estonia", "6-Panel"), shops ("MERCH + BUNDLES …", "available in 24-bit/44.1kHz quality"), "Covering almost 3 hours of music …", "Inquiries: …", "ALBUM CREDITS:", "All songs:".
+- **Drums and percussion stay on the tracks** (rule S490): someone with only drums and percussion – or the other pairs listed in the mapping (cymbal with drums; congas, bongos, timbales, cajón, tambourine, shaker with percussion) – is not put on the release by the quick switch "Instruments → release" (its tooltip says so); with other roles as before; by hand still possible.
 
 ### Import 3.221.0
 

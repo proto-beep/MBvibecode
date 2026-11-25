@@ -5,6 +5,7 @@ import harness as H  # noqa: F401 – used by the cases
 H.NO_ANIM = True  # [3.77.0] (Z-FLK) reading and mapping: no transitions or animations to wait for
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 import json  # noqa: E402
+import os  # noqa: E402
 import re  # noqa: E402
 import urllib.parse  # noqa: E402
 
@@ -2858,6 +2859,208 @@ Lucas Niggli – percussion (CH )"""
         H.ws_release = orig_ws
         H.MAIN = main0
         H.RULES_OFF = []
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+# [3.222.0] the texts of real releases (shortened where said) as the main source – a helper for the cases below
+BC3222_ATTRS = ['guitar', 'bass guitar', 'drums (drum set)', 'synthesizer', 'piano', 'percussion', 'vocals', 'programming', 'darbuka', 'conga', 'timbales', 'cuatro',
+                'lap steel guitar', 'keyboard', 'wurlitzer electric piano', 'backing vocals', 'bass', 'saxophone', 'flute', 'acoustic bass', 'bass clarinet', 'sampler',
+                'drum machine', 'cymbal', 'voice']
+
+
+def bc3222(p, album, credits, about='', titles=None, packages=None, media=None, media_format='Digital Media', off=(), init=''):
+    """Imports a Bandcamp album (main source) and gives its rows, the lines not recognized and left out, the date pool and the matrix."""
+    for k, n in enumerate(BC3222_ATTRS):
+        H.attr(9500 + k, n, 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    titles = titles or ['Song One', 'Song Two', 'Song Three', 'Song Four']
+    rec0, titles0, media0, fmt0, main0, ws0 = list(H.REC), list(H.TITLES), H.MEDIA, H.MEDIA_FORMAT, H.MAIN, H.ws_release
+    H.REC[:] = [H.uid('bbbbbbbb', i) for i in range(1, len(titles) + 1)]
+    H.TITLES[:] = titles
+    H.MEDIA = media
+    H.MEDIA_FORMAT = media_format
+    H.MAIN = H.MAIN.replace('  const S = {', '  const S = window.__S = {', 1)
+    H.BC_PAGES[album] = H.bc_page({'artist': 'Test Band', 'current': {'title': 'Testalbum', 'credits': credits, 'about': about}, 'packages': packages or [],
+                                   'trackinfo': [{'track_num': i + 1, 'title': t, 'duration': 300.0} for i, t in enumerate(titles)]})
+
+    def ws(full=False):
+        d = ws0(full)
+        d['relations'] = [{'target-type': 'url', 'type': 'purchase for download', 'url': {'resource': album}}]
+        return d
+    H.ws_release = ws
+    H.RULES_OFF = list(off)
+    try:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        if init:
+            ctx.add_init_script(init)
+        pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
+        H.wait_still(pg, "document.body.innerHTML", 10, 400)
+        out = {
+            'rows': pg.evaluate("window.__S.rows.filter(r => r.level !== 'skip').map(r => [(window.__S.artists.get(r.artistKey) || {}).name, r.raw, (r.types || []).join('/'), r.level, [...r.tracks].sort((a, b) => a - b).map(i => i + 1).join(','), r.primaryText || '', r.roleCredit || r.credit || '', r.eventHint || ''])"),
+            'unrec': pg.evaluate("(window.__S.release || {}).unrecognized || []"),
+            'ign': pg.evaluate("((window.__S.release || {}).ignored || []).map(x => [x.text, x.why])"),
+            'pool': pg.evaluate("window.__S.datePool.map(d => [d.begin ? [d.begin.year, d.begin.month, d.begin.day].join('-') : '', d.found || ''])"),
+            'cells': pg.evaluate("((window.__S.dm || {}).cells || []).map(c => [c.col, ((window.__S.datePool.find(d => d.id === c.date) || {}).begin || {}), (c.tgs || []).map(id => [...(((window.__S.trackPool || []).find(g => g.id === id) || {}).tracks || [])].map(i => i + 1).sort((a, b) => a - b).join(','))])"),
+            'insts': pg.evaluate("Object.fromEntries([...window.__S.artists.values()].map(a => [a.name, a.insts || '']))"),
+            'hints': pg.evaluate("[...document.querySelectorAll('[data-el=event-hint]')].map(x => x.textContent.trim())"),
+            'errs': errs,
+        }
+        b.close()
+        return out
+    finally:
+        H.REC[:] = rec0
+        H.TITLES[:] = titles0
+        H.MEDIA, H.MEDIA_FORMAT, H.MAIN, H.ws_release = media0, fmt0, main0, ws0
+        H.RULES_OFF = []
+
+
+def _rows(o, name):
+    return [r for r in o['rows'] if r[0] == name]
+
+
+def case_rde3222():
+    """Credits Importer 3.222.0 (collected items Z-RDE-*; rules S485, S486, S491 – S494): a live release of three CDs (10, 13, 9 tracks), its credits as
+    Bandcamp has them – "Track 1-10 / CD1:", "Recordings from the Northern Excavation Tour 2025", "Track 1, 3-6 MS Stubnitz/Hamburg/Germany Oct 7", "and
+    Ambientalika V/KIC/Zagreb/Croatia Apr 11, 2026", "Track 11-23 / CD2:" with "at The Alte Feuerwache Loschwitz, Dresden, Germany." and "August 2,
+    2025.", "Track 24-32 / CD3:" with "Recording from Rituals Over Limburg III Festival" / "at Nieuwe Nor, Heerlen, The Netherlands." / "November 8,
+    2025."; the about text names "2025" and "2026" without tracks.
+    A) Each place on its tracks: MS Stubnitz 1, 3–6 (not medium 3 track 6), Voodoo Club 2, Slaughterhouse 7, Hus 7 8, Nirvana and KIC 9, Black Temple
+       10, Alte Feuerwache Loschwitz 11–23, Nieuwe Nor 24–32; no line not recognized.
+    B) The days in the matrix with their tracks (Oct 7 with the heading's year 2025 on 1, 3–6; Apr 11, 2026 on 9; Aug 2, 2025 on 11–23; Nov 8, 2025
+       on 24–32); the years of the about text not placed.
+    C) The events said at their places: Nieuwe Nor "Rituals Over Limburg III Festival", KIC "Ambientalika V".
+    D) "Images from the work of Thomas Stothard and Gustave Doré": artwork on the release, credited "images"; the package and shop lines left out.
+    E) The rules off (as 3.221.0): the lines of tracks not recognized again."""
+    D = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'rde3222.json'), encoding='utf-8'))
+    results = []
+    with sync_playwright() as p:
+        o = bc3222(p, D['url'], D['credits'], D['about'], D['titles'], media=[10, 13, 9], media_format='CD')
+        places = {r[0]: r[4] for r in o['rows'] if r[1] == 'Recorded At'}
+        print('A)', places, o['unrec'])
+        results.append(places.get('MS Stubnitz') == '1,3,4,5,6' and places.get('Voodoo Club') == '2' and places.get('Slaughterhouse') == '7' and places.get('Hus 7') == '8'
+                       and places.get('Nirvana') == '9' and places.get('KIC') == '9' and places.get('Black Temple') == '10'
+                       and places.get('Alte Feuerwache Loschwitz') == ','.join(str(i) for i in range(11, 24)) and places.get('Nieuwe Nor') == ','.join(str(i) for i in range(24, 33))
+                       and not o['unrec'] and not o['errs'])
+        days = {f"{c[1].get('year')}-{c[1].get('month')}-{c[1].get('day')}": c[2] for c in o['cells'] if c[0] == 'performance'}
+        print('B)', days)
+        results.append(days.get('2025-10-7') == ['1,3,4,5,6'] and days.get('2026-4-11') == ['9'] and days.get('2025-8-2') == [','.join(str(i) for i in range(11, 24))]
+                       and days.get('2025-11-8') == [','.join(str(i) for i in range(24, 33))] and not any(k.endswith('-None-None') for k in days))
+        ev = {r[0]: r[7] for r in o['rows'] if r[7]}
+        print('C)', ev, o['hints'][:2])
+        results.append(ev == {'KIC': 'Ambientalika V', 'Nieuwe Nor': 'Rituals Over Limburg III Festival'} and len(o['hints']) >= 2)
+        art = [r for r in o['rows'] if r[0] in ('Thomas Stothard', 'Gustave Doré')]
+        whys = [w for _, w in o['ign']]
+        print('D)', art, whys)
+        results.append(len(art) == 2 and all(r[3] == 'release' and r[6] == 'images' for r in art) and whys.count('package') >= 1 and whys.count('shop') >= 1)
+        o2 = bc3222(p, D['url'], D['credits'], D['about'], D['titles'], media=[10, 13, 9], media_format='CD', off=['S485', 'S486', 'S491', 'S492', 'S493', 'S494'])
+        print('E)', len(o2['unrec']))
+        results.append(len(o2['unrec']) >= 10 and not o2['errs'])
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_lb3222():
+    """Credits Importer 3.222.0 (collected items Z-LB-*; rules S479 – S485): the credits of a Bandcamp release of nine tracks – each track's title as a
+    heading ("Hang Up (Pt 2) (*)"; the source's titles with "(feat. …)") above a line "Name (roles), Name (roles) …"; "Written by Serra Petale except,
+    (*) written with Adrian Quesada and Sinkane, (**) …"; "Assisted by …" below "Engineered by …"; "Additional production by …"; "Recorded at 5db,
+    London, Dooboire Studios, London and our collaborators studios around the world"; "(c) (p) 2026 GREAT! Records in association with !K7 Music".
+    A) The players on their tracks: Serra Petale vocals 3, 5, 7, 9, guitar 1–8; Josefine Jonsson bass guitar 1–7; Agustina Ruiz piano 3, 4 and
+       Wurlitzer 4; Merve Erdem vocals 2; Kit Martin additional programming and darbuka 2.
+    B) "Conexiones": each player with their own instrument on track 8 (Joshua Camp keyboard, Oliver Conan cuatro, Neil Ochoa conga) – not "Drums".
+    C) Writers: Serra Petale on all tracks; Adrian Quesada and Sinkane 1, Kit Sebastian 2, Ambrose Kenny-Smith 4, Simon Burke 6, Chicha Libre 8.
+    D) Kostas Michaloudis and David Haynes assistant engineers; Alejandro Lovera additional producer on the recordings (as the producers); the places 5db
+       and Dooboire Studios; ℗ and © GREAT! Records; "ALBUM CREDITS:", "All songs:", "Inquiries: …", the edition's lines left out.
+    E) The rules off (as 3.221.0): the writer "Serra Petale except" again."""
+    D = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'lb3222.json'), encoding='utf-8'))
+    results = []
+    with sync_playwright() as p:
+        o = bc3222(p, D['url'], D['credits'], D['about'], D['titles'], packages=D['packages'])
+        sp = {r[1]: r[4] for r in _rows(o, 'Serra Petale')}
+        print('A)', sp, _rows(o, 'Josefine Jonsson')[:1], _rows(o, 'Agustina Ruiz'), _rows(o, 'Kit Martin'))
+        results.append(sp.get('Vocals') == '3,5,7,9' and sp.get('Guitar') == '1,2,3,4,5,6,7,8' and {r[1]: r[4] for r in _rows(o, 'Josefine Jonsson')}.get('Bass Guitar') == '1,2,3,4,5,6,7'
+                       and {r[1]: r[4] for r in _rows(o, 'Agustina Ruiz')} == {'Synthesizer': '1', 'Piano': '3,4', 'Wurly': '4'}
+                       and {r[1]: r[4] for r in _rows(o, 'Merve Erdem')} == {'Vocals': '2'} and {r[1]: r[4] for r in _rows(o, 'Kit Martin')} == {'Programming [Additional]': '2', 'Darbuka': '2'})
+        cx = {n: [(r[5], r[4]) for r in _rows(o, n)] for n in ('Joshua Camp', 'Oliver Conan', 'Neil Ochoa')}
+        print('B)', cx)
+        results.append(cx['Joshua Camp'] == [('keyboard', '8')] and ('cuatro', '8') in cx['Oliver Conan'] and cx['Neil Ochoa'] == [('conga', '8')])
+        wr = {r[0]: r[4] for r in o['rows'] if r[1] == 'Written By'}
+        print('C)', wr)
+        results.append(wr == {'Serra Petale': '1,2,3,4,5,6,7,8,9', 'Adrian Quesada': '1', 'Sinkane': '1', 'Kit Sebastian': '2', 'Ambrose Kenny-Smith': '4', 'Simon Burke': '6', 'Chicha Libre': '8'})
+        asst = [r[1] for r in o['rows'] if r[0] in ('Kostas Michaloudis', 'David Haynes')]
+        ap = [(r[1], r[3]) for r in _rows(o, 'Alejandro Lovera') if 'roduc' in r[1]]
+        places = sorted(r[0] for r in o['rows'] if r[1] == 'Recorded At')
+        pc = sorted(r[1] for r in _rows(o, 'GREAT! Records'))
+        whys = {t: w for t, w in o['ign']}
+        print('D)', asst, ap, places, pc, o['unrec'])
+        results.append(asst == ['Assistant Engineer', 'Assistant Engineer'] and ap == [('Additional Producer', 'recording')] and places == ['5DB', 'Dooboire Studios']
+                       and pc == ['Copyright (c)', 'Phonographic Copyright (p)'] and whys.get('ALBUM CREDITS:') == 'heading' and whys.get('All songs:') == 'heading'
+                       and not [u for u in o['unrec'] if '→ ?' not in u] and not o['errs'])
+        o2 = bc3222(p, D['url'], D['credits'], D['about'], D['titles'], packages=D['packages'], off=['S479', 'S480', 'S481', 'S482', 'S483', 'S484', 'S485'])
+        print('E)', [r[0] for r in o2['rows'] if r[1] == 'Written By'])
+        results.append('Serra Petale except' in [r[0] for r in o2['rows'] if r[1] == 'Written By'] and not o2['errs'])
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_iz3222():
+    """Credits Importer 3.222.0 (collected items Z-IZ-*; rules S484 – S489): the credits of a Bandcamp vinyl release – "Richard Maye - beats on MPC
+    3000", "Composition by Richard Maye and Devin Brahja Waldman" (the release's artists named "Richard Maye & Devin Brahja Waldman"), "Lacquered for
+    vinyl by Phil Rodriguez at Elysian Masters", "Woodblock printing album artwork by RYOCK"; its edition "Released by RR GEMS Records ℗ ©", "Jackets
+    made in Estonia".
+    A) Richard Maye: a sampler credited "MPC 3000" (no "beats"); both composers apart.
+    B) Phil Rodriguez lacquer cut, Elysian Masters lacquer cut at; RYOCK artwork credited "woodblock printing".
+    C) ℗ and © RR GEMS Records; "Jackets made in Estonia" left out; "Pressed by Les Disques Garcia, France": no entry "France" (S495); nothing not
+       recognized.
+    D) The rules off (as 3.221.0): "Richard Maye - beats" again."""
+    D = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'iz3222.json'), encoding='utf-8'))
+    results = []
+    ac0 = list(H.RELEASE_AC)
+    H.RELEASE_AC[:] = [(H.uid('dddddddd', 3801), 'Richard Maye', 'Richard Maye', ' & '), (H.uid('dddddddd', 3802), 'Devin Brahja Waldman', 'Devin Brahja Waldman', '')]
+    try:
+        with sync_playwright() as p:
+            o = bc3222(p, D['url'], D['credits'], D['about'], packages=D['packages'], media_format='12" Vinyl')
+            rm = _rows(o, 'Richard Maye')
+            comp = sorted(r[0] for r in o['rows'] if r[1] == 'Composition By')
+            print('A)', rm, comp)
+            results.append(any(r[5] == 'sampler' and r[6] == 'MPC 3000' for r in rm) and comp == ['Devin Brahja Waldman', 'Richard Maye'] and not any(r[0].endswith('- beats') for r in o['rows']))
+            lc = [(r[0], r[1]) for r in o['rows'] if 'acquer' in r[1]]
+            ry = [(r[1], r[6]) for r in o['rows'] if r[0] in ('RYOCK', 'Ryock')]
+            print('B)', lc, ry)
+            results.append(('Phil Rodriguez', 'Lacquer cut By') in lc and any(n == 'Elysian Masters' for n, _ in lc) and any(c == 'woodblock printing' for _, c in ry))
+            pc = sorted(r[1] for r in _rows(o, 'RR GEMS Records'))
+            whys = {t: w for t, w in o['ign']}
+            print('C)', pc, [t for t in whys if 'Jackets' in t], o['unrec'], sorted({r[0] for r in o['rows']}))
+            results.append(pc == ['Copyright (c)', 'Phonographic Copyright (p)'] and any('Jackets made in Estonia' in t and w == 'package' for t, w in whys.items()) and not o['unrec'] and not o['errs']
+                           and 'France' not in {r[0] for r in o['rows']} and 'Les Disques Garcia' in {r[0] for r in o['rows']})
+            o2 = bc3222(p, D['url'], D['credits'], D['about'], packages=D['packages'], media_format='12" Vinyl', off=['S484', 'S485', 'S486', 'S487', 'S488', 'S489', 'S495'])
+            print('D)', sorted({r[0] for r in o2['rows']})[:6])
+            results.append(any(r[0] == 'Richard Maye - beats' for r in o2['rows']) and not o2['errs'])
+    finally:
+        H.RELEASE_AC[:] = ac0
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_percdrums3222():
+    """Credits Importer 3.222.0 (collected item Z-PERCDRUMS; rule S490): the quick switch "Instruments → release" (S339) on; "Anna Bell – drums,
+    percussion" (only such a pair), "Carl Dee – drums, percussion, vocals" (another role too), "Dora Eck – percussion, conga".
+    A) Anna Bell and Dora Eck keep their instruments on the tracks (not put on the release); Carl Dee is put on the release as before.
+    B) S490 off (as 3.221.0): all three on the release."""
+    credits = "Anna Bell – drums, percussion\nCarl Dee – drums, percussion, vocals\nDora Eck – percussion, congas"
+    init = "localStorage.setItem('dci-rules-off', JSON.stringify(['+S339']));"
+    results = []
+    with sync_playwright() as p:
+        o = bc3222(p, 'https://percdrums.bandcamp.com/album/test', credits, init=init)
+        ins = {k: o['insts'].get(k) for k in ('Anna Bell', 'Carl Dee', 'Dora Eck')}
+        print('A)', ins, o['errs'])
+        results.append(ins == {'Anna Bell': '', 'Carl Dee': 'release', 'Dora Eck': ''} and not o['errs'])
+        init2 = "localStorage.setItem('dci-rules-off', JSON.stringify(['+S339', 'S490']));"
+        o2 = bc3222(p, 'https://percdrums.bandcamp.com/album/test', credits, init=init2)
+        ins2 = {k: o2['insts'].get(k) for k in ('Anna Bell', 'Carl Dee', 'Dora Eck')}
+        print('B)', ins2)
+        results.append(ins2 == {'Anna Bell': 'release', 'Carl Dee': 'release', 'Dora Eck': 'release'})
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.221.0, Companion 1.6.0 – 1.24.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.222.0, Companion 1.6.0 – 1.24.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,19 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.222.0 · 2026-11-25
+
+- S479: `namesWithRoles` – a full stop at the end, `(?<=\))` as a separator, ", )" removed, unknown roles listed (`→ ? “…”`) when most are known, "Additional …" → `[Additional]`, "<instrument> Programming" → Programming; `readClause` – "A (x), B (y), … C (z)" is no list of names sharing C's role. Mapping: `INSTRUMENT_ALIASES.wurly`.
+- S480: `markedTitle` (footnote marks, "(Instrumental)", titles compared without "(feat. …)"), `bareTitle` uses it; `readLine0` opens a `trackBlock` for it and keeps `P.footMarks`; `P.ROLE_PAIR` accepts "Name (roles)"; "Written by A except, (*) written with B …" credited per mark.
+- S481 – S488: `tidyLines` rewrites – "Assisted by" (assistant engineer by the line above), "Additional production by" (`Additional Producer`), "Recorded at A, Town, B, Town and …" (pairs; `placeOf` – `digitName`), "Released by X ℗ ©", "Images from the work of …" / "<technique> album artwork by" (`Artwork [technique] by`), "Lacquered for vinyl by", "<role> on <model>" (`gearKind`); S484 also in `tidyLines` (S278 signs only before the year), `sentencesOf` ("GREAT! Records"), `readUnit` ("in association with …" cut); S482 in `loadRelease` (the level of the producers).
+- S485: `LEFTOUT_LINES` in the shop lines (edition, package, shop, promo, web, heading).
+- S489: `namesScoped` – `ownLines`, `splitBand`; the join of a release artist's parts skipped.
+- S490: `instsKeepPairs`, `INSTS_KEEP_PAIRS` (mapping) in the loop of S339; text `quick.S339` names the pairs.
+- S491 – S493: `trackPlaceRewrite` (module level; `HEAD`, `TRACK_LINE`, `AND_LINE`), used by `tidyLines` (places with "(tracks …)", headings and days left out as `heading` / `trackDate`, `P.eventLines`) and by `notesForDates` (`foundDateText`, `findFestivals`: sentences "Tracks … recorded [at the … Festival] on …"); `finishMarks` sets `eventName`, `groupCompanies` → role `eventName` → `row.eventHint`, shown by `notesFromHtml` (`role.eventHint`, `data-el=event-hint`).
+- S494: `autoPlaceFoundDates` – `dayTracks`, `yearOnly`.
+- S495: `finishMarks` – a country beside a company of the same line becomes its area.
+- Tests: `case_rde3222`, `case_lb3222`, `case_iz3222`, `case_percdrums3222` (t_sources_bandcamp; `bc3222` helper, data in `smoke/data/*.json`).
 
 ## Import 3.221.0 · 2026-11-25
 
