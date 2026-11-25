@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-25 | 3.218.0 | – |
+| 2026-11-25 | 3.218.0, 3.219.0 | – |
 | 2026-11-24 | 3.213.0 – 3.217.0 | – |
 | 2026-11-23 | 3.210.0 – 3.212.0 | – |
 | 2026-11-22 | 3.197.0 – 3.209.0 | – |
@@ -139,6 +139,17 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.219.0
+
+**Bandcamp's track pages and editions: where a line is from, lines read once, typos; Hammond B3; "director" without video; a list of the rules.**
+
+- **Where a line is from** (rule S464): a line not recognized or left out of a Bandcamp release shows the Bandcamp symbol and the position, a link to its track page ("Bandcamp track page 3 (Title)" in the tooltip), instead of "3: "; more than seven positions "1–12" to open; the text of an edition "edition “Vinyl LP”" instead of "Vinyl LP: ". A line of the album's text drops the same line of the track pages; the same line of several track pages is one line with their positions.
+- **Track pages: typos and lines per track** (rule S465): a name or a role the track pages write one letter apart (a letter more, less, other, or two swapped) is read as the spelling most of them have – a hint lists them; more apart, each spelling stays. The instruments the track pages give a person per track stay on their tracks – a hint says so.
+- **More lines read** (rules S461, S462): "Hammond B3 Organ" (a model within an instrument's name – the instrument without it, the model in the role credit); "Production" alone (a heading); "Catalog Number: DR 42126 LP" (a catalogue number, the release's or another edition's); "Lacquer Cut by X at Y" (the place of the lacquer cut, vinyl only – S026); "Muriel Grossmann - First Meditations on John Coltrane" (the release's artist and title).
+- **Shop lines** (rule S463): "A rare … box-set available in very limited quantities.", "THIS IS A PRE-ORDER. Shipping in November", "… exact date to be confirmed", "REQUEST A SIGNATURE …" are left out as shop.
+- **"director"** (rule S460): "Barry Guy – bass, director, composer" – a bare "director" is the video director only where there is video (a medium of video, a video track, a video at the source, "video" / "film" in the line); otherwise the conductor (musical direction). "Directed By" still asks (Q003).
+- **A list of the rules** (`tools/rules_index.js`): the register of the script, the role rules, the questions and the wording rules as one list (`node tools/rules_index.js . out.md`; `--check <file>` compares an existing list with the code).
 
 ### Import 3.218.0
 
