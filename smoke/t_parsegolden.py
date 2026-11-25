@@ -75,7 +75,7 @@ for part, label in (('on', 'A'), ('off', 'B')):
     diff = [k for k in sorted(set(a) | set(b)) if a.get(k) != b.get(k)]
     errors = [k for k, v in a.items() if any(isinstance(x, dict) and '$error' in x for x in v)]
     print(f'{label}) Texte: {len(a)} | verschieden: {len(diff)} {diff[:5]} | Fehler beim Lesen: {errors[:5]}')
-    for k in diff[:3]:
+    for k in diff[:8]:
         x, y = json.dumps(a.get(k), ensure_ascii=False), json.dumps(b.get(k), ensure_ascii=False)
         i = next((n for n in range(min(len(x), len(y))) if x[n] != y[n]), min(len(x), len(y)))
         print('   ', k, '| jetzt:', x[max(0, i - 80):i + 120], '| gespeichert:', y[max(0, i - 80):i + 120])

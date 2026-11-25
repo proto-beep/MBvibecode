@@ -1089,7 +1089,8 @@ def case_review43():
 def case_filter3161():
     """Credits Importer 3.161.0 (collected item Z-SETSEARCH): the filter at the top of "Mapping rules".
     A) The field stands above the quick switches. "S287": one rule left ("1 of n rules"), the sections without a hit gone, no quick switch.
-    B) "drums": of the quick switches only S245 ("Drums credited “drums”"), its group the only one; rules that name drums stay.
+    B) "drums": of the quick switches S245 ("Drums credited “drums”") and (3.222.0) S339 (its tooltip names drums and percussion), their groups;
+       rules that name drums stay.
     C) Two words ("vinyl mastering"): only rules with both. Emptied: every row, section and quick switch is there again, the count gone.
     D) A click on the id of a quick switch while a filter hides its rule: the filter is cleared and the rule shown."""
     results = []
@@ -1120,7 +1121,8 @@ def case_filter3161():
                        and a['count'] == f"1 of {len(all0['rows'])} rules")
         bq = filt('drums')
         print('B)', bq['quick'], bq['groups'], len(bq['rows']))
-        results.append(bq['quick'] == ['S245'] and bq['groups'] == 1 and 'S245' in bq['rows'] and 0 < len(bq['rows']) < len(all0['rows']))
+        # ((3.222.0, S490) "Instruments → release" names drums in its tooltip too)
+        results.append(bq['quick'] == ['S339', 'S245'] and bq['groups'] == 2 and 'S245' in bq['rows'] and 0 < len(bq['rows']) < len(all0['rows']))
         c = filt('vinyl mastering')
         c0 = filt('')
         print('C)', c['rows'][:8], '| leer:', len(c0['rows']), c0['sects'], len(c0['quick']), repr(c0['count']))

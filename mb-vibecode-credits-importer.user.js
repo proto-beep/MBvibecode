@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.221.0
+// @version      3.222.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.221.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.221.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.222.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.222.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.221.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.222.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -2238,6 +2238,7 @@
       "matrix.pubNone": "MusicBrainz knows no artist with this personal publisher – tick its works by hand",
       "matrix.pubUnmatched": "Publisher not found in MusicBrainz – tick its works by hand",
       "role.pubFromCompany": "Discogs lists it as a company (“{name}”) – a person as publisher",
+      "role.eventHint": "Event: “{name}” – MusicBrainz prefers the event (linked to this place); create it in MusicBrainz if it is not there yet",
       "role.pcFromCompany": "Discogs lists it as a label (“{name}”) – here the artist of the same name of this release ({where}); a suggestion",
       "role.pcAsLabel": "As the label instead",
       "role.pcAsLabelTitle": "Gives this row back to the label entry of Discogs (to link a label or another artist there)",
@@ -4807,7 +4808,7 @@
       "quick.name.S297": "℗ on the release",
       "quick.S297": "Phonographic copyright (℗) on the release instead of the recordings",
       "quick.name.S339": "Instruments → release",
-      "quick.S339": "After the import: two or more instruments without tracks go on the release, their common level on the recordings (⑃)",
+      "quick.S339": "After the import: two or more instruments without tracks go on the release, their common level on the recordings (⑃) – not someone with only drums and percussion (or congas, bongos, timbales, cajón, tambourine, shaker with percussion, cymbal with drums): those stay on the tracks",
       "log.instsAuto.one": "Instruments on the release + instrument family on the tracks by themselves: {n} entry (quick switch “Instruments → release”)",
       "log.instsAuto.other": "Instruments on the release + instrument family on the tracks by themselves: {n} entries (quick switch “Instruments → release”)",
       "typeAsk.askVoiceSax": "“{role}” alone: a saxophone or a voice? – please choose:",
@@ -5909,6 +5910,23 @@
     { id: 'S476', where: 'groupCredits, addCreditRows, dgLineupFind', note: 'Lineup and track credits (3.221.0; collected item Z-LOPEZ2; S217, S451): the lineups in the titles of the tracks name everyone who plays on a track – there an instrument of another kind says where the person plays too: "Ramón López – percussion" with "Lopez dr" in the titles keeps percussion on those tracks beside drums (drums and percussion do not exclude each other). Lines of tracks of a text still count only with the lineup\'s instrument ("Track 2: Anna – vocals")' },
     { id: 'S477', where: 'renderSupp, SUPP_UNREC_KEY', note: 'Sources (3.221.0; collected item Z-SUPPUNRECFOLD): the lines of an added source not recognized – four or more – at the end of its list, folded into one line "▸ 14 lines not recognized"; a click shows them (remembered)' },
     { id: 'S478', where: 'placeCopyrightYear', note: 'Dates (3.221.0; collected item Z-PCYEARAUTO; S470): the ℗/© year of the notes – of the source imported and of an added source – is placed in the column ℗/© of the date matrix as a suggestion (dashed; "Apply" puts it on the rows of ℗ and ©), when that column has no date yet and the notes give one year only; several years stay buttons of the pool' },
+    { id: 'S479', where: 'TEXT.parse (namesWithRoles, readClause)', note: 'Texts (3.222.0; collected items Z-LB-LISTLINES, Z-LB-CONEXIONES; S076): a list "Name (roles), Name (roles) …" – also with a full stop at the end, without a sign between ")" and the next name ("Serra Petale (Synthesizer, Programming, Vocals) Nic Crawshaw (Drums)"), with a comma before ")" – gives each person their own roles; a role not known is that person\'s, listed as not recognized ("Phone Call Voice"); "Additional Synthesizer Programming": programming, additional. Until 3.221.0 one unknown role made everyone take the role of the last brackets ("Drums")' },
+    { id: 'S480', where: 'TEXT.parse (markedTitle, readLine0: trackBlock, footMarks)', note: 'Texts (3.222.0; collected items Z-LB-TRACKBLOCKS, Z-LB-WRITTENEXCEPT; S145): a track\'s title as a heading – with a mark of a footnote ("Hang Up (Pt 2) (*)"), "(Instrumental)", the title at the source naming guests after it ("… (feat. Adrian Quesada & Sinkane)") – makes the line "Name (roles), …" below it that track\'s credits. "Written by Serra Petale except, (*) written with Adrian Quesada and Sinkane, (**) written with Kit Sebastian …": the first name on all tracks, the names after a mark on the track whose title carries it – only when every mark is one of such a title' },
+    { id: 'S481', where: 'tidyLines', note: 'Texts (3.222.0; collected item Z-LB-ASSISTED): "Assisted by Kostas Michaloudis and David Haynes" below "Engineered by …" (recorded, engineering): assistant engineers; below "Mixed by …" assistant mixing engineers, below "Mastered by …" assistant mastering engineers' },
+    { id: 'S482', where: 'tidyLines, loadRelease', note: 'Texts (3.222.0; collected item Z-LB-ADDPROD): "Additional production by X" is a producer with the attribute "additional" – on the level of the producers of the same source ("Produced by …" on the recordings: there too)' },
+    { id: 'S483', where: 'tidyLines, placeOf (digitName)', note: 'Texts (3.222.0; collected item Z-LB-RECORDEDAT): "Recorded at 5db, London, Dooboire Studios, London and our collaborators studios around the world" – each place with its town ("5db": a name of a digit and letters is a name), the words for elsewhere no place (until 3.221.0 "London" was the place)' },
+    { id: 'S484', where: 'tidyLines, sentencesOf, readUnit', note: 'Texts (3.222.0; collected items Z-LB-PCASSOC, Z-IZ-RELEASEDPC; S278, S369): "(c) (p) 2026 GREAT! Records in association with !K7 Music" – ℗ and © of GREAT! Records with its year (the "!" no end of a sentence; "in association with …" left out, a label information); "Released by RR GEMS Records ℗ ©" – the signs after the name: ℗ and © of RR GEMS Records beside the line of the label' },
+    { id: 'S485', where: 'TEXT.parse (shopLines; LEFTOUT_LINES)', note: 'Texts (3.222.0; collected items Z-RDE-LINES, Z-LB-EDITIONLINES, Z-IZ-JACKETS; S345, S389): left out with their reason – an edition\'s lines ("- 140g 12 inch 1xLP", "- Stand. Black Variant", "- Limited Edition Splatter Variant"), a package ("- Printed Inner Sleeve", "CD Digipak", "6-Panel", "Includes booklet with lyrics", "The triple-CD comes in 6-panel … digisleeve …", "Jackets made in Estonia"), a shop ("MERCH + BUNDLES AVAILABLE VIA OFFICIAL STORE:", "The digital download album is available in 24-bit/44.1kHz quality."), a description ("Covering almost 3 hours of music. High quality recordings tapped directly from stage mixer."), a contact ("Inquiries: …@…"), headings ("ALBUM CREDITS:", "All songs:")' },
+    { id: 'S486', where: 'tidyLines', note: 'Texts (3.222.0; collected items Z-RDE-LINES, Z-IZ-WOODBLOCK): "Images from the work of Thomas Stothard and Gustave Doré" – artwork (on the release), credited "images"; "Woodblock printing album artwork by RYOCK" – artwork, credited "woodblock printing" (a technique before "artwork by" that is no role)' },
+    { id: 'S487', where: 'tidyLines', note: 'Texts (3.222.0; collected item Z-IZ-LACQUERED; S462, S026): "Lacquered for vinyl by Phil Rodriguez at Elysian Masters" – the lacquer cut by and at (vinyl only)' },
+    { id: 'S488', where: 'tidyLines (gearKind)', note: 'Texts (3.222.0; collected item Z-IZ-BEATSON; T065, R113): "<role> on <model>" with a known model – "Richard Maye - beats on MPC 3000", "drums on TR-808" – is the model\'s instrument (sampler, drum machine, synthesizer) credited with the model; the role before "on" says nothing more. A model not known: as before' },
+    { id: 'S489', where: 'TEXT.parse (namesScoped)', note: 'Texts (3.222.0; collected item Z-IZ-COMPJOINT; S077): "Composition by Richard Maye and Devin Brahja Waldman" – the name of the release\'s artists, each part a person with a line of their own in the text: two names (for single instruments and writers); otherwise the release\'s artist stays whole (S077)' },
+    { id: 'S490', where: 'instsKeepPairs, loadRelease (S339; INSTS_KEEP_PAIRS)', note: 'Instruments (3.222.0; collected item Z-PERCDRUMS; S339): a person with only drums and percussion – or the other pairs of the mapping (INSTS_KEEP_PAIRS: drums and cymbal, percussion and congas, bongos, timbales, cajón, tambourine, shaker) – keeps them on the tracks: the quick switch S339 does not put them on the release (by hand "⑃ on the release …" still can). With any other instrument or voice the person is grouped as before' },
+    { id: 'S491', where: 'trackPlaceRewrite, tidyLines', note: 'Texts (3.222.0; collected item Z-RDE-MEDIA; S312): "Track 1-10 / CD1:" – the tracks of the lines below it, up to the next such heading; "Recordings from the Northern Excavation Tour 2025" below it – the year of the days without one (only with recordings)' },
+    { id: 'S492', where: 'trackPlaceRewrite, tidyLines, notesForDates (foundDateText)', note: 'Texts and dates (3.222.0; collected item Z-RDE-TRACKPLACES): "Track 1, 3-6 MS Stubnitz/Hamburg/Germany Oct 7" – recorded at MS Stubnitz (Hamburg, Germany) on track 1 and tracks 3 to 6 (the numbers as the text counts them, not medium 3 track 6), the day a date of these tracks (its year from the heading); "and Ambientalika V/KIC/Zagreb/Croatia Apr 11, 2026" – another place and day of the same tracks (four parts: the event first)' },
+    { id: 'S493', where: 'trackPlaceRewrite, finishMarks, notesFromHtml, findFestivals', note: 'Texts (3.222.0; collected item Z-RDE-PLACETRACKS; S056): below a heading of tracks, "at The Alte Feuerwache Loschwitz, Dresden, Germany." is the place of those tracks (until 3.221.0 of all) and "August 2, 2025." their day; "Recording from Rituals Over Limburg III Festival" above "at Nieuwe Nor, Heerlen, The Netherlands." – the event said at the place ("Event: … – MusicBrainz prefers the event"), and with its day MusicBrainz\'s events of that name are offered (S056)' },
+    { id: 'S494', where: 'autoPlaceFoundDates', note: 'Dates (3.222.0; collected item Z-RDE-ABOUTDATES): a year alone without tracks ("… during 2025 and subsequent performances in 2026") is not placed in the matrix where the notes give days with their tracks – it stays in the pool (to drag where wanted)' },
+    { id: 'S495', where: 'finishMarks (COUNTRY_NAMES)', note: 'Texts (3.222.0; collected item Z-IZ-JACKETS): "Pressed by Les Disques Garcia, France" – a country after a company in the same line is where it is (its area), no company of its own (until 3.221.0 "France" was a pressing plant)' },
     { id: 'S469', where: 'dgLineupApply, sendDiscogsStatus', note: 'Lineup and track credits (3.220.0; collected item Z-LOPEZ; S217): a row the answer leaves out (a lineup row on no track any more, a track credit taken into the lineup row) keeps its line at the source – its places go to the person\'s row still there, so the companion marks the line ("Ramón López – percussion" where the titles give him drums on all of his tracks)' },
     { id: 'S410', where: 'freshForget, repeatImport, loadRelease', note: '"↻ Repeat import" (3.209.0; collected item Z-FRESHALL): "Start afresh" forgets everything the dashboard holds of the release – not only the changes of the rows and the choices of the works matrix (Z-RI, 3.40.16), also the date pool, the track pool and the date matrix, the choices of the box "Dedications & tributes", "✕ No suite", texts and parts of sources switched off, "skip the works", entries joined by hand, the ticks of suggestions, what is remembered of the release ("Remember changes"; nothing of the import before is stored on the way). Kept: what was created in MusicBrainz through the dashboard (the lists of created works and suites), the source and the media chosen, the log' },
     { id: 'S409', where: 'mergeEntries, joinEntry, applyEntryMerges, dmTargetOf (entry-merge), groupHtml (grip)', note: 'Entries (3.208.0; collected item Z-ENTITYMERGE): two entries of the same kind that are one – from different sources, written otherwise – are joined by hand: the grip ⠿ before the kind of an entry dropped onto another entry. The entry dropped onto stays (its link to MusicBrainz counts; without one it takes the other\'s), the rows of the other come to it – the same role once, each row credited as its source writes it, the other\'s name one of its names. Two different entries of MusicBrainz, or entries of different kinds: not joined, a message says why. Remembered for the release (joined again at the next import); ↶ in the message undoes it' },
@@ -6670,6 +6688,7 @@
   const SERIES_FROM_VIDEO = MAP.SERIES_FROM_VIDEO;
   /** [Z-SYN] (3.81.0, T065) Models of synthesizers, drum machines and samplers, and the makers' names that may stand before them. */
   const GEAR_MODELS = MAP.GEAR_MODELS;
+  const INSTS_KEEP_PAIRS = MAP.INSTS_KEEP_PAIRS; // [Z-PERCDRUMS] (3.222.0, S490)
   /** [Z-RAD] (3.81.0, T066) Words of a broadcaster's name ("Norwegian State radio", "Westdeutscher Rundfunk", "BBC"). */
   const TEXT_BROADCASTER = MAP.TEXT_BROADCASTER;
   /** [Z-YTT] (3.81.0, review) The words of a schedule ("Doors 19:00", "Einlass", "Curfew"): a run of lines with times among them is no list of songs. */
@@ -7546,6 +7565,23 @@
   ];
   // ((S345) the size of the edition ("This is an exclusive bandcamp edition of 180 copies."): left out as "edition", as "Limited to 100 copies."
   const SHOP_EDITION_SIZE = /^(?:this\s+is\s+)?(?:an?\s+)?(?:(?:exclusive|limited|special|numbered|hand-?numbered|bandcamp|first|second|1st|2nd)\s+)*(?:[\p{L}-]+\s+){0,2}(?:edition|run|pressing)\s+of\s+(?:only\s+)?\d+\s+(?:copies|units|pieces|cassettes|tapes|cds|lps|records|discs)\b/iu;
+  // [3.222.0] (S485; collected items Z-RDE-LINES, Z-LB-EDITIONLINES, Z-IZ-JACKETS) more lines of a shop, an edition or a package, with
+  // their reason: "140g 12 inch 1xLP", "Stand. Black Variant", "MERCH + BUNDLES AVAILABLE VIA OFFICIAL STORE:", "Jackets made in Estonia",
+  // "The triple-CD comes in 6-panel … digisleeve …", "The digital download album is available in 24-bit/44.1kHz quality.", "Covering almost
+  // 3 hours of music. High quality recordings tapped directly from stage mixer.", "Inquiries: …", "ALBUM CREDITS:", "All songs:"
+  const LEFTOUT_LINES = [
+    [/^\d{2,3}\s*g(?:ram)?\s+(?:\d{1,2}["”]?\s*(?:inch|in\.?|")\s+)?(?:\d\s*x\s*)?(?:lp|vinyl|record)s?\b/i, 'edition'],
+    [/^\d{1,2}\s*(?:inch|")\s+\d\s*x\s*lp\b/i, 'edition'],
+    [/^(?:(?:stand(?:ard)?\.?|limited(?:\s+edition)?|ltd\.?|special|deluxe)\s+)?[\p{L}\s/&-]{0,40}\b(?:variant|colou?r(?:ed)?\s+vinyl|splatter|marbled?|translucent)\b\.?$/iu, 'edition'],
+    [/^(?:printed\s+)?(?:inner|outer)\s+sleeves?\b|^(?:cd\s+)?digi(?:pak|pack|sleeve|file)\b|^\d{1,2}[-\s]panel\b|^includes?\s+(?:an?\s+)?(?:booklet|insert|poster|download)\b/i, 'package'],
+    [/^(?:the\s+)?(?:triple|double|single|\d)[-\s]?(?:cd|lp|vinyl|cassette|disc)s?\s+(?:comes?|is\s+housed|is\s+packaged|arrives?)\s+in\b/i, 'package'],
+    [/^(?:jackets?|sleeves?|covers?|inserts?|booklets?|discs?|cds?|records?)\s+(?:made|printed|pressed|manufactured)\s+in\s+\p{Lu}/iu, 'package'],
+    [/^merch(?:andise)?\b.*\b(?:available|store|shop)\b|^(?:bundles?|merch)\s*(?:\+|and|&)\s*(?:bundles?|merch)\b/i, 'shop'],
+    [/^(?:the\s+)?(?:digital\s+)?(?:download|album|digital\s+album|files?)\b.{0,40}\bavailable\s+in\s+\d{2}[-\s]?bit\b|^download\s+available\s+in\b/i, 'shop'],
+    [/^covering\s+(?:almost|nearly|over|about|more\s+than)?\s*\d+\s+(?:hours?|minutes?)\s+of\s+music\b|^(?:high[-\s]quality\s+)?recordings?\s+(?:were\s+)?(?:tapped|taken)\s+(?:directly\s+)?from\b/i, 'promo'],
+    [/^(?:inquiries|enquiries)\s*:\s*\S+@\S+$/i, 'web'],
+    [/^(?:album|release|all)\s+credits\s*:?$|^all\s+(?:songs|tracks|music)\s*:$/i, 'heading'],
+  ];
   // [Z-EDITIONSIZES] (3.221.0, S475) a variant of an edition with its number of copies – "100x Kallisto Edition (Half/Half Colored) + A3
   // Poster + 6x6cm Patch", "250x Solid Black Edition", "20x Testpress w/ Signed Cover", "300 copies on clear vinyl": left out as "edition"
   const SHOP_EDITION_VARIANT = /^(?:ltd\.?\s+|limited\s+)?\d{1,5}\s*(?:x|×|copies|pcs\.?|pieces)\s+(?:(?:[\p{L}\d'’/&.-]+\s+){0,5}(?:edition|editions|testpress(?:ings?)?|test\s+press(?:ings?)?|pressing|vinyl|lp|cd|cassettes?|tapes?|copies)\b|testpress|test\s+press|on\s+[\p{L}\s/-]{2,40}vinyl\b)/iu;
@@ -9813,7 +9849,9 @@
       // ([Z-EDITEDAT] 3.211.0, S414) a name of a place that begins with a number ("35 Street Studio") is a name, not a date – a part with a
       // word of places and neither a year nor a month
       const numberedPlace = (x) => ruleOn('S414') && /^\d/.test(x) && TEXT_PLACE_WORDS.test(x) && !/\b(?:1[89]|20)\d{2}\b/.test(x) && !TEXT_MONTH_WORD.test(x);
-      const dateLike = (x) => /\d/.test(x) && !numberedPlace(x) && (!ruleOn('S348') || /^\d|\b(?:1[89]|20)\d{2}\b|\d(?:st|nd|rd|th)\b|\d{1,2}[./]\d{1,2}/i.test(x) || TEXT_MONTH_WORD.test(x));
+      // ([Z-LB-RECORDEDAT] 3.222.0, S483) a name of a digit and letters – "5db" – is a name ("1st", "2nd" stay dates)
+      const digitName = (x) => ruleOn('S483') && /^\d{1,3}[a-z]{2,}$/i.test(x) && !/^\d+(?:st|nd|rd|th)$/i.test(x);
+      const dateLike = (x) => /\d/.test(x) && !numberedPlace(x) && !digitName(x) && (!ruleOn('S348') || /^\d|\b(?:1[89]|20)\d{2}\b|\d(?:st|nd|rd|th)\b|\d{1,2}[./]\d{1,2}/i.test(x) || TEXT_MONTH_WORD.test(x));
       const parts = bare.replace(PLACE_DATE_TAIL, '').replace(/\s*\([^)]*\d[^)]*\)/g, '').replace(/\s*\(([^()]+)\)/, ', $1').split(/\s*,\s*/).map(clean).filter((x) => x && !dateLike(x));
       if (!parts.length) return null;
       let name = parts[0];
@@ -9966,6 +10004,8 @@
         const word = (line.slice(start, m.index).match(/(\S+)$/) || ['', ''])[1].replace(/^[(“"‘']+/, '');
         const dotted = /\.\S/.test(word) && !/\.[a-z]{2,}(?:\/\S*)?$/i.test(word);
         if (/^\p{L}$/u.test(word) || TEXT_ABBREV.test(word) || dotted) continue;
+        // ([Z-LB-PCASSOC] 3.222.0, S484) "GREAT! Records": a "!" inside the name of a ℗ / © is no end of its sentence
+        if (ruleOn('S484') && m[0][0] === '!' && PC_START.test(line) && start === 0 && /^(?:Records?|Recordings|Music|Label|Inc\.?|Ltd\.?|LLC|GmbH|Productions?|Entertainment)\b/.test(line.slice(m.index + m[0].length))) continue;
         out.push(line.slice(start, m.index + 1));
         start = m.index + m[0].length;
       }
@@ -10308,7 +10348,13 @@
      */
     const namesScoped = (P, side) => {
       const whole = clean(side).replace(/\s*\([^)]*\)$/, '');
-      if (ruleOn('S077') && whole && P.bandNames.has(norm(whole))) return [{ name: whole, scope: null }];
+      // ([Z-IZ-COMPJOINT] 3.222.0, S489) "Composition by Richard Maye and Devin Brahja Waldman" – the name of the release's artists, but each
+      // part a person with a line of their own in the text ("Richard Maye - beats …", "Devin Brahja Waldman - saxophone …"): two names
+      const ownLines = (x) => (P.allLines || []).some((l) => new RegExp(`^\\s*${escRe(x)}\\s*(?:[-–—:(]|\\s+-)`, 'u').test(String(l || '')));
+      const splitBand = ruleOn('S489') && whole && P.bandNames.has(norm(whole)) ? whole.split(/\s+(?:&|and|und|et|y)\s+|\s*,\s*/).map(clean).filter(Boolean) : [];
+      const bandApart = splitBand.length >= 2 && splitBand.every((x) => x.split(/\s+/).length >= 2 && ownLines(x));
+      if (ruleOn('S077') && whole && P.bandNames.has(norm(whole)) && !bandApart) return [{ name: whole, scope: null }];
+      if (bandApart) return splitBand.map((name) => ({ name, scope: null }));
       // commas, "&" and "and" inside brackets do not separate names
       const masked = String(side || '').replace(/\([^)]*\)/g, (b) => b.replace(/,/g, '\u0001').replace(/&/g, '\u0002').replace(/\band\b/gi, '\u0003'));
       const raw = masked.split(TEXT_NAME_SEP).flatMap((n) => n.split(TEXT_NAME_SEP_Y)).map((n) => clean(n.replace(/\u0001/g, ',').replace(/\u0002/g, '&').replace(/\u0003/g, 'and'))).filter(Boolean);
@@ -10320,6 +10366,8 @@
           for (let j = raw.length - 1; j > i; j--) {
             const seg = raw.slice(i, j + 1).map((x) => x.replace(/\s*\([^)]*\)$/, ''));
             const sep = [' & ', ' and ', ', ', ' und ', ' et ', ' y '].find((s) => P.bandNames.has(norm(seg.join(s))));
+            // ([Z-IZ-COMPJOINT] 3.222.0, S489) each part a person with a line of their own: not joined
+            if (sep && ruleOn('S489') && seg.every((x) => x.split(/\s+/).length >= 2 && ownLines(x))) break;
             if (sep) {
               took = j - i;
               parts.push(seg.join(sep));
@@ -10488,6 +10536,14 @@
           const made = SHOP_MADE.test(b) && SHOP_MADE_THING.test(b) && !/\bby\s+\p{Lu}/u.test(b);
           const goesOn = wasShop && /^(?:and|but|so|also|plus|which|that)\b|\b(?:I['’]m|I\s+am|I['’]ll|we['’]re|we\s+are|we['’]ll|our|my)\b/i.test(b) && !/:|\sby\s|\s[–—-]\s/.test(b);
           // (a credit after it – "…, cover art by Jane Doe" – keeps the line for the reader)
+          // ([3.222.0] S485) more lines of a shop, an edition or a package – each with its reason
+          const lo1 = ruleOn('S485') && !/\bby\s+\p{Lu}/u.test(b) ? LEFTOUT_LINES.find(([re]) => re.test(b)) : null;
+          const lo = lo1 ? [lo1] : ruleOn('S485') && !/\bby\s+\p{Lu}/u.test(b) ? b.split(/(?<=[.!?])\s+(?=\p{Lu})/u).map((x) => LEFTOUT_LINES.find(([re]) => re.test(x.trim()))) : [];
+          if (lo.length && lo.every(Boolean)) {
+            P.ignored.push({ text: t, why: lo[0][1] });
+            prevShop = true;
+            return '';
+          }
           if ((SHOP_EDITION_SIZE.test(b) || (ruleOn('S475') && SHOP_EDITION_VARIANT.test(b))) && !/\bby\s+\p{Lu}/u.test(b)) {
             P.ignored.push({ text: t, why: 'edition' });
             prevShop = true;
@@ -11892,6 +11948,72 @@
           return t === l ? l : keep(t.replace(/\s{2,}/g, ' '), P.rawOf.get(l) || l);
         });
       }
+      // [Z-RDE-TRACKPLACES] (3.222.0, S491 – S493) lines of tracks with their places and days (trackPlaceRewrite): the place on those
+      // tracks; the days go to the dates (notesForDates), the headings are left out
+      {
+        const rw = trackPlaceRewrite(out);
+        if (rw.size) {
+          out = out.flatMap((l, i) => {
+            const x = rw.get(i);
+            if (!x) return [l];
+            const raw = P.rawOf.get(l) || l;
+            if (x.event && P.eventLines) P.eventLines.set(String(raw).trim(), x.event);
+            if (x.place) return [keep(x.place, raw)];
+            P.ignored.push({ text: String(raw).trim(), why: x.date ? 'trackDate' : (x.ignore || 'heading') });
+            return [''];
+          });
+        }
+      }
+      // [3.222.0] lines of Bandcamp's and booklets' credits written their own way (S481 – S487)
+      out = out.flatMap((l) => {
+        const t = String(l);
+        const prev = (() => { const k = out.indexOf(l); for (let j = k - 1; j >= 0; j--) if (String(out[j]).trim()) return String(out[j]).trim(); return ''; })();
+        let m;
+        // [Z-LB-ASSISTED] (S481) "Assisted by X and Y" below "Engineered by …" / "Mixed by …" / "Mastered by …": their assistants
+        if (ruleOn('S481') && (m = t.match(/^\s*assist(?:ed|ance)\s+(?:by\s+)?:?\s*(\p{Lu}.+?)\.?\s*$/iu))) {
+          const kind = /^(?:engineered|recorded|recording|engineering)\b/i.test(prev) ? 'Assistant Engineer' : /^mix(?:ed|ing)\b/i.test(prev) ? 'Assistant Mixing Engineer'
+            : /^master(?:ed|ing)\b/i.test(prev) ? 'Assistant Mastering Engineer' : '';
+          if (kind) return [keep(`${kind}: ${m[1]}`, P.rawOf.get(l) || l)];
+        }
+        // [Z-LB-ADDPROD] (S482) "Additional production by X": a producer, "additional" (as an attribute)
+        if (ruleOn('S482') && (m = t.match(/^\s*additional\s+production\s*(?:by\s+|:\s*)(.+)$/i))) return [keep(`Additional Producer: ${m[1]}`, P.rawOf.get(l) || l)];
+        // [Z-LB-RECORDEDAT] (S483) "Recorded at 5db, London, Dooboire Studios, London and our collaborators studios around the world": a
+        // place and its town each; the words for elsewhere are no place
+        if (ruleOn('S483') && (m = t.match(/^\s*((?:recorded|mixed|mastered|recorded\s+and\s+mixed)\s+at)\s+(.+?)\.?\s*$/i))) {
+          const body = m[2].replace(/\s*,?\s+and\s+(?:at\s+)?(?:our|their|the|various|other|several|many)\b[^,]*\b(?:studios?|places|locations|homes?|world)\b.*$/i, '');
+          const items = body.split(/\s*,\s*|\s+and\s+/).map(clean).filter(Boolean);
+          const town = (x) => /^\p{Lu}[\p{L}'’.-]+(?:\s+\p{Lu}[\p{L}'’.-]+)?$/u.test(x) && !TEXT_PLACE_WORDS.test(x) && x.split(/\s+/).length <= 2;
+          const pairs = items.length >= 4 && items.length % 2 === 0 && items.every((x, k) => (k % 2 ? town(x) : true)) && uniq(items.filter((x, k) => k % 2)).length < items.length / 2 + 1;
+          // (only where a town repeats or words for elsewhere were cut – "Studio X, Berlin and Studio Y, Paris" is read as before)
+          if (pairs && (body !== m[2] || uniq(items.filter((x, k) => k % 2)).length < items.length / 2)) {
+            const outL = [];
+            for (let k = 0; k < items.length; k += 2) outL.push(keep(`${cap(m[1].toLowerCase())} ${items[k]}, ${items[k + 1]}`, P.rawOf.get(l) || l));
+            return outL;
+          }
+          if (body !== m[2]) return [keep(`${m[1]} ${body}`, P.rawOf.get(l) || l)];
+        }
+        // [Z-RDE-LINES] [Z-IZ-WOODBLOCK] (S486) "Images from the work of Thomas Stothard and Gustave Doré": artwork, credited "images";
+        // "Woodblock printing album artwork by RYOCK": artwork, credited "woodblock printing" (a technique before "artwork by", no role)
+        if (ruleOn('S486') && (m = t.match(/^\s*(images?|pictures?|paintings?|illustrations?|drawings?)\s+(?:taken\s+)?from\s+(?:the\s+)?(?:works?|paintings?|art)\s+of\s+(.+?)\.?\s*$/i))) {
+          return [keep(`Artwork [${cap(m[1].toLowerCase())}] by ${m[2]}`, P.rawOf.get(l) || l)];
+        }
+        if (ruleOn('S486') && (m = t.match(/^\s*([\p{L}][\p{L}\s-]{2,40}?)\s+(?:album\s+|cover\s+)?artwork\s+by\s+(.+)$/iu)) && !isRole(P, cap(m[1])) && !/\b(?:design|layout|cover|album|photo|photography|original|additional|front|back|inner|inside|sleeve|booklet|insert|digital|all)\b/i.test(m[1])
+          && !m[1].split(/\s+/).some((w) => isRole(P, cap(w)))) {
+          return [keep(`Artwork [${cap(m[1].toLowerCase())}] by ${m[2]}`, P.rawOf.get(l) || l)];
+        }
+        // [Z-IZ-RELEASEDPC] (S484) "Released by RR GEMS Records ℗ ©": the signs after the name – the label's line and its ℗ / ©
+        if (ruleOn('S484') && (m = t.match(/^\s*((?:released|published|issued)\s+by)\s+(.+?)\s+((?:℗|Ⓟ|©|\((?:p|c)\))(?:\s*(?:&|and|,|\+)?\s*(?:℗|Ⓟ|©|\((?:p|c)\)))*)\s*((?:19|20)\d{2})?\.?\s*$/iu))) {
+          return [keep(`${m[1]} ${m[2]}`, P.rawOf.get(l) || l), keep(`${m[3]}${m[4] ? ` ${m[4]}` : ''} ${m[2]}`, P.rawOf.get(l) || l)];
+        }
+        // [Z-IZ-BEATSON] (S488) "Richard Maye - beats on MPC 3000", "drums on TR-808": a known model (T065) is the instrument – the role
+        // before "on" says nothing more (the model its role credit: sampler "MPC 3000")
+        if (ruleOn('S488') && (m = t.match(/^(.+?(?:\s[-–—]\s+|:\s+))([\p{L}][\p{L}\s-]{1,30}?)\s+on\s+(?:an?\s+|the\s+)?([\p{L}\d][\p{L}\d\s.'’-]{1,30}?)\.?\s*$/u)) && gearKind(m[3])) {
+          return [keep(`${m[1]}${m[3]}`, P.rawOf.get(l) || l)];
+        }
+        // [Z-IZ-LACQUERED] (S487) "Lacquered for vinyl by X at Y": the lacquer cut (as S462's "Lacquer Cut by X at Y")
+        if (ruleOn('S487') && (m = t.match(/^\s*lacquered\s+(?:for\s+(?:the\s+)?vinyl\s+)?by\s+(.+)$/i))) return [keep(`Lacquer Cut by ${m[1]}`, P.rawOf.get(l) || l)];
+        return [l];
+      });
       // [Z-PUBLINE] (3.154.0, S278) "Published by … ℗ 1976 … © 1995 …" in one line: the publisher and each ℗ / © a line of its own (each with its year)
       if (ruleOn('S278')) {
         out = out.flatMap((l) => {
@@ -11901,6 +12023,8 @@
               if (acc.length && /(?:℗|\(p\)|(?:^|\s)P)\s*(?:&|\+|\/|and|und)$/i.test(acc[acc.length - 1])) acc[acc.length - 1] += ` ${x}`;
               // [Z-PCYEARSUPP] (3.220.0, S470) "℗ © 2026 X", "Blue Note Records, ℗ © 2026 X": a ℗ without its year before the © shares it
               else if (acc.length && ruleOn('S470') && /(?:^|[\s,])(?:℗|Ⓟ|\(p\))$/i.test(acc[acc.length - 1])) acc[acc.length - 1] += ` ${x}`;
+              // ([Z-LB-PCASSOC] 3.222.0, S484) "(c) (p) 2026 X": only signs before the year – one line
+              else if (acc.length && ruleOn('S484') && /^(?:\s*(?:℗|Ⓟ|©|\((?:p|c)\)|&|and|,))+\s*$/i.test(acc[acc.length - 1])) acc[acc.length - 1] += ` ${x}`;
               else acc.push(x);
               return acc;
             }, []);
@@ -13162,20 +13286,44 @@
      * (T041 or a role of the register).
      */
     const namesWithRoles = (P, side) => {
-      const t = clean(side);
-      const re = /\s*(?:^|,|&|\+|\band\b|\bund\b|\bet\b|\by\b)\s*([^()&,;+]+?)\s*\(([^)]+)\)/giy;
+      // ([Z-LB-LISTLINES] 3.222.0, S479) a full stop at the end; no sign between ")" and the next name; a comma before ")"
+      const lb = ruleOn('S479');
+      const t = lb ? clean(side).replace(/\s*\.\s*$/, '').replace(/,\s*\)/g, ')') : clean(side);
+      const re = lb ? /\s*(?:^|,|&|\+|\band\b|\bund\b|\bet\b|\by\b|(?<=\)))\s*([^()&,;+]+?)\s*\(([^)]+)\)/giy : /\s*(?:^|,|&|\+|\band\b|\bund\b|\bet\b|\by\b)\s*([^()&,;+]+?)\s*\(([^)]+)\)/giy;
       const out = [];
+      const unknown = [];
       let m;
       let end = 0;
+      const roleOf = (w) => {
+        const r = PROSE_ROLE_WORDS[norm(w)] || (isRole(P, cap(w)) ? cap(w) : isRole(P, `${cap(w)} By`) ? `${cap(w)} By` : '');
+        if (r || !lb) return r;
+        // ("Additional Synthesizer Programming": the role with "additional")
+        const add = w.match(/^additional\s+(.+)$/i);
+        if (add) { const b = roleOf(add[1]); if (b) return `${b} [Additional]`; }
+        // ("Synthesizer Programming": the programming of an instrument)
+        const prog = w.match(/^(.+?)\s+programming$/i);
+        if (prog && playable(P, prog[1].toLowerCase())) return 'Programming';
+        return '';
+      };
       while ((m = re.exec(t))) {
         // (an initial keeps its dot: "K.M.", "E.")
         const name = String(m[1]).replace(/\s+/g, ' ').trim();
-        const roles = m[2].split(TEXT_ROLE_SEP).map(clean).filter(Boolean).map((w) => PROSE_ROLE_WORDS[norm(w)] || (isRole(P, cap(w)) ? cap(w) : isRole(P, `${cap(w)} By`) ? `${cap(w)} By` : ''));
-        if (!looksLikeName(name) || !roles.length || roles.some((r) => !r)) return [];
-        out.push({ name, roles: uniq(roles) });
+        const words = m[2].split(TEXT_ROLE_SEP).map(clean).filter(Boolean);
+        const roles = words.map(roleOf);
+        if (!looksLikeName(name) || !roles.length) return [];
+        if (roles.some((r) => !r)) {
+          // (S479: a role unknown is that person's – listed as not recognized; the others are read)
+          if (!lb) return [];
+          words.forEach((w, k) => { if (!roles[k]) unknown.push(w); });
+        }
+        out.push({ name, roles: uniq(roles.filter(Boolean)) });
         end = re.lastIndex;
       }
-      return out.length && !clean(t.slice(end)) ? out : [];
+      if (!(out.length && !clean(t.slice(end)))) return [];
+      // (S479: most of the roles known – else it is no such list)
+      if (unknown.length && unknown.length * 2 >= out.reduce((k, x) => k + x.roles.length, 0) + unknown.length) return [];
+      unknown.forEach((w) => P.unrecognized.push(`${P.line0} → ? “${w}”`));
+      return out.filter((x) => x.roles.length);
     };
 
     const proseName = (P, ws) => ws.length >= 1 && ws.length <= 5 && ws.every((w, k) => (/^\p{Lu}[\p{L}'’.-]*$/u.test(w) || (k > 0 && k < ws.length - 1 && P.PROSE_PARTICLE.test(w)))
@@ -13281,6 +13429,8 @@
           const pre = unit.match(/^\s*([^,℗©]{2,60}?)\s*,\s*(?=℗|Ⓟ|©|\((?:p|c)\)\s)/iu);
           if (pre && (P.labelNames || []).some((n) => norm(n) === norm(pre[1]))) unit = unit.slice(pre[0].length);
         }
+        // ([Z-LB-PCASSOC] 3.222.0, S484) "… GREAT! Records in association with !K7 Music": the partner is no part of the name (left out)
+        if (ruleOn('S484') && /^\s*(?:℗|Ⓟ|©|\((?:p|c)\))/i.test(unit)) unit = unit.replace(/\s+in\s+(?:association|partnership|cooperation|collaboration)\s+with\s+.+$/i, '');
         const lic = ruleOn('S470') ? unit.match(/^(\s*(?:℗|Ⓟ|©|\((?:p|c)\)).*?\S)\s+(?:under\s+(?:(?:an?\s+)?(?:exclusive|non-exclusive|sole)\s+)?licen[cs]e|(?:exclusively\s+)?licen[cs]ed)\s+to\s+(.+?)\.?\s*$/iu)
           : unit.match(/^(\s*(?:℗|©).*?\S)\s+(?:under\s+licen[cs]e|licen[cs]ed)\s+to\s+(.+?)\.?\s*$/iu);
         if (lic) {
@@ -13950,6 +14100,12 @@
         let right = null;
         if ((m = clause.match(/^(.+?)\s+[–—-]\s+(.+)$/)) || (m = clause.match(/^(.+?)\s*:\s+(.+)$/))) [, left, right] = m;
         else if ((m = clause.match(/^(.+?)\s*\(([^)]+)\)$/))) [, left, right] = m;
+        // ([Z-LB-CONEXIONES] 3.222.0, S479) "A (keyboards), B (cuatro, vocals), … C (drums)": the brackets before the last are other
+        // people's roles – the last one is not the role of all of them
+        if (left && ruleOn('S479') && /\(/.test(left) && m && m[0] === clause && !/\s[–—-]\s|:\s/.test(clause)) {
+          P.unrecognized.push(P.line0);
+          return;
+        }
         if (!left) return;
         left = clean(left);
         right = clean(right);
@@ -14103,10 +14259,29 @@
       return '';
     };
 
+    /**
+     * [Z-LB-TRACKBLOCKS] (3.222.0, S480) A track's title as a heading with a mark of a footnote and words that are no part of it – "Hang Up
+     * (Pt 2) (*)", "Next Selection (Prelude) (Instrumental)": { title, mark } ("Hang Up (Pt 2)", "*"); the title must be a track's exactly.
+     */
+    const markedTitle = (P, s) => {
+      if (!ruleOn('S480')) return null;
+      const m = String(s || '').trim().match(/^(.+?)(?:\s*\((\*{1,9}|†{1,4}|‡{1,4})\))?(?:\s*\((?:instrumental|bonus(?:\s+track)?)\))?\s*:?$/iu);
+      if (!m || /[,;]|:\s*\S/.test(m[1])) return null;
+      const t = clean(m[1]);
+      if (t.split(/\s+/).length > 12 || P.bandNames.has(norm(t)) || isRole(P, cap(t))) return null;
+      // (the source's titles may name guests after it – "Hang Up (Pt 2) (feat. Adrian Quesada & Sinkane)": compared without them)
+      const noFeat = (x) => norm(String(x || '').replace(/\s*[([]\s*(?:feat\.?|featuring|ft\.?|with)\s+[^)\]]+[)\]]\s*$/i, '').replace(/\s+(?:feat\.?|featuring|ft\.)\s+.+$/i, ''));
+      const own = Array.isArray(P.ctx0.trackTitles) ? P.ctx0.trackTitles : [];
+      const hits = own.map((x, i) => (noFeat(x) === norm(t) ? i : -1)).filter((i) => i >= 0);
+      const set = exactTrack(P, t) || (hits.length === 1 ? (P.resolveTitles([own[hits[0]]], { prefix: false, exact: true }) || {}).indexes || null : null);
+      return set && set.size === 1 && (m[2] || t !== String(s).trim() || /[()]/.test(t) || hits.length === 1) ? { title: t, mark: m[2] || '', set } : null;
+    };
+
     const bareTitle = (P, s) => {
       const tm = !/[,;()]/.test(s) && !/:\s*$/.test(s) && s.match(P.TITLE_LINE);
       const t = tm && !tm[1] && !tm[2] ? clean(tm[3] || '') : '';
-      return t && !P.bandNames.has(norm(t)) && !isRole(P, cap(t)) ? exactTrack(P, t) : null;
+      const r = t && !P.bandNames.has(norm(t)) && !isRole(P, cap(t)) ? exactTrack(P, t) : null;
+      return r || (markedTitle(P, s) || {}).set || null;
     };
 
     const bareBlockCount = (P) => {
@@ -14852,6 +15027,23 @@
         P.ignored.push({ text: P.line0, why: 'gear' });
         return;
       }
+      // [Z-LB-WRITTENEXCEPT] (3.222.0, S480) "Written by Serra Petale except, (*) written with Adrian Quesada and Sinkane, (**) written with Kit
+      // Sebastian …": the first name on all tracks; the names after a mark on the tracks whose title above carries that mark – only when
+      // every mark is one of such a title (else read as before)
+      const fx = ruleOn('S480') && !sub && P.footMarks && P.footMarks.size ? line.match(/^(\p{L}[\p{L}\s]*?)\s+by\s+(.+?)\s*,?\s+except\s*[,:]?\s*(\(\s*(?:\*+|†+|‡+)\s*\).+)$/iu) : null;
+      if (fx && isRole(P, `${cap(clean(fx[1]))} By`)) {
+        const role = `${cap(clean(fx[1]))} By`;
+        const parts = fx[3].replace(/\.\s*$/, '').split(/\s*,\s*(?=\()/).map((x) => x.match(/^\(\s*(\*+|†+|‡+)\s*\)\s*(\p{L}[\p{L}\s-]*?)\s+with\s+(.+)$/iu));
+        if (parts.length && parts.every((x) => x && P.footMarks.has(x[1]) && isRole(P, `${cap(clean(x[2]))} By`))) {
+          let found = 0;
+          names(P, clean(fx[2])).forEach((n) => { if (addCredit(P, n, role, null)) found++; });
+          for (const x of parts) {
+            const set = P.footMarks.get(x[1]);
+            names(P, clean(x[3])).forEach((n) => { if (addCredit(P, n, `${cap(clean(x[2]))} By`, { set, spec: `(${x[1]})` })) found++; });
+          }
+          if (found) return;
+        }
+      }
       // [Z-TBL] (3.92.0, S145)
       if (ruleOn('S145') && !sub && P.resolveTitles && !(P.exceptHead && P.exceptHead.open)) {
         if (/^all\s/i.test(line) || /^all\s/i.test(P.line0)) P.trackBlock = null;
@@ -14860,6 +15052,17 @@
         const pm = line.match(P.POS_LINE);
         if (pm && P.posOrder.length > 1) {
           P.trackPos = pm[1];
+          P.ignored.push({ text: P.line0, why: 'trackTitle' });
+          return;
+        }
+        // [Z-LB-TRACKBLOCKS] (3.222.0, S480) "Hang Up (Pt 2) (*)" above "Serra Petale (Guitar, …), …": that track's block; its mark kept for
+        // the footnotes of the writers below ("(*) written with …")
+        const mt = markedTitle(P, line);
+        const hereT = mt ? (String(P.allLines[P.curLi] || '').trim() === String(raw || '').trim() ? P.curLi : P.allLines.findIndex((x) => String(x || '').trim() === String(raw || '').trim())) : -1;
+        if (mt && !titleLike(P, lineNear(P, hereT, -1)) && bareBlockCount(P) >= 2) {
+          P.trackBlock = { title: mt.title, scope: { set: mt.set, spec: `“${mt.title}”` } };
+          if (mt.mark) P.footMarks.set(mt.mark, new Set([...(P.footMarks.get(mt.mark) || []), ...mt.set]));
+          P.trackPos = '';
           P.ignored.push({ text: P.line0, why: 'trackTitle' });
           return;
         }
@@ -15595,6 +15798,27 @@
         }
         if (P.lineupLines.has(keyOf(c))) Object.assign(c, { members: true, lineup: true });
       }
+      // [Z-IZ-JACKETS] (3.222.0, S495) "Pressed by Les Disques Garcia, France": a country after a company of the same line is where it is
+      // (its area), no company of its own
+      if (ruleOn('S495')) {
+        for (let k = P.companies.length - 1; k >= 0; k--) {
+          const c = P.companies[k];
+          const country = (n) => COUNTRY_NAMES.test(n) || /^(?:USA|UK|U\.S\.A\.|U\.K\.|The Netherlands|United States|United Kingdom)$/.test(n);
+          const name = String((c.who || {}).name || '').trim();
+          if (!country(name)) continue;
+          const peer = P.companies.find((x) => x !== c && x.role === c.role && String(x.line || '') === String(c.line || '') && !country(String((x.who || {}).name || '').trim()));
+          if (!peer) continue;
+          if (!peer.who.area) peer.who.area = name;
+          P.companies.splice(k, 1);
+        }
+      }
+      // [Z-RDE-PLACETRACKS] (3.222.0, S493) the place of an event ("Rituals Over Limburg III Festival" at Nieuwe Nor): said at the place
+      if (P.eventLines && P.eventLines.size) {
+        for (const c of P.companies) {
+          const ev = P.eventLines.get(String(c.line || '').trim());
+          if (ev && /recorded\s+at/i.test(String(c.role || ''))) c.eventName = ev;
+        }
+      }
       for (let k = P.credits.length - 1; k >= 0; k--) {
         const c = P.credits[k];
         const same = (x) => x !== c && x.who && c.who && norm(x.who.name) === norm(c.who.name);
@@ -16224,6 +16448,10 @@
       // by …", "Recorded at …"; a title next to another title is a line of a tracklist, no block)
       P.curLi = -1;
       P.ROLE_PAIR = /^[^:]{1,60}?\s*:\s*\S|^\S.{0,60}?\s[–—-]\s+\S/u;
+      // ([Z-LB-TRACKBLOCKS] 3.222.0, S480) also "Name (roles), Name (roles)" – a line of players below a title
+      if (ruleOn('S480')) P.ROLE_PAIR = /^[^:]{1,60}?\s*:\s*\S|^\S.{0,60}?\s[–—-]\s+\S|^[^():,]{2,60}?\s*\([^)]+\)\s*(?:,|$|\.|\s+\p{Lu})/u;
+      P.eventLines = new Map(); // [Z-RDE-PLACETRACKS] (3.222.0, S493) a line of a place → the event of it ("Rituals Over Limburg III Festival")
+      P.footMarks = new Map(); // [Z-LB-WRITTENEXCEPT] (3.222.0, S480) "*" → the tracks of the title with that mark
       P.SIDE_LINE = /^(?:side|disc|disk|cd|lp|record|seite)\s*[\w]{1,3}\s*:?$/i;
       // (a title without quotation marks and position opens a block only in a text of two such blocks at least – not a band's name
       // above its members, "Black Sabbath" / "Ozzy Osbourne: vocals")
@@ -17678,7 +17906,7 @@
       const same = g.roles.find((r) => norm(r.role) === norm(c.role));
       if (!same) g.roles.push({ role: c.role, catno: c.catno || '', tracks: c.tracks || null, ...(c.line ? { line: c.line } : {}), ...(c.fromAbout ? { fromAbout: true } : {}), ...(c.fromNotes ? { fromNotes: true } : {}), ...(c.medium ? { medium: c.medium } : {}), ...(c.media ? { media: c.media } : {}),
         ...(c.notesLine ? { notesLine: c.notesLine } : {}), ...(c.typos ? { typos: c.typos } : {}), ...(c.anv ? { anv: c.anv } : {}),
-        ...(c.date ? { date: c.date } : {}), ...(c.roleCredit ? { roleCredit: c.roleCredit } : {}), ...(c.concert ? { concert: c.concert } : {}),
+        ...(c.date ? { date: c.date } : {}), ...(c.roleCredit ? { roleCredit: c.roleCredit } : {}), ...(c.concert ? { concert: c.concert } : {}), ...(c.eventName ? { eventName: c.eventName } : {}),
         ...(c.partScope ? { partScope: c.partScope } : {}), refs: [] }); // ([Z-EXCEPTC] 3.125.0: the year of a commission; [Z-PARTSCOPE] 3.197.0)
       // ([Z-PHOTOS] 3.128.0) a role credit of the text ("photo of X"): two of one role joined
       else if (c.roleCredit && same.roleCredit !== c.roleCredit) same.roleCredit = [same.roleCredit, c.roleCredit].filter(Boolean).join(', ');
@@ -32755,6 +32983,7 @@
       if (r.fromNotes) Object.assign(row, { fromNotes: true, notesCredit: r.line || '' });
       if (r.typos) row.typos = r.typos; // [S050] (3.32.5)
       if (r.concert) row.concert = r.concert; // [Z-CONCERTHINT] (3.132.0, S221) a suggestion of a concert's sentence
+      if (r.eventName && ruleOn('S493')) row.eventHint = r.eventName; // [Z-RDE-PLACETRACKS] (3.222.0) an event at this place
       if (r.roleCredit) Object.assign(row, { roleCredit: r.roleCredit, roleCreditTouched: true }); // [Z-PHOTOS] [Z-SUPPORTED] (3.128.0)
       // ([Z-SUPPORTED] 3.128.0, review) MusicBrainz has no relationship of a label for support: said at the row (an artist has one)
       if (ruleOn('S208') && /^supported by$/i.test(String(r.role || '').trim())) row.notes = [...(row.notes || []), 'supportLabel'];
@@ -33084,12 +33313,22 @@
         if (rmdRefresh()) renderSource();
         // [Z-PLAYS] (3.102.0, S168; review: with the rows remembered back) the instruments of "I played …" no one is credited with
         if (playsRefresh()) renderSource();
+        // [Z-LB-ADDPROD] (3.222.0, S482) an additional producer on the level of the producers of the same source ("Produced by …" on the
+        // recordings: "Additional production by …" there too)
+        if (ruleOn('S482')) {
+          const prodLv = uniq(S.rows.filter((r) => !r.manual && !r.supp && r.level !== 'skip' && (r.types || []).includes('producer') && !/additional/i.test(`${r.raw} ${(r.mods || []).join(' ')}`)).map((r) => r.level));
+          if (prodLv.length === 1) {
+            S.rows.filter((r) => !r.manual && !r.supp && r.level !== 'skip' && r.level !== prodLv[0] && (r.types || []).includes('producer') && /additional/i.test(`${r.raw} ${(r.mods || []).join(' ')}`) && findRowType(r, prodLv[0]))
+              .forEach((r) => { r.level = prodLv[0]; resolveRowType(r); });
+          }
+        }
+        // [Z-PERCDRUMS] (3.222.0, S490) a person with only drums and percussion (and the pairs of INSTS_KEEP_PAIRS) keeps them on the tracks
         // [Z-INSTSAUTO] (3.191.0, S339; a quick switch, off) every person with two or more instruments the source names without tracks:
         // "⑃ on the release + group" by itself – the instruments on the release, their common level on the recordings
         if (ruleOn('S339') && ruleOn('S169')) {
           let nAuto = 0;
           for (const a of [...S.artists.values()]) {
-            if (a.insts || a.instsNo || entrySkipped(a) || uniq(instsRows(a).map(lineKeyOf)).length < INSTS_SUGGEST || instsOneTrack(a)) continue;
+            if (a.insts || a.instsNo || entrySkipped(a) || uniq(instsRows(a).map(lineKeyOf)).length < INSTS_SUGGEST || instsOneTrack(a) || instsKeepPairs(a)) continue;
             instsSet(a, 'release');
             if (a.insts === 'release') nAuto += 1;
           }
@@ -33824,7 +34063,7 @@
 
   async function findFestivals(seq) {
     S.festivals = [];
-    const text = String((S.release && S.release.notes) || '');
+    const text = notesForDates(String((S.release && S.release.notes) || '')); // ([Z-RDE-PLACETRACKS] 3.222.0, S493) a festival with its day
     if (!ruleOn('S056') || !text.trim()) return;
     const re = new RegExp(TEXT_FESTIVAL_WORDS.source, 'giu');
     const seen = new Set();
@@ -38896,7 +39135,9 @@
   /** [3.31.6] Tracks set from the notes: ⓘ with the line they come from (item 97c). */
   /** [S054] (3.37.0) ⓘ with the line of the Discogs notes a row comes from (the transparency note). */
   const notesLineInfo = (row) => (row.notesCredit ? `<span class="dci-info dci-notesline" title="${esc(tr('notes.creditLine', { text: row.notesCredit }))}">ⓘ</span>` : '');
-  const notesFromHtml = (row) => (row.notesFrom ? `<div class="dci-sub dci-notesfrom"><span class="dci-info" title="${esc(tr('matrix.notesFrom', { text: row.notesFrom }))}">ⓘ</span> ${esc(tr('role.notesTracks', { list: trackListLabel(row.notesTracks || new Set()) }))}</div>` : '');
+  const notesFromHtml = (row) => (row.notesFrom ? `<div class="dci-sub dci-notesfrom"><span class="dci-info" title="${esc(tr('matrix.notesFrom', { text: row.notesFrom }))}">ⓘ</span> ${esc(tr('role.notesTracks', { list: trackListLabel(row.notesTracks || new Set()) }))}</div>` : '')
+    // [Z-RDE-PLACETRACKS] (3.222.0, S493) the event at this place ("Rituals Over Limburg III Festival"): MusicBrainz prefers the event
+    + (row.eventHint && ruleOn('S493') ? `<div class="dci-sub dci-eventhint" data-el="event-hint">${esc(tr('role.eventHint', { name: row.eventHint }))}</div>` : '');
 
   /** [S050] (3.32.5) A role read with its typos corrected: what was written (collected item 115). */
   const typoHtml = (row) => ((row.typos || []).length ? `<div class="dci-sub dci-typo">${esc(row.typos.map((t) => tr('role.typoRead', { read: t.read, written: t.written })).join(' · '))}
@@ -39419,6 +39660,114 @@
   const usDateOrder = () => ['us', 'usa', 'united states'].includes(norm((S.release && S.release.country) || ''));
 
   /** The sentence around a found date: its line, split at ";" and at full stops that end a sentence. */
+  /**
+   * [Z-RDE-MEDIA] [Z-RDE-TRACKPLACES] [Z-RDE-PLACETRACKS] (3.222.0, S491 – S493) Lines of tracks with their places and days, as a release
+   * of concerts writes them:
+   *   "Track 1-10 / CD1:" (a heading: the tracks of the lines below it, up to the next such heading),
+   *   "Recordings from the Northern Excavation Tour 2025" (the year of the days below it without one – only for recordings),
+   *   "Track 1, 3-6 MS Stubnitz/Hamburg/Germany Oct 7" (tracks, place/town/country, day), "and Ambientalika V/KIC/Zagreb/Croatia Apr 11, 2026"
+   *   (another place and day of the same tracks; four parts: the event first), "at The Alte Feuerwache Loschwitz, Dresden, Germany." and
+   *   "Recording from Rituals Over Limburg III Festival at Nieuwe Nor, Heerlen, The Netherlands." below a heading (its place), "August 2,
+   *   2025." (its day). The numbers follow the text's own counting: "1, 3-6" is track 1 and tracks 3 to 6 (not medium 3, track 6).
+   * Gives for each line read so: { i, place: "Recorded at X, Town, Country (tracks 1, 3 to 6)", date: "Tracks 1, 3 to 6 recorded on October
+   * 7, 2025", event: "Rituals Over Limburg III Festival", ignore: 'heading' }.
+   */
+  function trackPlaceRewrite(lines) {
+    const out = new Map();
+    if (!ruleOn('S491')) return out;
+    const clean = (x) => String(x || '').replace(/\s+/g, ' ').trim();
+    const MON = TEXT_MONTH_WORD.source;
+    const spec = (x) => String(x || '').replace(/\s*[-–]\s*/g, ' to ').replace(/\s*,\s*/g, ', ').replace(/\s*(?:&|and)\s*/gi, ', ').trim();
+    const HEAD = /^\s*tracks?\s+(\d{1,3}(?:\s*[-–]\s*\d{1,3})?(?:\s*,\s*\d{1,3}(?:\s*[-–]\s*\d{1,3})?)*)\s*(?:\/|–|-)\s*(?:cd|disc|disk|lp|side|medium)\s*\d{1,2}\s*:?\s*$/i;
+    const DAY = new RegExp(`((?:${MON})\\.?\\s+\\d{1,2}(?:st|nd|rd|th)?|\\d{1,2}(?:st|nd|rd|th)?\\s+(?:${MON})\\.?)(?:,?\\s*((?:19|20)\\d{2}))?`, 'i');
+    const TRACK_LINE = new RegExp(`^\\s*tracks?\\s+(\\d{1,3}(?:\\s*[-–]\\s*\\d{1,3})?(?:\\s*,\\s*\\d{1,3}(?:\\s*[-–]\\s*\\d{1,3})?)*)\\s+(.+?)\\s+(${DAY.source})\\s*\\.?\\s*$`, 'i');
+    const AND_LINE = new RegExp(`^\\s*(?:and|&|\\+)\\s+(.+?)\\s+(${DAY.source})\\s*\\.?\\s*$`, 'i');
+    // (only a text with such lines: a heading of tracks or a line of tracks with a place and a day)
+    if (!lines.some((l) => HEAD.test(String(l || '')) || TRACK_LINE.test(String(l || '')))) return out;
+    let head = '';
+    let year = '';
+    let last = '';
+    let headEvent = '';
+    const where = (x) => {
+      const parts = String(x).split(/\s*\/\s*/).map(clean).filter(Boolean);
+      if (parts.length < 2) return null;
+      const event = parts.length >= 4 ? parts[0] : '';
+      const rest = parts.length >= 4 ? parts.slice(1) : parts;
+      return { place: rest.join(', '), event };
+    };
+    const dayOf = (d, y) => `${d}, ${y || year}`.replace(/,\s*$/, '');
+    lines.forEach((l0, i) => {
+      const l = String(l0 || '').trim();
+      let m;
+      if ((m = l.match(HEAD))) {
+        head = spec(m[1]);
+        year = '';
+        last = '';
+        headEvent = '';
+        out.set(i, { i, ignore: 'heading' });
+        return;
+      }
+      if ((m = l.match(/^recordings?\s+(?:from|of|during|on)\s+(?:the\s+)?.*\b(?:tour|festival|sessions?|concerts?|shows?)\b.*?\b((?:19|20)\d{2})\s*$/i)) && !/\s(?:at|by|in)\s/i.test(l) && l.split(/\s+/).length <= 10) {
+        year = m[1];
+        out.set(i, { i, ignore: 'heading' });
+        return;
+      }
+      if ((m = l.match(TRACK_LINE))) {
+        const w = where(m[2]);
+        const dm = m[3].match(DAY);
+        if (!w || !dm) return;
+        last = spec(m[1]);
+        out.set(i, { i, place: `Recorded at ${w.place} (tracks ${last})`, date: (dm[2] || year) ? `Tracks ${last} recorded on ${dayOf(dm[1], dm[2])}.` : '', event: w.event });
+        return;
+      }
+      if (last && (m = l.match(AND_LINE))) {
+        const w = where(m[1]);
+        const dm = m[2].match(DAY);
+        if (!w || !dm) return;
+        out.set(i, { i, place: `Recorded at ${w.place} (tracks ${last})`, date: (dm[2] || year) ? `Tracks ${last} recorded on ${dayOf(dm[1], dm[2])}.` : '', event: w.event });
+        return;
+      }
+      if (!head) return;
+      if (!l) return;
+      // (below a heading of tracks) "at X, Town, Country." / "Recording from Y Festival at X, Town, Country." / "Recording from a private performance"
+      if ((m = l.match(/^(?:(?:a\s+)?record(?:ing|ings|ed)\s+(?:from|at|live\s+at)\s+(.+?)\s+)?at\s+(?:the\s+)?(\p{Lu}.+?)\.?\s*$/iu))) {
+        if (m[1]) headEvent = !/^(?:a|an|the)\s+(?:private\s+)?(?:performance|concert|show|gig)\b/i.test(m[1]) ? clean(m[1].replace(/^the\s+/i, '')) : '';
+        out.set(i, { i, place: `Recorded at ${m[2]} (tracks ${head})`, event: headEvent || '' });
+        last = head;
+        return;
+      }
+      if (/^(?:a\s+)?record(?:ing|ings)\s+(?:from|of)\s+(?:a|an|the)\s+(?:private\s+|live\s+)?(?:performance|concert|show|gig|session)\b[^.]*\.?$/i.test(l)) {
+        out.set(i, { i, ignore: 'heading' });
+        return;
+      }
+      // ("Recording from Rituals Over Limburg III Festival" above "at Nieuwe Nor, Heerlen, The Netherlands.": the event of the place below)
+      if ((m = l.match(/^(?:[Aa]\s+)?[Rr]ecord(?:ing|ings|ed)\s+(?:from|of|at|live\s+at)\s+(?:[Tt]he\s+)?(\p{Lu}[^.]*?)\.?\s*$/u)) && !/\sat\s/.test(m[1])) {
+        headEvent = clean(m[1]);
+        out.set(i, { i, ignore: 'heading', event: headEvent });
+        return;
+      }
+      if ((m = l.match(new RegExp(`^(${DAY.source})\\.?\\s*$`, 'i')))) {
+        const dm = m[1].match(DAY);
+        if (dm && (dm[2] || year)) out.set(i, { i, date: `Tracks ${head} recorded on ${dayOf(dm[1], dm[2])}.`, event: headEvent });
+      }
+    });
+    return out;
+  }
+  /** [Z-RDE-TRACKPLACES] (3.222.0, S492) The notes for the dates: lines of tracks with places and days written as sentences of dates. */
+  function notesForDates(text) {
+    if (!ruleOn('S492')) return String(text || '');
+    const lines = String(text || '').split('\n');
+    const rw = trackPlaceRewrite(lines);
+    if (!rw.size) return String(text || '');
+    return lines.map((l, i) => {
+      const x = rw.get(i);
+      if (!x) return l;
+      if (x.date) return x.event && /\bfestival\b/i.test(x.event) ? x.date.replace(' recorded on ', ` recorded at the ${x.event} on `) : x.date;
+      if (x.event && /\bfestival\b/i.test(x.event)) return '';
+      return x.ignore ? '' : l;
+    }).join('\n');
+  }
+
   function sentenceAround(src, a, b) {
     const lineStart = src.lastIndexOf('\n', a - 1) + 1;
     let lineEnd = src.indexOf('\n', b);
@@ -39781,7 +40130,7 @@
    */
   function foundDateText() {
     const wiki = S.supp && S.supp.source === WIKIPEDIA ? String(S.supp.rel.notes || '') : '';
-    return [String((S.release && S.release.notes) || ''), wiki].filter(Boolean).join('\n');
+    return [notesForDates(String((S.release && S.release.notes) || '')), wiki].filter(Boolean).join('\n'); // ([Z-RDE-TRACKPLACES] 3.222.0, S492)
   }
   function dateFinds() {
     const notes = foundDateText();
@@ -40839,8 +41188,14 @@
     };
     const grouped = new Set(ruleOn('D038') ? finds.filter((f) => f.tracks && f.tracks.size).flatMap((f) => daysOf(f) || []) : []);
     const summedUp = (x) => grouped.size > 0 && !(x.tracks && x.tracks.size) && (daysOf(x) || [null]).every((d) => grouped.has(d));
+    // [Z-RDE-ABOUTDATES] (3.222.0, S494) only a year, no tracks ("… during 2025 and subsequent performances in 2026"), where other dates of
+    // the notes give days with their tracks: says nothing more – not placed
+    const dayTracks = ruleOn('S494') && finds.some((x) => x.tracks && x.tracks.size && x.value && x.value.begin && x.value.begin.day);
+    const yearOnly = (x) => dayTracks && !(x.tracks && x.tracks.size) && x.value && x.value.begin && !x.value.begin.month && !x.multi
+      && [x.hint, ...(x.hints || [])].includes('performance'); // (a year of the recordings only – not of ℗ / © or else)
     finds.forEach((x0, i) => {
       const key = `notes:${i}`;
+      const noCell = yearOnly(x0); // [Z-RDE-ABOUTDATES] (3.222.0, S494) in the pool only
       if (S.aboutOff && fromAboutText(x0)) return; // [3.16.1]
       if (summedUp(x0)) return; // [Z-WIKISEMI] (3.187.0, D038)
       // Media choice: dates only for tracks of media not chosen stay out; the others keep the chosen tracks
@@ -40878,6 +41233,7 @@
         const e = shared || poolDateFor(x.value, group, gkey, forLiner ? tr('liner.poolName', { name: liner.name }) : '');
         // [3.17.6] marked for the liner notes: their row shows it as a suggestion
         if (forLiner) e.liner = liner.name;
+        if (noCell) return; // ([Z-RDE-ABOUTDATES] 3.222.0, S494) a year alone: in the pool, not placed
         const common = addCommonDate(e.begin, e.end, group, gkey, e);
         if (!group) return;
         // [D022] (3.32.0) a period of Performance: what its days have in common at once (the period stays in the pool)
@@ -47269,6 +47625,21 @@
    * person as a guest (S322) or the track's artists name the person (S078) on just that one: all the instruments stay on that track,
    * nothing goes on the release ("⑃ on the release …" greyed, with its reason; the quick switch S339 leaves the person out).
    */
+  /**
+   * [Z-PERCDRUMS] (3.222.0, S490) The person's instruments are only such pairs of the mapping (INSTS_KEEP_PAIRS: drums and percussion,
+   * percussion and congas …): each of them with a partner of its pair – the quick switch S339 does not put them on the release (by hand it
+   * still can). With any other role or instrument the person is grouped as before.
+   */
+  function instsKeepPairs(a) {
+    if (!ruleOn('S490')) return false;
+    const key = (r) => norm(String(r.primaryText || r.raw || '')).replace(/\s*\(drum set\)$/, '').replace(/^drum set$/, 'drums').replace(/s$/, '');
+    const own = uniq(instsRows(a).map(key)).filter(Boolean);
+    const others = S.rows.filter((r) => r.artistKey === a.key && !r.supp && r.level !== 'skip' && !instsRows(a).includes(r) && ['recording', 'release'].includes(r.level)
+      && (r.types || []).some((t) => ['instrument', 'vocal'].includes(t)));
+    if (own.length < 2 || others.length) return false;
+    const pairs = (INSTS_KEEP_PAIRS || []).map((p) => p.map((x) => norm(x).replace(/s$/, '')));
+    return own.every((x) => pairs.some((p) => p.includes(x) && p.some((y) => y !== x && own.includes(y))));
+  }
   function instsOneTrack(a) {
     if (!ruleOn('S382') || a.insts === 'release' || selIdx().length < 2) return false;
     const rows = instsRows(a);
