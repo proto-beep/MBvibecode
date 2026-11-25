@@ -1721,10 +1721,11 @@ def case_bwv3138r():
 def case_magic3155():
     """Credits Importer 3.155.0 (collected item Z-WORKMAGIC, rule S284): "✨ Answer all" at the works matrix. MusicBrainz's search finds
     "Song Two" by Writer W (the writer of track 2); track 3 (Writer Z) none; track 4 no writers.
-    A) Careful (the default): the preview names one answer – track 2 linked to "Song Two" (the title and all writers) –; nothing set yet.
+    A) Careful (the default): the preview names one answer – track 2 linked to "Song Two" (3.220.0, S467: "link “Song Two”" under the heading
+       of its reason "Same title, same writers") –; nothing set yet.
     B) "Answer these": track 2's work planned, ✨ at its track (its tooltip the answer), a line in the log; "↺ Undo magic" there.
     C) "↺ Undo magic": the plan gone, no ✨, the log says so.
-    D) ▾ Balanced (stored): the preview adds new works for tracks 3 and 4; ⓘ shows the table of the eight kinds of questions by level.
+    D) ▾ Balanced (stored): the preview adds new works for tracks 3 and 4 ("create a new work …", under "New works"); ⓘ shows the table of the eight kinds of questions by level.
     E) ⚙ Settings → Works: "Works" switched off – the preview names nothing of works, says it is off."""
     FOUND = H.uid('cccccccc', 3155)
     WW = H.ARTISTS[3007][0]
@@ -1751,7 +1752,7 @@ def case_magic3155():
             open_preview()
             a = pg.evaluate(PREVIEW)
             print('A)', a)
-            results.append(bool(a) and a['items'] == [['work', '1.2 – work “Song Two” linked (the title and all writers)']] and 'Careful' in a['text'] and not pg.evaluate(PLAN))
+            results.append(bool(a) and a['items'] == [['work', '1.2 – link “Song Two”']] and 'Same title, same writers (1)' in a['text'] and 'Careful' in a['text'] and not pg.evaluate(PLAN))
             pg.locator('[data-act=magic-apply]').evaluate('b => b.click()')
             H.wait_for(pg, "!!document.querySelector('[data-act=magic-undo]')", 20)
             pg.wait_for_timeout(400)
@@ -1774,7 +1775,8 @@ def case_magic3155():
             cur = pg.evaluate("(document.querySelector('[data-el=magic-info] .dci-mx-magiccur') || {}).textContent || ''")
             print('D)', stored, d1, '| ⓘ:', info, cur)
             kinds = [k for k, _ in (d1 or {'items': []})['items']]
-            results.append(stored == '"balanced"' and bool(d1) and kinds.count('work') == 3 and any('1.3 – new work' in t for _, t in d1['items']) and any('1.4 – new work' in t for _, t in d1['items'])
+            results.append(stored == '"balanced"' and bool(d1) and kinds.count('work') == 3 and any('1.3 – create a new work “Song Three”' in t for _, t in d1['items']) and any('1.4 – create a new work' in t for _, t in d1['items'])
+                           and 'New works (2)' in d1['text'] and d1['text'].index('Same title, same writers') < d1['text'].index('New works')
                            and info == ['Suites', 'Works', 'Medleys', 'Live', 'Cover', 'Publishers', 'Column dates', 'Dedications'] and cur == 'Balanced')
             # E) the kind "Works" switched off
             H.open_settings(pg, 'works')
@@ -2631,8 +2633,8 @@ def case_samework3192():
                 d.append(preview(pg))
                 b.close()
             print('D)', d)
-            results.append(len(d[0]) == 1 and 'first of its tracks only' in d[0][0][1] and len(d[1]) == 1 and 'first of its tracks only' in d[1][0][1]
-                           and any('one new work “Song Two” for 3 tracks' in x[1] for x in d[2]))
+            results.append(len(d[0]) == 1 and 'for its first track only' in d[0][0][1] and len(d[1]) == 1 and 'for its first track only' in d[1][0][1]
+                           and any('one new work “Song Two” for all 3 tracks' in x[1] for x in d[2]))  # (3.220.0, S467: the wordings)
             b, pg, errs = start(p, off=['S342'])
             f = pg.evaluate(ROW)
             print('F)', f)
@@ -2837,7 +2839,7 @@ def case_parthead3196():
             pg.fill('[data-f=magic-suite-name]', 'Bosque')
             pg.locator('[data-act=magic-apply]').evaluate('b => b.click()'); H.wait_for(pg, "!!document.querySelector('[data-act=magic-undo]')", 20)
             pg.wait_for_timeout(1200)
-            results.append(not any(k == 'suite' for k, _, _ in c0) and any(k == 'suite' and 'with 2 parts' in t and f for k, t, f in c1))
+            results.append(not any(k == 'suite' for k, _, _ in c0) and any(k == 'suite' and ('with 2 parts' in t or ', 2 parts' in t) and f for k, t, f in c1))  # (3.220.0, S467: "suite “…”, 2 parts")
             cc = pg.evaluate(LINE)
             pg.locator('[data-act=suite-rename]').first.evaluate('b => b.click()'); pg.wait_for_timeout(300)
             pg.fill('[data-f=suite-rename]', 'Bosque de Niebla')

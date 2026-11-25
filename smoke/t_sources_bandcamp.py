@@ -2551,7 +2551,7 @@ def case_titleinfo3217():
             m['format'] = 'Digital Media'
         return d
     H.ws_release = ws
-    ROWS = """() => window.__S.rows.filter(r => r.level !== 'skip').map(r => [(window.__S.artists.get(r.artistKey) || {}).name, r.primaryText || (r.types || [])[0], [...r.tracks].sort().join(',')])"""
+    ROWS = """() => window.__S.rows.map(r => [(window.__S.artists.get(r.artistKey) || {}).name, r.primaryText || (r.types || [])[0], [...r.tracks].sort().join(',')])"""
 
     def run(p, off=()):
         H.RULES_OFF = list(off)
@@ -2636,7 +2636,7 @@ Catalog Number: DR 21 CD"""
             m['format'] = 'Digital Media'
         return d
     H.ws_release = ws
-    ROWS = """() => window.__S.rows.filter(r => r.level !== 'skip').map(r => [(window.__S.artists.get(r.artistKey) || {}).name, r.raw, (r.types || []).join('/'), r.primaryText || '', [...r.tracks].sort().join(',')])"""
+    ROWS = """() => window.__S.rows.map(r => [(window.__S.artists.get(r.artistKey) || {}).name, r.raw, (r.types || []).join('/'), r.primaryText || '', [...r.tracks].sort().join(',')])"""
     UNREC = """[...document.querySelectorAll('.dci-unrec li')].map(li => [li.textContent.replace(/\\s+/g, ' ').trim(), [...li.querySelectorAll('.dci-bcsrc a')].map(a => a.textContent.trim())])"""
     IGN = """[...document.querySelectorAll('.dci-ignored li:not(.dci-ign-group)')].map(li => li.textContent.replace(/\\s+/g, ' ').trim())"""
 
@@ -2697,6 +2697,81 @@ Catalog Number: DR 21 CD"""
         H.ws_release = orig_ws
         H.MAIN = main0
         H.RULES_OFF = []
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_lopez3220():
+    """Credits Importer 3.220.0 (collected item Z-LOPEZ, S469): Kraków 2018 (Bandcamp, shortened): the credits "Paul Lytton – percussion",
+    "Ramón López – percussion", "Rafał Mazur – electric bass"; the track titles "Improv 1 (Lopez dr// Mazur, el-b)", "Improv 2 (Guy db //
+    López, dr // Mazur, el-b)", "Improv 3 (Lytton, perc, cym // López, dr)", "Improv 4 (Lytton, perc, cym // López, dr)".
+    A) Ramón López on tracks 1 and 2 ("Lopez" without its accent is he), no entry "Lopez" of its own; nothing missing.
+    B) The titles give him drums on all of his tracks (his lineup row "percussion" is left out): his row still has the line of the
+       credits (the place the companion marks).
+    C) (3.220.0, S468) the question of lineup and track credits on Bandcamp: "Who plays on which tracks? (Bandcamp: lineup and track pages)".
+    D) S469 off (as 3.219.0): his row has no line of the credits."""
+    for k, n in [(9321, 'percussion'), (9322, 'drums'), (9323, 'cymbal'), (9324, 'electric bass'), (9325, 'double bass')]:
+        H.attr(k, n, 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    ALBUM = 'https://lopez.bandcamp.com/album/krakow'
+    titles = ['Improv 1 (Lopez dr// Mazur, el-b)', 'Improv 2 (Guy db // López, dr // Mazur, el-b)', 'Improv 3 (Lytton, perc, cym // López, dr)', 'Improv 4 (Lytton, perc, cym // López, dr)']
+    credits = "Barry Guy – bass\nPaul Lytton – percussion\nRamón López – percussion\nRafał Mazur – electric bass"
+    H.BC_PAGES[ALBUM] = H.bc_page({'artist': 'Test Band', 'current': {'title': 'Testalbum', 'credits': credits, 'about': ''},
+                                   'trackinfo': [{'track_num': i + 1, 'title': tt, 'duration': 180.0} for i, tt in enumerate(titles)]})
+    orig_ws = H.ws_release
+    main0 = H.MAIN
+    H.MAIN = H.MAIN.replace('  const S = {', '  const S = window.__S = {', 1)
+
+    def ws():
+        d = orig_ws()
+        d['relations'].append({'target-type': 'url', 'type': 'purchase for download', 'url': {'resource': ALBUM}})
+        for m in d['media']:
+            m['format'] = 'Digital Media'
+        return d
+    H.ws_release = ws
+    ROWS = """() => window.__S.rows.map(r => [(window.__S.artists.get(r.artistKey) || {}).name, r.raw, [...r.tracks].sort().join(','), JSON.stringify([...(r.srcRefs || []), ...(r.dglRefs || [])]), r.level, r.id])"""
+    results = []
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
+            H.wait_still(pg, "document.body.innerHTML", 10, 400)
+            rows = pg.evaluate(ROWS)
+            logs = pg.evaluate("[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9)).filter(x => /title/i.test(x))")
+            for r in rows:
+                print('   Zeile:', r[:3], r[4:], (r[3] or '')[:160])
+            print('   Log:', logs)
+            rl = [r for r in rows if r[0] == 'Ramón López']
+            print('A)', [r[:3] for r in rl])
+            results.append(any('0' in r[2].split(',') and '1' in r[2].split(',') for r in rl) and not any(r[0] == 'Lopez' for r in rows) and not any('missing' in x.lower() or 'not found' in x.lower() for x in logs))
+            refsB = [x for r in rl for x in json.loads(r[3] or '[]')]
+            print('B)', [x.get('line') for x in refsB])
+            results.append(any(x.get('line') == 'Ramón López – percussion' for x in refsB))
+            dgt = pg.evaluate("((document.querySelector('[data-el=dglineup] p strong') || {}).textContent || '')")
+            print('C)', dgt)
+            results.append(dgt == 'Who plays on which tracks? (Bandcamp: lineup and track pages)')
+            results.append(not errs)
+            b.close()
+            # D) S469 off (as 3.219.0): the line lost with the row
+            H.RULES_OFF = ['S469']
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
+            H.wait_still(pg, "document.body.innerHTML", 10, 400)
+            refsD = [x for r in pg.evaluate(ROWS) if r[0] == 'Ramón López' for x in json.loads(r[3] or '[]')]
+            print('D)', refsD)
+            results.append(refsD == [] and not errs)
+            b.close()
+    finally:
+        H.RULES_OFF = []
+        H.ws_release = orig_ws
+        H.MAIN = main0
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

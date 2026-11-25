@@ -1997,7 +1997,7 @@ Photography: Jane Doe
         results.append(bool(place) and place['kind'] == 'place' and sorted(r[0] for r in place['rows']) == ['Mixed At', 'Recorded At'] and not tonart)
         print('   Jane Doe:', jd)
         results.append(bool(cd) and cd['kind'] == 'label' and bool(jd) and jd['kind'] == 'artist')
-        results.append(box == 'Lineup and track credits (pasted text)')
+        results.append(box == 'Who plays on which tracks? (pasted text: lineup and track credits)')  # (3.220.0, S468)
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.219.0
+// @version      3.220.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.219.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.219.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.220.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.220.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.219.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.220.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -841,7 +841,7 @@
       "matrix.sameTribute.one": "{n} work of {name} (the tribute) with this title – check before you link it:",
       "matrix.sameTribute.other": "{n} works of {name} (the tribute) with this title – check before you link one:",
       "matrix.tributeTag": "work of {name} – check",
-      "magic.why.tribute": "a work of the artist of the tribute, of exactly this title",
+      "magic.why.tribute": "a work of the artist of the tribute, same title",
       "dedbox.noTrack": "the work of which track? (from {where})",
       "dedbox.pickTitle": "This entry – on the level chosen",
       "dedbox.dismiss": "leave out",
@@ -1250,6 +1250,7 @@
       "date.used.other": "{n} rows",
       "date.suggestions": "Suggestions:",
       "date.sugg.copyright": "℗/© year in the notes {date}",
+      "date.sugg.copyrightSupp": "℗/© year in the notes of {name} {date}",
       "date.formTitle": "Edit date",
       "date.begin": "Begin date",
       "date.end": "End date",
@@ -2040,7 +2041,7 @@
       "suite.renameOk": "✓",
       "suite.renameTitle": "Change the name of the suite (its parts follow)",
       "suite.from.parthead": "from headings of parts of the track list",
-      "magic.what.suiteParts": "suite “{name}” with {n} parts ({from})",
+      "magic.what.suiteParts": "suite “{name}”, {n} parts ({from})",
       "log.suiteRenamed": "Suite renamed: “{name}”",
       "suite.forming": "Its form is open …",
       "suite.names": "Names:",
@@ -2360,6 +2361,15 @@
       "dgl.trackTitle": "The lineup's rows on the tracks without track credits",
       "dgl.lineup": "The lineup's",
       "dgl.lineupTitle": "As the lineup says: everyone on all tracks with the lineup's instrument – the track credits left out",
+      "dgl.title2": "Who plays on which tracks? (Discogs: lineup and track credits)",
+      "dgl.title2Any": "Who plays on which tracks? ({src}: lineup and track credits)",
+      "dgl.title2Bc": "Who plays on which tracks? (Bandcamp: lineup and track pages)",
+      "dgl.precise2": "Combine both (recommended)",
+      "dgl.track2": "Only what the tracks say",
+      "dgl.lineup2": "Only the lineup",
+      "dgl.preciseLine": "everyone on their tracks, with the more precise instrument",
+      "dgl.trackLine": "tracks with credits as their credits say, the lineup elsewhere",
+      "dgl.lineupLine": "everyone on all tracks, the track credits left out",
       "log.dglFound": "Lineup and the credits of single tracks differ – proposed: {list}",
       "log.dglAnswer": "Lineup: {choice}",
       "rmd.title.one": "Removed in the editor last time: {n} credit",
@@ -2546,19 +2556,37 @@
       "magic.rule.ded.balanced": "MusicBrainz has one entry of the name, the level is known",
       "magic.rule.ded.bold": "also without a track named: on the release group",
       "magic.what.suite": "suite “{name}” ({from})",
-      "magic.what.medley": "split into {n} works ({found} found in MusicBrainz)",
+      "magic.what.medley": "medley: {n} works ({found} of them already in MusicBrainz)",
       "magic.what.pick": "work “{title}” linked ({why})",
-      "magic.what.new": "new work “{title}”",
-      "magic.what.part": "part linked to “{title}”",
-      "magic.what.live": "“live” on the link of “{title}” ({why})",
-      "magic.what.coverAuto": "“cover” on “{title}” kept",
-      "magic.what.cover": "“cover” on “{title}” (written by {names})",
-      "magic.what.pub": "{name} publishes “{title}”",
-      "magic.what.coldate": "{name}: the date of the column {date}",
+      "magic.what.new": "create a new work “{title}”",
+      "magic.what.part": "link as a part of “{title}”",
+      "magic.what.live": "“{title}” live ({why})",
+      "magic.what.coverAuto": "cover of “{title}” – kept (set by itself: its writers play nothing here)",
+      "magic.what.cover": "cover of “{title}” by {names}",
+      "magic.what.pub": "publisher of “{title}”: {name}",
+      "magic.what.coldate": "{name}: date {date} (from its column)",
       "magic.what.ded": "{phrase}: {name}",
-      "magic.why.exact": "the title and all writers",
-      "magic.why.one": "the one found",
-      "magic.why.most": "the title and most writers",
+      "magic.why.exact": "same title, same writers",
+      "magic.why.one": "the only work of this title in MusicBrainz",
+      "magic.why.most": "same title, most of the writers",
+      "magic.what.link": "link “{title}”",
+      "magic.what.linkWhy": "link “{title}” – {why}",
+      "magic.what.coverOf": "cover of “{title}”",
+      "magic.what.coverBy": "cover of “{title}” by {name}",
+      "magic.what.coverPerformed": "cover of “{title}” as performed by {name}",
+      "magic.coverWord": "cover",
+      "magic.coverOffTitle": "Click: link only, without “cover”",
+      "magic.coverOnTitle": "Click: “cover” again",
+      "magic.group.coverBy": "Covers of works by {name}",
+      "magic.group.coverPerformed": "Covers of songs performed by {name}",
+      "magic.group.exact": "Same title, same writers",
+      "magic.group.most": "Same title, most of the writers",
+      "magic.group.one": "The only work of this title in MusicBrainz",
+      "magic.group.same": "One work for several tracks",
+      "magic.group.part": "Parts of a suite or a medley",
+      "magic.group.new": "New works",
+      "matrix.tributeTagBy": "cover of a work by {name}?",
+      "matrix.tributeTagPerformed": "cover of a song performed by {name}?",
       "magic.previewTitle": "What “✨ Answer all” would answer",
       "magic.none": "Nothing to answer at this level.",
       "magic.previewHead.one": "Level “{level}”: {n} answer",
@@ -3673,9 +3701,9 @@
       "samework.createAfter": "After you submit, {tracks} are linked with this work (staged with the next staging, not submitted).",
       "samework.created": "Work “{title}” has been created for {tracks}.",
       "samework.first": "Nothing staged: the work “{title}” for several tracks must exist in MusicBrainz first. “Stage” opens its form again; “↺ ask again” at its line takes the answer back.",
-      "magic.what.sameOne": "one work “{title}” for {n} tracks",
-      "magic.what.sameNew": "one new work “{title}” for {n} tracks",
-      "magic.what.sameFirst": "new work “{title}” for the first of its tracks only",
+      "magic.what.sameOne": "“{title}”: one work for all {n} tracks",
+      "magic.what.sameNew": "create one new work “{title}” for all {n} tracks",
+      "magic.what.sameFirst": "create “{title}” for its first track only (the others after it)",
       "log.sameWorkOne": "{tracks}: one work “{title}”",
       "log.sameWorkGate": "Stage: the work “{title}” for several tracks first – its form opens",
       "log.sameWorkCreated": "Work “{title}” created for several tracks ({mbid})",
@@ -5867,6 +5895,11 @@
     { id: 'S463', where: 'TEXT.parse (shopLines; SHOP_SELL_LINES)', note: 'Texts (3.219.0; collected item Z-BCSHOPLINE): more of what a shop writes to sell an edition is left out as "shop" (as S345) – "A rare … box-set available in very limited quantities.", "THIS IS A PRE-ORDER. Shipping in November", "November, 2026 exact date to be confirmed", "REQUEST A SIGNATURE in a personal message if you like!"; a credit in the line ("… by Jane Doe") keeps it. Off (as until 3.218.0): not recognized' },
     { id: 'S464', where: 'BANDCAMP.toRelease (bcLinesOnce, bcPages), bcSrcOf, unaWordsHtml, renderSource (ignLi), lineTracks', note: 'Bandcamp (3.219.0; collected item Z-BCTRACKSRC): where a line not recognized or left out is from – instead of "3: " the symbol of Bandcamp and the position, a link to the track page (its tooltip "Bandcamp track page 3 (Title)"), more than seven positions "1–12" to open; instead of "Vinyl LP: " the symbol and "edition “Vinyl LP”". A line of the album\'s text drops the same line of the track pages; the same line of several track pages is one line with their positions. Off (as until 3.218.0): "3: …" once per page' },
     { id: 'S465', where: 'BANDCAMP.toRelease (bcOneLetter, bcPerTrackPeople), labelHintHtml', note: 'Bandcamp (3.219.0; collected item Z-BCGROSSMANN): the track pages write a name or a role one letter apart (a typo) – read as the spelling most of them have, a hint lists them; more apart, each spelling stays (its own role credit or "credited as" for its tracks). The instruments the track pages give a person per track (two or more, not on all tracks) stay on their tracks – a hint says so (S339 takes none of them: the source names tracks). Off (as until 3.218.0): each spelling its own' },
+    { id: 'S466', where: 'tributeCandidates, runArtistWorks, awButtonsHtml, renderMessages, awLineHtml', note: 'Works of the artists (3.220.0; collected item Z-ARTWORKSSTOP2): the buttons of S456 also in the messages of a long search – "“Rollins”: 86 artists in MusicBrainz … this can take a while" and "… takes long" –, shown at once (until 3.219.0 only a line above the works matrix, and after the message of many artists not drawn until later): "Stop" while it runs or is about to, "Continue" and "Stop and discard" once stopped, "Read again" once discarded, none when it is done. Off: as in 3.219.0' },
+    { id: 'S467', where: 'magicPlan, magicPopHtml, attrStepOf, the yellow tag of a tribute\'s work (matrix.tributeTagBy)', note: 'Works (3.220.0; collected item Z-MAGICWORDS): the answers of "✨ Answer all" in plainer words, by group of their reason (its heading once – "Covers of works by Sonny Rollins (6)", "Covers of songs performed by Sonny Rollins (2)", "The only work of this title in MusicBrainz (3)" –, each by its track); a work of the artist of a tribute is one answer "cover of “Doxy”" – linked with "cover" on its link (from "balanced" on) –; a click on "cover" strikes it (linked only), again brings it back. The yellow tag in the matrix asks: "cover of a work by Sonny Rollins?" / "cover of a song performed by Sonny Rollins?". Off: as until 3.219.0' },
+    { id: 'S468', where: 'dgLineupHtml', note: 'Lineup and track credits (3.220.0; collected item Z-DGLWORDS; S217): the question in plain words – "Who plays on which tracks? (Bandcamp: lineup and track pages)" – and its buttons saying what they do, each with a line below it: "Combine both (recommended)" (everyone on their tracks, the more precise instrument), "Only what the tracks say" (tracks with credits as their pages say, the lineup elsewhere), "Only the lineup" (everyone on all tracks, the track pages left out). Off: "More precise everywhere", "Per track", "The lineup\'s" as until 3.219.0' },
+    { id: 'S470', where: 'tidyLines, readUnit, loadSupplement', note: 'Texts (3.220.0; collected item Z-PCYEARSUPP; S278, S369): "℗ © 2026 X" – a ℗ without its year right before the © shares its year (one line, until 3.219.0 the ℗ alone was left out as signs without a name); "Blue Note Records, ℗ © 2026 Creative Control Corp. under exclusive license to UMG Recordings, Inc." – the release\'s label before the signs is no part of it, "under exclusive license to" as "under license to" (S369): ℗ and © of Creative Control Corp. with the year, licensed to UMG Recordings, Inc. (one name: the company\'s form after its comma). The ℗/© years of an added source\'s notes are suggestions of the date pool too ("℗/© year in the notes of Discogs 2026"), as those of the source imported' },
+    { id: 'S469', where: 'dgLineupApply, sendDiscogsStatus', note: 'Lineup and track credits (3.220.0; collected item Z-LOPEZ; S217): a row the answer leaves out (a lineup row on no track any more, a track credit taken into the lineup row) keeps its line at the source – its places go to the person\'s row still there, so the companion marks the line ("Ramón López – percussion" where the titles give him drums on all of his tracks)' },
     { id: 'S410', where: 'freshForget, repeatImport, loadRelease', note: '"↻ Repeat import" (3.209.0; collected item Z-FRESHALL): "Start afresh" forgets everything the dashboard holds of the release – not only the changes of the rows and the choices of the works matrix (Z-RI, 3.40.16), also the date pool, the track pool and the date matrix, the choices of the box "Dedications & tributes", "✕ No suite", texts and parts of sources switched off, "skip the works", entries joined by hand, the ticks of suggestions, what is remembered of the release ("Remember changes"; nothing of the import before is stored on the way). Kept: what was created in MusicBrainz through the dashboard (the lists of created works and suites), the source and the media chosen, the log' },
     { id: 'S409', where: 'mergeEntries, joinEntry, applyEntryMerges, dmTargetOf (entry-merge), groupHtml (grip)', note: 'Entries (3.208.0; collected item Z-ENTITYMERGE): two entries of the same kind that are one – from different sources, written otherwise – are joined by hand: the grip ⠿ before the kind of an entry dropped onto another entry. The entry dropped onto stays (its link to MusicBrainz counts; without one it takes the other\'s), the rows of the other come to it – the same role once, each row credited as its source writes it, the other\'s name one of its names. Two different entries of MusicBrainz, or entries of different kinds: not joined, a message says why. Remembered for the release (joined again at the next import); ↶ in the message undoes it' },
     { id: 'S408', where: 'renderDedBox (ded-kind), emChipHtml, toggleDedication', note: 'Dedications (3.207.0; collected item Z-DEDKINDSWITCH): each row of the box "Dedications & tributes" has two buttons "Dedication | Tribute" – the chosen one filled in its colour (dedication old rose, tribute gold), a click switches (as "⇄" at the row and the chip did); the chips of these relationships have the colours too. A kind MusicBrainz has not for this target (a tribute of a place) is greyed out' },
@@ -11799,6 +11832,8 @@
             // ("℗ & © 2023 …", "P + © 2023 …": one line – the ℗ shares the year of the ©)
             .reduce((acc, x) => {
               if (acc.length && /(?:℗|\(p\)|(?:^|\s)P)\s*(?:&|\+|\/|and|und)$/i.test(acc[acc.length - 1])) acc[acc.length - 1] += ` ${x}`;
+              // [Z-PCYEARSUPP] (3.220.0, S470) "℗ © 2026 X", "Blue Note Records, ℗ © 2026 X": a ℗ without its year before the © shares it
+              else if (acc.length && ruleOn('S470') && /(?:^|[\s,])(?:℗|Ⓟ|\(p\))$/i.test(acc[acc.length - 1])) acc[acc.length - 1] += ` ${x}`;
               else acc.push(x);
               return acc;
             }, []);
@@ -13173,9 +13208,18 @@
       // others; "Published by Water Damage the band from Texas LLC." – the name of a company with its form at the end, as written
       if (ruleOn('S369')) {
         unit = unit.replace(/^\s*P\s*(?:&|\+|and)\s*C(?=\s)/i, '℗ & ©');
-        const lic = unit.match(/^(\s*(?:℗|©).*?\S)\s+(?:under\s+licen[cs]e|licen[cs]ed)\s+to\s+(.+?)\.?\s*$/iu);
+        // [Z-PCYEARSUPP] (3.220.0, S470) "Blue Note Records, ℗ © 2026 Creative Control Corp. under exclusive license to UMG Recordings, Inc.": the
+        // label of the release before the signs is no part of the ℗ / © (the release has it); "under exclusive license" as "under license"
+        if (ruleOn('S470')) {
+          const pre = unit.match(/^\s*([^,℗©]{2,60}?)\s*,\s*(?=℗|Ⓟ|©|\((?:p|c)\)\s)/iu);
+          if (pre && (P.labelNames || []).some((n) => norm(n) === norm(pre[1]))) unit = unit.slice(pre[0].length);
+        }
+        const lic = ruleOn('S470') ? unit.match(/^(\s*(?:℗|Ⓟ|©|\((?:p|c)\)).*?\S)\s+(?:under\s+(?:(?:an?\s+)?(?:exclusive|non-exclusive|sole)\s+)?licen[cs]e|(?:exclusively\s+)?licen[cs]ed)\s+to\s+(.+?)\.?\s*$/iu)
+          : unit.match(/^(\s*(?:℗|©).*?\S)\s+(?:under\s+licen[cs]e|licen[cs]ed)\s+to\s+(.+?)\.?\s*$/iu);
         if (lic) {
-          lic[2].split(/\s*,\s*|\s+(?:and|&)\s+/i).map(clean).filter(looksLikeName).forEach((n) => {
+          // ([Z-PCYEARSUPP] 3.220.0, S470) "UMG Recordings, Inc." one name: the company's form after its comma
+          const licSplit = ruleOn('S470') ? /\s*,(?!\s*(?:Inc|Ltd|LLC|L\.L\.C|GmbH|Corp|Co|Limited|S\.?A|B\.?V|AG|plc)\b\.?\s*(?:,|$|\s+(?:and|&)\s))\s*|\s+(?:and|&)\s+/i : /\s*,\s*|\s+(?:and|&)\s+/i;
+          lic[2].split(licSplit).map(clean).filter(looksLikeName).forEach((n) => {
             P.companies.push({ who: who(P, n), role: 'Licensed To', catno: '', tracks: null, line: P.line0, part: P.part0, pi: P.pi0, n: P.n0 });
           });
           unit = lic[1];
@@ -20895,6 +20939,7 @@
     suiteRenaming: '', // [Z-SUITERENAME] (3.196.0) the suite whose name is being changed in its line
     sameWork: new Map(), // [Z-SAMEWORK] (3.192.0) the answers to "one work for these tracks?" (key → { answer, before })
     magicSkip: new Set(), // [Z-SUITENO] (3.189.0) the answers of the preview of "✨ Answer all" unticked
+    magicNoCover: new Set(), // [Z-MAGICWORDS] (3.220.0, S467) the answers "cover of …" whose "cover" is struck (linked only)
     // [Z-SU] (3.41.2) the works of the suites accepted (key of the suite → { gid "pending:s<n>", title, key })
     suiteWorks: new Map(),
     // [Z-SUM] (3.41.11) the suites added by hand ("＋ Suite …"): key → { key, name, from: 'manual', tracks }; the box open
@@ -28420,8 +28465,8 @@
 
   // --- Messages and progress in the dashboard ----------------------------------------
 
-  function showMessage(kind, key, params = {}, { closeButton = false, action = null } = {}) {
-    S.messages.push({ kind, key, params, closeButton, action });
+  function showMessage(kind, key, params = {}, { closeButton = false, action = null, aw = false } = {}) {
+    S.messages.push({ kind, key, params, closeButton, action, aw });
     renderMessages();
   }
 
@@ -28463,7 +28508,7 @@
     $('msgs').innerHTML = head + (folded ? '' : S.messages.map((m) => `
       <div class="dci-msg dci-msg-${m.kind}" data-msg="${m.id}" data-msgkey="${esc(m.key)}">${esc(tr(m.key, m.params))}${m.action
         ? ` <button type="button" class="dci-inline-btn" data-act="${esc(m.action.act)}" data-arg="${esc(m.action.arg || '')}">${esc(tr(m.action.label, m.params))}</button>` : ''}${m.closeButton
-        ? ` <button type="button" class="dci-inline-btn" data-act="close">${esc(tr('msg.toEditor'))}</button>` : ''}${x(m)}</div>`).join(''));
+        ? ` <button type="button" class="dci-inline-btn" data-act="close">${esc(tr('msg.toEditor'))}</button>` : ''}${m.aw ? awButtonsHtml() : ''}${x(m)}</div>`).join(''));
   }
 
   function setBusy(key, params = {}) {
@@ -29730,6 +29775,16 @@
       // ([Z-WIKI] 3.149.0, review) the badge's link one address (Wikipedia: its first article); the edit note names them all
       S.supp = { source, id, rel, open: true, items: [], url: (source === WIKIPEDIA ? rel.url : rel.noteSource || rel.url) || '', typed, ocr: !!(input && input.ocr), rg: S.suppRgNext || null };
       S.suppRgNext = null;
+      // [Z-PCYEARSUPP] (3.220.0, S470) the ℗/© years of the added source's notes: suggestions of the date pool too (until 3.219.0 only those
+      // of the source imported)
+      if (ruleOn('S470')) {
+        const have = new Set((S.dateSuggestions || []).map((x) => x.begin.year));
+        const add = dateSuggestions(rel).filter((x) => !have.has(x.begin.year)).map((x) => ({ ...x, source: 'copyrightSupp', name: source.name }));
+        if (add.length) {
+          S.dateSuggestions = [...(S.dateSuggestions || []).filter((x) => x.source !== 'copyrightSupp'), ...add];
+          renderDates();
+        }
+      }
       S.suppOpen = true; // [Z-SUPPTOGGLE] (3.132.0) the bar shows what was loaded; the button folds it
       if (input && input.ocrLines) {
         const was = S.ocrSuppLines;
@@ -41203,7 +41258,7 @@
     }).join('');
     const suggestions = poolSuggestions();
     const suggHtml = suggestions.length ? `<span class="dci-date-sugg"><span class="dci-sub">${esc(tr('date.suggestions'))}</span>
-      ${suggestions.map((x) => `<button type="button" class="dci-textbtn" data-act="pool-suggest" data-year="${esc(String(x.begin.year))}">${esc(tr(`date.sugg.${x.source}`, { date: formatDate(x.begin) }))}</button>`).join(' ')}</span>` : '';
+      ${suggestions.map((x) => `<button type="button" class="dci-textbtn" data-act="pool-suggest" data-year="${esc(String(x.begin.year))}">${esc(tr(`date.sugg.${x.source}`, { date: formatDate(x.begin), name: x.name || '' }))}</button>`).join(' ')}</span>` : '';
     const hint = S.datePool.length ? `<span class="dci-drag-hint" title="${esc(tr('drop.dateHintTitle'))}">⠿ ${esc(tr('date.dragHint'))}</span>` : '';
     // [165] (3.37.15) "+ New date" also in a folded pool and in the bar kept while "Dates & tracks" is folded
     const add = `<button type="button" class="dci-textbtn" data-act="pool-new">${esc(tr('date.poolNew'))}</button>`;
@@ -43831,7 +43886,7 @@
       if (trib.size) {
         results = results.map((w) => {
           const by = w.writerIds.filter((id) => trib.has(id));
-          return by.length && !w.writerIds.some((id) => own.has(id)) ? { ...w, tribute: trib.get(by[0]) } : w;
+          return by.length && !w.writerIds.some((id) => own.has(id)) ? { ...w, tribute: trib.get(by[0]), tributeWriter: true } : w; // ([Z-MAGICWORDS] 3.220.0, S467) a writer
         });
         const tw = results.filter((w) => w.tribute);
         if (tw.length) log('info', 'tributeWork', { track: trackLabel(track), name: tw[0].tribute, list: tw.map((w) => w.title).join(' · ') });
@@ -44633,8 +44688,10 @@
     const ad = await mbWsIdle(`artist?query=${encodeURIComponent(`artist:(${words}) OR sortname:(${words})`)}&limit=1`);
     const total = Number(ad && ad.count) || 0;
     if (total > mbHits()) {
-      showMessage('info', 'ded.manyNames', { name, n: total, limit: mbHits() });
+      // ([Z-ARTWORKSSTOP2] 3.220.0, S466: "Stop" in this message, at once – and above the works matrix)
       if (ruleOn('S456')) S.awLong = true; // [Z-ARTWORKSSTOP] (3.218.0) its works read next can take long: "Stop" shown
+      showMessage('info', 'ded.manyNames', { name, n: total, limit: mbHits() }, { aw: ruleOn('S466') });
+      if (ruleOn('S466')) renderWorksBackground();
       log('info', 'dedManyNames', { name, n: total, limit: mbHits() });
     }
     if (!total) return [];
@@ -47721,6 +47778,7 @@
       if (!was || tracksSig(r.tracks) === was.tracks) r.tracks = new Set(sn.tracks);
       if (!was || r.primaryText === was.primaryText) Object.assign(r, { primaryText: sn.primaryText, primaryTouched: sn.primaryTouched });
       if (!was || r.credit === was.credit) Object.assign(r, { credit: sn.credit, creditTouched: sn.creditTouched });
+      delete r.dglRefs;
     }
     const byId = (id) => S.rows.find((r) => r.id === id);
     const fold = (r) => {
@@ -47767,6 +47825,19 @@
       else T.forEach((t) => { if (dglAbbr(t.credit, full)) Object.assign(t, { credit: '', creditTouched: true }); }); // the abbreviation of the full name is no artist credit
       // a lineup row on no track any more: left out (the person plays only where the track credits say)
       L.filter((l) => !l.tracks.size).forEach(fold);
+      // [Z-LOPEZ] (3.220.0, S469) the lines of the rows left out stay the person's: their places at the source go to the person's rows
+      // still there (the lineup's first, else the track credits', else another of the person's), so the companion still marks the line ("Ramón López – percussion" on
+      // a page whose titles give him drums on all of his tracks)
+      if (ruleOn('S469')) {
+        const gone = [...L, ...T].filter((r) => !S.rows.includes(r));
+        const keep = [...L, ...T].find((r) => S.rows.includes(r)) || S.rows.find((r) => r.artistKey === x.key && !r.supp && r.level !== 'skip');
+        const refs = gone.flatMap((r) => [...(r.srcRefs || []), ...(r.dglRefs || [])]);
+        if (keep && refs.length) {
+          const key = (f) => `${f.page || ''}|${f.line}|${f.n || 0}|${f.part || ''}|${f.pos || ''}`;
+          const have = new Set((keep.srcRefs || []).map(key));
+          keep.dglRefs = [...new Map([...(keep.dglRefs || []), ...refs].filter((f) => !have.has(key(f))).map((f) => [key(f), f])).values()];
+        }
+      }
     }
     S.rows.filter((r) => q.snap.has(r.id)).forEach((r) => refreshRowDetails(r));
     // ((review) what this answer set: a field still so is the answer's (else changed by hand since)
@@ -47784,6 +47855,11 @@
   }
   /** Whether a row waits for the answer. */
   const dgLineupOpen = (row) => !!(ruleOn('S217') && S.dgLineup && !S.dgLineup.done && S.dgLineup.snap.has(row.id));
+  /**
+   * [Z-MAGICWORDS] (3.220.0, S467) A work of the artist of a tribute that the artist wrote (the artist's works, or a work the search found
+   * with the artist among its writers) – else a song the artist performed.
+   */
+  const tributeBy = (w) => !!(w && (w.composer || w.tributeWriter || (w.tribute && (w.writers || []).some((n) => norm(n) === norm(w.tribute)))));
   function dgLineupHtml() {
     const q = S.dgLineup;
     if (!q || !ruleOn('S217')) return '';
@@ -47793,10 +47869,17 @@
       x.mism.forEach((m) => parts.push(tr('dgl.mismatch', { lineup: m.lineup, track: m.track, list: trackListLabel(m.tracks) })));
       return `<li><strong>${esc(x.name)}</strong>: ${esc(parts.join(' · '))}</li>`;
     }).join('');
-    const btn = (c) => `<button type="button" class="${c === 'precise' ? 'dci-small' : 'dci-textbtn'}" data-act="dgl-pick" data-choice="${c}" aria-pressed="${q.done && q.choice === c}" title="${esc(c === 'track' ? trSrc('dgl.trackTitle') : tr(`dgl.${c}Title`))}">${q.done && q.choice === c ? '✓ ' : ''}${esc(tr(`dgl.${c}`))}</button>`;
-    return `<div class="dci-festival dci-plays dci-dglineup${q.done ? ' dci-dgl-done' : ''}" role="note" data-el="dglineup"><p><strong>${esc(trSrc('dgl.title'))}</strong> ${esc(q.done ? tr('dgl.hintDone', { list: trackListLabel(q.tracks) }) : trSrc('dgl.hint', { list: trackListLabel(q.tracks) }))}</p>
+    // [Z-DGLWORDS] (3.220.0, S468) a plain question and buttons that say what they do – each with its line below it
+    const plain = ruleOn('S468');
+    const label = (c) => tr(plain ? `dgl.${c}2` : `dgl.${c}`);
+    const btn = (c) => `<button type="button" class="${c === 'precise' ? 'dci-small' : 'dci-textbtn'}" data-act="dgl-pick" data-choice="${c}" aria-pressed="${q.done && q.choice === c}" title="${esc(c === 'track' ? trSrc('dgl.trackTitle') : tr(`dgl.${c}Title`))}">${q.done && q.choice === c ? '✓ ' : ''}${esc(label(c))}</button>`;
+    const title = plain ? (S.source === BANDCAMP ? tr('dgl.title2Bc') : trSrc('dgl.title2')) : trSrc('dgl.title');
+    const offers = plain
+      ? `<ul class="dci-dgl-opts">${['precise', 'track', 'lineup'].map((c) => `<li>${btn(c)} <span class="dci-sub">${esc(tr(`dgl.${c}Line`))}</span></li>`).join('')}</ul>`
+      : `<div class="dci-festival-offers">${['precise', 'track', 'lineup'].map(btn).join(' ')}</div>`;
+    return `<div class="dci-festival dci-plays dci-dglineup${q.done ? ' dci-dgl-done' : ''}" role="note" data-el="dglineup"><p><strong>${esc(title)}</strong> ${esc(q.done ? tr('dgl.hintDone', { list: trackListLabel(q.tracks) }) : trSrc('dgl.hint', { list: trackListLabel(q.tracks) }))}</p>
       <ul class="dci-dgl-list">${lines}</ul>
-      <div class="dci-festival-offers">${['precise', 'track', 'lineup'].map(btn).join(' ')}</div></div>`;
+      ${offers}</div>`;
   }
 
   // --- [Z-GAPREFRESH2] (3.135.0, S223) the credits taken out in the editor last time --------------------------------------------------
@@ -50051,7 +50134,7 @@
               S.awLong = true;
               renderWorksBackground();
             }
-            showMessage('info', 'msg.artistWorksSlow', { name: info.name, n: entry.total || entry.linked, done: entry.recordings });
+            showMessage('info', 'msg.artistWorksSlow', { name: info.name, n: entry.total || entry.linked, done: entry.recordings }, { aw: ruleOn('S466') });
             log('info', 'artistWorksSlow', { name: info.name, n: entry.total || entry.linked, done: entry.recordings });
           }, part);
           // [Z-ARTWORKSSTOP] (3.218.0, S456) stopped by "Stop": what was read of this artist kept (matched) and read on from there later
@@ -50081,7 +50164,10 @@
       log('error', 'error', { text: e.message });
     }
     S.artistWorksRunning = false;
-    if (!S.awPaused) S.awLong = false; // [Z-ARTWORKSSTOP] (3.218.0) done: its line goes
+    if (!S.awPaused && !S.artistWorksAgain) {
+      S.awLong = false; // [Z-ARTWORKSSTOP] (3.218.0) done: its line goes
+      if (S.messages.some((m) => m.aw)) renderMessages(); // ([Z-ARTWORKSSTOP2] 3.220.0) and the buttons of its messages
+    }
     // [Z-YTW] (3.80.0, S118) songs of a video split before the works of the artists were read: offered now
     const songOffers = [...S.workParts.keys()].reduce((k, i) => k + songOffersFromArtistWorks(i), 0);
     if (matchArtistWorks() || suggestionChanged() || songOffers) renderWorksBackground();
@@ -50109,6 +50195,7 @@
       log('info', 'artistWorksDropped', { n });
     }
     renderWorksBackground();
+    renderMessages(); // ([Z-ARTWORKSSTOP2] 3.220.0) the buttons of its messages
   }
   function awGo() {
     const was = S.awPaused;
@@ -50117,11 +50204,24 @@
     S.awLong = true; // (its line again, with "Stop", while it reads on)
     runArtistWorks();
     renderWorksBackground();
+    renderMessages(); // ([Z-ARTWORKSSTOP2] 3.220.0) the buttons of its messages
   }
   /** [Z-ARTWORKSSTOP] (3.218.0, S456) The line of a long search of the artists' works: "Stop" while it runs; "Continue" (and "Stop" again) once stopped. */
+  /**
+   * [Z-ARTWORKSSTOP2] (3.220.0, S466) The buttons of a long search of the artists' works in its messages ("“Rollins”: 86 artists … this can take
+   * a while", "… takes long"): "Stop" while it runs or is about to; "Continue" and "Stop and discard" once stopped; "Read again" once
+   * discarded; none when it is done.
+   */
+  function awButtonsHtml() {
+    if (!ruleOn('S456') || !ruleOn('S466') || !(S.awLong || S.awPaused)) return '';
+    const btn = (act, key, title) => ` <button type="button" class="dci-inline-btn" data-act="${act}" title="${esc(tr(title))}">${esc(tr(key))}</button>`;
+    if (!S.awPaused) return btn('mx-aw-stop', 'matrix.awStop', 'matrix.awStopTitle');
+    if (S.awPaused === 'paused') return btn('mx-aw-go', 'matrix.awGo', 'matrix.awGoTitle') + btn('mx-aw-stop', 'matrix.awDrop', 'matrix.awDropTitle');
+    return btn('mx-aw-go', 'matrix.awGoAgain', 'matrix.awGoTitle');
+  }
   function awLineHtml() {
     if (!ruleOn('S456') || !(S.awLong || S.awPaused)) return '';
-    if (!S.awPaused && !S.artistWorksRunning) return '';
+    if (!S.awPaused && !S.artistWorksRunning && !(ruleOn('S466') && S.awLong)) return '';
     const names = uniq([...(S.artistWorkTargets || new Map()).values()].map((x) => x && x.name).filter(Boolean)).slice(0, 4).join(', ');
     const btn = (act, key, title) => `<button type="button" class="dci-textbtn" data-act="${act}" title="${esc(tr(title))}">${esc(tr(key))}</button>`;
     if (!S.awPaused) return `<p class="dci-sub" data-el="aw-line">${esc(tr('matrix.awRunning', { names }))} ${btn('mx-aw-stop', 'matrix.awStop', 'matrix.awStopTitle')}</p>`;
@@ -50387,7 +50487,7 @@
       found = `<div class="dci-same dci-mx-wlist" id="${listId}"${open ? '' : ' hidden'}><strong>${esc(what)}</strong><ul class="dci-candidates">${same.map((w) => `<li${w.loose || w.tribute ? ' class="dci-mx-wloose"' : ''}>
           <button type="button" data-act="work-pick" data-gid="${esc(w.gid)}" data-title="${esc(w.title)}"${w.composer ? ` data-composer="${esc(w.composer)}" data-composer-name="${esc(w.composerName || '')}"` : ''}>${esc(tr('works.link'))}</button>
           <a class="dci-mblink" href="/work/${esc(w.gid)}" target="_blank" rel="noopener"><span class="dci-src dci-src-mb">MB</span>${esc(w.title)}</a>${w.disambiguation ? ` <span class="dci-disamb">(${esc(w.disambiguation)})</span>` : ''}
-          <span class="dci-sub">${esc([w.type, w.writers.join(', ')].filter(Boolean).join(' – '))}</span>${w.loose ? ` <span class="dci-badge dci-mx-wloosetag" data-el="work-loose">${esc(tr('matrix.looseTag'))}</span>` : ''}${w.tribute ? ` <span class="dci-badge dci-mx-wloosetag" data-el="work-tribute">${esc(tr('matrix.tributeTag', { name: w.tribute }))}</span>` : ''}</li>`).join('')}</ul></div>`;
+          <span class="dci-sub">${esc([w.type, w.writers.join(', ')].filter(Boolean).join(' – '))}</span>${w.loose ? ` <span class="dci-badge dci-mx-wloosetag" data-el="work-loose">${esc(tr('matrix.looseTag'))}</span>` : ''}${w.tribute ? ` <span class="dci-badge dci-mx-wloosetag" data-el="work-tribute">${esc(tr(ruleOn('S467') ? (tributeBy(w) ? 'matrix.tributeTagBy' : 'matrix.tributeTagPerformed') : 'matrix.tributeTag', { name: w.tribute }))}</span>` : ''}</li>`).join('')}</ul></div>`;
     }
     // [Z-SU] (3.41.3) a title of parts ("A / B"): split into works of their own (a medley) – offered, not done by itself (Q-cg)
     // [Z-MDLY2] (3.99.0) a switch: marked, its parts become new works when "＋ New" or "＋ New works" plans them (not before)
@@ -52108,7 +52208,7 @@
         const label = tracksShort({ level: 'recording', tracks: new Set(g.tracks) });
         const ex = sameWorkExisting(g);
         if (ex) {
-          out.push({ kind: 'work', i: open[0], tracks: [...g.tracks], label, what: tr('magic.what.sameOne', { title: ex.title, n: g.tracks.length }), apply: () => sameWorkOne(g) });
+          out.push({ kind: 'work', i: open[0], tracks: [...g.tracks], label, group: 'same', what: tr('magic.what.sameOne', { title: ex.title, n: g.tracks.length }), apply: () => sameWorkOne(g) });
           continue;
         }
         // (the search of a track "Song (Alternate Take)" may not find "Song": the first track whose search found one)
@@ -52117,13 +52217,13 @@
         const r = rs.find((x) => x.pick) || { pick: null, why: '', cands: rs.flatMap((x) => x.cands) };
         if (r.pick) {
           const w = r.pick;
-          out.push({ kind: 'work', i: open[0], tracks: [...g.tracks], label, what: `${tr('magic.what.sameOne', { title: w.title, n: g.tracks.length })} – ${tr(r.why)}`,
+          out.push({ kind: 'work', i: open[0], tracks: [...g.tracks], label, group: 'same', what: `${tr('magic.what.sameOne', { title: w.title, n: g.tracks.length })} – ${tr(r.why)}`,
             apply: () => sameWorkOne(g, { gid: w.gid, title: w.title }) });
         } else if (!r.cands.length && (magicAt('bold') || (magicAt('balanced') && g.exact && g.sameWriters))) {
-          out.push({ kind: 'work', i: open[0], tracks: [...g.tracks], label, what: tr('magic.what.sameNew', { title: g.title, n: g.tracks.length }), apply: () => sameWorkOne(g) });
+          out.push({ kind: 'work', i: open[0], tracks: [...g.tracks], label, group: 'same', what: tr('magic.what.sameNew', { title: g.title, n: g.tracks.length }), apply: () => sameWorkOne(g) });
         } else if (!r.cands.length) {
           const i = open[0];
-          out.push({ kind: 'work', i, label: tl(i), what: tr('magic.what.sameFirst', { title: g.title }),
+          out.push({ kind: 'work', i, label: tl(i), group: 'same', what: tr('magic.what.sameFirst', { title: g.title }),
             apply: () => {
               planNewWork(i);
               const p = S.workPlan.get(i);
@@ -52140,14 +52240,25 @@
         const { pick, why, cands } = r;
         if (pick) {
           const w = pick;
-          out.push({ kind: 'work', i, label: tl(i), what: tr('magic.what.pick', { title: w.title, why: tr(why) }),
-            apply: () => {
-              S.workPlan.set(i, { gid: w.gid, title: w.title, origin: 'search', flags: new Set(), composer: w.composer || '', composerName: w.composerName || '', magic: true });
-              addFoundWorkRels(w.gid);
-              return () => { if ((S.workPlan.get(i) || {}).gid === w.gid) S.workPlan.delete(i); };
-            } });
+          // [Z-MAGICWORDS] (3.220.0, S467) a work of the artist of a tribute: "cover of “Doxy” by Sonny Rollins" (his work) or "… performed by
+          // Sonny Rollins" (a song he played) – linked and "cover" on its link in one answer; a click on "cover" strikes it (linked only)
+          const trib = ruleOn('S467') && why === 'magic.why.tribute' && magicKindOn('cover');
+          const item = { kind: 'work', i, label: tl(i), what: tr('magic.what.pick', { title: w.title, why: tr(why) }) };
+          if (ruleOn('S467')) {
+            const name = w.tribute || w.composerName || '';
+            const g = why === 'magic.why.tribute' ? (tributeBy(w) ? 'coverBy' : 'coverPerformed') : why.replace('magic.why.', '');
+            Object.assign(item, { group: g, groupName: name, short: tr(trib ? 'magic.what.coverOf' : 'magic.what.link', { title: w.title }), coverToggle: trib,
+              what: trib ? tr(tributeBy(w) ? 'magic.what.coverBy' : 'magic.what.coverPerformed', { title: w.title, name }) : tr('magic.what.linkWhy', { title: w.title, why: tr(why) }) });
+          }
+          item.apply = () => {
+            S.workPlan.set(i, { gid: w.gid, title: w.title, origin: 'search', flags: new Set(), composer: w.composer || '', composerName: w.composerName || '', magic: true });
+            addFoundWorkRels(w.gid);
+            const coverUndo = trib && !S.magicNoCover.has(magicKey(item)) ? attrStep(i, { gid: w.gid, title: w.title, planned: true }, 'cover')() : null;
+            return () => { if (coverUndo) coverUndo(); if ((S.workPlan.get(i) || {}).gid === w.gid) S.workPlan.delete(i); };
+          };
+          out.push(item);
         } else if (!cands.length && magicAt('balanced')) {
-          out.push({ kind: 'work', i, label: tl(i), what: tr('magic.what.new', { title: workTitleOf(t.title) }),
+          out.push({ kind: 'work', i, label: tl(i), group: 'new', what: tr('magic.what.new', { title: workTitleOf(t.title) }),
             apply: () => {
               planNewWork(i);
               return () => {
@@ -52163,7 +52274,7 @@
           for (const p of ps) {
             if (p.origin !== 'pending' || !p.offer) continue;
             const offer = { ...p.offer };
-            out.push({ kind: 'work', i, label: tl(i), what: tr('magic.what.part', { title: offer.title }),
+            out.push({ kind: 'work', i, label: tl(i), group: 'part', what: tr('magic.what.part', { title: offer.title }),
               apply: () => {
                 const before = { gid: p.gid, title: p.title, offer: p.offer, entity: p.entity };
                 Object.assign(p, { gid: offer.gid, title: offer.title, origin: 'search' });
@@ -52176,19 +52287,7 @@
       }
     }
     // the attributes of a link: one step of setLinkAttr, its sets and the plan's flags as before
-    const attrStep = (i, work, name) => () => {
-      const key = linkKey(i, work.gid);
-      const on0 = new Set(S.linkAttrOn.get(key) || []);
-      const off0 = new Set(S.linkAttrOff.get(key) || []);
-      const plan = work.planned ? planOf(i, work.gid) : null;
-      const flags0 = plan ? new Set(plan.flags) : null;
-      setLinkAttr(i, work, name, true);
-      return () => {
-        S.linkAttrOn.set(key, on0);
-        S.linkAttrOff.set(key, off0);
-        if (plan && flags0) plan.flags = flags0;
-      };
-    };
+    const attrStep = attrStepOf;
     const mrows = (magicKindOn('live') || magicKindOn('cover') || magicKindOn('pub')) ? matrixRows() : [];
     if (magicKindOn('live')) {
       const reasons = MAGIC_LEVELS.slice(0, MAGIC_LEVELS.indexOf(lv) + 1).flatMap((x) => MAGIC_LIVE[x]);
@@ -52285,6 +52384,22 @@
   /** "✨ Answer all": the answers of the preview given; each marked ✨ at its track, in the log; "↺ Undo magic" takes them all back. */
   /** [Z-SUITENO] (3.189.0) The key of an answer of the preview (its tick). */
   const magicKey = (x) => x.key || `${x.kind}|${x.i}`;
+  /** The attributes of a link: one step of setLinkAttr, its sets and the plan's flags as before (an undo). */
+  function attrStepOf(i, work, name) {
+    return () => {
+      const key = linkKey(i, work.gid);
+      const on0 = new Set(S.linkAttrOn.get(key) || []);
+      const off0 = new Set(S.linkAttrOff.get(key) || []);
+      const plan = work.planned ? planOf(i, work.gid) : null;
+      const flags0 = plan ? new Set(plan.flags) : null;
+      setLinkAttr(i, work, name, true);
+      return () => {
+        S.linkAttrOn.set(key, on0);
+        S.linkAttrOff.set(key, off0);
+        if (plan && flags0) plan.flags = flags0;
+      };
+    };
+  }
   async function magicApply() {
     const plan = magicPlan().filter((x) => !S.magicSkip.has(magicKey(x)));
     S.magicSkip.clear();
@@ -52350,10 +52465,36 @@
     const ticks = ruleOn('S331');
     // [Z-SUITERENAME] (3.196.0, S354) the name of a suite to be: changed right here (it is taken with "Apply")
     const nameField = (x) => (x.kind === 'suite' && x.suiteName && ruleOn('S354') ? ` <input type="text" data-f="magic-suite-name" data-key="${esc(magicKey(x))}" value="${esc(S.magicNames.get(magicKey(x)) || x.suiteName)}" size="${Math.min(48, Math.max(14, String(x.suiteName).length + 2))}" aria-label="${esc(tr('suite.renameLabel'))}" title="${esc(tr('suite.renameTitle'))}">` : '');
+    // ([Z-MAGICWORDS] 3.220.0, S467) in its group the answer without its reason; "cover" of "cover of …" a button that strikes it
+    const textOf = (x) => {
+      const s = ruleOn('S467') && x.group && x.short ? x.short : x.what;
+      if (!(ruleOn('S467') && x.coverToggle)) return esc(s);
+      const off = S.magicNoCover.has(magicKey(x));
+      const word = tr('magic.coverWord');
+      const at = s.indexOf(word);
+      const btn = `<button type="button" class="dci-textbtn dci-magic-cover${off ? ' dci-struck' : ''}" data-act="magic-nocover" data-key="${esc(magicKey(x))}" aria-pressed="${!off}" title="${esc(tr(off ? 'magic.coverOnTitle' : 'magic.coverOffTitle'))}">${esc(word)}</button>`;
+      return at < 0 ? `${esc(s)} ${btn}` : `${esc(s.slice(0, at))}${btn}${esc(s.slice(at + word.length))}`;
+    };
     const item = (x, k) => (ticks
-      ? `<li data-el="magic-item" data-kind="${k}"><label title="${esc(tr('magic.itemTitle'))}"><input type="checkbox" data-f="magic-item" data-key="${esc(magicKey(x))}"${S.magicSkip.has(magicKey(x)) ? '' : ' checked'}> ${esc(x.label)} – ${esc(x.what)}</label>${nameField(x)}</li>`
-      : `<li data-el="magic-item" data-kind="${k}">${esc(x.label)} – ${esc(x.what)}</li>`);
-    const list = kinds.map((k) => `<li><strong>${esc(tr(`magic.kind.${k}`))}</strong> (${plan.filter((x) => x.kind === k).length})<ul>${plan.filter((x) => x.kind === k).slice(0, ticks ? 400 : 40).map((x) => item(x, k)).join('')}</ul></li>`).join('');
+      ? `<li data-el="magic-item" data-kind="${k}"><label title="${esc(tr('magic.itemTitle'))}"><input type="checkbox" data-f="magic-item" data-key="${esc(magicKey(x))}"${S.magicSkip.has(magicKey(x)) ? '' : ' checked'}> ${esc(x.label)} – </label>${textOf(x)}${nameField(x)}</li>`
+      : `<li data-el="magic-item" data-kind="${k}">${esc(x.label)} – ${textOf(x)}</li>`);
+    // [Z-MAGICWORDS] (3.220.0, S467) the answers of a kind in groups by their reason (its heading once), each by its track
+    const GROUPS = ['coverBy', 'coverPerformed', 'exact', 'most', 'one', 'same', 'part', 'new'];
+    const groupsOf = (xs) => {
+      const by = new Map();
+      xs.forEach((x) => { const g = `${x.group || ''}\u0000${x.groupName || ''}`; if (!by.has(g)) by.set(g, []); by.get(g).push(x); });
+      return [...by.entries()].sort((a, b) => GROUPS.indexOf(a[0].split('\u0000')[0]) - GROUPS.indexOf(b[0].split('\u0000')[0]) || a[0].localeCompare(b[0]));
+    };
+    const kindList = (k) => {
+      const xs = plan.filter((x) => x.kind === k).slice(0, ticks ? 400 : 40);
+      if (!ruleOn('S467') || !xs.some((x) => x.group)) return xs.map((x) => item(x, k)).join('');
+      return groupsOf(xs).map(([g, ys]) => {
+        const [gk, name] = g.split('\u0000');
+        const sorted = [...ys].sort((a, b) => a.i - b.i);
+        return gk ? `<li class="dci-mx-magicgroup"><em>${esc(tr(`magic.group.${gk}`, { name }))}</em> (${ys.length})<ul>${sorted.map((x) => item(x, k)).join('')}</ul></li>` : sorted.map((x) => item(x, k)).join('');
+      }).join('');
+    };
+    const list = kinds.map((k) => `<li><strong>${esc(tr(`magic.kind.${k}`))}</strong> (${plan.filter((x) => x.kind === k).length})<ul>${kindList(k)}</ul></li>`).join('');
     const nOn = plan.filter((x) => !S.magicSkip.has(magicKey(x))).length;
     return `${menu}${info}<div class="dci-wh-pop dci-mx-magicpop" data-el="magic-preview" role="group" aria-label="${esc(tr('magic.previewTitle'))}">
       <p><strong>${esc(tr('magic.previewHead', { level: tr(`magic.level.${lv}`), n: plan.length }))}</strong></p>
@@ -54042,7 +54183,8 @@
           if (!a || row.manual || !row.raw) continue;
           // Discogs: credits with a Discogs artist or label; Bandcamp: credits of its own text (not of a supplement)
           // ([Z-BCAM] 3.91.0, review) on Bandcamp also the credits of the "about" text (the companion 1.14.0 marks them there; before: skipped)
-          const refs = textSite(site) ? (row.srcRefs || []).filter((r) => !r.about || site === 'bandcamp') : [];
+          // ([Z-LOPEZ] 3.220.0, S469) with the lines of the person's rows the lineup left out
+          const refs = textSite(site) ? [...(row.srcRefs || []), ...(row.dglRefs || [])].filter((r) => !r.about || site === 'bandcamp') : [];
           if (site === 'discogs' ? !a.dId : (row.supp || !refs.length)) continue;
           const info = rowInfo && rowInfo.get(row.id);
           let status = 'open';
@@ -54452,7 +54594,7 @@
   function bandcampPayloadForRows(rows) {
     const refs = [];
     for (const row of rows) {
-      for (const r of row.supp ? [] : row.srcRefs || []) {
+      for (const r of row.supp ? [] : [...(row.srcRefs || []), ...(row.dglRefs || [])]) { // ([Z-LOPEZ] 3.220.0, S469)
         const ref = { page: r.page || '', line: r.line, part: r.part || '', pi: r.pi || 0, n: r.n || 0, ...(r.about ? { about: true } : {}) };
         if (!refs.some((x) => JSON.stringify(x) === JSON.stringify(ref))) refs.push(ref);
       }
@@ -56644,6 +56786,7 @@
         S.magicInfo = false;
         S.magicPreview = !S.magicPreview;
         S.magicSkip.clear(); // [Z-SUITENO] (3.189.0) every answer ticked anew
+        S.magicNoCover.clear(); // ([Z-MAGICWORDS] 3.220.0) every "cover" anew
         S.magicNames.clear(); // [Z-SUITERENAME] (3.196.0)
         const focus = (sel) => { const b = S.overlay.querySelector(sel); if (b) b.focus({ preventScroll: true }); };
         if (S.magicPreview && !S.magicBusy) {
@@ -56658,6 +56801,15 @@
         }
         renderWorks();
         focus('[data-act="magic-open"]');
+        break;
+      }
+      // [Z-MAGICWORDS] (3.220.0, S467) "cover" of an answer "cover of …": struck – linked only –, or back
+      case 'magic-nocover': {
+        const k = btn.dataset.key;
+        if (S.magicNoCover.has(k)) S.magicNoCover.delete(k);
+        else S.magicNoCover.add(k);
+        renderWorks();
+        { const b = S.overlay.querySelector(`[data-act="magic-nocover"][data-key="${CSS.escape(k)}"]`); if (b) b.focus({ preventScroll: true }); }
         break;
       }
       case 'magic-cancel':
@@ -66991,7 +67143,12 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       .dci-wpill-mixed { border: 1px solid var(--role); background: linear-gradient(135deg, #cddbf6 50%, #fff 50%); color: #2c4a80; }
       .dci-wpill-mb, .dci-wpill-mb:disabled { border-color: var(--ok); background: #e6f3ea; color: #1f5a36; opacity: 1; cursor: default; }
       .dci-wpill-hint { border: 1px dashed var(--sugg-line); background: var(--sugg-bg); color: var(--sugg-ink); }
-      .dci-wpill.dci-wstrong { font-weight: 700; } /* [Z-COVERSHOW] (3.218.0) "co?" of a work whose composer performs nothing here */
+      .dci-wpill.dci-wstrong { font-weight: 700; }
+      /* [Z-MAGICWORDS] (3.220.0) "cover" in an answer of ✨: a word to strike; the reason of a group of answers */
+      .dci-magic-cover { font: inherit; text-decoration: underline dotted; }
+      .dci-magic-cover.dci-struck { text-decoration: line-through; opacity: .6; }
+      .dci-dgl-opts { list-style: none; margin: calc(var(--u, 1px) * 4) 0 0; padding: 0; display: flex; flex-direction: column; gap: calc(var(--u, 1px) * 3); }
+      .dci-mx-magicgroup > em { font-style: normal; color: var(--muted, #6b6880); } /* [Z-COVERSHOW] (3.218.0) "co?" of a work whose composer performs nothing here */
       /* [Z-CV] (3.40.17) set by itself: ticked, in the colours of a suggestion */
       .dci-wpill-auto { border: 1px solid var(--sugg-line); background: var(--sugg-bg); color: var(--sugg-ink); font-weight: 600; }
       .dci-mxchip { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 3); padding: 1px calc(var(--u, 1px) * 7); border: 1px solid; border-left-width: 4px; border-radius: 4px; font-size: calc(var(--u, 1px) * 12); font-weight: 600; line-height: 1.4; white-space: nowrap; }
