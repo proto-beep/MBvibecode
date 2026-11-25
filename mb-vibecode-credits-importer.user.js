@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.220.0
+// @version      3.221.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.220.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.220.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.221.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.221.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.220.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.221.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -242,6 +242,7 @@
       "supp.remove": "remove",
       "supp.title": "From the added source: {name}",
       "supp.summary": "confirmed: {confirmed} · new: {added} · differing: {differ} · not recognized: {unrec}",
+      "supp.unrecFold": "{n} lines not recognized",
       "supp.known.one": "{n} line recognised as known (not read, but it names what the dashboard has)",
       "supp.known.other": "{n} lines recognised as known (not read, but they name what the dashboard has)",
       "log.suppKnown": "Added source: “{line}” not read, but known – {name}: {role} (S327)",
@@ -1264,6 +1265,7 @@
       "date.untitled": "Date",
       "preview.date": "date {date}",
       "log.dateSaved": "Date saved: {date}",
+      "log.pcYearPlaced": "℗/© year {year} of the notes suggested in the column ℗/© of the date matrix",
       "log.dateOwn": "Date pool: {date} for this column only (shared before with “{from}”)",
       "log.dateRemoved": "Date deleted: {date}",
       "match.searchArtist": "Search artists",
@@ -5899,6 +5901,14 @@
     { id: 'S467', where: 'magicPlan, magicPopHtml, attrStepOf, the yellow tag of a tribute\'s work (matrix.tributeTagBy)', note: 'Works (3.220.0; collected item Z-MAGICWORDS): the answers of "✨ Answer all" in plainer words, by group of their reason (its heading once – "Covers of works by Sonny Rollins (6)", "Covers of songs performed by Sonny Rollins (2)", "The only work of this title in MusicBrainz (3)" –, each by its track); a work of the artist of a tribute is one answer "cover of “Doxy”" – linked with "cover" on its link (from "balanced" on) –; a click on "cover" strikes it (linked only), again brings it back. The yellow tag in the matrix asks: "cover of a work by Sonny Rollins?" / "cover of a song performed by Sonny Rollins?". Off: as until 3.219.0' },
     { id: 'S468', where: 'dgLineupHtml', note: 'Lineup and track credits (3.220.0; collected item Z-DGLWORDS; S217): the question in plain words – "Who plays on which tracks? (Bandcamp: lineup and track pages)" – and its buttons saying what they do, each with a line below it: "Combine both (recommended)" (everyone on their tracks, the more precise instrument), "Only what the tracks say" (tracks with credits as their pages say, the lineup elsewhere), "Only the lineup" (everyone on all tracks, the track pages left out). Off: "More precise everywhere", "Per track", "The lineup\'s" as until 3.219.0' },
     { id: 'S470', where: 'tidyLines, readUnit, loadSupplement', note: 'Texts (3.220.0; collected item Z-PCYEARSUPP; S278, S369): "℗ © 2026 X" – a ℗ without its year right before the © shares its year (one line, until 3.219.0 the ℗ alone was left out as signs without a name); "Blue Note Records, ℗ © 2026 Creative Control Corp. under exclusive license to UMG Recordings, Inc." – the release\'s label before the signs is no part of it, "under exclusive license to" as "under license to" (S369): ℗ and © of Creative Control Corp. with the year, licensed to UMG Recordings, Inc. (one name: the company\'s form after its comma). The ℗/© years of an added source\'s notes are suggestions of the date pool too ("℗/© year in the notes of Discogs 2026"), as those of the source imported' },
+    { id: 'S471', where: 'runArtistWorks', note: 'Works (3.221.0; collected item Z-AWMSGGONE; S466): the messages that reading the works of many artists takes a while ("“Rollins”: 86 artists in MusicBrainz – the first 3 are compared …", "Looking up the works of … takes a while") go when all is read; stopped or paused they stay with their buttons. Off: they stay until closed' },
+    { id: 'S472', where: 'freeTextPre (countryTailCut, COUNTRY_TAIL, COUNTRY_CODES)', note: 'Texts (3.221.0; collected item Z-COUNTRYTAIL): a country or its code in brackets at the end of a line of a person – "Savina Yannatou - voice (GR)", "Agusti Fernandez – piano ( ESP )", "Julius Gabriel - baritone sax / soprano ( D )", "Percy Pursglove (UK)" – is cut off first (the letters of cars and codes as written too); nothing is compared or offered. Off: the line was not recognized' },
+    { id: 'S473', where: 'TEXT.parse (splitRoles)', note: 'Texts (3.221.0; collected item Z-SAXKIND; S040, T011): a bare kind beside "<kind> sax" in the same list – "soprano sax / tenor", "baritone sax / soprano" – is that instrument too (tenor saxophone, soprano saxophone), not the voice nor the question of "soprano" (Q019); also clarinets, recorders, flutes, trombones' },
+    { id: 'S474', where: 'freeTextRewrite, compareSupplement', note: 'Texts (3.221.0; collected item Z-NAMEONLY; S257): a name alone in a list of lines "Name – role" ("Percy Pursglove" between "Ben Dwyer – guitar" and "Torben Snekkestad – soprano sax") is a performer of the lineup (the instruments of MusicBrainz offered, S257); from an added source the person\'s role on the release already (an instrument, a voice) is what it says – confirmed, no new role. Not a heading above the list (the line before must be one of the list)' },
+    { id: 'S475', where: 'TEXT.parse (shopLines; SHOP_EDITION_VARIANT)', note: 'Texts (3.221.0; collected item Z-EDITIONSIZES; S345): a variant of an edition with its number of copies – "100x Kallisto Edition (Half/Half Colored) + A3 Poster + 6x6cm Patch", "250x Solid Black Edition", "20x Testpress w/ Signed Cover", "300 copies on clear vinyl" – is left out as "edition" (a credit with "by" keeps the line)' },
+    { id: 'S476', where: 'groupCredits, addCreditRows, dgLineupFind', note: 'Lineup and track credits (3.221.0; collected item Z-LOPEZ2; S217, S451): the lineups in the titles of the tracks name everyone who plays on a track – there an instrument of another kind says where the person plays too: "Ramón López – percussion" with "Lopez dr" in the titles keeps percussion on those tracks beside drums (drums and percussion do not exclude each other). Lines of tracks of a text still count only with the lineup\'s instrument ("Track 2: Anna – vocals")' },
+    { id: 'S477', where: 'renderSupp, SUPP_UNREC_KEY', note: 'Sources (3.221.0; collected item Z-SUPPUNRECFOLD): the lines of an added source not recognized – four or more – at the end of its list, folded into one line "▸ 14 lines not recognized"; a click shows them (remembered)' },
+    { id: 'S478', where: 'placeCopyrightYear', note: 'Dates (3.221.0; collected item Z-PCYEARAUTO; S470): the ℗/© year of the notes – of the source imported and of an added source – is placed in the column ℗/© of the date matrix as a suggestion (dashed; "Apply" puts it on the rows of ℗ and ©), when that column has no date yet and the notes give one year only; several years stay buttons of the pool' },
     { id: 'S469', where: 'dgLineupApply, sendDiscogsStatus', note: 'Lineup and track credits (3.220.0; collected item Z-LOPEZ; S217): a row the answer leaves out (a lineup row on no track any more, a track credit taken into the lineup row) keeps its line at the source – its places go to the person\'s row still there, so the companion marks the line ("Ramón López – percussion" where the titles give him drums on all of his tracks)' },
     { id: 'S410', where: 'freshForget, repeatImport, loadRelease', note: '"↻ Repeat import" (3.209.0; collected item Z-FRESHALL): "Start afresh" forgets everything the dashboard holds of the release – not only the changes of the rows and the choices of the works matrix (Z-RI, 3.40.16), also the date pool, the track pool and the date matrix, the choices of the box "Dedications & tributes", "✕ No suite", texts and parts of sources switched off, "skip the works", entries joined by hand, the ticks of suggestions, what is remembered of the release ("Remember changes"; nothing of the import before is stored on the way). Kept: what was created in MusicBrainz through the dashboard (the lists of created works and suites), the source and the media chosen, the log' },
     { id: 'S409', where: 'mergeEntries, joinEntry, applyEntryMerges, dmTargetOf (entry-merge), groupHtml (grip)', note: 'Entries (3.208.0; collected item Z-ENTITYMERGE): two entries of the same kind that are one – from different sources, written otherwise – are joined by hand: the grip ⠿ before the kind of an entry dropped onto another entry. The entry dropped onto stays (its link to MusicBrainz counts; without one it takes the other\'s), the rows of the other come to it – the same role once, each row credited as its source writes it, the other\'s name one of its names. Two different entries of MusicBrainz, or entries of different kinds: not joined, a message says why. Remembered for the release (joined again at the next import); ↶ in the message undoes it' },
@@ -7536,6 +7546,9 @@
   ];
   // ((S345) the size of the edition ("This is an exclusive bandcamp edition of 180 copies."): left out as "edition", as "Limited to 100 copies."
   const SHOP_EDITION_SIZE = /^(?:this\s+is\s+)?(?:an?\s+)?(?:(?:exclusive|limited|special|numbered|hand-?numbered|bandcamp|first|second|1st|2nd)\s+)*(?:[\p{L}-]+\s+){0,2}(?:edition|run|pressing)\s+of\s+(?:only\s+)?\d+\s+(?:copies|units|pieces|cassettes|tapes|cds|lps|records|discs)\b/iu;
+  // [Z-EDITIONSIZES] (3.221.0, S475) a variant of an edition with its number of copies – "100x Kallisto Edition (Half/Half Colored) + A3
+  // Poster + 6x6cm Patch", "250x Solid Black Edition", "20x Testpress w/ Signed Cover", "300 copies on clear vinyl": left out as "edition"
+  const SHOP_EDITION_VARIANT = /^(?:ltd\.?\s+|limited\s+)?\d{1,5}\s*(?:x|×|copies|pcs\.?|pieces)\s+(?:(?:[\p{L}\d'’/&.-]+\s+){0,5}(?:edition|editions|testpress(?:ings?)?|test\s+press(?:ings?)?|pressing|vinyl|lp|cd|cassettes?|tapes?|copies)\b|testpress|test\s+press|on\s+[\p{L}\s/-]{2,40}vinyl\b)/iu;
   // ((S345) how an edition was made – its words without a name: "recycled", "dubbing", "hand-made", "D.I.Y.")
   const SHOP_MADE = /\b(?:recycled|dubb(?:ed|ing)|hand-?(?:made|numbered|stamped|painted|assembled|cut)|d\.?\s?i\.?\s?y\.?|screen-?printed\s+covers?|home-?made)\b/i;
   const SHOP_MADE_THING = /\b(?:cassettes?|tapes?|vinyl|cds?|lps?|covers?|sleeves?|j-?cards?|inlays?|copies)\b/i;
@@ -7663,6 +7676,25 @@
   const COMPANY_SUFFIX_WORD = /^(?:records?|label|editions?|éditions|disques|schallplatten)$/i;
   // [Z-AFFIL] (S262, review) a country or its code in brackets is no company ("(UK)", "(USA)")
   const AFFIL_NOT = /^(?:uk|usa?|gb|gbr|ger|deu|de|fr|fra|jp|jpn|it|ita|es|esp|nl|ned|se|swe|no|nor|dk|den|fi|fin|au|aus|ca|can|br|bra|ar|arg|mx|mex|ru|rus|cn|chn|kr|kor|in|ind|nz|nzl|ie|irl|be|bel|at|aut|ch|sui|pl|pol|pt|por|gr|gre|tr|tur|il|isr|za|rsa|nyc|eu|ny|la|sf|dc|jr|sr|ii|iii|iv)$/i;
+  /**
+   * [Z-COUNTRYTAIL] (3.221.0, S472) A country or its code in brackets at the end of a line of a person ("( ESP )", "(GR)", "( D )" – also
+   * the letters of cars, "IR" as written): cut off. Only after a role or a name (a line with a sign between name and role, or a name alone).
+   */
+  const COUNTRY_TAIL = /^(.*?\S)\s*\(\s*([A-Z]{1,3}|[A-Z][a-z]{3,})\s*\)\s*$/u;
+  const COUNTRY_CODES = new Set(['uk', 'us', 'usa', 'gb', 'gbr', 'ger', 'deu', 'de', 'd', 'fr', 'fra', 'f', 'jp', 'jpn', 'j', 'it', 'ita', 'i', 'es', 'esp', 'e', 'nl', 'ned', 'nld',
+    'se', 'swe', 's', 'no', 'nor', 'n', 'dk', 'den', 'dnk', 'fi', 'fin', 'au', 'aus', 'ca', 'can', 'br', 'bra', 'ar', 'arg', 'mx', 'mex', 'ru', 'rus', 'cn', 'chn', 'kr', 'kor',
+    'in', 'ind', 'nz', 'nzl', 'ie', 'irl', 'ir', 'be', 'bel', 'b', 'at', 'aut', 'a', 'ch', 'sui', 'che', 'pl', 'pol', 'pt', 'por', 'prt', 'p', 'gr', 'gre', 'grc', 'tr', 'tur', 'il', 'isr',
+    'za', 'rsa', 'cz', 'cze', 'sk', 'svk', 'hu', 'hun', 'h', 'ro', 'rou', 'bg', 'bgr', 'hr', 'cro', 'hrv', 'si', 'slo', 'svn', 'rs', 'srb', 'ua', 'ukr', 'lt', 'ltu', 'lv', 'lat', 'lva',
+    'ee', 'est', 'is', 'isl', 'lu', 'lux', 'l', 'cu', 'cub', 'eng', 'sco', 'wal']);
+  const COUNTRY_NAMES = /^(?:England|Scotland|Wales|Ireland|Germany|France|Spain|Italy|Greece|Switzerland|Austria|Norway|Sweden|Denmark|Finland|Iceland|Poland|Portugal|Netherlands|Belgium|Japan|Canada|Brazil|Argentina|Mexico|Cuba|Australia|Israel|Turkey|Russia|Ukraine|Hungary|Czechia|Lithuania|Latvia|Estonia|Slovenia|Croatia|Serbia|Romania|Bulgaria|Luxembourg)$/;
+  function countryTailCut(t) {
+    const m = t.match(COUNTRY_TAIL);
+    if (!m || !(COUNTRY_CODES.has(m[2].toLowerCase()) && /^[A-Z]+$/.test(m[2]) || COUNTRY_NAMES.test(m[2]))) return t;
+    const head = m[1].replace(/\s+$/, '');
+    // (a line of a person: "Name – role", "Name: role", or a name alone of two to four words, each with a capital)
+    const named = /\s[-–—]\s|^[^:]{2,40}:\s|\t/.test(head) || /^(?:\p{Lu}[\p{L}'’.-]*\s+){1,3}\p{Lu}[\p{L}'’.-]*$/u.test(head);
+    return named ? head : t;
+  }
   // a company that is a studio: "(StudioMASS)", "(Abbey Road Studios)", "(Sterling Sound)" – the place of a studio's role
   const AFFIL_STUDIO = /\b(?:[Ss]tudios?|STUDIOS?|[Mm]astering|MASTERING|[Ss]ound|SOUND|[Aa]udio|AUDIO|[Ll]abs?|[Rr]ecordings?|[Tt]onstudio)\b|\p{Ll}\p{Lu}/u;
 
@@ -10247,6 +10279,17 @@
         const joined = `${prev.slice(0, -1).join(' ')} ${parts[i]}`;
         if (isRole(P, joined)) parts[i] = joined;
       }
+      // [Z-SAXKIND] (3.221.0, S473) "soprano sax / tenor", "baritone sax / soprano": a bare kind beside "<kind> sax" in the same list is that
+      // instrument too (tenor sax, soprano sax) – not the voice or the question of "soprano" (Q019)
+      if (ruleOn('S473')) {
+        const KIND = /^(?:sopranino|soprano|alto|tenor|baritone|bass|c-melody)$/i;
+        const nounOf = (x) => { const w = String(x).split(' '); return w.length === 2 && KIND.test(w[0]) && /^(?:sax(?:ophone)?s?|clarinets?|recorders?|flutes?|trombones?)$/i.test(w[1]) ? w[1] : ''; };
+        for (let i = 0; i < parts.length; i++) {
+          if (!KIND.test(parts[i])) continue;
+          const near = [parts[i - 1], parts[i + 1]].map(nounOf).find(Boolean);
+          if (near && isRole(P, `${parts[i]} ${near}`)) parts[i] = `${parts[i]} ${near}`;
+        }
+      }
       return parts.filter(Boolean);
     };
 
@@ -10445,7 +10488,7 @@
           const made = SHOP_MADE.test(b) && SHOP_MADE_THING.test(b) && !/\bby\s+\p{Lu}/u.test(b);
           const goesOn = wasShop && /^(?:and|but|so|also|plus|which|that)\b|\b(?:I['’]m|I\s+am|I['’]ll|we['’]re|we\s+are|we['’]ll|our|my)\b/i.test(b) && !/:|\sby\s|\s[–—-]\s/.test(b);
           // (a credit after it – "…, cover art by Jane Doe" – keeps the line for the reader)
-          if (SHOP_EDITION_SIZE.test(b) && !/\bby\s+\p{Lu}/u.test(b)) {
+          if ((SHOP_EDITION_SIZE.test(b) || (ruleOn('S475') && SHOP_EDITION_VARIANT.test(b))) && !/\bby\s+\p{Lu}/u.test(b)) {
             P.ignored.push({ text: t, why: 'edition' });
             prevShop = true;
             return '';
@@ -10656,6 +10699,16 @@
 
     function freeTextPre(P, lines0) {
       const L = lines0.map((l) => String(l == null ? '' : l));
+      // [Z-COUNTRYTAIL] (3.221.0, S472) "Savina Yannatou - voice (GR)", "Agusti Fernandez – piano ( ESP )", "Percy Pursglove (UK)": the country
+      // of a person at the end of the line is no part of the role or the name – cut off first (not compared, not offered)
+      if (ruleOn('S472')) {
+        L.forEach((l, i) => {
+          const t = countryTailCut(l);
+          if (t === l) return;
+          if (!P.rawOf.has(t)) P.rawOf.set(t, P.rawOf.get(l) || l);
+          L[i] = t;
+        });
+      }
       const gone = new Set();
       const drop = (i, why, extra = {}) => {
         if (gone.has(i) || !L[i].trim()) return;
@@ -10859,6 +10912,20 @@
               put(L[x], `${clean(L[x])} – performer`);
             }
             i = j - 1;
+            continue;
+          }
+        }
+        // [Z-NAMEONLY] (3.221.0, S474) a name alone in a list of lines "Name – role" (the line before it one, the next one too or the list's
+        // end – not a heading above the list): a performer, as a name of a
+        // lineup (S257: the instruments of MusicBrainz offered; from an added source the person's role the release has already)
+        if (ruleOn('S474') && ruleOn('S257')) {
+          const n0 = clean(t);
+          const ws = n0.split(/\s+/);
+          const roleLine = (x) => x >= 0 && x < L.length && !gone.has(x) && /^\s*[^–—:]{3,60}?\s[–—-]\s+\S/u.test(L[x]);
+          if (ws.length >= 2 && ws.length <= 4 && !/[:：\d(),/&|]|\s[–—-]\s/u.test(n0) && looksLikeName(n0) && !isRole(P, cap(n0)) && !playable(P, n0.toLowerCase())
+            && ws.every((w, k) => /^\p{Lu}/u.test(w) || (k > 0 && PERSON_PARTICLE.test(w))) && roleLine(i - 1) && (roleLine(i + 1) || i + 1 >= L.length || !L[i + 1].trim())) {
+            P.lineupLines.add(`${String(P.rawOf.get(L[i]) || L[i]).trim()}\u0000${n0} – performer`);
+            put(L[i], `${n0} – performer`);
             continue;
           }
         }
@@ -17538,9 +17605,11 @@
         // [S058] (3.38.12) a credit of lines whose order was not clear is a row of its own: "⇅" swaps it without taking a clear
         // credit of the same role with it (the same relationship of both is staged once)
         const rKey = `${norm(role.raw)}|${norm(anv)}${c.stackAmbig ? '|stack' : ''}${c.improv ? '|improv' : ''}`; // ([Z-IMPROV] 3.133.0, review) apart from composing
+        // ([Z-LOPEZ2] 3.221.0, S476) a role from the lineups of the track titles only (S451): each title names who plays on that track
+        if (group.roles.has(rKey) && !c.fromTitle) group.roles.get(rKey).fromTitle = false;
         if (!group.roles.has(rKey)) {
           group.roles.set(rKey, { role, anv, ...(ac.from ? { anvFrom: ac.from } : {}), allTracks: false, indexes: new Set(), unresolved: [], specs: [], positions: [], lines: [], refs: [],
-            fromAbout: !!c.fromAbout, fromNotes: !!c.fromNotes, titleComposer: !!c.titleComposer, tcpSingle: !!c.tcpSingle, rmxTitle: !!c.rmxTitle,
+            fromAbout: !!c.fromAbout, fromNotes: !!c.fromNotes, titleComposer: !!c.titleComposer, tcpSingle: !!c.tcpSingle, rmxTitle: !!c.rmxTitle, fromTitle: !!c.fromTitle,
             ...(c.thanksFor ? { thanksFor: true } : {}), ...(c.lineup ? { lineup: true } : {}), // [Z-THANKSFOR] [Z-LINEUPHEAD] (3.146.0)
             ...(c.abbrAlt ? { abbr: c.abbr, abbrAlt: c.abbrAlt } : {}), // ([Z-ABBR] 3.101.0, review)
             ...(c.pkgMedium ? { pkgMedium: c.pkgMedium, fromPkg: c.fromPkg } : {}), // [Z-VINYLONLY] (3.161.0, S293)
@@ -29782,6 +29851,7 @@
         const add = dateSuggestions(rel).filter((x) => !have.has(x.begin.year)).map((x) => ({ ...x, source: 'copyrightSupp', name: source.name }));
         if (add.length) {
           S.dateSuggestions = [...(S.dateSuggestions || []).filter((x) => x.source !== 'copyrightSupp'), ...add];
+          placeCopyrightYear(); // [Z-PCYEARAUTO] (3.221.0, S478)
           renderDates();
         }
       }
@@ -30031,6 +30101,16 @@
         if (!a) {
           fresh.push(info);
           continue;
+        }
+        // [Z-NAMEONLY] (3.221.0, S474) a name alone of the added source (a performer of its lineup): the person's role on the release
+        // already (an instrument, a voice, a performer) is what it says – confirmed, no new role "performer"
+        if (ruleOn('S474') && c.lineup && /^performer$/i.test(String(c.role.base || ''))) {
+          const own = S.rows.filter((r) => r.artistKey === a.key && !r.supp && r.level !== 'skip' && (r.types || []).some((t) => ['instrument', 'vocal', 'performer'].includes(t)));
+          if (own.length) {
+            own.forEach((r) => { if (!r.confirmedBy) r.confirmedBy = new Set(); r.confirmedBy.add(short); });
+            sp.confirmed++;
+            continue;
+          }
         }
         const res = compare(a, probe, info);
         if (res) items.push({ id: id(), artistKey: a.key, sel: suppPreselect(res), ...info, ...res });
@@ -30698,7 +30778,7 @@
       const text = trustRank(win) === trustRank(lose) ? tr('trust.reasonSame', { name: trustName(win) }) : tr('trust.reason', { win: trustName(win), lose: trustName(lose) });
       return `<tr class="dci-supp-why"><td></td><td colspan="6">⚖ ${esc(text)} <button type="button" class="dci-textbtn" data-act="trust-open">${esc(tr('trust.link'))}</button></td></tr>`;
     };
-    const rows = sp.items.map((it) => {
+    const rowOf = (it) => {
       const a = it.artistKey ? S.artists.get(it.artistKey) : null;
       const who = it.kind === 'unrec' ? '–' : a && it.kind !== 'entry'
         ? `<strong>${esc(a.name)}</strong>${it.name && it.kind !== 'name' && it.kind !== 'spell' && nameKey(it.name) !== nameKey(a.name) ? `<div class="dci-sub">${esc(tr('supp.written', { name: it.name }))}</div>` : ''}`
@@ -30709,7 +30789,14 @@
         <td><input type="checkbox" data-f="supp-sel" data-id="${it.id}" ${it.sel ? 'checked' : ''} ${off ? 'disabled' : ''} aria-label="${esc(`${tr(`supp.kind.${kind}`)}: ${it.name || it.line}`)}"></td>
         <td>${chip(kind)}</td><td>${who}</td><td>${esc(it.kind === 'precise' ? it.mainSays : it.rel || '–')}</td>
         <td>${mainCell(it)}</td><td>${addCell(it)}</td><td>${mbCell(it)}</td></tr>${whyRow(it)}`;
-    }).join('');
+    };
+    // [Z-SUPPUNRECFOLD] (3.221.0, S477) four lines not recognized or more: at the end, folded into one line ("▸ 14 lines not recognized")
+    const unrecs = sp.items.filter((it) => it.kind === 'unrec');
+    const foldUnrec = ruleOn('S477') && unrecs.length >= 4;
+    const unrecOpen = foldUnrec && !!readJson('localStorage', SUPP_UNREC_KEY, false);
+    const rows = foldUnrec
+      ? `${sp.items.filter((it) => it.kind !== 'unrec').map(rowOf).join('')}<tr class="dci-supp-unrecfold"><td></td><td colspan="6"><button type="button" class="dci-textbtn" data-act="supp-unrec-fold" aria-expanded="${unrecOpen}">${unrecOpen ? '▾' : '▸'} ${esc(tr('supp.unrecFold', { n: unrecs.length }))}</button></td></tr>${unrecOpen ? unrecs.map(rowOf).join('') : ''}`
+      : sp.items.map(rowOf).join('');
     // ((review) the more precise ones and the names to check counted too
     const summary = tr('supp.summary', { confirmed: sp.confirmed, added: count('role') + count('entry'), differ: count('differ'), unrec: count('unrec') })
       + (count('precise') + count('name') ? tr('supp.summaryPrecise', { n: count('precise') + count('name') }) : '') + (count('spell') ? tr('supp.summarySpell', { n: count('spell') }) : '');
@@ -30733,6 +30820,8 @@
           <ul>${sp.known.map((k) => `<li><span class="dci-supp-knownline">${esc(k.line)}</span> → <strong>${esc(k.name)}</strong>: ${esc(k.role)}</li>`).join('')}</ul></details>` : ''}` : ''}`;
   }
 
+  /** [Z-SUPPUNRECFOLD] (3.221.0, S477) the lines of an added source not recognized shown (true) or folded (false, the default) */
+  const SUPP_UNREC_KEY = 'dci-supp-unrec-open';
   /** The marks of a row: its source, and the second source when it says the same (or other tracks). */
   /** ((3.127.0, review) the rows of a line of the entry matrix, opened: its badges are at the line already) */
   function emDetailRows(rows) {
@@ -32187,6 +32276,7 @@
       if (c.thanksFor && ruleOn('S256')) row.thanksFor = true; // [Z-THANKSFOR] (3.146.0) additional or guest, chosen at the row
       if (c.lineup && ruleOn('S257')) row.lineup = true; // [Z-LINEUPHEAD] (3.146.0) a name of a lineup (the instruments of MusicBrainz offered)
       if (c.titleComposer) row.titleComposer = true; // [Z-TCP] (3.60.0, S088)
+      if (c.fromTitle) row.fromTitle = true; // [Z-LOPEZ2] (3.221.0, S476) a credit of the lineup of a track's title
       if (c.tcpSingle) row.tcpSingle = true; // [Z-TCP2] (3.63.0, S092)
       if (c.abbrAlt) Object.assign(row, { abbr: c.abbr, abbrAlt: c.abbrAlt }); // [Z-ABBR] (3.101.0, S166; review)
       abbrAskFor(row, c); // [Z-ABBR2] (3.102.0, S166)
@@ -32887,6 +32977,7 @@
       S.dateSuggestions = dateSuggestions(rel);
       // Dates in the notes with a word naming their group: suggestions in the date matrix (once per release)
       autoPlaceFoundDates();
+      placeCopyrightYear(); // [Z-PCYEARAUTO] (3.221.0, S478)
       // [D023] (3.31.7) dates in the titles of the tracks (off until switched on)
       placeTitleDates();
       // [145b] (3.35.6) the works of the source as track groups (or out of the pool with the setting off)
@@ -41125,6 +41216,27 @@
     return true;
   }
 
+  /**
+   * [Z-PCYEARAUTO] (3.221.0, S478) The ℗/© year of the notes – of the source imported and of an added source ("Blue Note Records, ℗ © 2026
+   * Creative Control Corp. …"): placed in the column ℗/© of the date matrix as a suggestion (dashed, "Apply" puts it on the rows of ℗ and
+   * ©), when that column has no date yet and the notes give one year only (several: the buttons of the pool, as before).
+   */
+  function placeCopyrightYear() {
+    if (!ruleOn('S478')) return 0;
+    const years = uniq((S.dateSuggestions || []).filter((x) => x.category === 'copyright').map((x) => x.begin.year));
+    const group = DATE_GROUPS.find((g) => g.key === 'copyright');
+    const m = dm();
+    if (years.length !== 1 || !group || m.cells.some((c) => c.col === 'copyright')) return 0;
+    const v = { begin: { year: years[0], month: null, day: null }, end: { year: years[0], month: null, day: null }, ended: true };
+    const e = poolDateFor(v, group, `notes:pc:${years[0]}`);
+    m.cells.push({ id: newCellId(), col: 'copyright', date: e.id, tgs: [], studios: [], auto: true });
+    m.dirty = true;
+    savePool();
+    saveMatrix();
+    log('info', 'pcYearPlaced', { year: years[0] });
+    return 1;
+  }
+
   function poolSuggestions() {
     const inPool = new Set(S.datePool.map((d) => formatDateValue(d)));
     return S.dateSuggestions.filter((x) => !inPool.has(formatDateValue({ begin: x.begin, end: x.begin, ended: true })));
@@ -47718,7 +47830,9 @@
       const T = all0.filter((r) => L.some((l) => dglRelated(l.primaryText, r.primaryText)));
       // ((3.134.0, review) a text's lines of tracks often add to the lineup ("Track 2: Anna – vocals"): there only the lineup's instruments say
       // where someone plays
-      const all = entrySource(a) === DISCOGS ? all0 : T;
+      // ([Z-LOPEZ2] 3.221.0, S476) the lineups in the titles of the tracks name everyone who plays on a track: there an instrument of
+      // another kind says where the person plays too ("Lopez dr" beside "Ramón López – percussion": drums and percussion both)
+      const all = entrySource(a) === DISCOGS ? all0 : all0.filter((r) => T.includes(r) || (ruleOn('S476') && r.fromTitle));
       // (a track credit the same as the lineup's – role and spelling – is part of its row: its tracks)
       const also = L.flatMap((r) => [...(r.dTrackIdx || [])]);
       lineup.push({ a, L, T, also, onTracks: uniq([...all.flatMap((r) => [...r.tracks]), ...also]) });
@@ -50166,7 +50280,9 @@
     S.artistWorksRunning = false;
     if (!S.awPaused && !S.artistWorksAgain) {
       S.awLong = false; // [Z-ARTWORKSSTOP] (3.218.0) done: its line goes
-      if (S.messages.some((m) => m.aw)) renderMessages(); // ([Z-ARTWORKSSTOP2] 3.220.0) and the buttons of its messages
+      // [Z-AWMSGGONE] (3.221.0, S471) all read: the messages that it takes a while go too (stopped or paused: they stay with their buttons)
+      if (ruleOn('S471') && S.messages.some((m) => m.aw)) S.messages = S.messages.filter((m) => !m.aw);
+      if (S.messages.some((m) => m.aw) || ruleOn('S471')) renderMessages(); // ([Z-ARTWORKSSTOP2] 3.220.0) and the buttons of its messages
     }
     // [Z-YTW] (3.80.0, S118) songs of a video split before the works of the artists were read: offered now
     const songOffers = [...S.workParts.keys()].reduce((k, i) => k + songOffersFromArtistWorks(i), 0);
@@ -58580,6 +58696,13 @@
         renderGroups();
         renderWorks();
         break;
+      case 'supp-unrec-fold': { // [Z-SUPPUNRECFOLD] (3.221.0, S477)
+        writeJson('localStorage', SUPP_UNREC_KEY, btn.getAttribute('aria-expanded') !== 'true');
+        renderSupp();
+        const b2 = S.overlay.querySelector('[data-act="supp-unrec-fold"]');
+        if (b2) b2.focus({ preventScroll: true });
+        break;
+      }
       case 'supp-fold':
         if (S.supp) S.supp.open = !S.supp.open;
         renderSupp();
@@ -66890,6 +67013,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       .dci-supp-role, .dci-supp-entry { border: 1px dashed var(--sugg-line); color: var(--sugg-ink); }
       .dci-supp-differ { border: 1px solid #e8a27f; color: #8a3a12; }
       .dci-supp-unrec { border: 1px solid #c8c5d6; color: var(--muted); }
+      .dci-supp-unrecfold button { color: var(--muted); font-weight: 600; } /* [Z-SUPPUNRECFOLD] (3.221.0) */
       .dci-supp-line { max-width: 34ch; }
       .dci-supp-hint { font-weight: 600; }
       /* [Z-SUPPWORDS] (3.188.0, S327) the lines known without being read, below the table */

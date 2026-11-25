@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-25 | 3.218.0 – 3.220.0 | 1.24.0 |
+| 2026-11-25 | 3.218.0 – 3.221.0 | 1.24.0 |
 | 2026-11-24 | 3.213.0 – 3.217.0 | – |
 | 2026-11-23 | 3.210.0 – 3.212.0 | – |
 | 2026-11-22 | 3.197.0 – 3.209.0 | – |
@@ -139,6 +139,19 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.221.0
+
+**Countries after names, saxophones in a list, a name alone, editions with their numbers; percussion beside drums; ℗/© year in the matrix; lines not recognized folded.**
+
+- **A country after a name** (rule S472): "Savina Yannatou - voice (GR)", "Agusti Fernandez – piano ( ESP )", "Julius Gabriel - baritone sax / soprano ( D )" – the country or its code in brackets at the end of a line is cut off (nothing compared or offered); until now the line was not recognized.
+- **Saxophones in a list** (rule S473): "soprano sax / tenor", "baritone sax / soprano" – the bare kind beside "<kind> sax" is a saxophone too (no question "soprano?").
+- **A name alone** (rule S474): "Percy Pursglove" in a list of lines "Name – role" is a performer of the lineup (the instruments of MusicBrainz offered); from an added source his role on the release already (trumpet) is confirmed – no new role.
+- **Editions with their numbers** (rule S475): "100x Kallisto Edition (Half/Half Colored) + A3 Poster + 6x6cm Patch", "250x Solid Black Edition", "20x Testpress w/ Signed Cover" are left out as "edition".
+- **Percussion beside drums** (rule S476): the lineups in the track titles name everyone on a track – "Lopez dr" there keeps "Ramón López – percussion" on those tracks beside drums (until now the lineup row could go).
+- **Lines not recognized folded** (rule S477): four or more lines of an added source not recognized are at the end of its list, folded: "▸ 14 lines not recognized" (remembered).
+- **℗/© year in the date matrix** (rule S478): the ℗/© year of the notes – of the source imported and of "＋ Source" – is placed in the column ℗/© as a suggestion (dashed; "Apply" puts it on the ℗ and © rows), when that column has no date and the notes give one year.
+- **Messages of a long search go** (rule S471): "“Rollins”: 86 artists … this can take a while" goes when all is read (stopped: it stays with its buttons).
 
 ### Import 3.220.0 · COMPANION 1.24.0
 

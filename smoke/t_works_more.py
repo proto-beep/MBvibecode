@@ -18,7 +18,8 @@ def case_artistworks():
        artists credited on its track.
     C) Read once per session: a second import (a pasted text) compares again without asking MusicBrainz again (the release
        artist's work is offered again for track 4, whose chosen work was given up).
-    D) A large catalogue: an artist with 2,500 recordings takes longer than 10 seconds – a message says why; with the
+    D) A large catalogue: an artist with 2,500 recordings takes longer than 10 seconds – a message says why (3.221.0, S471: gone once all is
+       read); with the
        setting "at most 2,000 per artist" (3.16.0; default 4,000) only the first 2,000 are read, and a message says so.
     E) A result of the background does not disturb typing: while a date field of the works matrix is being typed in, the
        matrix is not drawn anew (focus and text stay); once the field is left, the work found is shown."""
@@ -126,7 +127,7 @@ def case_artistworks():
         print('D) Meldungen:', msgs)
         print('   Protokoll:', log)
         print('   Aufnahmen gelesen bis Offset:', max(recs), '| Anfragen:', len(recs))
-        results.append(any('takes a while: a large catalogue (2500 recordings' in m for m in msgs)
+        results.append(not any('takes a while: a large catalogue (2500 recordings' in m for m in msgs)  # (3.221.0, S471: gone once all is read)
                        and any('Guitar Guy has 2500 works and recordings; only the first 2000 were compared' in m for m in msgs)
                        and any('a large catalogue' in x for x in log) and any('only the first 2000 compared' in x for x in log)
                        and len(recs) == 20 and max(recs) == 1900)

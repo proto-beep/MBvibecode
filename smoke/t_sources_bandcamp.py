@@ -5,6 +5,7 @@ import harness as H  # noqa: F401 – used by the cases
 H.NO_ANIM = True  # [3.77.0] (Z-FLK) reading and mapping: no transitions or animations to wait for
 from caserun import run_cases, sync_playwright  # noqa: F401 – the shared browser
 import json  # noqa: E402
+import re  # noqa: E402
 import urllib.parse  # noqa: E402
 
 
@@ -2708,7 +2709,9 @@ def case_lopez3220():
     B) The titles give him drums on all of his tracks (his lineup row "percussion" is left out): his row still has the line of the
        credits (the place the companion marks).
     C) (3.220.0, S468) the question of lineup and track credits on Bandcamp: "Who plays on which tracks? (Bandcamp: lineup and track pages)".
-    D) S469 off (as 3.219.0): his row has no line of the credits."""
+    D) S469 and S476 off (as 3.219.0): his row has no line of the credits.
+    E) (3.221.0, S476: drums and percussion do not exclude each other) his lineup row "percussion" stays on all four tracks, beside "Drums" of
+       the titles."""
     for k, n in [(9321, 'percussion'), (9322, 'drums'), (9323, 'cymbal'), (9324, 'electric bass'), (9325, 'double bass')]:
         H.attr(k, n, 14, 14)
     H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
@@ -2750,13 +2753,15 @@ def case_lopez3220():
             refsB = [x for r in rl for x in json.loads(r[3] or '[]')]
             print('B)', [x.get('line') for x in refsB])
             results.append(any(x.get('line') == 'Ramón López – percussion' for x in refsB))
+            print('E)', [r[:3] for r in rl])
+            results.append(['Ramón López', 'percussion', '0,1,2,3'] in [r[:3] for r in rl] and ['Ramón López', 'Drums', '0,1,2,3'] in [r[:3] for r in rl])
             dgt = pg.evaluate("((document.querySelector('[data-el=dglineup] p strong') || {}).textContent || '')")
             print('C)', dgt)
             results.append(dgt == 'Who plays on which tracks? (Bandcamp: lineup and track pages)')
             results.append(not errs)
             b.close()
-            # D) S469 off (as 3.219.0): the line lost with the row
-            H.RULES_OFF = ['S469']
+            # D) S469 and S476 off (as 3.219.0): the line lost with the row
+            H.RULES_OFF = ['S469', 'S476']
             b = p.chromium.launch(args=H.LAUNCH_ARGS)
             ctx = H.new_context(b)
             pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
@@ -2772,6 +2777,87 @@ def case_lopez3220():
         H.RULES_OFF = []
         H.ws_release = orig_ws
         H.MAIN = main0
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_blueshroud3221():
+    """Credits Importer 3.221.0 (collected items Z-COUNTRYTAIL, Z-SAXKIND, Z-NAMEONLY, Z-EDITIONSIZES; rules S472 – S475): the credits of a
+    Bandcamp release (shortened from a real one) – "Barry Guy – bass and director ( GB )", "Savina Yannatou - voice (GR)", "Ben Dwyer – guitar
+    ( IR )", "Percy Pursglove (UK)", "Torben Snekkestad – soprano sax / tenor ( NOR )", "Per Texas Johansson – tenor sax / clarinet ( S )",
+    "Julius Gabriel - baritone sax / soprano ( D )", "Lucas Niggli – percussion (CH )"; its vinyl edition "100x Kallisto Edition (Half/Half
+    Colored) + A3 Poster + 6x6cm Patch", "150x Exergy Edition (Ultra Clear)", "250x Solid Black Edition", "20x Testpress w/ Signed Cover".
+    A) No line of them not recognized; no name or role with the country ("GB", "ESP" …).
+    B) Torben Snekkestad soprano and tenor saxophone, Julius Gabriel baritone and soprano saxophone (no question "soprano?").
+    C) Percy Pursglove a performer (a name of the lineup).
+    D) The four lines of the edition left out as "edition".
+    E) The rules off (as 3.220.0): those lines not recognized again."""
+    ALBUM = 'https://blueshroud.bandcamp.com/album/what-is-the-word'
+    for k, n, parent in [(9331, 'saxophone', 14), (9332, 'soprano saxophone', 9331), (9333, 'tenor saxophone', 9331), (9334, 'baritone saxophone', 9331),
+                         (9335, 'clarinet', 14), (9336, 'percussion', 14), (9337, 'guitar', 14)]:
+        H.attr(k, n, 14, parent)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    credits = """Barry Guy – bass and director ( GB )
+Savina Yannatou - voice (GR)
+Ben Dwyer – guitar ( IR )
+Percy Pursglove (UK)
+Torben Snekkestad – soprano sax / tenor ( NOR )
+Per Texas Johansson – tenor sax / clarinet ( S )
+Julius Gabriel - baritone sax / soprano ( D )
+Lucas Niggli – percussion (CH )"""
+    pkg = [{'type_name': 'Vinyl LP', 'title': 'Vinyl LP', 'description': '100x Kallisto Edition (Half/Half Colored) + A3 Poster + 6x6cm Patch\n150x Exergy Edition (Ultra Clear)\n250x Solid Black Edition\n20x Testpress w/ Signed Cover'}]
+    H.BC_PAGES[ALBUM] = H.bc_page({'artist': 'Test Band', 'current': {'title': 'Testalbum', 'credits': credits, 'about': ''}, 'packages': pkg,
+                                   'trackinfo': [{'track_num': i + 1, 'title': tt, 'duration': 180.0} for i, tt in enumerate(['Song One', 'Song Two', 'Song Three', 'Song Four'])]})
+    orig_ws = H.ws_release
+    main0 = H.MAIN
+    H.MAIN = H.MAIN.replace('  const S = {', '  const S = window.__S = {', 1)
+
+    def ws():
+        d = orig_ws()
+        d['relations'].append({'target-type': 'url', 'type': 'purchase for download', 'url': {'resource': ALBUM}})
+        for m in d['media']:
+            m['format'] = 'Digital Media'
+        return d
+    H.ws_release = ws
+    ROWS = """() => window.__S.rows.map(r => [(window.__S.artists.get(r.artistKey) || {}).name, r.raw, (r.types || []).join('/'), r.primaryText || ''])"""
+    REL = """(() => { const r = window.__S.release || {}; return [r.unrecognized || [], (r.ignored || []).map(x => [x.text, x.why])]; })()"""
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
+        H.wait_still(pg, "document.body.innerHTML", 10, 400)
+        out = pg.evaluate(ROWS), pg.evaluate(REL), errs
+        b.close()
+        return out
+    results = []
+    try:
+        with sync_playwright() as p:
+            rows, (unrec, ign), errs = run(p)
+            names = sorted({r[0] for r in rows if r[0]})
+            print('A)', names, '| nicht erkannt:', unrec)
+            results.append(not unrec and not any(re.search(r'\b(?:GB|GR|IR|NOR|ESP|CH|UK|D|S)\b', n + ' ' + r) for n, r, *_ in rows if n) and 'Percy Pursglove' in names and not errs)
+            sax = [r for r in rows if r[0] in ('Torben Snekkestad', 'Julius Gabriel')]
+            print('B)', sax)
+            results.append(sorted(r[3] for r in sax if r[0] == 'Torben Snekkestad') == ['soprano saxophone', 'tenor saxophone']
+                           and sorted(r[3] for r in sax if r[0] == 'Julius Gabriel') == ['baritone saxophone', 'soprano saxophone'])
+            pp = [r for r in rows if r[0] == 'Percy Pursglove']
+            print('C)', pp)
+            results.append(len(pp) == 1 and 'performer' in pp[0][2])
+            ed = [t for t, why in ign if why == 'edition']
+            print('D)', ign)
+            results.append(len(ed) == 4)
+            rows2, (unrec2, ign2), errs2 = run(p, off=['S472', 'S473', 'S474', 'S475'])
+            print('E)', unrec2)
+            results.append(len(unrec2) >= 8 and not errs2)
+    finally:
+        H.ws_release = orig_ws
+        H.MAIN = main0
+        H.RULES_OFF = []
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

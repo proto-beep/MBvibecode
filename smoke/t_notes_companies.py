@@ -2519,7 +2519,7 @@ def case_tribute3206():
     results = []
 
     def open_page(p, off=()):
-        H.RULES_OFF = list(off)
+        H.RULES_OFF = [*off, 'S471']  # (3.221.0) the message of the many artists stays to be read (S471 off)
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
         ctx = H.new_context(b)
         pg, errs = H.open_mb_edit(ctx, companion=False)
@@ -2947,7 +2947,8 @@ def case_pcyear3220():
        no entry "Blue Note Records".
     B) The rule off (as 3.219.0): not so.
     C) The way it was seen: the release imported without that line, Discogs release 39123408 typed as "+ Source" with the line in its notes:
-       its ℗/© year 2026 is offered in the date pool ("℗/© year in the notes of Discogs 2026"); off: not."""
+       its ℗/© year 2026 is offered in the date pool ("℗/© year in the notes of Discogs 2026"; S478 off); off: not.
+    D) (3.221.0, S478) the same way with S478: the year 2026 placed in the column ℗/© of the date matrix."""
     orig = H.discogs_release
     NOTES = 'Blue Note Records, ℗ © 2026 Creative Control Corp. under exclusive license to UMG Recordings, Inc.\n'
 
@@ -2961,7 +2962,7 @@ def case_pcyear3220():
     H.RELEASE_LABELS = [(H.uid('eeeeeeee', 77), 'Blue Note Records', 'B0001')]
     ROWS = """() => window.__S.rows.map(r => [(window.__S.artists.get(r.artistKey) || {}).name, (r.types || []).join('|'), r.date ? [r.date.by, r.date.ey].join('/') : '', r.level])"""
 
-    def supp(p, off=()):
+    def supp(p, off=('S478',)):
         H.RULES_OFF = list(off)
         H.discogs_release = orig
         other = orig()
@@ -2981,6 +2982,7 @@ def case_pcyear3220():
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Added source: Discogs/.test(li.textContent))", 60)
         H.wait_still(pg, "document.body.innerHTML", 10, 400)
         sugg = pg.evaluate("[...document.querySelectorAll('[data-act=pool-suggest]')].map(b => b.textContent.trim())")
+        sugg += pg.evaluate("[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9)).filter(x => /column ℗\\/©/.test(x))")
         b.close()
         H.DG_API.pop('/releases/39123408', None)
         H.discogs_release = rel
@@ -3016,7 +3018,10 @@ def case_pcyear3220():
             print('B)', names2, ign2.count('copyrightYear'))
             results.append(not any(r[0].startswith('UMG Recordings, Inc') for r in rows2) and 'Creative Control Corp' not in names2 and not errs2)
             before, sugg, errs3 = supp(p)
-            before4, sugg4, _ = supp(p, off=['S470'])
+            before4, sugg4, _ = supp(p, off=['S470', 'S478'])
+            before5, sugg5, errs5 = supp(p, off=())
+            print('D)', before5, sugg5)
+            results.append(any('2026' in x and 'column ℗/©' in x for x in sugg5) and not errs5)
             print('C)', before, sugg, errs3, '| aus:', sugg4)
             results.append(2026 not in before and any('notes of Discogs' in x and '2026' in x for x in sugg) and not any('2026' in x for x in sugg4) and not errs3)
     finally:
@@ -3027,6 +3032,93 @@ def case_pcyear3220():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_suppfold3221():
+    """Credits Importer 3.221.0 (collected items Z-NAMEONLY, Z-SUPPUNRECFOLD, Z-PCYEARAUTO; rules S474, S477, S478): the release imported from
+    Discogs (Percy Pursglove trumpet); a Bandcamp album typed as "+ Source" with "Percy Pursglove (UK)" among lines "Name – role", five lines
+    not recognized and "℗ © 2026 Creative Control Corp." in its credits.
+    A) Percy Pursglove: no new role "performer" – his trumpet confirmed by the added source.
+    B) The five lines not recognized at the end, folded: "▸ 5 lines not recognized"; a click shows them (▾), remembered.
+    C) The ℗/© year 2026 of the added source placed in the column ℗/© of the date matrix (a suggestion, dashed).
+    D) The rules off (as 3.220.0): a new role "performer", the lines unfolded, no cell in ℗/©."""
+    ALBUM = 'https://pursglove.bandcamp.com/album/test'
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['notes'] = ''
+        d['extraartists'] = d.get('extraartists', []) + [{'name': 'Percy Pursglove', 'anv': '', 'role': 'Trumpet', 'tracks': '', 'id': 3611, 'join': ''}]
+        return d
+    H.ARTISTS[3611] = (H.uid('dddddddd', 3611), 'Percy Pursglove')
+    H.attr(9341, 'trumpet', 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    credits = """Anna Bell – voice
+Percy Pursglove (UK)
+Carl Dee – piano
+Flurp gnargle snoo
+Wibble wobble wubble
+Zorp zarp zirp zup
+Quux quuz quuy
+Plonk plink plank plunk
+
+℗ © 2026 Creative Control Corp."""
+    H.BC_PAGES[ALBUM] = H.bc_page({'artist': 'Test Band', 'current': {'title': 'Testalbum', 'credits': credits, 'about': ''},
+                                   'trackinfo': [{'track_num': i + 1, 'title': tt, 'duration': 180.0} for i, tt in enumerate(['Song One', 'Song Two', 'Song Three', 'Song Four'])]})
+    main0 = H.MAIN
+    H.MAIN = H.MAIN.replace('  const S = {', '  const S = window.__S = {', 1)
+    SUPP = """[...document.querySelectorAll('.dci-supp-row')].map(tr => [tr.querySelector('.dci-supp-kind').textContent.trim(), (tr.children[2].querySelector('strong') || tr.children[2]).textContent.trim(), tr.children[5].textContent.replace(/\\s+/g, ' ').trim()])"""
+    FOLD = "(() => { const b = document.querySelector('[data-act=supp-unrec-fold]'); return b ? [b.textContent.trim(), b.getAttribute('aria-expanded')] : null; })()"
+    CELL = "window.__S.dateMatrix ? 0 : 0"
+    PC = "JSON.stringify((window.__S.dm || {}).cells || [])"
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.open_supp(pg)
+        pg.fill('[data-f=supp-url]', ALBUM)
+        pg.click('[data-act=supp-url]')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Added source: Bandcamp/.test(li.textContent))", 60)
+        H.wait_still(pg, "document.body.innerHTML", 10, 400)
+        items = pg.evaluate(SUPP)
+        fold = pg.evaluate(FOLD)
+        opened = None
+        if fold:
+            pg.click('[data-act=supp-unrec-fold]')
+            pg.wait_for_timeout(300)
+            opened = [pg.evaluate(FOLD), len([x for x in pg.evaluate(SUPP) if x[0] == 'not recognized']), pg.evaluate("localStorage.getItem('dci-supp-unrec-open')"),
+                      pg.evaluate("document.activeElement.dataset.act || ''")]
+        logs = pg.evaluate("[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9)).filter(x => /℗\\/©/.test(x))")
+        b.close()
+        return items, fold, opened, logs, errs
+    results = []
+    H.discogs_release = rel
+    try:
+        with sync_playwright() as p:
+            items, fold, opened, logs, errs = run(p)
+            print('A)', items)
+            results.append(not any(n == 'Percy Pursglove' for k, n, _ in items) and not errs)
+            print('B)', fold, opened)
+            results.append(fold == ['▸ 5 lines not recognized', 'false'] and not any(k == 'not recognized' for k, _, _ in items)
+                           and opened and opened[0] == ['▾ 5 lines not recognized', 'true'] and opened[1] == 5 and opened[2] == 'true' and opened[3] == 'supp-unrec-fold')
+            print('C)', logs)
+            results.append(any('2026' in x and 'column ℗/©' in x for x in logs))
+            items2, fold2, _, logs2, errs2 = run(p, off=['S474', 'S477', 'S478'])
+            print('D)', items2, fold2, logs2)
+            results.append(any(n == 'Percy Pursglove' for k, n, _ in items2) and fold2 is None and sum(1 for k, _, _ in items2 if k == 'not recognized') == 5
+                           and not any('column ℗/©' in x for x in logs2) and not errs2)
+    finally:
+        H.discogs_release = orig
+        H.MAIN = main0
+        H.RULES_OFF = []
+        H.ARTISTS.pop(3611, None)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_awstop3220():
     """Credits Importer 3.220.0 (collected item Z-ARTWORKSSTOP2, S466): the release "If Ever You Would Leave Us (we play for Rollins)";
     "Rollins" the name of two artists in MusicBrainz (one hit in the settings) – the message "“Rollins”: 2 artists … this can take a while";
@@ -3034,7 +3126,8 @@ def case_awstop3220():
     A) The message has "Stop" at once (as soon as it is shown).
     B) "Stop": the message has "Continue" and "Stop and discard"; the reading stops (no more requests of Sonny Rollins).
     C) "Continue": the reading goes on – the message has "Stop" again.
-    D) S466 off: the message has no button."""
+    D) S466 off: the message has no button.
+    E) (3.221.0, S471) all read: the message is gone."""
     SR = H.uid('dddddddd', 3900)
     added_lts = {868: ('b41e7530-cde4-459c-b8c5-dfef08fc8295', 'dedicated to', 'artist', 'release_group'),
                  9440: (H.uid('94409440', 1), 'tribute', 'artist', 'release_group')}
@@ -3071,7 +3164,7 @@ def case_awstop3220():
     H.MB_SEARCH['artist'] = H.MB_SEARCH['artist'] + [{'id': H.uid('dddddddd', 3901), 'name': 'Rollins Band', 'disambiguation': '', 'type': 'Group', 'score': 90}]
     H.ARTIST_RECORDINGS[SR] = 2500
     main0 = H.MAIN
-    H.MAIN = H.MAIN_SLOW
+    H.MAIN = H.MAIN_SLOW.replace('  const S = {', '  const S = window.__S = {', 1)
     MSG = """(() => { const m = document.querySelector('[data-msgkey="ded.manyNames"]'); return m ? [...m.querySelectorAll('button[data-act^=mx-aw]')].map(b => b.dataset.act + ':' + b.textContent.trim()) : null; })()"""
     results = []
 
@@ -3114,6 +3207,12 @@ def case_awstop3220():
             c = pg.evaluate(MSG)
             print('C)', c, n3)
             results.append(n3 > n2 and c in (['mx-aw-stop:Stop'], []))
+            # E) (3.221.0, S471) all read: the message is gone
+            H.wait_ok(pg, "!window.__S.artistWorksRunning && !window.__S.awPaused", 120)
+            pg.wait_for_timeout(500)
+            e = pg.evaluate("!!document.querySelector('[data-msgkey=\"ded.manyNames\"]')")
+            print('E) Meldung noch da:', e, pg.evaluate("[window.__S.artistWorksRunning, window.__S.awPaused, window.__S.awLong, window.__S.artistWorksAgain]"), errs[-3:])
+            results.append(e is False)
             results.append(not errs)
             b.close()
             b, pg, errs = open_page(p, off=['S466'])
