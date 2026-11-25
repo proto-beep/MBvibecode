@@ -2336,4 +2336,49 @@ def case_ocrpipe3144():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_imgarrows3218():
+    """Credits Importer 3.218.0 (collected item Z-IMGARROWS, S457): the images of "Text from cover art" (Back, Booklet, Tray), step frames.
+    A) → shows the next image, → after the last the first again; ← before the first the last.
+    C) S457 off: → changes nothing."""
+    results = []
+    HEAD = "document.querySelector('#dci-ocr .dci-ocr-head .dci-sub').textContent.trim()"
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        H.COVER_ART = list(ART)
+        ctx = H.new_context(b)
+        beta_on(ctx)
+        ctx.add_init_script('window.__ocrTexts = %s;' % json.dumps(TEXTS))
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'ocr-open')
+        pg.wait_for_selector('#dci-ocr .dci-ocr-card', timeout=10000)
+        pg.click('#dci-ocr [data-ocr=frames]')
+        pg.wait_for_selector('#dci-ocr [data-ocr-view]', timeout=10000)
+        pg.evaluate("document.activeElement && document.activeElement.blur()")
+        seen = [pg.evaluate(HEAD)]
+        for key in ['ArrowRight', 'ArrowRight', 'ArrowRight', 'ArrowLeft']:
+            pg.keyboard.press(key)
+            pg.wait_for_timeout(250)
+            seen.append(pg.evaluate(HEAD))
+        return b, pg, errs, seen
+
+    with sync_playwright() as p:
+        b, pg, errs, seen = run(p)
+        print('A)', seen)
+        img = [s.rsplit(' · ', 1)[-1] for s in seen]
+        results.append(img == ['Back', 'Booklet', 'Tray', 'Back', 'Tray'])
+        b.close()
+        b, pg, errs2, seen2 = run(p, ['S457'])
+        print('C)', seen2)
+        results.append(len(set(seen2)) == 1)
+        results.append(not errs and not errs2)
+        b.close()
+    H.RULES_OFF = []
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

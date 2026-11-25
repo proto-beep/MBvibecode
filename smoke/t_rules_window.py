@@ -1176,4 +1176,37 @@ def case_needs3162():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_qsticks3218():
+    """Credits Importer 3.218.0 (collected item Z-QSTICKS): the ticks of a quick switch ("Read from titles": permanent, dates, lineup,
+    composers, release title, MusicBrainz's titles too; "Days → release level": permanent, date groups).
+    A) Each column of ticks: the boxes one below the other at the same place, each text left-aligned right beside its box, on one line.
+    B) The ticks of the switch itself tinted apart from "permanent" (another background).
+    C) The headings of the groups ("Dates", "Instruments and performers" …) not against the box's edge: a space at their left."""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        pg.wait_for_timeout(800)
+        pg.click('.dci-head [data-act=rules]')
+        pg.wait_for_timeout(500)
+        got = pg.evaluate("""[...document.querySelectorAll('#dci-rules .dci-qticks')].map(q => [...q.querySelectorAll('label')].map(l => {
+          const i = l.querySelector('input').getBoundingClientRect(), s = l.querySelector('span').getBoundingClientRect();
+          return { x: Math.round(i.left), gap: Math.round(s.left - i.right), lines: Math.round(s.height / parseFloat(getComputedStyle(l.querySelector('span')).lineHeight || 14)),
+            align: getComputedStyle(l.querySelector('span')).textAlign, bg: getComputedStyle(l).backgroundColor, sub: l.classList.contains('dci-qsub') }; }))""")
+        heads = pg.evaluate("[...document.querySelectorAll('#dci-rules .dci-quick-gh')].map(h => parseFloat(getComputedStyle(h).paddingLeft))")
+        for g in got:
+            print('A)', [(x['x'], x['gap'], x['align'], x['sub'], x['bg']) for x in g])
+        results.append(len(got) >= 2 and all(len({x['x'] for x in g}) == 1 and all(0 <= x['gap'] <= 8 and x['align'] in ('left', 'start') for x in g) for g in got))
+        results.append(all({x['bg'] for x in g if x['sub']} and not ({x['bg'] for x in g if x['sub']} & {x['bg'] for x in g if not x['sub']}) for g in got))
+        print('C)', heads)
+        results.append(bool(heads) and all(h >= 6 for h in heads))
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

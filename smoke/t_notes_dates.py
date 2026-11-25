@@ -1037,6 +1037,67 @@ Live at Club Montmartre, Copenhagen, Denmark
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_notesplace3218():
+    """Credits Importer 3.218.0 (collected item Z-NOTESPLACETRACKS, S459): the notes of Discogs 31535431 (Albert Ayler), shortened – two
+    media (1-1, 1-2, 2-1, 2-2); Discogs's companies "Recorded At – Jazzhus Montmartre" and "Recorded At – Hilversum, Holland" for the whole
+    release; the notes give the tracks: "1-1 recorded September 3rd, 1964" / "Live at Club Montmartre, Copenhagen, Denmark", "1-2 to 2-1
+    recorded September 14, 1964 in Copenhagen, Denmark", "2-2 recorded November 9, 1964 in Hilversum, The Netherlands".
+    A) Club Montmartre (the notes) recorded at on 1-1 only; Jazzhus Montmartre (Discogs) on 1-1 only too – the same place under another
+       name perhaps (renamed): both entries, a hint at each.
+    B) Copenhagen: recorded in (an area) on 1-2, 2-1 – no place there.
+    C) Hilversum, Holland: on 2-2 only (its city named by the notes)."""
+    H.MEDIA = [2, 2]
+    POS = ['1-1', '1-2', '2-1', '2-2']
+    NOTES = """1-1 recorded September 3rd, 1964
+Live at Club Montmartre, Copenhagen, Denmark
+1-2 to 2-1 recorded September 14, 1964 in Copenhagen, Denmark
+2-2 recorded November 9, 1964 in Hilversum, The Netherlands"""
+    orig = H.discogs_release
+
+    def rel():
+        d = orig()
+        d['notes'] = NOTES
+        for t, pos in zip(d['tracklist'], POS):
+            t['position'] = pos
+        d['companies'] = [c for c in d['companies'] if c['entity_type_name'] != 'Recorded At'] + [
+            {'name': 'Jazzhus Montmartre', 'entity_type_name': 'Recorded At', 'id': 1102, 'catno': ''},
+            {'name': 'Hilversum, Holland', 'entity_type_name': 'Recorded At', 'id': 1103, 'catno': ''}]
+        return d
+
+    H.discogs_release = rel
+    PLACES = """[...document.querySelectorAll('section.dci-group')].filter(g => /Montmartre|Copenhagen|Hilversum/.test(g.querySelector('.dci-gname strong').textContent))
+      .map(g => [g.querySelector('.dci-gname strong').textContent.trim(), [...g.querySelectorAll('tr.dci-row')].map(r => [(r.querySelector('.dci-drole') || { dataset: { raw: '' } }).dataset.raw.trim(),
+        (r.querySelector('.dci-tracks, [data-f=tracks]') || r).textContent.replace(/\\s+/g, ' ').trim().slice(0, 60)]),
+        ((g.querySelector('.dci-renamed') || {}).textContent || '').trim()])"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(1500)
+        places = pg.evaluate(PLACES)
+        for x in places:
+            print('  Ort:', x[0], [r[0] for r in x[1]], '| Hinweis:', x[2])
+        names = [x[0] for x in places]
+        hint = {x[0]: x[2] for x in places}
+        role = {x[0]: [r[0] for r in x[1]] for x in places}
+        tr = {n: pg.evaluate("""(name) => [...document.querySelectorAll('.dci-group')].filter(g => g.querySelector('.dci-gname strong').textContent.trim() === name)
+          .flatMap(g => [...g.querySelectorAll('tr.dci-tracksrow')].map(t => [...t.querySelectorAll('input[data-f=track]:checked')].map(c => Number(c.dataset.i) + 1)))""", n) for n in names}
+        print('   Tracks:', tr)
+        results.append(tr.get('Club Montmartre') == [[1]] and tr.get('Jazzhus Montmartre') == [[1]] and bool(hint.get('Club Montmartre')) and bool(hint.get('Jazzhus Montmartre')))
+        results.append(tr.get('Copenhagen') == [[2, 3]] and role.get('Copenhagen') == ['Recorded In'])
+        hv = [n for n in names if n.startswith('Hilversum')]
+        results.append(len(hv) == 1 and tr.get(hv[0]) == [[4]])
+        print('Fehler:', errs)
+        results.append(not errs)
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_cdtracks3176():
     """Credits Importer 3.176.0 (collected items Z-NAMEROLE-NOSEP, Z-CDTRACKS; S300): a booklet's lineup in the notes of a release of
     two media (3 + 1 tracks; the source numbers its tracks 1 … 4): "Anna Berg piano (CD1 2)", "Ben Holt guitar (CD1 1, 3; CD2 1)",

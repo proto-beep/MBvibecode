@@ -13,6 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
+| 2026-11-25 | 3.218.0 | – |
 | 2026-11-24 | 3.213.0 – 3.217.0 | – |
 | 2026-11-23 | 3.210.0 – 3.212.0 | – |
 | 2026-11-22 | 3.197.0 – 3.209.0 | – |
@@ -138,6 +139,18 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.218.0
+
+**Licences, the release's title, stopping a long search, covers of a tribute, places by the notes' tracks, arrows in the images, the quick switches tidied.**
+
+- **"Licensed by …"** (rule S454): "Licensed by the Don Cherry Estate and James Quinlan", "- Licensed by X" (a point of a list) – a licensor each, as "Licensed by courtesy of" (S183); "Licensed by X and producer Y": X the licensor, Y the release's producer (a person is no licensor in MusicBrainz).
+- **The release's title** (rule S455; a tick "release title" of the quick switch "Read from titles", which reads the titles of the tracks and of the release): "Sunrise - with Collin Walcott & Leon Thomas + Oregon - Live in Ypsilanti, MI, 1977" – the names after "with" performers, "Live in X" the area recorded in ("Live at X" the place), the year the date of the recordings – only what the source does not say; a place is never part of a name; said in the log.
+- **Stop a long search of the artists' works** (rule S456): once it takes long (a large catalogue, a name of many artists – "Rollins"), a line above the works matrix with "Stop": it stops, what was found kept; "Continue" reads on from where it stopped; "Stop and discard" drops what this search found (only these suggestions – nothing in MusicBrainz).
+- **← / → in the images of "Text from cover art"** (rule S457): the image before / after, after the last the first again; Esc closes the window (as before).
+- **Covers of a tribute** (rule S458): a work found on the page of the artist of a tribute or dedication (Sonny Rollins – a tribute is no credit) shows "by Sonny Rollins"; "co?" (cover) is offered in bold; "✨ Answer all" sets it from "balanced" on, "careful" only offers it.
+- **Places by the notes' tracks** (rule S459): Discogs lists where it was recorded for the whole release ("Jazzhus Montmartre", "Hilversum, Holland"), the notes say for which tracks – each place gets those tracks (a word of its name in common, or its town); the notes' place of another name ("Club Montmartre") is its own entry on the same tracks, both marked "perhaps the same place (renamed)" (joined when MusicBrainz has them as one place); an area no place covers then stays the area of its tracks ("in Copenhagen"). "recorded September 14, 1964 in Copenhagen" is read as "recorded in Copenhagen, September 14, 1964" in every text.
+- **Quick switches tidied**: the ticks of a switch in one column, each box at the left of its text; the ticks of the switch itself tinted apart from "permanent"; the headings of the groups with a space at their left.
 
 ### Import 3.217.0
 

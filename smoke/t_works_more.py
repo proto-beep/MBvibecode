@@ -2971,4 +2971,73 @@ def case_suite3197():
         H.TITLES[:] = old
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+
+def case_awstop3218():
+    """Credits Importer 3.218.0 (collected item Z-ARTWORKSSTOP, S456): the works of the artists – Guitar Guy with 2,500 recordings (a large
+    catalogue), the time before the message 1 second.
+    A) Once it takes long: a line above the works matrix "Reading the works of … – this can take a while." with "Stop".
+    B) "Stop": the reading stops between two requests (no more requests of it); the line "Stopped: … kept." with "Continue" and "Stop and
+       discard"; the log says so.
+    C) "Continue": read on from where it stopped – the next request of Guitar Guy not from offset 0.
+    D) "Stop" twice: what this search found discarded – the line says so, with "Read again"."""
+    H.MAIN = H.MAIN_SLOW
+    GUITAR = H.ARTISTS[3002][0]
+    LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
+    LINE = "(() => { const l = document.querySelector('[data-el=aw-line]'); return l ? [l.textContent.replace(/\\s+/g, ' ').trim(), [...l.querySelectorAll('button')].map(b => b.dataset.act)] : null; })()"
+    results = []
+    rec0 = dict(H.ARTIST_RECORDINGS)
+    try:
+        H.ARTIST_RECORDINGS[GUITAR] = 2500
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            ctx = H.new_context(b)
+            ctx.add_init_script("try { localStorage.setItem('dci-aw-slow-s', '1'); } catch (e) {}")
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.on('dialog', lambda d: d.accept())
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "!!document.querySelector('[data-el=aw-line] [data-act=mx-aw-stop]')", 90)
+            a = pg.evaluate(LINE)
+            print('A)', a)
+            results.append(a is not None and 'Reading the works of' in a[0] and a[1] == ['mx-aw-stop'])
+            pg.click('[data-el=aw-line] [data-act=mx-aw-stop]')
+            try:
+                H.wait_for(pg, "!!document.querySelector('[data-el=aw-line] [data-act=mx-aw-go]')", 30)
+            except Exception:
+                print('   nach Stopp:', pg.evaluate(LINE), pg.evaluate(LOGS)[-8:], errs)
+                raise
+            pg.wait_for_timeout(1500)
+            n1 = len([x for x in H.BROWSES if x[1] == GUITAR])
+            pg.wait_for_timeout(2500)
+            n2 = len([x for x in H.BROWSES if x[1] == GUITAR])
+            b1 = pg.evaluate(LINE)
+            logs = pg.evaluate(LOGS)
+            print('B)', b1, n1, n2, [x for x in logs if 'stopped' in x.lower()])
+            results.append(n1 == n2 and b1 is not None and 'Stopped' in b1[0] and b1[1] == ['mx-aw-go', 'mx-aw-stop']
+                           and any('Works of the artists: stopped' in x for x in logs))
+            recs0 = [x for x in H.BROWSES if x[1] == GUITAR and x[0] == 'recording']
+            last = recs0[-1][2]
+            pg.click('[data-el=aw-line] [data-act=mx-aw-go]')
+            H.wait_for(pg, f"(() => true)()", 5)
+            pg.wait_for_timeout(2500)
+            more = [x for x in H.BROWSES if x[1] == GUITAR and x[0] == 'recording'][len(recs0):]
+            print('C) zuletzt:', last, '| danach:', [x[2] for x in more][:4])
+            results.append(bool(more) and more[0][2] == last + 100)
+            H.wait_for(pg, "!!document.querySelector('[data-el=aw-line] [data-act=mx-aw-stop]')", 30)
+            pg.click('[data-el=aw-line] [data-act=mx-aw-stop]')
+            H.wait_for(pg, "!!document.querySelector('[data-el=aw-line] [data-act=mx-aw-go]')", 30)
+            pg.click('[data-el=aw-line] [data-act=mx-aw-stop]')
+            pg.wait_for_timeout(500)
+            d = pg.evaluate(LINE)
+            print('D)', d)
+            results.append(d is not None and 'discarded' in d[0] and d[1] == ['mx-aw-go'])
+            print('Fehler:', errs)
+            results.append(not errs)
+            b.close()
+    finally:
+        H.ARTIST_RECORDINGS.clear()
+        H.ARTIST_RECORDINGS.update(rec0)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

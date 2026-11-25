@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.217.0
+// @version      3.218.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.217.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.217.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.218.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.218.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.217.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.218.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -2526,9 +2526,13 @@
       "magic.rule.live.careful": "the track itself is live (its title, its credit, the notes name it)",
       "magic.rule.live.balanced": "also: the release group is Live, a concert, a credit for the whole release",
       "magic.rule.live.bold": "also: the format, the notes of the release",
-      "magic.rule.cover.careful": "no cover",
-      "magic.rule.cover.balanced": "the cover set by itself is kept",
+      "magic.rule.cover.careful": "no cover (“co?” only offered)",
+      "magic.rule.cover.balanced": "the cover set by itself is kept; the offers “co?” taken",
       "magic.rule.cover.bold": "also the offers “co?”",
+      "matrix.workBy": "by {name}",
+      "entry.renamed": "perhaps the same place as {name} (renamed)",
+      "entry.renamedTitle": "The notes give this place on the same tracks as {name} – perhaps one place under another name (renamed between the recordings). MusicBrainz has them as one place: they are joined; else join them by hand (⠿) if they are one.",
+      "log.notesPlaceTracks": "{name}: the tracks the notes give it – {tracks}",
       "magic.rule.pub.careful": "none",
       "magic.rule.pub.balanced": "a suggested publisher kept when it is the only one of the track",
       "magic.rule.pub.bold": "every suggested publisher kept",
@@ -2983,6 +2987,21 @@
       "busy.applyProgress": "Staging {i} of {n} …",
       "matrix.searchProgress": "Same-named works: {done} of {total} tracks checked ",
       "matrix.searchCancel": "stop",
+      "matrix.awRunning": "Reading the works of {names} – this can take a while.",
+      "matrix.awStop": "Stop",
+      "matrix.awStopTitle": "Stop reading the works of the artists – what was found so far is kept",
+      "matrix.awPaused": "Stopped: the works of {names} found so far are kept.",
+      "matrix.awGo": "Continue",
+      "matrix.awGoTitle": "Read on from where it stopped",
+      "matrix.awDrop": "Stop and discard",
+      "matrix.awDropTitle": "Discard the works this search found (only these suggestions – nothing in MusicBrainz is deleted)",
+      "matrix.awDropped": "Stopped: the works found were discarded.",
+      "matrix.awGoAgain": "Read again",
+      "log.artistWorksStop": "Works of the artists: stopped – what was found is kept",
+      "log.artistWorksPaused": "Works of {name}: stopped after {n} works – “Continue” reads on",
+      "log.artistWorksDropped": "Works of the artists: what this search found was discarded ({n} artists)",
+      "log.artistWorksGo": "Works of the artists: read on",
+      "log.artistWorksAgainRead": "Works of the artists: read again",
       "matrix.fold": "Fold the works matrix",
       "matrix.unfold": "Unfold the works matrix",
       "matrix.skip": "Skip works",
@@ -3798,7 +3817,7 @@
       "ocr.clear": "Remove the frames",
       "ocr.rotl": "Turn left",
       "ocr.rotr": "Turn right",
-      "ocr.framesHint": "Drag across the image for a frame, at a corner to change it, inside it to move it. Two columns of credits: one frame each – they are read in their order. Without a frame the whole image is read.",
+      "ocr.framesHint": "Drag across the image for a frame, at a corner to change it, inside it to move it. Two columns of credits: one frame each – they are read in their order. Without a frame the whole image is read. ← / → the image before / after.",
       "ocr.plainHint": "Reads best: text on a plain, even background – text on photos or patterns is often read wrong.",
       "ocr.busyTitle": "Many words were read uncertainly in:",
       "ocr.busyHint": "Text on a plain, even background reads best – a tighter frame around the credits, or the image at its original size, can help.",
@@ -4070,7 +4089,7 @@
       "quick.name.D035": "Days → release level",
       "quick.sub.S319": "date groups",
       "quick.name.S450": "Read from titles",
-      "quick.S450": "Credits and dates from the titles of the tracks",
+      "quick.S450": "Credits and dates from the titles of the tracks and of the release",
       "quick.sub.D023": "dates",
       "quick.sub.D023Title": "Dates in the titles (“March 23, 2004 (Set 1)”) – in the pool and the date matrix",
       "quick.sub.S451": "lineup",
@@ -4079,6 +4098,10 @@
       "quick.sub.S088Title": "Composers in brackets after a title of a text (“2 Bonu (Oliver Lake)”)",
       "quick.sub.S452": "MusicBrainz's titles too",
       "quick.sub.S452Title": "Read MusicBrainz's titles of the tracks too, where the source's give nothing",
+      "quick.sub.S455": "release title",
+      "quick.sub.S455Title": "The release's title too: performers after “with”, “Live in/at …” and its year – only where the source does not say it",
+      "log.relTitleInfo": "From the release's title “{title}”: {list} – ⚙ quick switch “Read from titles” (tick “release title”) turns it off",
+      "msg.relTitleInfo": "Read from the release's title “{title}”: {list}. The tick “release title” of the quick switch “Read from titles” (⚙ Mapping rules) turns this off.",
       "log.titleLineup": "{n} credits from the titles of the tracks ({source}) – ⚙ quick switch “Read from titles” turns it off",
       "msg.titleLineup": "{n} credits read from the titles of the tracks ({source}). The quick switch “Read from titles” (⚙ Mapping rules) turns this off.",
       "log.titleLineupMissing": "Names in the titles of the tracks without an entry of the release (only said): {list}",
@@ -5825,6 +5848,12 @@
     { id: 'S451', where: 'titleLineup, TITLE_INSTR', note: 'Track titles (3.217.0; collected item Z-TITLEINFO): the lineup in a title – "Album 1: Improv 1 (Lopez dr// Mazur, el-b // Pursglove, tp)", also without brackets ("Improv 2 Vandermark sax // Rasmussen, sax // …") – parts at "//", each a surname and its abbreviations (dr drums, el-b electric bass, db double bass, tp trumpet, p piano, perc percussion, cym cymbal, sax saxophone …) or instruments written out: credits of that track; the surname is an entry of the release (the source\'s credits, the release artists; accents aside) – one without such an entry is only said, no entry made. A tick of S450' },
     { id: 'S452', where: 'titleLineup (titleOf)', note: 'Track titles (3.217.0; collected item Z-TITLEINFO; off): MusicBrainz\'s titles of the tracks are read too, where the source\'s give nothing. A tick of S450' },
     { id: 'S453', where: 'TEXT.parse (moreTextLine: mqHead), addWorkNotes, findWorkRels (candidates), arrSuggHtml, planWorkLinks (musicQuoteLt)', note: 'Works (3.217.0; collected item Z-QUOTEWORKS): "György Kurtág\'s miniatures as they appear within "For To End Yet Again":" and below it the titles in quotation marks – the work of that track "quotes music from" each work of that composer of exactly that title MusicBrainz has (a part of a larger work only when it is a work of its own); several of one title to choose from; offered in yellow, staged once confirmed (✓) – also on a work MusicBrainz has (otherwise not supplemented, S083) and on a new one. The composer is not credited on the track\'s work; works MusicBrainz has not are not created. Every free text' },
+    { id: 'S454', where: 'TEXT.parse (licLine, licByLine)', note: 'Texts (3.218.0; collected item Z-LICENSEDBY): "Licensed by the Don Cherry Estate and James Quinlan", "- Licensed by X" (a point of a list), "Licensed by X and producer Y" – the licensors as with "Licensed by courtesy of" (S183; a label each, "the" left out); a name with "producer" before it the release\'s producer (a person is no licensor in MusicBrainz). Off (as until 3.217.0): the line not recognized' },
+    { id: 'S455', where: 'QS_TICKS, releaseTitleInfo, releaseTitleParts', note: 'Release title (3.218.0; collected item Z-RELTITLEINFO; a tick of "Read from titles", on): what the release\'s title says, where the source does not say it – "Sunrise - with Collin Walcott & Leon Thomas + Oregon - Live in Ypsilanti, MI, 1977": the names after "with" / "featuring" performers (not a name an entry already has, nor the release\'s artist); "Live in X" the area recorded in, "Live at X" the place recorded at (only when no place or area recorded is named); the year the date of the recordings (only when the notes give no date). A place never part of a name; said where it comes from. Off (as until 3.217.0): the release\'s title not read' },
+    { id: 'S456', where: 'runArtistWorks, loadArtistWorks, awStop, awGo, awLineHtml', note: 'Works of the artists (3.218.0; collected item Z-ARTWORKSSTOP): a search of the artists\' works that takes long (a large catalogue, a name of many artists – "Rollins") gets a line above the works matrix with "Stop": it stops between two requests, the works found so far kept (matched with the tracks); "Continue" reads on from where it stopped; "Stop" again discards what this search found (only these suggestions – nothing in MusicBrainz), "Continue" then reads anew. Off (as until 3.217.0): no such line' },
+    { id: 'S457', where: 'keydown of the page (ocrChosen, renderOcr)', note: 'Text from cover art (3.218.0; collected item Z-IMGARROWS): in the view of the images (Bandcamp\'s, Discogs\'s, your own) ← / → show the image before / after – after the last the first again, before the first the last; not while typing in a field; Esc closes the window (as before). Off (as until 3.217.0): only the small images and "Next image"' },
+    { id: 'S458', where: 'matchArtistWorks, workByHtml, linkAttrsHtml (attrPillHtml), magicPlan', note: 'Works (3.218.0; collected item Z-COVERSHOW): a work found on the page of the artist of a tribute or dedication (Sonny Rollins – a tribute is no credit, the artist no performer) has that artist as its composer: "by Sonny Rollins" at the work found, and "co?" (a cover – none of its composers performs here) offered at its link, in bold. "Answer all" sets "cover" from "balanced" on (until 3.217.0 only "bold"); "careful" only offers it. Off: as until 3.217.0' },
+    { id: 'S459', where: 'addNotesCompanies, notesPlaceTracks, placeKeyWords, renamedHtml', note: 'Discogs notes (3.218.0; collected item Z-NOTESPLACETRACKS): Discogs lists where it was recorded for the whole release ("Recorded At – Jazzhus Montmartre", "Recorded At – Hilversum, Holland"), the notes say for which tracks ("1-1 to 1-6 … Live at Club Montmartre, Copenhagen", "1-7 to 2-4 … in Copenhagen, Denmark", "2-5 to 2-10 … in Hilversum, The Netherlands"): each place of Discogs gets the tracks of the notes\' places and areas it stands for – a place with a word of its name in common ("Montmartre"; not "Club", "Studio", "Jazzhus"), an area its town ("Hilversum") –; the notes\' place of another name is an entry of its own on the same tracks, both marked "perhaps the same place (renamed)" (one entry when MusicBrainz has them as one place, S324); an area no place covers then stays the area of its tracks (Copenhagen: recorded in). Off (as until 3.217.0): Discogs\'s places on all tracks' },
     { id: 'S410', where: 'freshForget, repeatImport, loadRelease', note: '"↻ Repeat import" (3.209.0; collected item Z-FRESHALL): "Start afresh" forgets everything the dashboard holds of the release – not only the changes of the rows and the choices of the works matrix (Z-RI, 3.40.16), also the date pool, the track pool and the date matrix, the choices of the box "Dedications & tributes", "✕ No suite", texts and parts of sources switched off, "skip the works", entries joined by hand, the ticks of suggestions, what is remembered of the release ("Remember changes"; nothing of the import before is stored on the way). Kept: what was created in MusicBrainz through the dashboard (the lists of created works and suites), the source and the media chosen, the log' },
     { id: 'S409', where: 'mergeEntries, joinEntry, applyEntryMerges, dmTargetOf (entry-merge), groupHtml (grip)', note: 'Entries (3.208.0; collected item Z-ENTITYMERGE): two entries of the same kind that are one – from different sources, written otherwise – are joined by hand: the grip ⠿ before the kind of an entry dropped onto another entry. The entry dropped onto stays (its link to MusicBrainz counts; without one it takes the other\'s), the rows of the other come to it – the same role once, each row credited as its source writes it, the other\'s name one of its names. Two different entries of MusicBrainz, or entries of different kinds: not joined, a message says why. Remembered for the release (joined again at the next import); ↶ in the message undoes it' },
     { id: 'S408', where: 'renderDedBox (ded-kind), emChipHtml, toggleDedication', note: 'Dedications (3.207.0; collected item Z-DEDKINDSWITCH): each row of the box "Dedications & tributes" has two buttons "Dedication | Tribute" – the chosen one filled in its colour (dedication old rose, tribute gold), a click switches (as "⇄" at the row and the chip did); the chips of these relationships have the colours too. A kind MusicBrainz has not for this target (a tribute of a place) is greyed out' },
@@ -12226,7 +12255,7 @@
       // (a name – also one in small letters, "rbb media GmbH" –, not words of a sentence: "an agreement with …")
       const nameLike = who && !/[.;]/.test(who) && !/^(?:an?|the|this|that|these|those|our|their|his|her|its|my|your|ein|eine[mnrs]?|der|die|das|dem|den|des|agreement|arrangement|vertrag)\b/i.test(who)
         && (/\p{Lu}/u.test(who) || who.split(/\s+/).length <= 3);
-      return licLine0(P, lead && nameLike && !/^(?:creative\s+commons|cc\b)/i.test(who) ? `Licensed From: ${who}` : l1);
+      return licByLine(P, licLine0(P, lead && nameLike && !/^(?:creative\s+commons|cc\b)/i.test(who) ? `Licensed From: ${who}` : l1));
     };
 
     const licLine0 = (P, l) => (!ruleOn('S183') ? l : String(l || '').replace(/(^|[.;]\s+)Licen[cs]ed\s+(?:by\s+)?(?:the\s+)?courtesy\s+of\s+([^.;]+)/giu, (m, pre, who0) => {
@@ -12238,10 +12267,46 @@
       return !who || /^\p{Ll}/u.test(who) ? m : `${pre}Licensed From: ${who}${/^\p{Lu}/u.test(rest) ? `. ${rest}` : ''}`;
     }));
 
+    /**
+     * [Z-LICENSEDBY] (3.218.0, S454) "Licensed by the Don Cherry Estate and James Quinlan", "- Licensed by X" (a point of a list),
+     * "Licensed by X and producer Y": the licensors as "Licensed by courtesy of …" (S183) – a label each in MusicBrainz ("the" left
+     * out) –; a name with "producer" before it the release's producer (a person is no licensor in MusicBrainz).
+     */
+    // ((review) not "Licensed by courtesy of" (S183 reads it); the names end where the sentence ends or a clause begins ("for the UK",
+    // "under …"); a lower-case start is no name ("Licensed by an agreement …"))
+    const licByLine = (P, l) => (!ruleOn('S454') ? l : String(l || '').replace(/(^\s*(?:[-–—•*]\s*)?|[.;]\s+)Licen[cs]ed\s+by\s+(?!(?:the\s+)?courtesy\b)(?:the\s+)?([^.;]+)/giu, (m, pre, who0) => {
+      const cut = who0.search(/,\s*(?=licen[cs]ed|distributed|manufactured|marketed)|\s+(?:for|under|in|by\s+arrangement|on\s+behalf|excluding|except|worldwide)\b/iu);
+      const head = (cut < 0 ? who0 : who0.slice(0, cut)).trim();
+      if (!head || /^\p{Ll}/u.test(head)) return m;
+      const prod = [];
+      const parts = head.split(/\s*(?:,\s*(?:and\s+|&\s+)?|\s(?:and|&)\s+)/u).map((x) => x.replace(/^the\s+(?=\p{Lu})/u, '').trim()).filter(Boolean)
+        .filter((x) => { const pm = x.match(/^(?:co-?)?producers?\s+(\p{Lu}.*)$/iu); if (pm) { prod.push(pm[1]); return false; } return true; });
+      if (!parts.length || parts.some((x) => /^\p{Ll}/u.test(x))) return m;
+      const rest = cut < 0 ? '' : who0.slice(cut).replace(/^,?\s*/, '');
+      return `${pre.replace(/[-–—•*]\s*$/, '')}Licensed From: ${parts.join(' and ')}${prod.length ? `. Produced by ${prod.join(' and ')}` : ''}${/^\p{Lu}/u.test(rest) ? `. ${rest}` : ''}`;
+    }));
+
     // [Z-DTRK] (3.121.0, S189) "1-1 to 1-6 recorded September 3rd, 1964" – the tracks as the source numbers them at the start of a
     // line – read as "Tracks 1-1 to 1-6: …"; a place's line right below it, without tracks or a year of its own ("Live at Club Montmartre,
     // Copenhagen, Denmark"), belongs to it: "Tracks 1-1 to 1-6: Recorded live at Club Montmartre, Copenhagen, Denmark, September 3rd, 1964"
-    const discTrackLines = (P, lines) => {
+    /**
+     * [Z-NOTESPLACETRACKS] (3.218.0, S459) "recorded September 14, 1964 in Copenhagen, Denmark" – the date between the verb and where:
+     * read as "recorded in Copenhagen, Denmark, September 14, 1964" (the area of the line, as when the date follows it; "… at X" was read
+     * already). The line as written stays its line (P.rawOf).
+     */
+    const dateBeforeWhere = (P, l) => {
+      if (!ruleOn('S459')) return l;
+      const m = String(l || '').match(/^(\s*(?:Tracks?\s+[^:]+:\s*)?)(recorded|rec\.|mixed|mastered|overdubbed)(\s+live)?\s+((?:on\s+)?[\p{L}\d][\p{L}\d\s,.–-]*?(?:19|20)\d{2}),?\s+(in)\s+(\p{Lu}[^.;!?]*?)\s*\.?\s*$/iu);
+      if (!m) return l;
+      const seg = m[4].replace(/^on\s+/i, '');
+      const d = findDates(seg)[0];
+      if (!d || !d.value || d.text.length < seg.trim().length - 2) return l;
+      const out = `${m[1]}${m[2]}${m[3] || ''} ${m[5]} ${m[6]}, ${seg}`;
+      if (P && P.rawOf && !P.rawOf.has(out)) P.rawOf.set(out, P.rawOf.get(l) || l);
+      return out;
+    };
+    const discTrackLines = (P, lines0) => {
+      const lines = lines0.map((l) => dateBeforeWhere(P, l));
       if (!ruleOn('S189') || !P.resolveTracks) return lines;
       const out = [];
       for (let i = 0; i < lines.length; i++) {
@@ -12261,7 +12326,7 @@
           rest = `${vm[1]}${pm[1] ? ' live' : ''} ${pm[2].toLowerCase()} ${pm[3]}, ${vm[2]}`;
           i++;
         }
-        out.push(`Tracks ${m[1]}: ${rest.charAt(0).toUpperCase()}${rest.slice(1)}`);
+        out.push(dateBeforeWhere(P, `Tracks ${m[1]}: ${rest.charAt(0).toUpperCase()}${rest.slice(1)}`));
       }
       return out;
     };
@@ -17357,6 +17422,7 @@
       if ((who.altNames || []).length) g.altNames = uniq([...(g.altNames || []), ...who.altNames]);
       // [3.30.9] an entry only from the Discogs notes: searched by its name (S042)
       if (c.fromNotes && !who.id) g.fromNotes = true;
+      if (c.renamedOf) g.renamedOf = c.renamedOf; // [Z-NOTESPLACETRACKS] (3.218.0, S459)
       // [Z-UNA] (3.42.8, review) the kind an own rule of texts gives it
       if (c.entity && !g.entity) g.entity = c.entity;
       // [3.21.3] a name without an id: the web profiles found next to it (T032)
@@ -20709,6 +20775,10 @@
     // [3.15.0] works of artists (release artists, writers, performers): kept for the session; matches per track
     artistWorks: new Map(),
     artistWorkHits: new Map(),
+    awPaused: '', // [Z-ARTWORKSSTOP] (3.218.0, S456) '' | 'paused' (the works found kept) | 'dropped' (discarded)
+    awPartial: new Map(), // [Z-ARTWORKSSTOP] an artist read in part when stopped: where to go on
+    awRunIds: new Set(), // [Z-ARTWORKSSTOP] the artists read by the search since its start (what a second "Stop" discards)
+    awLong: false, // [Z-ARTWORKSSTOP] the search takes long: its line with "Stop" shown
     artistWorkTargets: new Map(),
     artistWorksSpecialLogged: new Set(),
     settingsOpen: false,
@@ -24174,7 +24244,7 @@
   // release's rights societies, which are taken only with S160
   const QS_NEEDS = { S045: 'S160' };
   // ticks inside a switch: (3.161.0) date groups of D035; [Z-TITLEINFO] (3.217.0, S450) what "Read from titles" reads
-  const QS_TICKS = { D035: ['S319'], S450: ['D023', 'S451', 'S088', 'S452'] };
+  const QS_TICKS = { D035: ['S319'], S450: ['D023', 'S451', 'S088', 'S455', 'S452'] };
 
   function quickSwitchesHtml() {
     const notes = ruleNotes();
@@ -31002,10 +31072,11 @@
     const joined = [];
     const joinedOther = [];
     const someTracks = (t) => !!(t && !t.all && (t.indexes || []).length);
+    if (ruleOn('S042') && ruleOn('S459')) notesPlaceTracks(rel, res.companies);
     for (const c of ruleOn('S042') ? res.companies.filter(wanted) : []) {
       if (!looseName(c.who.name)) continue;
       // [Z-AREARELS] (3.179.0, S313) an area of the notes for an activity the source lists a place or a company for: left out
-      if (ruleOn('S313') && areaCoveredBy(c, (rel.companies || []).filter((d) => !d.fromNotes))) {
+      if ((ruleOn('S459') && c.placeOf) || (ruleOn('S313') && areaCoveredBy(c, (rel.companies || []).filter((d) => !d.fromNotes)))) {
         rel.ignored = rel.ignored || [];
         rel.ignored.push({ text: c.line || `${c.role} ${c.who.name}`, why: 'areaCovered' });
         continue;
@@ -31070,7 +31141,7 @@
       // place, credited as the notes write it
       const anv = (byPlace || (same.length && spelt(same[0]))) && norm(c.who.name) !== norm(same[0].who.name) ? c.who.name : '';
       rel.companies.push({ who, role: c.role, catno: '', tracks: c.tracks || null, fromNotes: true, line: c.line, ...(anv ? { anv } : {}), ...(c.date ? { date: c.date } : {}), ...(c.partScope ? { partScope: c.partScope } : {}), ...((c.pubBlock || ruleOn('S053')) && someTracks(c.tracks) ? { notesLine: c.line } : {}),
-        ...(c.medium ? { medium: c.medium } : {}), ...(c.roleCredit ? { roleCredit: c.roleCredit } : {}) }); // ([Z-DRAGONAUT] 3.215.0) the medium the text gives it (a pressing: vinyl); ([Z-OVERDUBAT] 3.216.0) its credit
+        ...(c.medium ? { medium: c.medium } : {}), ...(c.roleCredit ? { roleCredit: c.roleCredit } : {}), ...(c.renamedOf ? { renamedOf: c.renamedOf } : {}) }); // ([Z-DRAGONAUT] 3.215.0) the medium the text gives it (a pressing: vinyl); ([Z-OVERDUBAT] 3.216.0) its credit
       added.push(`${c.who.name} (${c.role})`);
     }
     if (added.length) log('info', 'notesCompanies', { n: added.length, list: added.join(', ') });
@@ -31100,6 +31171,51 @@
     }
     if (joined.length) log('info', 'notesPubTracks', { list: joined.join(', ') });
     if (joinedOther.length) log('info', 'notesCompanyTracks', { list: joinedOther.join(', ') });
+  }
+
+  /**
+   * [Z-NOTESPLACETRACKS] (3.218.0, S459) Discogs lists where it was recorded for the whole release ("Recorded At – Jazzhus Montmartre",
+   * "Recorded At – Hilversum, Holland"), the notes say for which tracks ("1-1 to 1-6 recorded September 3rd, 1964 / Live at Club Montmartre,
+   * Copenhagen, Denmark", "1-7 to 2-4 recorded … in Copenhagen, Denmark", "2-5 to 2-10 recorded … in Hilversum, The Netherlands"): each
+   * place of Discogs gets the tracks of the notes' places and areas it stands for – a place of a word of its name in common (not a word
+   * like "Club", "Studio", "Jazzhus": "Montmartre"), an area its town ("Hilversum") –, the place of the notes is its own entry on those
+   * tracks too, both marked as perhaps the same place under another name (renamed between the recordings; one entry when MusicBrainz
+   * has them as one place, S324). An area of the notes no place covers then (Copenhagen: 1-7 to 2-4) stays an area of its tracks.
+   */
+  const PLACE_GENERIC = /^(?:jazzhus|jazzhaus|jazzclub|jazz|house|haus|hus|hall|halle|theatre|theater|church|kirche|centre|center|auditorium|festival|room|live|cafe|café|bar|club|studio|studios|sound|music|records|recording|the|and|und)$/iu;
+  const placeKeyWords = (name) => String(name || '').split(',')[0].normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+    .replace(PLACE_FILLER, ' ').split(/[^\p{L}\p{N}]+/u).filter((w) => w.length >= 4 && !PLACE_GENERIC.test(w));
+  function notesPlaceTracks(rel, notesCos) {
+    const some = (x) => !!(x && !x.all && (x.indexes || []).length);
+    const recAt = (c) => /^recorded\s+at$/i.test(String(c.role || '').trim());
+    const recIn = (c) => /^recorded\s+in$/i.test(String(c.role || '').trim());
+    const notes = (notesCos || []).filter((c) => (recAt(c) || recIn(c)) && some(c.tracks) && c.who && c.who.name);
+    if (!notes.length) return;
+    const town = (d) => [String(d.who.name || '').split(',')[0], d.who.area || ''].map((x) => looseName(x)).filter(Boolean);
+    for (const d of (rel.companies || []).filter((x) => recAt(x) && !x.fromNotes && !some(x.tracks))) {
+      const dw = placeKeyWords(d.who.name);
+      const hits = notes.filter((c) => (recAt(c) && (sameCompanyName(d.who.name, c.who.name) || placeKeyWords(c.who.name).some((w) => dw.includes(w))))
+        || (recIn(c) && town(d).includes(looseName(c.who.name))));
+      if (!hits.length) continue;
+      d.tracks = { indexes: uniq(hits.flatMap((c) => c.tracks.indexes)).sort((a, b) => a - b) };
+      d.notesLine = uniq(hits.map((c) => c.line).filter(Boolean)).join(' / ');
+      // an area that is the town of Discogs's place ("in Hilversum" – "Hilversum, Holland"): that place, no area of its own
+      hits.filter(recIn).forEach((c) => { c.placeOf = d.who.name; });
+      // the notes' place of another name: its own entry, both marked
+      for (const c of hits.filter((x) => recAt(x) && !sameCompanyName(d.who.name, x.who.name) && !samePlaceName(d.who, x.who.name))) {
+        c.renamedOf = d.who.name;
+        d.renamedOf = c.who.name;
+      }
+      log('info', 'notesPlaceTracks', { name: d.who.name, tracks: trackListLabel(new Set(d.tracks.indexes)) });
+    }
+  }
+
+  /** [Z-NOTESPLACETRACKS] (3.218.0, S459) "perhaps the same place (renamed): X" at a place the notes give under another name – not once joined. */
+  function renamedHtml(a) {
+    if (!a || !a.renamedOf || !ruleOn('S459')) return '';
+    const other = [...S.artists.values()].find((x) => x !== a && x.company && [x.name, x.rawName, ...(x.altNames || [])].some((n) => n && norm(n) === norm(a.renamedOf)));
+    if (!other || (a.mbid && other.mbid === a.mbid)) return '';
+    return ` <span class="dci-sub dci-renamed" title="${esc(tr('entry.renamedTitle', { name: other.name }))}">${esc(tr('entry.renamed', { name: other.name }))}</span>`;
   }
 
   /** [S054] (3.37.0) A name as the notes give it, without brackets left from a track list ("Pub Co (1"); not a number only. */
@@ -32327,6 +32443,7 @@
       key: nextId('c'), dId: g.dId, links: g.links, name: g.name, rawName: g.rawName, status: 'pending', company: true,
       entityType: null, mbid: null, mbName: '', candidates: [], editing: false, error: '', anvs: [], area: g.area || '',
       ...(g.fromNotes ? { fromNotes: true } : {}), ...(g.altNames ? { altNames: g.altNames } : {}),
+      ...(g.renamedOf ? { renamedOf: g.renamedOf } : {}), // [Z-NOTESPLACETRACKS] (3.218.0, S459)
       ...(ruleOn('S199') && g.roles.some(commissioned) ? { commissionFor: true } : {}), // [Z-EXCEPTC] (3.125.0)
     };
     S.artists.set(company.key, company);
@@ -32424,6 +32541,7 @@
       if (repeat && repeat.fresh) dropWorkChoices();
       // [3.30.8] places named in the Discogs notes, unless Discogs lists them already (S042)
       if (source === DISCOGS) addNotesCompanies(rel);
+      releaseTitleInfo(rel); // [Z-RELTITLEINFO] (3.218.0, S455)
       applyMediaChoice(choice);
       if (S.mediaSel) log('info', 'mediaChosen', { text: mediaChoiceText() });
       // [3.20.0] the choices of the dialog: the works decided
@@ -32491,6 +32609,7 @@
       S.dedForm = null;
       S.artistWorkTargets = new Map();
       S.artistWorksSpecialLogged = new Set();
+      Object.assign(S, { awPaused: '', awPartial: new Map(), awRunIds: new Set(), awLong: false }); // [Z-ARTWORKSSTOP] (3.218.0)
       // [179] (3.38.16) the composers of titles logged anew; [180] (3.38.15) no list "n works ▾" open
       S.titleComposerLogged = new Set();
       S.wtCache = new Map();
@@ -38258,7 +38377,7 @@
     return `
       <section class="dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${hidden}${groupFolded(a.key) ? ' dci-gcompact' : ''}${mxEntry(a) ? ' dci-em-entry' : mxCompact(a) ? ' dci-em-centry' : ''}${entrySkipped(a) ? ' dci-gskipped' : ''}" data-group="${a.key}">
         <div class="dci-ghead">
-          ${S.view === 'full' && !a.company ? groupFoldHtml(a) : ''}<div class="dci-gname">${mxOn(a) && rows.length && (S.view === 'compact' || S.emWide.has(a.key)) ? emWideHtml(a) : S.view === 'compact' && rows.length ? openAllHtml(a, rows) : ''}${ruleOn('S409') && rows.length ? `<span class="dci-entry-grip" data-drag="entry" data-id="${esc(a.key)}" draggable="true" role="img" title="${esc(tr('merge.gripTitle'))}" aria-label="${esc(tr('merge.gripTitle'))}"></span>` : ''}${kindTagHtml(a)}${entryNameHtml(a)}${ruleOn('S201') ? entryOriginsHtml(a) : ''}${improvMarkHtml(S.rows.filter((r) => r.artistKey === a.key && r.level === 'work'))}${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''} ${sourceLink} ${creditChipHtml(a)}${membersNoteHtml(a)}${siteNoteHtml(a)}${memberOfHtml(a)}</div>
+          ${S.view === 'full' && !a.company ? groupFoldHtml(a) : ''}<div class="dci-gname">${mxOn(a) && rows.length && (S.view === 'compact' || S.emWide.has(a.key)) ? emWideHtml(a) : S.view === 'compact' && rows.length ? openAllHtml(a, rows) : ''}${ruleOn('S409') && rows.length ? `<span class="dci-entry-grip" data-drag="entry" data-id="${esc(a.key)}" draggable="true" role="img" title="${esc(tr('merge.gripTitle'))}" aria-label="${esc(tr('merge.gripTitle'))}"></span>` : ''}${kindTagHtml(a)}${entryNameHtml(a)}${ruleOn('S201') ? entryOriginsHtml(a) : ''}${improvMarkHtml(S.rows.filter((r) => r.artistKey === a.key && r.level === 'work'))}${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''}${renamedHtml(a)} ${sourceLink} ${creditChipHtml(a)}${membersNoteHtml(a)}${siteNoteHtml(a)}${memberOfHtml(a)}</div>
           <div class="dci-gmatch" data-match="${a.key}">${matchHtml(a)}${ruleOn('S201') ? identityLinkHtml(a) : ''}</div>
           ${worksLink}<div class="dci-ghead-r">${compact ? emBySegHtml(a) : ''}${joinUndoHtml(a)}${entrySkipHtml(a, allRows)}</div>
         </div>
@@ -40545,6 +40664,70 @@
       showMessage('warn', 'msg.titleLineupMissing', { list: [...missing].join(', ') });
     }
     return added.length;
+  }
+
+  /**
+   * [Z-RELTITLEINFO] (3.218.0, S455; a tick of "Read from titles") What the release's title says, where the source does not say it:
+   * "Sunrise - with Collin Walcott & Leon Thomas + Oregon - Live in Ypsilanti, MI, 1977" – the names after "with" / "featuring" performers
+   * (a name an entry of the release has, or the release's artist, left as it is); "Live in X" the area recorded in, "Live at X" the place
+   * recorded at (only when the source names no place or area recorded); the year after it the date of the recordings (only when the
+   * notes have no date). A place is never part of a name. The source's title, else MusicBrainz's; said where it comes from.
+   */
+  function releaseTitleParts(title) {
+    const out = { names: [], live: null };
+    for (const seg0 of String(title || '').split(/\s+[-–—:]\s+|\s*[([]\s*|\s*[)\]]\s*/)) {
+      const seg = seg0.trim();
+      const w = seg.match(/^(?:with|feat\.?|featuring|ft\.)\s+(.+)$/iu);
+      if (w) {
+        // ("+ Oregon" a name too; a place or a word of a live set ends the names)
+        w[1].split(/\s*(?:,|&|\+|\band\b)\s*/iu).map((x) => x.trim()).filter((x) => /^\p{Lu}/u.test(x) && !/^(?:live|in|at)\b/i.test(x) && x.split(/\s+/).length <= 4)
+          .forEach((x) => out.names.push(x));
+        continue;
+      }
+      const l = seg.match(/^live\s+(in|at)\s+(.+?)(?:,?\s+((?:19|20)\d\d))?\.?$/iu) || seg.match(/^live\s+((?:19|20)\d\d)$/iu);
+      if (l && !out.live) out.live = l.length > 3 ? { kind: l[1].toLowerCase(), where: l[2].replace(/,\s*$/, '').trim(), year: l[3] || '' } : { kind: '', where: '', year: l[1] };
+    }
+    return out;
+  }
+  function releaseTitleInfo(rel) {
+    if (!(ruleOn('S450') && ruleOn('S455')) || !rel) return [];
+    const title = String(rel.title && !/^https?:/i.test(rel.title) ? rel.title : S.releaseTitleMb || '');
+    const parts = releaseTitleParts(title);
+    const said = [];
+    const known = [...(rel.credits || []).map((c) => c.who && c.who.name), ...(S.releaseCredit || []).flatMap((p) => [p.name, p.artistName])].filter(Boolean).map((x) => looseName(x));
+    for (const name of uniq(parts.names)) {
+      if (known.includes(looseName(name))) continue;
+      rel.credits = rel.credits || [];
+      rel.credits.push({ who: { id: 0, name, rawName: name, links: [] }, role: 'Performer', base: 'Performer', details: [], credited: '', tracks: { all: true }, fromRelTitle: true, line: title });
+      said.push(`${name} – performer`);
+    }
+    const lv = parts.live;
+    if (lv) {
+      const notes = String(rel.notes || '');
+      const placeKnown = (rel.companies || []).some((c) => /^recorded\s+(?:at|in)$/i.test(String(c.role || '').trim()))
+        || /\b(?:recorded|live)\s+(?:live\s+)?(?:at|in)\s+\p{Lu}/u.test(notes);
+      const dateKnown = findDates(notes).some((d) => d.value && d.value.begin && d.value.begin.year && !['issue', 'copyright'].includes(d.hint));
+      if (lv.where && !placeKnown) {
+        const line = `Recorded live ${lv.kind} ${lv.where}`;
+        let res = null;
+        try { res = TEXT.parse(line, sourceContext()); } catch (e) { res = null; }
+        const got = ((res && res.companies) || []).filter((c) => /^recorded\s+(?:at|in)$/i.test(String(c.role || '').trim()));
+        if (got.length) {
+          rel.companies = rel.companies || [];
+          got.forEach((c) => rel.companies.push({ ...c, tracks: c.tracks || null, fromRelTitle: true, line: title }));
+          said.push(`${got.map((c) => c.who.name).join(', ')} – ${got[0].role.toLowerCase()}`);
+        }
+      }
+      if (lv.year && !dateKnown) {
+        rel.notes = `${notes}${notes && !notes.endsWith('\n') ? '\n' : ''}Recorded live${lv.where ? ` ${lv.kind} ${lv.where}` : ''}, ${lv.year}.`;
+        said.push(`${lv.year} – date of the recordings`);
+      }
+    }
+    if (said.length) {
+      log('info', 'relTitleInfo', { title, list: said.join('; ') });
+      showMessage('info', 'msg.relTitleInfo', { title, list: said.join('; ') });
+    }
+    return said;
   }
 
   function placeTitleDates({ force = false } = {}) {
@@ -43860,6 +44043,11 @@
     return [plan.composerName || plan.composer];
   }
   const coverHint = (i, work) => coverComposers(i, work).length > 0;
+  /** [Z-COVERSHOW] (3.218.0, S458) "by Sonny Rollins" at a work found in MusicBrainz: whose work it is (its composer as found). */
+  function workByHtml(i, work) {
+    const plan = work && ruleOn('S458') && work.origin !== 'created' ? planOf(i, work.gid) : null;
+    return plan && plan.composerName ? ` <span class="dci-sub dci-mx-by">${esc(tr('matrix.workBy', { name: plan.composerName }))}</span>` : '';
+  }
   /**
    * [Z-CV] (3.40.17) "cover" set by itself (collected item Z-CV; Q-by): a work of MusicBrainz chosen among those of the track's
    * composer (as for "co?"), the composer an entry of the source whose credits on the release are all writing credits (composer,
@@ -44251,6 +44439,7 @@
     const total = Number(ad && ad.count) || 0;
     if (total > mbHits()) {
       showMessage('info', 'ded.manyNames', { name, n: total, limit: mbHits() });
+      if (ruleOn('S456')) S.awLong = true; // [Z-ARTWORKSSTOP] (3.218.0) its works read next can take long: "Stop" shown
       log('info', 'dedManyNames', { name, n: total, limit: mbHits() });
     }
     if (!total) return [];
@@ -45045,10 +45234,14 @@
   }
 
   /** One attribute as a small button: its short form (or its name with "ausschreiben"). */
-  function attrPillHtml(a, { state, act, title, extra = '' }) {
+  function attrPillHtml(a, { state: state0, act, title, extra = '' }) {
+    let state = state0;
     const n = norm(a.name);
     const label = S.wattrLong ? a.name : attrAbbr(a.name);
-    return `<button type="button" class="dci-wpill dci-wpill-${state}" data-act="${act}" data-attr="${esc(n)}" aria-pressed="${state === 'off' || state === 'hint' ? 'false' : state === 'mixed' ? 'mixed' : 'true'}"
+    // ([Z-COVERSHOW] 3.218.0) a hint in bold: "hint strong"
+    const strong = state === 'hint strong';
+    if (strong) state = 'hint';
+    return `<button type="button" class="dci-wpill dci-wpill-${state}${strong ? ' dci-wstrong' : ''}" data-act="${act}" data-attr="${esc(n)}" aria-pressed="${state === 'off' || state === 'hint' ? 'false' : state === 'mixed' ? 'mixed' : 'true'}"
       ${state === 'mb' ? 'disabled' : ''} title="${esc(title)}">${esc(label)}${state === 'hint' ? '?' : ''}${extra}</button>`;
   }
 
@@ -45081,7 +45274,7 @@
       }
       // [179] (3.38.16) "co?": the composer is none of the performers
       if (n === 'cover' && coverHint(mrow.i, mrow.work)) {
-        return attrPillHtml(a, { state: 'hint', act: 'mx-wattr', title: tr('matrix.coverOffer', { names: coverComposers(mrow.i, mrow.work).join(', ') }) });
+        return attrPillHtml(a, { state: ruleOn('S458') ? 'hint strong' : 'hint', act: 'mx-wattr', title: tr('matrix.coverOffer', { names: coverComposers(mrow.i, mrow.work).join(', ') }) });
       }
       return attrPillHtml(a, { state: 'off', act: 'mx-wattr', title: a.name });
     }).join('');
@@ -49253,13 +49446,21 @@
    */
   /** [Z-WTS] (3.52.0) The lyrics languages of a work of the web service (ISO 639-3: "eng", "zxx"). */
   const workLangs = (w) => (Array.isArray(w.languages) && w.languages.length ? w.languages : w.language ? [w.language] : []).map(String);
-  async function loadArtistWorks(mbid, name, onPage) {
+  /**
+   * [Z-ARTWORKSSTOP] (3.218.0, S456) `resume`: an artist read in part when "Stop" was clicked – read on from where it stopped (its `at`:
+   * the part, linked works or recordings, and the offset); "Stop" ends it between two requests (`paused`, with where it stood).
+   */
+  async function loadArtistWorks(mbid, name, onPage, resume = null) {
     // [3.16.0] at most S.awMax works and recordings together (setting): the linked works first, the recordings with the rest
     const max = S.awMax;
-    const entry = { name, works: new Map(), recordings: 0, total: 0, linked: 0, linkedRead: 0, capped: false, max };
-    for (let offset = 0; offset < max; offset += 100) {
+    const entry = resume ? Object.assign(resume, { stopped: false, paused: false, partial: false })
+      : { name, works: new Map(), recordings: 0, total: 0, linked: 0, linkedRead: 0, capped: false, max };
+    const at = (resume && resume.at) || { phase: 'linked', offset: 0 };
+    const paused = (phase, offset) => (ruleOn('S456') && S.awPaused ? Object.assign(entry, { stopped: true, paused: true, at: { phase, offset } }) : null);
+    for (let offset = at.phase === 'linked' ? at.offset : max; offset < max; offset += 100) {
       // [3.18.0] the works matrix skipped (or "Not now"): stopped between two requests
       if (awResting()) return Object.assign(entry, { stopped: true });
+      if (paused('linked', offset)) return entry;
       const d = await mbWsIdle(`work?artist=${mbid}&inc=aliases&limit=100&offset=${offset}`);
       const list = (d && d.works) || [];
       // ([Z-WTS] 3.52.0: with its lyrics languages, for the suggestion of new works)
@@ -49280,12 +49481,13 @@
       if (entry.total) entry.capped = true;
       return entry;
     }
-    for (let offset = 0; ; offset += 100) {
+    for (let offset = at.phase === 'rec' ? at.offset : 0; ; offset += 100) {
       if (offset >= rest) {
         entry.capped = true;
         break;
       }
       if (awResting()) return Object.assign(entry, { stopped: true });
+      if (paused('rec', offset)) return entry;
       const d = await mbWsIdle(`recording?artist=${mbid}&inc=work-rels&limit=${Math.min(100, rest - offset)}&offset=${offset}`);
       const list = (d && d.recordings) || [];
       entry.total = (d && d['recording-count']) || entry.recordings + list.length;
@@ -49348,6 +49550,9 @@
           // [Z-TRIBUTEWORKS2] (3.207.0, S407) found only through the artist of a tribute: a suggestion in yellow ("work of Sonny Rollins")
           if (info.why === 'tribute' && !comp) {
             if (!found.has(w.gid)) hit.tribute = info.name;
+            // [Z-COVERSHOW] (3.218.0, S458) a work on the artist's own page (written by the artist of the tribute – no performer of the
+            // release: a tribute is no credit): its composer, for "by …" at the work and "co?" (a cover) at its link
+            if (ruleOn('S458') && w.via === 'linked' && !hit.composer) Object.assign(hit, { composer: mbid, composerName: info.name });
           } else delete hit.tribute;
           // "co?" only for a work found through its composer: by a similar title of a song, or named in the track's title
           if (comp && !hit.composer && (comp.named || (similar && /^song$/i.test(w.type || '')))) Object.assign(hit, { composer: mbid, composerName: info.name });
@@ -49578,6 +49783,8 @@
       S.artistWorksAgain = true;
       return;
     }
+    // [Z-ARTWORKSSTOP] (3.218.0, S456) stopped by "Stop": not again until "Continue"
+    if (ruleOn('S456') && S.awPaused) return;
     // [3.16.0] switched off in the settings: no comparison, no hits
     if (!S.awOn) {
       S.artistWorkTargets = new Map();
@@ -49618,9 +49825,11 @@
     S.artistWorksRunning = true;
     try {
       for (const [mbid, info] of targets) {
-        if (S.artistWorksAgain || awResting()) break;
+        if (S.artistWorksAgain || awResting() || (ruleOn('S456') && S.awPaused)) break;
+        S.awRunIds.add(mbid);
+        const part = S.awPartial.get(mbid) || null;
         // [3.16.0] read before (in this browser, within the days of the setting): from the store
-        if (!S.artistWorks.has(mbid)) {
+        if (!S.artistWorks.has(mbid) && !part) {
           const rec = await awGet(mbid);
           if (rec && awFresh(rec)) {
             const e = awUnpack(rec);
@@ -49628,7 +49837,7 @@
             log('info', 'artistWorksStored', { name: info.name, n: e.works.size, date: new Date(rec.readAt).toISOString().slice(0, 10) });
           }
         }
-        if (!S.artistWorks.has(mbid)) {
+        if (!S.artistWorks.has(mbid) || part) {
           // one artist taking longer than the seconds of the setting (10) because of a large catalogue (more entries to read
           // than the setting says, 900; a wait for the dashboard's own requests is not the catalogue's fault): the message says so
           const started = Date.now();
@@ -49636,12 +49845,26 @@
           const e = await loadArtistWorks(mbid, info.name, (entry) => {
             if (slowShown || Date.now() - started < S.awSlowSec * 1000 || entry.total + entry.linked <= S.awSlowN) return;
             slowShown = true;
+            if (ruleOn('S456') && !S.awLong) {
+              S.awLong = true;
+              renderWorksBackground();
+            }
             showMessage('info', 'msg.artistWorksSlow', { name: info.name, n: entry.total || entry.linked, done: entry.recordings });
             log('info', 'artistWorksSlow', { name: info.name, n: entry.total || entry.linked, done: entry.recordings });
-          });
+          }, part);
+          // [Z-ARTWORKSSTOP] (3.218.0, S456) stopped by "Stop": what was read of this artist kept (matched) and read on from there later
+          if (e.paused) {
+            S.awPartial.set(mbid, e);
+            S.artistWorks.set(mbid, Object.assign(e, { partial: true }));
+            log('info', 'artistWorksPaused', { name: info.name, n: e.works.size });
+            break;
+          }
+          S.awPartial.delete(mbid);
           // [3.18.0] stopped (works matrix skipped): what was read of this artist is not kept as complete
           if (e.stopped) break;
           e.readAt = Date.now();
+          delete e.partial;
+          delete e.at;
           S.artistWorks.set(mbid, e);
           awPut(awPack(mbid, e, e.readAt));
           if (e.works.size) log('info', 'artistWorks', { name: info.name, n: e.works.size });
@@ -49656,16 +49879,52 @@
       log('error', 'error', { text: e.message });
     }
     S.artistWorksRunning = false;
+    if (!S.awPaused) S.awLong = false; // [Z-ARTWORKSSTOP] (3.218.0) done: its line goes
     // [Z-YTW] (3.80.0, S118) songs of a video split before the works of the artists were read: offered now
     const songOffers = [...S.workParts.keys()].reduce((k, i) => k + songOffersFromArtistWorks(i), 0);
     if (matchArtistWorks() || suggestionChanged() || songOffers) renderWorksBackground();
     const n = [...S.artistWorkHits.values()].reduce((sum, list) => sum + list.length, 0);
     const tracks = [...S.artistWorkHits.keys()].sort((a, b) => a - b).map((i) => trackLabel(S.mbTracks[i])).join(', ');
-    if (!S.artistWorksAgain && !awResting()) log('ok', n ? 'artistWorksDone' : 'artistWorksNone', { n, tracks });
+    if (!S.artistWorksAgain && !awResting() && !S.awPaused) log('ok', n ? 'artistWorksDone' : 'artistWorksNone', { n, tracks });
     if (S.artistWorksAgain) {
       S.artistWorksAgain = false;
       runArtistWorks();
     }
+  }
+
+  /** [Z-ARTWORKSSTOP] (3.218.0, S456) "Stop" of the works of the artists: first pause (keep), then discard what this search found. */
+  function awStop() {
+    if (!S.awPaused) {
+      S.awPaused = 'paused';
+      log('info', 'artistWorksStop');
+    } else if (S.awPaused === 'paused') {
+      const n = [...S.awRunIds].filter((id) => S.artistWorks.has(id)).length;
+      S.awRunIds.forEach((id) => S.artistWorks.delete(id));
+      S.awPartial = new Map();
+      S.awRunIds = new Set();
+      S.awPaused = 'dropped';
+      matchArtistWorks();
+      log('info', 'artistWorksDropped', { n });
+    }
+    renderWorksBackground();
+  }
+  function awGo() {
+    const was = S.awPaused;
+    S.awPaused = '';
+    log('info', was === 'dropped' ? 'artistWorksAgainRead' : 'artistWorksGo');
+    S.awLong = true; // (its line again, with "Stop", while it reads on)
+    runArtistWorks();
+    renderWorksBackground();
+  }
+  /** [Z-ARTWORKSSTOP] (3.218.0, S456) The line of a long search of the artists' works: "Stop" while it runs; "Continue" (and "Stop" again) once stopped. */
+  function awLineHtml() {
+    if (!ruleOn('S456') || !(S.awLong || S.awPaused)) return '';
+    if (!S.awPaused && !S.artistWorksRunning) return '';
+    const names = uniq([...(S.artistWorkTargets || new Map()).values()].map((x) => x && x.name).filter(Boolean)).slice(0, 4).join(', ');
+    const btn = (act, key, title) => `<button type="button" class="dci-textbtn" data-act="${act}" title="${esc(tr(title))}">${esc(tr(key))}</button>`;
+    if (!S.awPaused) return `<p class="dci-sub" data-el="aw-line">${esc(tr('matrix.awRunning', { names }))} ${btn('mx-aw-stop', 'matrix.awStop', 'matrix.awStopTitle')}</p>`;
+    if (S.awPaused === 'paused') return `<p class="dci-sub" data-el="aw-line">${esc(tr('matrix.awPaused', { names }))} ${btn('mx-aw-go', 'matrix.awGo', 'matrix.awGoTitle')} · ${btn('mx-aw-stop', 'matrix.awDrop', 'matrix.awDropTitle')}</p>`;
+    return `<p class="dci-sub" data-el="aw-line">${esc(tr('matrix.awDropped', { names }))} ${btn('mx-aw-go', 'matrix.awGoAgain', 'matrix.awGoTitle')}</p>`;
   }
 
   async function autoSearchWorks() {
@@ -49880,7 +50139,7 @@
       const o = pending ? rowOptsHtml(i) : { btn: '', panel: '', hint: '' };
       const badge = pending
         ? `<span class="dci-badge dci-badge-plan" title="${esc(tr('works.pendingTitle'))} – ${esc(tr('works.plannedPending'))}">${esc(tr('matrix.newWork'))}</span> <strong>${esc(work.title)}</strong>${o.btn}`
-        : `<span class="dci-badge dci-badge-plan">${esc(tr(work.origin === 'created' ? 'works.plannedCreated' : 'works.plannedFound'))}</span> ${mbLink(work)}${workLabelRoHtml(work)}`;
+        : `<span class="dci-badge dci-badge-plan">${esc(tr(work.origin === 'created' ? 'works.plannedCreated' : 'works.plannedFound'))}</span> ${mbLink(work)}${workLabelRoHtml(work)}${workByHtml(i, work)}`;
       // [Z-SU] (3.41.3) one new work "A / B": split into works of their own (a medley)
       // ((3.98.0, review) not a work that replaces a linked one: its old link would not be removed)
       const mParts = pending && !replacedWork(i) ? medleyParts(i) : [];
@@ -51738,12 +51997,14 @@
     }
     if (magicKindOn('cover') && magicAt('balanced')) {
       for (const m of mrows) {
-        if (!m.work || !m.work.planned || workLocked(m.work)) continue;
+        // ([Z-COVERSHOW] 3.218.0, S458) a work of MusicBrainz found (its cells locked) too: "cover" is the link's, not the work's
+        if (!m.work || !m.work.planned || (workLocked(m.work) && !ruleOn('S458'))) continue;
         const on = S.linkAttrOn.get(linkKey(m.i, m.work.gid)) || new Set();
         // the "cover" set by itself kept for good (balanced); the offer "co?" taken (bold)
         if (coverAuto(m.i, m.work) && !on.has('cover') && linkAttrsOf(m.i, m.work).has('cover')) {
           out.push({ kind: 'cover', i: m.i, label: tl(m.i), what: tr('magic.what.coverAuto', { title: m.work.title }), apply: attrStep(m.i, m.work, 'cover') });
-        } else if (magicAt('bold') && coverComposers(m.i, m.work).length) {
+        // ([Z-COVERSHOW] 3.218.0, S458: from "balanced" on – "careful" only offers it, in bold)
+        } else if ((ruleOn('S458') ? magicAt('balanced') : magicAt('bold')) && coverComposers(m.i, m.work).length) {
           out.push({ kind: 'cover', i: m.i, label: tl(m.i), what: tr('magic.what.cover', { title: m.work.title, names: coverComposers(m.i, m.work).join(', ') }), apply: attrStep(m.i, m.work, 'cover') });
         }
       }
@@ -52624,6 +52885,7 @@
       ${head}
       ${skipped ? '' : `
       ${S.searchProgress ? `<p class="dci-sub" data-el="search-progress">${esc(tr('matrix.searchProgress', S.searchProgress))}<button type="button" class="dci-textbtn" data-act="mx-search-cancel">${esc(tr('matrix.searchCancel'))}</button></p>` : ''}
+      ${awLineHtml()}
       ${cols.length ? '' : `<p class="dci-sub">${esc(trSrc('matrix.empty'))}</p>`}`}
       <div class="dci-mx-hs dci-mx-hs-top" data-mxhs="top" aria-hidden="true" hidden><div></div></div>
       <div class="dci-mx-wrap"${skipped ? ' inert' : ''}>
@@ -53073,6 +53335,14 @@
       }
       case 'mx-search-cancel':
         S.searchCancel = true;
+        return true;
+      // [Z-ARTWORKSSTOP] (3.218.0, S456) "Stop": the works of the artists not read on (what was found kept); "Stop" again: what this search
+      // found is discarded (nothing of MusicBrainz – only these suggestions); "Continue": read on from where it stopped (anew after discarding)
+      case 'mx-aw-stop':
+        awStop();
+        return true;
+      case 'mx-aw-go':
+        awGo();
         return true;
       case 'mx-fold':
         // [3.18.0] fold / unfold the works matrix (not stored); [Z-WMX] (3.52.0, review) its popovers closed
@@ -63728,7 +63998,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
   /** Settings of this script in the browser's storage for musicbrainz.org (see "Settings" in the README). */
   const SETTINGS_KEYS = ['dci-lang', 'dci-scale', 'dci-log-open', 'dci-sync-mode', 'dci-dg-status', 'dci-dg-release', 'dci-dg-artwork',
     'dci-dg-hover', 'dci-dg-jump', 'dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', 'dci-role-codes', 'dci-pools-open', 'dci-pools-keep', 'dci-dm-auto', DM_FOLD_KEY,
-    'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-log-note-w', 'dci-media-sel', 'dci-media-load', 'dci-wattr-long', 'dci-work-dates', 'dci-magic-level', 'dci-magic-off', 'dci-qs-perm', 'dci-source-order', 'dci-source-trust', 'dci-wiki-bg', 'dci-beta-qf', 'dci-source-pick', 'dci-bc-tracks',
+    'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-log-note-w', 'dci-media-sel', 'dci-media-load', 'dci-wattr-long', 'dci-work-dates', 'dci-magic-level', 'dci-magic-off', 'dci-qs-perm', 'dci-ign-order', 'dci-source-order', 'dci-source-trust', 'dci-wiki-bg', 'dci-beta-qf', 'dci-source-pick', 'dci-bc-tracks',
     'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, 'dci-mx-skiprows', 'dci-weblinks-show', 'dci-inst-links', 'dci-smart-quotes',
     SETTINGS_TAB_KEY, VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, POOL_FOLD_KEY,
     'dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark', 'dci-kind-palette-dark',
@@ -65354,6 +65624,19 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       else setSearchOpen(true);
       return;
     }
+    // [Z-IMGARROWS] (3.218.0, S457) the images of "Text from cover art" (Bandcamp's, Discogs's, your own): ← / → the one before / after,
+    // after the last the first again (and before the first the last); not while typing in a field
+    if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey && ruleOn('S457')
+      && S.ocr && S.ocr.step === 'frames' && document.getElementById('dci-ocr') && !typingIn(e.target)) {
+      const n = ocrChosen().length;
+      if (n > 1) {
+        e.preventDefault();
+        S.ocr.cur = (Math.min(S.ocr.cur, n - 1) + (e.key === 'ArrowLeft' ? -1 : 1) + n) % n;
+        S.ocr.error = '';
+        renderOcr();
+      }
+      return;
+    }
     if (e.key !== 'Escape') return;
     // [3.34.1] the window "Text from cover art" first
     if (S.ocr && document.getElementById('dci-ocr')) {
@@ -65930,7 +66213,8 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       #dci-rules .dci-quick-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 10); padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10);
         background: #f1effa; border-bottom: 1px solid #dddae8; border-radius: 4px 4px 0 0; }
       #dci-rules .dci-quick-h strong { font-size: calc(var(--u, 1px) * 13); }
-      #dci-rules .dci-quick-gh { font-size: calc(var(--u, 1px) * 11); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted, #6b6880); margin: calc(var(--u, 1px) * 8) 0 calc(var(--u, 1px) * 4); }
+      #dci-rules .dci-quick-gh { font-size: calc(var(--u, 1px) * 11); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted, #6b6880); margin: calc(var(--u, 1px) * 8) 0 calc(var(--u, 1px) * 4);
+        padding: 0 calc(var(--u, 1px) * 10); } /* [Z-QSTICKS] (3.218.0) in line with the boxes below, not against the box's edge */
       #dci-rules .dci-quick-h + .dci-quick-group .dci-quick-gh { margin-top: calc(var(--u, 1px) * 2); }
       #dci-rules .dci-quick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--u, 1px) * 280), 1fr)); gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10);
         padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 10) calc(var(--u, 1px) * 10); }
@@ -65966,10 +66250,18 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       #dci-rules .dci-qticks { flex: 0 0 auto; display: flex; flex-direction: column; }
       #dci-rules .dci-qticks .dci-qperm { flex: 1 1 50%; }
       #dci-rules .dci-qticks .dci-qsub { border-top: 0; }
+      /* [Z-QSTICKS] (3.218.0) the ticks of a switch in one column: each box at the left, its text left-aligned beside it, on one line,
+         all rows of one height; the ticks of the switch itself tinted apart from "permanent" (which looks as at every switch) */
+      #dci-rules .dci-qticks { min-width: max-content; align-items: stretch; }
+      #dci-rules .dci-qticks .dci-qperm { flex: 1 1 0; min-height: calc(var(--u, 1px) * 19); justify-content: flex-start; align-self: stretch; text-align: left; white-space: nowrap;
+        gap: calc(var(--u, 1px) * 5); padding: 0 calc(var(--u, 1px) * 8) 0 calc(var(--u, 1px) * 6); }
+      #dci-rules .dci-qticks .dci-qperm > span { flex: 1 1 auto; text-align: left; }
+      #dci-rules .dci-qticks .dci-qsub { background: #eef5f0; color: #2f5a3c; box-shadow: inset 3px 0 0 #7fb08f; }
+      #dci-rules .dci-qticks .dci-qsub:has(input:disabled) { opacity: 0.6; }
       /* [Z-QSSCOPE] (3.156.0) the "permanent" box between a switch and its id; a switch changed for this import only marked */
       #dci-rules .dci-qperm { flex: 0 0 auto; display: flex; align-items: center; gap: calc(var(--u, 1px) * 3); margin: 0; padding: 0 calc(var(--u, 1px) * 6);
         border: 1px solid #c8c5d6; border-right: 0; background: #faf9fd; font-size: calc(var(--u, 1px) * 10.5); color: var(--muted, #6d6a7c); cursor: pointer; }
-      #dci-rules .dci-qperm input { margin: 0; }
+      #dci-rules .dci-qperm input { margin: 0; width: auto; flex: 0 0 auto; } /* [Z-QSTICKS] (3.218.0) the box its own size, not the width inputs get here */
       #dci-rules .dci-qonce .dci-qbtn { border-style: dashed; }
       #dci-rules .dci-qneeds-tag { flex: 0 0 auto; padding: 0 calc(var(--u, 1px) * 5); border-radius: 999px; background: #ecebf6; color: #2f2a5c; font-size: calc(var(--u, 1px) * 10.5); }
       #dci-rules .dci-qneeds .dci-qbtn[aria-pressed="true"] .dci-qled { opacity: 0.45; }
@@ -66491,6 +66783,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       .dci-wpill-mixed { border: 1px solid var(--role); background: linear-gradient(135deg, #cddbf6 50%, #fff 50%); color: #2c4a80; }
       .dci-wpill-mb, .dci-wpill-mb:disabled { border-color: var(--ok); background: #e6f3ea; color: #1f5a36; opacity: 1; cursor: default; }
       .dci-wpill-hint { border: 1px dashed var(--sugg-line); background: var(--sugg-bg); color: var(--sugg-ink); }
+      .dci-wpill.dci-wstrong { font-weight: 700; } /* [Z-COVERSHOW] (3.218.0) "co?" of a work whose composer performs nothing here */
       /* [Z-CV] (3.40.17) set by itself: ticked, in the colours of a suggestion */
       .dci-wpill-auto { border: 1px solid var(--sugg-line); background: var(--sugg-bg); color: var(--sugg-ink); font-weight: 600; }
       .dci-mxchip { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 3); padding: 1px calc(var(--u, 1px) * 7); border: 1px solid; border-left-width: 4px; border-radius: 4px; font-size: calc(var(--u, 1px) * 12); font-weight: 600; line-height: 1.4; white-space: nowrap; }
