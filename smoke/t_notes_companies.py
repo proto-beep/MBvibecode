@@ -2689,6 +2689,122 @@ def case_tribute3207():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+
+def case_cover3218():
+    """Credits Importer 3.218.0 (collected item Z-COVERSHOW, S458): the release "If Ever You Would Leave Us (we play for Rollins)"; Sonny
+    Rollins picked in the box – his works on tracks 2 and 3 in yellow; the one of track 2 taken.
+    A) At track 2: "found, will be linked", "by Sonny Rollins", and "co?" offered in bold (Rollins performs nothing here).
+    B) "✨ Answer all", level "balanced": the cover is one of its answers; level "careful": not (only offered).
+    C) S458 off: no "by …", "co?" not in bold."""
+    SR = H.uid('dddddddd', 3900)
+    added_lts = {868: ('b41e7530-cde4-459c-b8c5-dfef08fc8295', 'dedicated to', 'artist', 'release_group'),
+                 9440: (H.uid('94409440', 1), 'tribute', 'artist', 'release_group')}
+    for i, (g, n, t0, t1) in added_lts.items():
+        H.lt(i, g, n, t0, t1, dates=False)
+    for k, n in [(567, 'cover'), (578, 'live')]:
+        H.attr(k, n, k)
+    H.lt(278, H.LTS[278]['gid'], 'performance', 'recording', 'work', (567, 578))
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.MB_SEARCH['artist'] = [{'id': SR, 'name': 'Sonny Rollins', 'disambiguation': 'jazz saxophonist', 'type': 'Person', 'score': 100}]
+    rel = lambda: [{'target-type': 'artist', 'type': 'composer', 'direction': 'backward', 'artist': {'id': SR, 'name': 'Sonny Rollins'}}]
+    works0 = list(H.WORK_SEARCH)
+    W = lambda k: H.uid('3a3a3a3a', k)
+    H.WORK_SEARCH[:] = [{'id': W(1), 'title': H.TITLES[1], 'aliases': [], 'type': 'Song', 'relations': rel()},
+                        {'id': W(2), 'title': H.TITLES[2], 'aliases': [], 'type': 'Song', 'relations': rel()}]
+    H.ARTIST_WORKS[SR] = [{'id': W(1), 'title': H.TITLES[1], 'aliases': []}, {'id': W(2), 'title': H.TITLES[2], 'aliases': []}]
+    H.ARTIST_RECORDINGS[SR] = [{'title': H.TITLES[3], 'work': {'id': W(3), 'title': H.TITLES[3]}}]
+    orig_ws, orig_js, orig_dg = H.ws_release, H.js_entity, H.discogs_release
+    H.js_entity = lambda gid: ({'entityType': 'artist', 'id': 3900, 'gid': SR, 'name': 'Sonny Rollins', 'comment': 'jazz saxophonist'} if gid == SR else orig_js(gid))
+
+    def ws(full=False):
+        d = orig_ws(full)
+        d['title'] = 'If Ever You Would Leave Us (we play for Rollins)'
+        return d
+    H.ws_release = ws
+
+    def dg():
+        d = orig_dg()
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = dg
+    BOX = """(() => { const b = document.querySelector('[data-el=dedbox]'); if (!b || b.hidden) return null;
+      return { list: [...b.querySelectorAll('.dci-dedlist li')].map(li => { const c = li.cloneNode(true); const sw = c.querySelector('.dci-dedsw');
+        if (sw) sw.replaceWith(((sw.querySelector('.dci-on') || {}).dataset || {}).kind === 'tribute' ? 'tribute to' : 'dedicated to'); return c.textContent.replace(/\\s+/g, ' ').trim(); }),
+        on: [...b.querySelectorAll('.dci-dedlist [data-act=ded-kind].dci-on')].map(x => x.dataset.kind),
+        sugg: [...b.querySelectorAll('.dci-dedsugg')].map(x => [...x.querySelectorAll('[data-act=ded-pick]')].map(y => y.textContent.replace(/\\s+/g, ' ').trim())) }; })()"""
+    TRIB = "[...document.querySelectorAll('[data-el=work-tribute]')].map(x => x.closest('[data-track], tr, .dci-mx-row, li') ? x.textContent.trim() : x.textContent.trim())"
+    results = []
+    ROW = """(() => { const r = document.querySelector('tr[data-work="1"]'); if (!r) return null;
+      const by = r.querySelector('.dci-mx-by'); const co = r.querySelector('.dci-wpill[data-attr=cover]');
+      return [by ? by.textContent.trim() : '', co ? [co.textContent.trim(), co.classList.contains('dci-wstrong')] : null]; })()"""
+    COVERS = "[...document.querySelectorAll('[data-el=magic-item][data-kind=cover]')].map(x => x.textContent.replace(/\\s+/g, ' ').trim())"
+
+    def open_page(p, off=()):
+        H.RULES_OFF = list(off)
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        ctx.add_init_script("localStorage.setItem('dci-aw-ask', '2'); localStorage.setItem('dci-magic-level', JSON.stringify('balanced'));")
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        pg.click('#dci-open')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(3000)
+        pg.click('[data-el=dedbox] [data-act=ded-pick]')
+        H.wait_ok(pg, "!!document.querySelector('tr[data-work=\"1\"] [data-act=work-pick]')", 30)
+        pg.locator('tr[data-work="1"] [data-act=work-pick]').first.evaluate('b => b.click()')
+        pg.wait_for_timeout(1500)
+        if 'S458' not in off:
+            H.wait_ok(pg, "!!document.querySelector('tr[data-work=\"1\"] .dci-wpill[data-attr=cover]')", 45)
+        return b, pg, errs
+
+    def magic(pg):
+        pg.locator('[data-el=works] [data-act=magic-open]').first.evaluate('b => b.click()')
+        pg.wait_for_timeout(800)
+        got = pg.evaluate(COVERS)
+        print('   Vorschau:', pg.evaluate("(document.querySelector('[data-el=magic-preview]') || {textContent: 'keine'}).textContent.replace(/\\s+/g, ' ').slice(0, 400)"))
+        c = pg.locator('[data-act=magic-cancel]')
+        if c.count():
+            c.first.evaluate('b => b.click()')
+        pg.wait_for_timeout(300)
+        return got
+
+    try:
+        with sync_playwright() as p:
+            b, pg, errs = open_page(p)
+            a = pg.evaluate(ROW)
+            print('A)', a)
+            results.append(bool(a) and a[0] == 'by Sonny Rollins' and a[1] == ['co?', True])
+            bal = magic(pg)
+            pg.evaluate("localStorage.setItem('dci-magic-level', JSON.stringify('careful'))")
+            pg.locator('[data-el=works] [data-act=magic-menu]').first.evaluate('b => b.click()')
+            pg.wait_for_timeout(300)
+            pg.locator('[data-act=magic-level][data-level=careful]').first.evaluate('b => b.click()')
+            pg.wait_for_timeout(300)
+            car = magic(pg)
+            print('B) balanced:', bal, '| careful:', car)
+            results.append(len(bal) == 1 and 'Sonny Rollins' in bal[0] and car == [])
+            results.append(not errs)
+            b.close()
+            b, pg, errs = open_page(p, off=['S458'])
+            c = pg.evaluate(ROW)
+            print('C)', c)
+            results.append(bool(c) and c[0] == '' and (c[1] is None or c[1][1] is False) and not errs)
+            b.close()
+    finally:
+        H.ws_release, H.js_entity, H.discogs_release = orig_ws, orig_js, orig_dg
+        H.WORK_SEARCH[:] = works0
+        H.ARTIST_WORKS.pop(SR, None)
+        H.ARTIST_RECORDINGS.pop(SR, None)
+        H.MB_SEARCH.pop('artist', None)
+        H.RULES_OFF = []
+        for i in added_lts:
+            H.LTS.pop(i, None)
+        H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 def case_courvoisier3211():
     """Credits Importer 3.211.0 (collected items Z-EDITEDAT, Z-MASTEREDBYLATE, Z-PROSOCALL, Z-DESIGNSTUDIO, Z-PKGWALLET, Z-CREATENOTELINKS;
     rules S414 – S418): the credits of Sylvie Courvoisier's album as Discogs notes.

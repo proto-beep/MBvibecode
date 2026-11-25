@@ -2626,4 +2626,74 @@ def case_quoteworks3217():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+
+
+def case_texts3218():
+    """Credits Importer 3.218.0 (collected items Z-LICENSEDBY, Z-RELTITLEINFO; rules S454, S455): a pasted text of the Bandcamp page of
+    "Sunrise" (Don Cherry), shortened – "- Licensed by the Don Cherry Estate and James Quinlan", "Licensed by the Don Cherry Estate and
+    producer James Quinlan."; the release's title in MusicBrainz "Sunrise - with Collin Walcott & Leon Thomas + Oregon - Live in Ypsilanti,
+    MI, 1977", the text crediting Collin Walcott (piano) only.
+    A) Licensors: Don Cherry Estate and James Quinlan (both lines), James Quinlan producer too; nothing not recognized of those lines.
+    B) From the release's title: Leon Thomas and Oregon performers (Collin Walcott not again), Ypsilanti recorded in, 1977 in the date pool;
+       said in the log, with the tick that turns it off.
+    C) S454 and S455 off: the licence lines not recognized; nothing from the title."""
+    TEXT = """Collin Walcott: Piano
+- Licensed by the Don Cherry Estate and James Quinlan
+Licensed by the Don Cherry Estate and producer James Quinlan."""
+    t0 = H.REL_TITLE
+    H.REL_TITLE = 'Sunrise - with Collin Walcott & Leon Thomas + Oregon - Live in Ypsilanti, MI, 1977'
+    LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
+    ROLES = """[...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+      [...g.querySelectorAll('tr.dci-row')].map(r => (r.querySelector('.dci-drole') || { dataset: { raw: '' } }).dataset.raw.trim())])"""
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        try:
+            H.wait_for(pg, f"{LOGS}.filter(x => /Import complete/.test(x)).length >= 2", 60)
+        except Exception:
+            print('   Log:', pg.evaluate(LOGS)[:30], errs)
+            raise
+        pg.wait_for_timeout(1500)
+        roles = {}
+        for n, r in pg.evaluate(ROLES):
+            roles.setdefault(n, []).extend(r)
+        logs = pg.evaluate(LOGS)
+        unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li, [data-el=unrecognized] li')].map(li => li.textContent.replace(/\\s+/g, ' ').trim())")
+        pool = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-date-pool:{H.REL}') || '[]')")
+        years = sorted({str(d['begin'].get('year')) for d in pool})
+        b.close()
+        return roles, logs, unrec, years, errs
+
+    results = []
+    try:
+        with sync_playwright() as p:
+            roles, logs, unrec, years, errs = run(p)
+            print('A) Einträge:', roles)
+            print('   nicht erkannt:', unrec)
+            lic = lambda n: [r for r in roles.get(n, []) if 'licen' in r.lower()]
+            results.append(bool(lic('Don Cherry Estate')) and bool(lic('James Quinlan')) and any('produc' in r.lower() for r in roles.get('James Quinlan', []))
+                           and not any('Licensed' in u for u in unrec))
+            said = [x for x in logs if 'release' in x.lower() and 'title' in x.lower() and 'Ypsilanti' in x]
+            print('B) Log:', said, '| Jahre:', years)
+            results.append(bool(roles.get('Leon Thomas')) and bool(roles.get('Oregon')) and len(roles.get('Collin Walcott', [])) == 1
+                           and any('In' in r for r in roles.get('Ypsilanti', [])) and '1977' in years and bool(said) and 'release title' in said[0])
+            results.append(not errs)
+            roles2, logs2, unrec2, years2, errs2 = run(p, ['S454', 'S455'])
+            print('C) Einträge:', sorted(roles2), '| nicht erkannt:', unrec2, '| Jahre:', years2)
+            results.append('Leon Thomas' not in roles2 and 'Ypsilanti' not in roles2 and '1977' not in years2 and not errs2)
+    finally:
+        H.REL_TITLE = t0
+        H.RULES_OFF = []
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
