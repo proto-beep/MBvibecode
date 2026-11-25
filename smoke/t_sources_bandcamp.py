@@ -2246,14 +2246,14 @@ def case_pkg3157():
             g = pg.evaluate(GROUPS)
             hint = pg.evaluate("((document.querySelector('[data-el=label-hint]') || {}).textContent || '').replace(/\\s+/g, ' ')")
             unrec = pg.evaluate("[...document.querySelectorAll('.dci-unrec li')].map(li => li.textContent)")
-            ign = pg.evaluate("[...document.querySelectorAll('.dci-ignored li')].map(li => li.textContent.replace(/\\s+/g, ' ').slice(0, 140))")
+            ign = pg.evaluate("[...document.querySelectorAll('.dci-ignored li')].map(li => li.textContent.replace(/\\s+/g, ' ').slice(0, 260))")
             chk = pg.evaluate("((document.querySelector('[data-el=scan-check]') || {}).textContent || '')")
             print('A)', g, '\n   Hinweis:', hint)
             results.append(g.get('Bass Man') == ['electric bass'] and g.get('Drum Guy') == ['drums'] and g.get('Keys Guy') == ['piano']
                            and not any('rights reserved' in k.lower() for k in g)
                            and 'the text of the Bandcamp edition “Compact Disc (CD)” – 1 new · 1 the same as in the credits (one entry) · 1 more precise there (taken)' in hint)
             print('B) ausgelassen:', ign, '| nicht erkannt:', unrec)
-            results.append(unrec == [] and sum(1 for x in ign if x.startswith('Compact Disc (CD): ') and 'shop' in x) >= 3)
+            results.append(unrec == [] and sum(1 for x in ign if ('edition “Compact Disc (CD)”' in x) and 'shop' in x) >= 3)
             print('C)', chk)
             results.append(chk.startswith('The track list of the text fits'))
             st = pg.evaluate("[...document.querySelectorAll('[data-el=sync-notab]')].map(x => x.textContent).join(' | ')")
@@ -2579,6 +2579,120 @@ def case_titleinfo3217():
             rows2, msgs2, errs2 = run(p, off=['S450'])
             print('B)', rows2, msgs2)
             results.append(not any(r[0] == 'Ramón López' and '0' in r[2].split(',') for r in rows2) and not any('titles of the tracks' in m for m in msgs2) and not errs2)
+    finally:
+        H.ws_release = orig_ws
+        H.MAIN = main0
+        H.RULES_OFF = []
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_grossmann3219():
+    """Credits Importer 3.219.0 (collected items Z-BCGROSSMANN, Z-BCTRACKSRC, Z-BCSHOPLINE, Z-DIRECTOR; rules S460 – S465): a digital release,
+    Bandcamp its source – Muriel Grossmann "First Meditations on John Coltrane", shortened: the album credits (Personnel with "Abel Boquera -
+    Hammond B3 Organ", "Production", "Lacquer Cut by … at … (vinyl)", catalogue numbers, "Barry Guy – bass, director"), the text of the
+    edition "Vinyl LP" (shop lines); track pages 1 – 4: "Uros Stamenkovic - Drums" on all, "Radomir Milojkovic - Guitar" on 1 and 2,
+    "Radomir Milojkovic - Guitar" written "Radomir Miljokovic" on 3 (two letters swapped: a typo), "Jane Doe - Hammond B3 Organ"
+    on 2 and "Jane Doe - Hamond B3 Organ" on 4 (one letter), "Some prose nobody reads" on 1, 2 and 3.
+    A) None of the album's lines is not recognized; Abel Boquera Hammond organ (role credit with B3); the vinyl lacquer cut left out (a
+       digital release, S026); "director" conductor (no video).
+    B) "Some prose nobody reads" once, with the Bandcamp symbol and the links 1, 2, 3 to the track pages; the shop lines of the edition left
+       out as shop, with "edition “Vinyl LP”" before them.
+    C) Jane Doe's role read as one ("Hamond B3 Organ" → "Hammond B3 Organ", one letter) on tracks 2 and 4; "Radomir Miljokovic" read as
+       Radomir Milojkovic (tracks 1 – 3), the hint names it.
+    D) The switches off (S461 – S465, S460): the lines not recognized again, "3: …" as before, director as video director."""
+    ALBUM = 'https://grossmann.bandcamp.com/album/first-meditations'
+    BAND = 'https://grossmann.bandcamp.com'
+    H.attr(9311, 'organ', 14, 14)
+    H.attr(9312, 'Hammond organ', 14, 9311)
+    H.attr(9313, 'drums', 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    titles = ['Song One', 'Song Two', 'Song Three', 'Song Four']
+    credits = """Personnel
+Muriel Grossmann - Guitar
+Abel Boquera - Hammond B3 Organ
+Barry Guy – bass, director
+
+Production
+Lacquer Cut by Jukka Sarapää at Timmion Cutting (vinyl)
+Catalog Number: DR 42126 LP
+Catalog Number: DR 21 CD"""
+    pkg = [{'type_name': 'Vinyl LP', 'title': 'Vinyl LP', 'description': 'Catalogue number: DR 42126 LP\nTHIS IS A PRE-ORDER. Shipping in November\nREQUEST A SIGNATURE in a personal message if you like!\nA rare Not Two Records box-set available in very limited quantities.'}]
+    H.BC_PAGES[ALBUM] = H.bc_page({'artist': 'Test Band', 'current': {'title': 'Testalbum', 'credits': credits, 'about': ''}, 'packages': pkg,
+                                   'trackinfo': [{'track_num': i + 1, 'title': tt, 'title_link': f'/track/song-{i + 1}', 'duration': 180.0} for i, tt in enumerate(titles)]})
+    tp = {1: 'Uros Stamenkovic - Drums\nRadomir Milojkovic - Guitar\nSome prose nobody reads',
+          2: 'Uros Stamenkovic - Drums\nRadomir Milojkovic - Guitar\nJane Doe - Hammond B3 Organ\nSome prose nobody reads',
+          3: 'Uros Stamenkovic - Drums\nRadomir Miljokovic - Guitar\nSome prose nobody reads',
+          4: 'Uros Stamenkovic - Drums\nJane Doe - Hamond B3 Organ'}
+    for i, tt in enumerate(titles):
+        H.BC_PAGES[f'{BAND}/track/song-{i + 1}'] = H.bc_page({'current': {'title': tt, 'credits': tp[i + 1]}})
+    orig_ws = H.ws_release
+    main0 = H.MAIN
+    H.MAIN = H.MAIN.replace('  const S = {', '  const S = window.__S = {', 1)
+
+    def ws():
+        d = orig_ws()
+        d['relations'].append({'target-type': 'url', 'type': 'purchase for download', 'url': {'resource': ALBUM}})
+        for m in d['media']:
+            m['format'] = 'Digital Media'
+        return d
+    H.ws_release = ws
+    ROWS = """() => window.__S.rows.filter(r => r.level !== 'skip').map(r => [(window.__S.artists.get(r.artistKey) || {}).name, r.raw, (r.types || []).join('/'), r.primaryText || '', [...r.tracks].sort().join(',')])"""
+    UNREC = """[...document.querySelectorAll('.dci-unrec li')].map(li => [li.textContent.replace(/\\s+/g, ' ').trim(), [...li.querySelectorAll('.dci-bcsrc a')].map(a => a.textContent.trim())])"""
+    IGN = """[...document.querySelectorAll('.dci-ignored li:not(.dci-ign-group)')].map(li => li.textContent.replace(/\\s+/g, ' ').trim())"""
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        H.ENTRIES_VIEW = 'legacy'
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        try:
+            H.open_dashboard(pg)
+        except Exception:
+            print('   Fehler beim Öffnen:', errs, pg.evaluate("[...document.querySelectorAll('#dci-log li')].map(li => li.textContent).slice(-15)"))
+            raise
+        try:
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
+        except Exception:
+            print('   Log:', pg.evaluate("[...document.querySelectorAll('#dci-log li')].map(li => li.textContent).slice(-12)"), errs)
+            raise
+        H.wait_still(pg, "document.body.innerHTML", 10, 400)
+        pg.evaluate("document.querySelectorAll('details.dci-unrec, details.dci-ignored').forEach(d => d.open = true)")
+        rows = pg.evaluate(ROWS)
+        unrec = pg.evaluate(UNREC)
+        ign = pg.evaluate(IGN)
+        hint = pg.evaluate("(document.querySelector('[data-el=label-hint]') || {}).textContent || ''")
+        b.close()
+        return rows, unrec, ign, hint, errs
+    results = []
+    try:
+        with sync_playwright() as p:
+            rows, unrec, ign, hint, errs = run(p)
+            for r in rows:
+                print('   Zeile:', r)
+            print('A) nicht erkannt:', unrec)
+            print('   ausgelassen:', ign)
+            print('   Hinweis:', hint)
+            ab = [r for r in rows if r[0] == 'Abel Boquera']
+            bg = [r for r in rows if r[0] == 'Barry Guy']
+            results.append(not any(any(k in u[0] for k in ('Hammond', 'Production', 'Lacquer', 'Catalog', 'director')) for u in unrec)
+                           and bool(ab) and ab[0][3] in ('Hammond organ', 'organ') and ab[0][1] == 'Hammond B3 Organ' and any('conductor' in r[2] for r in bg) and not any('video' in r[2] for r in bg)
+                           and not any(r[0] == 'Jukka Sarapää' for r in rows))
+            prose = [u for u in unrec if 'Some prose' in u[0]]
+            shop = [x for x in ign if 'PRE-ORDER' in x or 'SIGNATURE' in x or 'rare Not Two' in x]
+            print('B)', prose, shop)
+            results.append(len(prose) == 1 and prose[0][1] == ['1', '2', '3'] and len(shop) == 3 and all('edition “Vinyl LP”' in x for x in shop))
+            jd = [r for r in rows if r[0] == 'Jane Doe']
+            print('C)', jd, [r for r in rows if r[0].startswith('Radomir')])
+            results.append(len(jd) == 1 and jd[0][4] == '1,3' and jd[0][1] == 'Hammond B3 Organ' and any(r[0] == 'Radomir Milojkovic' and r[4] == '0,1,2' for r in rows)
+                           and not any(r[0] == 'Radomir Miljokovic' for r in rows) and '“Radomir Miljokovic” → “Radomir Milojkovic”' in hint)
+            results.append(not errs)
+            rows2, unrec2, ign2, hint2, errs2 = run(p, off=['S460', 'S461', 'S462', 'S463', 'S464', 'S465'])
+            print('D)', unrec2, [r for r in rows2 if r[0] == 'Barry Guy'])
+            results.append(any('Hammond' in u[0] for u in unrec2) and any(u[0].startswith('1: Some prose') for u in unrec2)
+                           and any('video' in r[2] for r in rows2 if r[0] == 'Barry Guy') and not errs2)
     finally:
         H.ws_release = orig_ws
         H.MAIN = main0

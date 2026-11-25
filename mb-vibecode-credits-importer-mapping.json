@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.218.0",
+  "version": "3.219.0",
   "about": "MB x Vibecode: Credits Importer – the data of its mapping register (role rules, company roles, questions, tables and word lists, the quick switches). Loaded by the script (@resource mapping); the rules with code stay in the script. Regular expressions are {\"$re\": source, \"$flags\": flags}, sets {\"$set\": [...]}, maps {\"$map\": [[key, value], ...]}.",
   "DEFAULT_OFF_RULES": {"$set":["D023","S452","S046","D026","S114","S155","S160","S297","S339","S343"]},
   "CHECKBOX_DETAILS": [
@@ -1154,7 +1154,7 @@
     ["7e84f845-ac16-41fe-9ff8-df12eb32af55","MusicBrainz Test Artist"]
   ],
   "SPECIAL_ARTIST_NAME": {"$re":"^\\[[^\\]]+\\]$","$flags":""},
-  "TEXT_COMPANY_RE": {"$re":"^(published by|publisher|(broadcast|broadcasted|aired|transmitted) by|(recorded|overdubbed|mixed|remixed|mastered|remastered|edited|engineered|produced) at|(recorded|overdubbed|mixed|mastered|remastered|produced|remixed|engineered|composed|arranged|printed|manufactured|made|pressed|lacquer cut|lacquers cut|programmed|edited|transferred|written|lyrics written|libretto written|revised|translated) in|pressed by|manufactured by|distributed by|printed by|licensed (from|to|through)|funded by|marketed by|phonographic copyright|copyright|rights society)","$flags":""},
+  "TEXT_COMPANY_RE": {"$re":"^(published by|publisher|(broadcast|broadcasted|aired|transmitted) by|(recorded|overdubbed|mixed|remixed|mastered|remastered|edited|engineered|produced|lacquer cut|lacquers cut|cut|plated) at|(recorded|overdubbed|mixed|mastered|remastered|produced|remixed|engineered|composed|arranged|printed|manufactured|made|pressed|lacquer cut|lacquers cut|programmed|edited|transferred|written|lyrics written|libretto written|revised|translated) in|pressed by|manufactured by|distributed by|printed by|licensed (from|to|through)|funded by|marketed by|phonographic copyright|copyright|rights society)","$flags":""},
   "MONTH_NAMES": {
     "1": ["january","jan","januar","jänner","jän","enero","ene","janvier","janv","gennaio","styczeń","stycznia","styczen"],
     "2": ["february","feb","februar","febrero","février","fevrier","févr","fevr","fév","febbraio","luty","lutego"],
