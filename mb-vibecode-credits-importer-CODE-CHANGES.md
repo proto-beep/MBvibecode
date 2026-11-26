@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.223.0, Companion 1.6.0 – 1.24.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.224.0, Companion 1.6.0 – 1.24.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,21 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.224.0 · 2026-11-26
+
+- S522: `sentencesOf` – no end after a day ("4.") before a month (`TEXT_MONTH_WORD`).
+- S523: `coverLines3223` cuts "– live at" after a "by" name; `addCredit` – `prodCo` (a production company after "recorded by") goes to the companies as a label "Recorded By" (C021).
+- S524: `coverLines3223` – "<Role>: Name, <tasks> by …" as two lines.
+- S525: `coverLines3223` – "(A/B/C)" of societies as "(A, B)" with the known ones (`SOCIETY_ALT`).
+- S526: `coverLines3223` – a line cut before ", Track(s) N … by"; the sentences after its last part a line each.
+- S527: mapping Q005 `presetAnswer: 0`, R100 `^texts?( by)?$`; `askTranslation` presets R100 (liner notes) under S527.
+- S528: `addCreditRows` – the conductor of S460 credited as written.
+- S529: the illustration of S508 without "[technique]".
+- S530: `HANDMADE_ED_BY` (limited … edition … handmade) – design, `P.lineRoleCredit` "sleeve"; not a line of the shop.
+- S531: `promoFacts` – the name without "<Nationality> artist", a painting as Illustration, an artwork taken without `promo` unless another of its family is there.
+- S532: `INSTRUMENT_ALIASES` "tape loops", "tape loop" → tape (`FIXED_RULES`).
+- Tests: `case_sig3224` (t_sources_bandcamp, data `smoke/data/sig3224.json`); `case_dt3223` expects the illustration without credit; review3159 counts S532 as fixed.
 
 ## Import 3.223.0 · 2026-11-25
 

@@ -3136,7 +3136,8 @@ def case_dt3223():
                        and all(t == '10,11' for _, t in rr('Unicorn Planet')) and all(t == '1,2,3,4,5,6,7,8,9' for _, t in rr('The Shed Recording Studio')))
         art = sorted((r[0], r[2].split('/')[0], r[6]) for r in o['rows'] if r[0] in ('Riandy Karuniawan', 'Zac Anderson', 'Sam Giles') and r[3] == 'release')
         print('B)', art)
-        results.append(('Riandy Karuniawan', 'illustration', 'oil on canvas') in art and ('Zac Anderson', 'artwork', 'photo collage') in art
+        # (3.224.0, S529: an illustration has no role credit – before: "oil on canvas")
+        results.append(('Riandy Karuniawan', 'illustration', '') in art and ('Zac Anderson', 'artwork', 'photo collage') in art
                        and any(n == 'Zac Anderson' and t == 'design' for n, t, _ in art) and any(n == 'Sam Giles' and c == 'sleeve' for n, _, c in art))
         tw = sorted(r[5] for r in _rows(o, 'Tara Wardrop') if r[5])
         fs = [r for r in _rows(o, 'Fergus Smith') if 'Shahi' in r[1]]
@@ -3155,6 +3156,52 @@ def case_dt3223():
         print('F)', bri2)
         results.append(len(bri2) == 1 and bri2[0][2] == 'produced in' and bri2[0][3] == 'recording' and not o2['errs'])
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+def case_sig3224():
+    """Credits Importer 3.224.0 (collected items Z-DAYDOT … Z-TAPELOOPS; rules S522 – S532): Bandcamp "So It Goes" (smoke/data/sig3224.json):
+    "Tracks 1, 2, 5 composed by Evan Parker (PRS, MCPS) and Barry Guy (PRS/MCPS/PPL), Track 3 composed by Barry Guy (PRS/MCPS/PPL), Track 4 composed
+    by Evan Parker (PRS/MCPS). Recorded 4. February 2023 by RouteStock production – live at The Hot Tin, Faversham UK. Recording engineer: Henry Dagg,
+    mixed and mastered by Ferran Conangla at FCM Studio, Barcelona." … "Text: Evan Parker."; and a second text: "Barry Guy – bass, director,
+    composer", "Nik Rayne: guitar, tape loops", "Limited Sam Giles edition of 75 handmade mini-LP CDR", "Original Oil on Canvas Cover Artwork by
+    Riandy Karuniawan".
+    A) Tracks (S526, S525): Barry Guy composes 3, Evan Parker 4; no "PPL)"; nothing after the last part on track 4 only.
+    B) Sentences (S522, S523, S524): The Hot Tin recorded at, RouteStock production recorded by (a label); Henry Dagg recording engineer, Ferran
+       Conangla mix and mastering, FCM Studio mixed at and mastered at – not recorded at; nothing not recognized.
+    C) "Text" (S527): liner notes on the release, the question to switch to lyricist at the row.
+    D) The second text: Barry Guy conductor credited "director" (S528); tape loops – tape (S532); Sam Giles design "sleeve" (S530); Riandy Karuniawan
+       an illustration without credit (S529).
+    E) Off (as 3.223.0): "PPL)" a composer."""
+    D = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'sig3224.json'), encoding='utf-8'))
+    results = []
+    with sync_playwright() as p:
+        H.attr(9594, 'tape', 14, 14)
+        H.attr(9595, 'illustration', 14, 14)
+        o = bc3222(p, D['url'], D['credits'], D['about'], titles=D['titles'])
+        rr = lambda n: sorted((r[1], r[4]) for r in _rows(o, n))
+        print('A)', rr('Barry Guy'), rr('Evan Parker'), [r[0] for r in o['rows'] if ')' in r[0]])
+        results.append(('Composed By', '1,2,3,5') in rr('Barry Guy') and ('Composed By', '1,2,4,5') in rr('Evan Parker') and not [r for r in o['rows'] if ')' in r[0]]
+                       and all(r[4] != '4' for r in o['rows'] if r[0] in ('The Hot Tin', 'FCM Studio', 'Henry Dagg')))
+        names = {r[0]: sorted(r[1] for r in _rows(o, r[0])) for r in o['rows']}
+        print('B)', {k: names.get(k) for k in ('The Hot Tin', 'RouteStock production', 'Henry Dagg', 'Ferran Conangla', 'FCM Studio')}, o['unrec'])
+        results.append(names.get('The Hot Tin') == ['Recorded At'] and names.get('RouteStock production') == ['Recorded By'] and names.get('Henry Dagg') == ['Recording engineer']
+                       and names.get('Ferran Conangla') == ['Mastered By', 'Mixed By'] and names.get('FCM Studio') == ['Mastered At', 'Mixed At'] and not o['unrec'] and not o['errs'])
+        tx = [r for r in _rows(o, 'Evan Parker') if r[1] == 'Text']
+        print('C)', tx)
+        results.append(len(tx) == 1 and tx[0][2].startswith('liner notes') and tx[0][3] == 'release')
+        o2 = bc3222(p, D['url'], 'Barry Guy – bass, director, composer\nNik Rayne: guitar, tape loops\nLimited Sam Giles edition of 75 handmade mini-LP CDR\n'
+                    'Original Oil on Canvas Cover Artwork by Riandy Karuniawan', '', titles=D['titles'])
+        bg = [(r[2], r[6]) for r in _rows(o2, 'Barry Guy') if 'director' in r[1].lower()]
+        nr = [(r[5], r[6]) for r in _rows(o2, 'Nik Rayne') if 'tape' in r[1]]
+        sg = [(r[2].split('/')[0], r[6]) for r in _rows(o2, 'Sam Giles')]
+        rk = [(r[2].split('/')[0], r[6]) for r in _rows(o2, 'Riandy Karuniawan')]
+        print('D)', bg, nr, sg, rk, o2['unrec'])
+        results.append(bg and bg[0][0].startswith('conductor') and bg[0][1] == 'director' and nr == [('tape', 'tape loops')] and sg == [('design', 'sleeve')]
+                       and rk == [('illustration', '')] and not o2['errs'])
+        o3 = bc3222(p, D['url'], D['credits'], D['about'], titles=D['titles'], off=['S522', 'S525'])
+        print('E)', [r[0] for r in o3['rows'] if ')' in r[0]], o3['unrec'][:2])
+        results.append(any(')' in r[0] for r in o3['rows']) and not o3['errs'])
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 
 
 run_cases(globals())

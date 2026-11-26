@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.223.0
+// @version      3.224.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.223.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.223.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.224.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.224.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.223.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.224.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -5518,7 +5518,7 @@
    * list of the mapping rules shows it ticked and greyed ("always on") instead of a switch that changes nothing. The case review3159 of
    * t_static.py checks that every other S rule is asked somewhere (ruleOn, a rule's `special`).
    */
-  const FIXED_RULES = new Set(['S013', 'S015', 'S016', 'S023', 'S027', 'S028', 'S029', 'S030', 'S125', 'S515']);
+  const FIXED_RULES = new Set(['S013', 'S015', 'S016', 'S023', 'S027', 'S028', 'S029', 'S030', 'S125', 'S515', 'S532']);
   /**
    * [Z-QSSCOPE] (3.156.0) Quick switches changed for this import only: id → on. Not stored – a new import (or a reload) forgets them;
    * a quick switch whose "permanent" box is ticked is stored as before (QS_PERM_KEY: the ids with the box ticked).
@@ -5970,6 +5970,17 @@
     { id: 'S519', where: 'renderSource (pkgHint)', note: 'Texts (3.223.0; collected item Z-LEFTOUT-TABLE): a line about the package left out ("Gatefold …") on a physical release MusicBrainz has no packaging for: a hint at the line ("MusicBrainz has no packaging for this release yet") – nothing more, nowhere else' },
     { id: 'S520', where: 'addNotesCompanies', note: 'Texts (3.223.0; collected items Z-DT-HANDMADE, Z-LEFTOUT-TABLE): the lines of the Discogs notes left out as an edition, a shop, a package, merchandise, about the labels or as a footnote are listed with their reason (until 3.222.0 gone silently: "LTD TO 90 COPIES WORLDWIDE - 40 FOR EUROPE.")' },
     { id: 'S521', where: 'addNotesCompanies', note: 'Texts (3.223.0; collected item Z-OTHERMEDIA): a line of the notes for tracks this release does not have ("Tracks 2-5 to 2-10: Recorded November 9, 1964 in Hilversum, The Netherlands" where MusicBrainz has one medium) is listed as such – no longer gone silently' },
+    { id: 'S522', where: 'sentencesOf', note: 'Texts (3.224.0; collected item Z-DAYDOT): "Recorded 4. February 2023 by …" – a day with its full stop before a month is no end of its sentence (until 3.223.0 "Recorded 4" and "February 2023 by …" not recognized)' },
+    { id: 'S523', where: 'coverLines3223 (– live at), addCredit (prodCo)', note: 'Texts (3.224.0; collected item Z-RECBYDASH): "Recorded … by RouteStock production – live at The Hot Tin, Faversham UK" – the name ends before "– live at" (The Hot Tin recorded at, Faversham its area); a production company that recorded it (…production, …productions) is a label – "recorded by" (the label–recording relationship "recording", C021)' },
+    { id: 'S524', where: 'coverLines3223 (role, then a task by)', note: 'Texts (3.224.0; collected item Z-ENGCOLON): "Recording engineer: Henry Dagg, mixed and mastered by Ferran Conangla at FCM Studio, Barcelona." – two credits: Henry Dagg the recording engineer, Ferran Conangla mix and mastering; the "at" belongs to the tasks it follows (FCM Studio mixed at and mastered at – no recorded at)' },
+    { id: 'S525', where: 'coverLines3223 (societies with "/")', note: 'Texts (3.224.0; collected item Z-PROSLASH): rights societies in brackets written with "/" after a name ("Barry Guy (PRS/MCPS/PPL)") are read like those with commas – only the societies the mapping knows (RIGHTS_SOCIETIES); until 3.223.0 "PPL)" became a composer' },
+    { id: 'S526', where: 'coverLines3223 (Track N … by, Track M … by)', note: 'Texts (3.224.0; collected item Z-TRACKSCOMPOSED): "Tracks 1, 2, 5 composed by A and B, Track 3 composed by B, Track 4 composed by A." – each part with its tracks a credit of its own; the sentences after the last part ("Recorded …", "Recording engineer: …") hold for the release, not for its tracks' },
+    { id: 'S527', where: 'Q005, R100, askTranslation (presetAnswer)', note: 'Roles (3.224.0; collected items Z-TEXTROLE, Z-TEXTTOGGLE): "Text", "text", "Texts" alone – liner notes on the release, taken at once as a suggestion; the question Q005 stays at the row: one click makes it lyricist on the works, another liner notes again' },
+    { id: 'S528', where: 'addCreditRows', note: 'Roles (3.224.0; collected item Z-DIRECTORCREDIT; S460): "Barry Guy – bass, director, composer" – the conductor credited as written ("director"), no longer "music director" (that was only the way to the conductor)' },
+    { id: 'S529', where: 'coverLines3223 (painting)', note: 'Texts (3.224.0; collected item Z-OILCANVAS2; S508): "Original Oil on Canvas Cover Artwork by X" – an illustration without role credit (MusicBrainz has none for it); the technique is given nowhere' },
+    { id: 'S530', where: 'coverLines3223, shopLines (HANDMADE_ED_BY)', note: 'Texts (3.224.0; collected item Z-HANDMADE2; S513): "Limited Sam Giles edition of 75 handmade mini-LP CDR" – the name of a limited edition made by hand: its design, credited "sleeve"; the rest of the line (the size, the format) is of no interest' },
+    { id: 'S531', where: 'promoFacts', note: 'Texts (3.224.0; collected item Z-PROMOART; S320): the artwork an edition\'s description names ("… featuring custom oil-on-canvas artwork by Indonesian artist Riandy Karuniawan.") is taken – a painting as an illustration (S529), the name without who they are (S516) –, unless another line names someone else for the artwork (then a suggestion, as before); a credit line saying the same gives it once' },
+    { id: 'S532', where: 'INSTRUMENT_ALIASES', note: 'Instruments (3.224.0; collected item Z-TAPELOOPS): "tape loops" – tape, credited as written (an alias of the mapping; until 3.223.0 a drum machine)' },
     { id: 'S469', where: 'dgLineupApply, sendDiscogsStatus', note: 'Lineup and track credits (3.220.0; collected item Z-LOPEZ; S217): a row the answer leaves out (a lineup row on no track any more, a track credit taken into the lineup row) keeps its line at the source – its places go to the person\'s row still there, so the companion marks the line ("Ramón López – percussion" where the titles give him drums on all of his tracks)' },
     { id: 'S410', where: 'freshForget, repeatImport, loadRelease', note: '"↻ Repeat import" (3.209.0; collected item Z-FRESHALL): "Start afresh" forgets everything the dashboard holds of the release – not only the changes of the rows and the choices of the works matrix (Z-RI, 3.40.16), also the date pool, the track pool and the date matrix, the choices of the box "Dedications & tributes", "✕ No suite", texts and parts of sources switched off, "skip the works", entries joined by hand, the ticks of suggestions, what is remembered of the release ("Remember changes"; nothing of the import before is stored on the way). Kept: what was created in MusicBrainz through the dashboard (the lists of created works and suites), the source and the media chosen, the log' },
     { id: 'S409', where: 'mergeEntries, joinEntry, applyEntryMerges, dmTargetOf (entry-merge), groupHtml (grip)', note: 'Entries (3.208.0; collected item Z-ENTITYMERGE): two entries of the same kind that are one – from different sources, written otherwise – are joined by hand: the grip ⠿ before the kind of an entry dropped onto another entry. The entry dropped onto stays (its link to MusicBrainz counts; without one it takes the other\'s), the rows of the other come to it – the same role once, each row credited as its source writes it, the other\'s name one of its names. Two different entries of MusicBrainz, or entries of different kinds: not joined, a message says why. Remembered for the release (joined again at the next import); ↶ in the message undoes it' },
@@ -7626,6 +7637,9 @@
   // ((S345) how an edition was made – its words without a name: "recycled", "dubbing", "hand-made", "D.I.Y.")
   const SHOP_MADE = /\b(?:recycled|dubb(?:ed|ing)|hand-?(?:made|numbered|stamped|painted|assembled|cut)|d\.?\s?i\.?\s?y\.?|screen-?printed\s+covers?|home-?made)\b/i;
   // [Z-DT-HANDMADE] (3.223.0, S513) "Sam Giles Gatefold Handmade CD sleeve and vinyl replica CDr.": the name before it made the package
+  // ([Z-HANDMADE2] 3.224.0, S530) "Limited Sam Giles edition of 75 handmade mini-LP CDR": the name of a limited edition made by hand – its
+  // design, credited "sleeve"
+  const HANDMADE_ED_BY = /^(?:[Ll]imited|LIMITED|[Ss]pecial|[Dd]eluxe)\s+(\p{Lu}\p{Ll}[\p{L}'’.-]*(?:\s+\p{Lu}\p{Ll}[\p{L}'’.-]*){1,2}?)\s+(?:[Ee]dition|EDITION)\b.*\b(?:[Hh]and-?[Mm]ade|HANDMADE)\b/u;
   const HANDMADE_BY = /^(\p{Lu}\p{Ll}[\p{L}'’.-]*(?:\s+\p{Lu}\p{Ll}[\p{L}'’.-]*){1,2}?)\s+(?:\p{L}+\s+){0,3}(?:[Hh]and-?[Mm]ade|HANDMADE)\s+(?:\p{L}+\s+){0,2}([Ss]leeve|[Cc]over|[Bb]ox|[Cc]ase|[Jj]acket|[Pp]ackaging)s?\b/u;
   const SHOP_MADE_THING = /\b(?:cassettes?|tapes?|vinyl|cds?|lps?|covers?|sleeves?|j-?cards?|inlays?|copies)\b/i;
   const REVIEW_NOT_SOURCE = /^(?:cd|lp|dvd|sacd|ep|disc|side|track|tracks|vol|bonus|remaster(?:ed)?|recorded|live)\b|\d:\d|\s[–—-]\s|:/i;
@@ -10044,6 +10058,8 @@
         const word = (line.slice(start, m.index).match(/(\S+)$/) || ['', ''])[1].replace(/^[(“"‘']+/, '');
         const dotted = /\.\S/.test(word) && !/\.[a-z]{2,}(?:\/\S*)?$/i.test(word);
         if (/^\p{L}$/u.test(word) || TEXT_ABBREV.test(word) || dotted) continue;
+        // ([Z-DAYDOT] 3.224.0, S522) "Recorded 4. February 2023 by …": a day with its full stop before a month is no end of its sentence
+        if (ruleOn('S522') && m[0][0] === '.' && /^\d{1,2}$/.test(word) && new RegExp(`^${TEXT_MONTH_WORD.source}`, 'iu').test(line.slice(m.index + m[0].length))) continue;
         // ([Z-LB-PCASSOC] 3.222.0, S484) "GREAT! Records": a "!" inside the name of a ℗ / © is no end of its sentence
         if (ruleOn('S484') && m[0][0] === '!' && PC_START.test(line) && start === 0 && /^(?:Records?|Recordings|Music|Label|Inc\.?|Ltd\.?|LLC|GmbH|Productions?|Entertainment)\b/.test(line.slice(m.index + m[0].length))) continue;
         out.push(line.slice(start, m.index + 1));
@@ -10248,8 +10264,11 @@
           studioCredit: { who: who(P, name), role: p.raw, base: p.base, details: p.mods, credited: '', tracks: tracksOf(P, scope), ...at(P), ...extra } });
         return true;
       }
-      if (broadcaster || P.isCompanyRoleKnown(p.raw)) {
-        P.companies.push({ who: who(P, name), role: broadcaster ? 'Recorded By' : p.raw, catno: '', tracks: scope ? tracksOf(P, scope) : null, ...at(P), ...extra, ...(broadcaster ? { entity: 'label' } : {}) });
+      // [Z-RECBYDASH] (3.224.0, S523) a production company that recorded it ("Recorded … by RouteStock production"): a label – "recorded by"
+      // (the label–recording relationship "recording"), no broadcast
+      const prodCo = !broadcaster && ruleOn('S523') && /^recorded(?:\s+live)?\s+by$/i.test(p.raw) && /\bproductions?\b|\bprod\.$/i.test(clean(name)) && !P.bandNames.has(norm(name));
+      if (broadcaster || prodCo || P.isCompanyRoleKnown(p.raw)) {
+        P.companies.push({ who: who(P, name), role: broadcaster || prodCo ? 'Recorded By' : p.raw, catno: '', tracks: scope ? tracksOf(P, scope) : null, ...at(P), ...extra, ...(broadcaster || prodCo ? { entity: 'label' } : {}) });
         if (broadcaster) P.companies.push({ who: who(P, name), role: 'Broadcast By', catno: '', tracks: scope ? tracksOf(P, scope) : null, ...at(P), ...extra, entity: 'label', implied: true });
       } else {
         // [S073] (3.42.3) the title of the release or of a track is no person ("With Black Zenith, …" on "Black Zenith"; Z-BZ) –
@@ -10574,7 +10593,7 @@
         if (ruleOn('S345')) {
           const b = t.replace(LEAD_MARK, '').replace(/^[-–•*]\s+/, '').trim();
           // ([Z-DT-HANDMADE] 3.223.0, S513) a name before a handmade package ("Sam Giles Gatefold Handmade CD sleeve …") is its designer
-          const made = SHOP_MADE.test(b) && SHOP_MADE_THING.test(b) && !/\bby\s+\p{Lu}/u.test(b) && !(ruleOn('S513') && HANDMADE_BY.test(b));
+          const made = SHOP_MADE.test(b) && SHOP_MADE_THING.test(b) && !/\bby\s+\p{Lu}/u.test(b) && !(ruleOn('S513') && HANDMADE_BY.test(b)) && !(ruleOn('S530') && HANDMADE_ED_BY.test(b));
           const goesOn = wasShop && /^(?:and|but|so|also|plus|which|that)\b|\b(?:I['’]m|I\s+am|I['’]ll|we['’]re|we\s+are|we['’]ll|our|my)\b/i.test(b) && !/:|\sby\s|\s[–—-]\s/.test(b);
           // (a credit after it – "…, cover art by Jane Doe" – keeps the line for the reader)
           // ([3.222.0] S485) more lines of a shop, an edition or a package – each with its reason
@@ -10585,7 +10604,7 @@
             prevShop = true;
             return '';
           }
-          if ((SHOP_EDITION_SIZE.test(b) || (ruleOn('S475') && SHOP_EDITION_VARIANT.test(b))) && !/\bby\s+\p{Lu}/u.test(b)) {
+          if ((SHOP_EDITION_SIZE.test(b) || (ruleOn('S475') && SHOP_EDITION_VARIANT.test(b))) && !/\bby\s+\p{Lu}/u.test(b) && !(ruleOn('S530') && HANDMADE_ED_BY.test(b))) {
             P.ignored.push({ text: t, why: 'edition' });
             prevShop = true;
             return '';
@@ -10764,15 +10783,22 @@
      */
     function promoFacts(P) {
       const seen = new Set([...P.credits, ...P.companies].map((c) => `${nameKey(c.who.name)}|${promoFamily(c.role)}`));
-      const read = (text, shown) => {
-        for (const [re, role, fam] of PROMO_FACTS) {
+      const read = (text0, shown) => {
+        // ([Z-PROMOART] 3.224.0, S531) "… artwork by Indonesian artist Riandy Karuniawan" – the name without who they are (as S516)
+        const text = ruleOn('S531') ? text0.replace(/\bby\s+(?:the\s+)?(?:\p{Lu}\p{Ll}+(?:-\p{Lu}\p{Ll}+)?\s+)?(?:artist|painter|illustrator|photographer|designer|graphic\s+artist)\s+(?=\p{Lu}\p{Ll}+\s+\p{Lu})/gu, 'by ') : text0;
+        for (const [re, role0, fam] of PROMO_FACTS) {
           const m = re.exec(text);
           if (!m) continue;
           const key = `${nameKey(m[1])}|${fam}`;
           if (seen.has(key) || [...seen].some((k) => k.endsWith(`|${fam}`) && (k.startsWith(`${nameKey(m[1])} `) || nameKey(m[1]).startsWith(`${k.split('|')[0]} `)))) continue;
+          // ([Z-PROMOART] 3.224.0, S531) the artwork of an edition's description is taken – a painting ("oil-on-canvas artwork by") an
+          // illustration (as S508) –, unless another line names someone else for it (then a suggestion, as before)
+          const painted = fam === 'art' && /\b(?:oil|acrylic|watercolou?r|gouache|ink|charcoal|pencil)(?:[-\s]+on[-\s]+\p{L}+)?\s+(?:painting|artwork|art)\b/iu.test(text);
+          const role = ruleOn('S531') && painted ? 'Illustration' : role0;
+          const other = [...seen].some((k) => k.endsWith(`|${fam}`));
           seen.add(key);
           Object.assign(P, { line0: shown, part0: m[0], pi0: 0, n0: 0 });
-          addCredit(P, m[1], role, null, { promo: shown });
+          addCredit(P, ruleOn('S531') ? m[1].replace(/\.$/, '') : m[1], role, null, ruleOn('S531') && fam === 'art' && !other ? {} : { promo: shown });
         }
       };
       const caps = (text) => text === text.toUpperCase();
@@ -12057,6 +12083,31 @@
           }
         }
       }
+      // [Z-PROSLASH] (3.224.0, S525) rights societies in brackets written with "/" ("Barry Guy (PRS/MCPS/PPL)"): as with commas – the known
+      // ones only ("PPL", no society MusicBrainz lists as such, would be read as a name)
+      if (ruleOn('S525')) {
+        out = out.map((l) => {
+          const t = l.replace(/\(\s*([A-Z]{2,7}(?:\s*[/&,]\s*[A-Z]{2,7})+)\s*\)/g, (w, inner) => {
+            const parts = inner.split(/\s*[/&,]\s*/);
+            const known = parts.filter((x) => new RegExp(`^(?:${SOCIETY_ALT})$`, 'u').test(x));
+            if (!known.length || !inner.includes('/')) return w;
+            return `(${known.join(', ')})`;
+          });
+          return t === l ? l : keep(t, rawOf(l));
+        });
+      }
+      // [Z-TRACKSCOMPOSED] (3.224.0, S526) "Tracks 1, 2, 5 composed by A and B, Track 3 composed by B, Track 4 composed by A.": each part with
+      // its tracks a credit of its own
+      if (ruleOn('S526')) {
+        out = out.flatMap((l) => {
+          const parts = l.split(/,\s+(?=tracks?\s+[\dA-Z][\w\s,&–-]{0,30}?\s+(?:composed|written|arranged|produced|recorded|mixed|performed|lyrics|music)\b)/i);
+          if (parts.length < 2) return [l];
+          // (the sentences after the last part are no part of its tracks: "… Track 4 composed by Evan Parker (PRS/MCPS). Recorded 4. February
+          // 2023 by …" – a line each; a day's full stop before a month ends nothing, S522)
+          const last = parts.pop().split(/(?<=[^\d\s]\.)\s+(?=\p{Lu})/u);
+          return [...parts.map((x) => keep(`${x.trim()}.`, rawOf(l))), ...last.map((x) => keep(x.trim(), rawOf(l)))];
+        });
+      }
       // [Z-DT-EXCEPTTRACKS] (S507) "Gamma Globulin and Serpent's Tongue Recorded and Mixed by George Bennett at Unicorn Planet." – titles of
       // tracks before a credit: that credit for those tracks; the same credit without tracks elsewhere ("Recorded and Mixed by Darek Mudge at
       // The Shed …") for the others (also in one line: "…, Gamma Globulin and Serpent's Tongue Recorded and Mixed by …")
@@ -12163,7 +12214,8 @@
         if (m) return [fin(`${m[1]} ${m[2]} by ${m[3]}${scope}`), fin(`${cap(m[2])} in ${m[4]}${scope}`)];
         // [Z-DT-OILCANVAS] (S508) "Original Oil on Canvas Cover Artwork by X": an illustration, credited "oil on canvas"
         m = ruleOn('S508') ? t.match(/^(?:original\s+)?(oil\s+on\s+canvas|oil|acrylic(?:\s+on\s+canvas)?|watercolou?r|gouache|ink|charcoal|pencil)\s+(?:on\s+\p{L}+\s+)?(?:front\s+)?(?:cover\s+)?(?:artwork|art|painting|illustration)\s+by\s+(.+)$/iu) : null;
-        if (m) return [fin(`Illustration [${m[1].toLowerCase()}] by ${m[2].replace(/\.$/, '')}${scope}`)];
+        // ([Z-OILCANVAS2] 3.224.0, S529: an illustration has no role credit in MusicBrainz – the technique given nowhere)
+        if (m) return [fin(ruleOn('S529') ? `Illustration by ${m[2].replace(/\.$/, '')}${scope}` : `Illustration [${m[1].toLowerCase()}] by ${m[2].replace(/\.$/, '')}${scope}`)];
         // [Z-DT-COLLAGE] (S509) "Layout and Photo Collage by X": the layout and an artwork credited "photo collage"
         m = ruleOn('S509') ? t.match(/^(layout|design|graphic\s+design)\s+(?:and|&)\s+((?:photo\s+)?collages?)\s+by\s+(.+)$/iu) : null;
         if (m) return [fin(`${cap(m[1].toLowerCase())} by ${m[3].replace(/\.$/, '')}`), fin(`Artwork [${m[2].toLowerCase()}] by ${m[3].replace(/\.$/, '')}`)];
@@ -12175,6 +12227,7 @@
         // [Z-DT-HANDMADE] (S513) "Sam Giles Gatefold Handmade CD sleeve and vinyl replica CDr.": a name before a handmade package – its design,
         // credited "sleeve"
         m = ruleOn('S513') ? t.match(HANDMADE_BY) : null;
+        if (!m && ruleOn('S530') && HANDMADE_ED_BY.test(t)) m = [t, t.match(HANDMADE_ED_BY)[1], 'sleeve'];
         if (m && !/^(?:limited|special|deluxe|original)$/i.test(m[1].split(/\s+/)[0])) {
           // (credited with the part alone – "sleeve" – as decided for a handmade one, not "sleeve design" of S037)
           P.lineRoleCredit = P.lineRoleCredit || new Map();
@@ -12195,6 +12248,13 @@
           });
           if (roles.some((r) => /, /.test(r))) t = `${t.slice(0, at)}${sep}${roles.join(', ')}`;
         }
+        // [Z-ENGCOLON] (3.224.0, S524) "Recording engineer: Henry Dagg, mixed and mastered by Ferran Conangla at FCM Studio, Barcelona.": two
+        // credits – the "at" of the second belongs to its own tasks (mixed at, mastered at), not to the role before the comma
+        m = ruleOn('S524') ? t.match(/^(\p{L}[\p{L}\s&/-]{1,40}?):\s*(\p{Lu}[\p{L}'’.-]+(?:\s+\p{Lu}[\p{L}'’.-]+){1,3}),\s+((?:recorded|mixed|mastered|produced|engineered|edited|remixed|arranged)\b(?:\s+(?:and|&)\s+\p{L}+)*\s+by\s+\S.*)$/iu) : null;
+        if (m) return [fin(`${m[1]}: ${m[2]}${scope}`), fin(`${cap(m[3])}${scope}`)];
+        // [Z-RECBYDASH] (3.224.0, S523) "… by RouteStock production – live at The Hot Tin, Faversham UK": the name ends before "– live at" (where
+        // it was recorded)
+        if (ruleOn('S523')) t = t.replace(/(\bby\s+\S[^–—]*?)\s+[–—-]\s+(?:recorded\s+)?live\s+(at|in)\s+/iu, '$1 $2 ');
         // [Z-LJ-COPROD] (S506) "… is a Cardinal Fuzz (CF068) and Sky Lantern Records (SLR204) co-production": the labels, no credit
         // (only a line that ends so – "… is a coproduction between A, B & C" names the labels for the reader of labels, left out as "labels")
         if (ruleOn('S506') && /\bco-?\s?production\.?$/i.test(t) && /\b(?:is|was)\s+an?\b/i.test(t)) {
@@ -30800,7 +30860,8 @@
   function askTranslation(row) {
     // [Z-QPBAND] (3.124.0, Q015) "Soundscapes": its first answer (effects credited "soundscapes") taken at once as a suggestion
     // (3.183.0: also "loops", "drones" – Q025, Q026 – and "original artwork" – Q027)
-    if (['R118', 'R128', 'R129', 'R130'].includes(row.ruleId) && !row.company) {
+    // ([Z-TEXTROLE] 3.224.0, S527: "Text" / "Texts" – liner notes, lyricist one click away – R100)
+    if ((['R118', 'R128', 'R129', 'R130'].includes(row.ruleId) || (row.ruleId === 'R100' && ruleOn('S527'))) && !row.company) {
       const q = typeQuestionFor(row);
       if (q && q.presetAnswer != null && row.typeAnswer == null && q.options[q.presetAnswer]) {
         const touched = !!row.levelTouched;
@@ -32860,6 +32921,8 @@
       const asConductor = musicalDirector(c, rel);
       const row = makeRow(artist.key, { raw: c.role.raw, base: asConductor ? 'music director' : c.role.base, mods: c.role.mods, anv: c.anv, artTask: !!c.role.artTask, artCredit: c.role.artCredit || '', guess: !!c.guess });
       if (asConductor) row.notes = [...(row.notes || []), 'directorConductor'];
+      // [Z-DIRECTORCREDIT] (3.224.0, S528) credited as written – "director" –, not "music director" (the way to the conductor only)
+      if (asConductor && ruleOn('S528')) Object.assign(row, { roleCredit: String(c.role.base || 'director').trim().toLowerCase(), roleCreditTouched: true });
       if (c.role.splitFrom) row.dSplitFrom = c.role.splitFrom; // [S018] the role as written at the source
       if (c.role.splitBase) row.dSplitBase = c.role.splitBase; // [S033] its role as written there (the companion finds the line by it)
       row.srcRefs = c.refs || []; // [3.17.0] where it is at the source (Bandcamp view)
