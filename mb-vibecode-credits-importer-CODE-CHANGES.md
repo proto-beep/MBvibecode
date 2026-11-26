@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.225.0, Companion 1.6.0 – 1.24.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.226.0, Companion 1.6.0 – 1.24.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,14 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.226.0 · 2026-11-26
+
+- S538: `awDupPick` – a tie left: `awCountLoad` (`work/<gid>?inc=recording-rels`, distinct recordings, `S.awRecCount`), `{ pending }` while loading; `magicPlan` lists such a track as skipped "counting"; texts `magic.why.dupCount`, `magic.group.dupCount`, `magic.skip.counting`.
+- S539: `matchArtistWorks` keeps `awArtist`; `sameNamed` carries it; `pickFor` turns `magic.why.one` into `magic.why.oneArtist` / `magic.why.oneBy` (with `oneName`); `magic.why.one` now "found".
+- S540: `matchArtistWorks` – `coverOf` / `coverBy` for every work of the tribute artist's page; `sameNamed` carries them; `magicPlan` (`coverAlso`) puts such a pick under "Covers of …" with the cover toggle.
+- S541: `magicWorkTip`; `magicPopHtml` – `data-el="magic-worklink"` ↗ after an answer with `workGid`.
+- Tests: `case_awcount3226` (t_works_more), `case_covergroup3226` (t_notes_companies); `case_magicwords3220` compares without the ↗.
 
 ## Import 3.225.0 · 2026-11-26
 

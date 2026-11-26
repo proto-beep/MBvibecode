@@ -2899,7 +2899,7 @@ def case_magicwords3220():
             H.wait_ok(pg, "!!document.querySelector('[data-act=magic-cancel]')", 30)
             prev = pg.evaluate("(document.querySelector('[data-el=magic-preview]') || {textContent: ''}).textContent.replace(/\\s+/g, ' ').trim()")
             heads = pg.evaluate("[...document.querySelectorAll('[data-el=magic-preview] .dci-mx-magicgroup')].map(x => x.textContent.replace(/\\s+/g, ' ').trim())")
-            items = pg.evaluate("[...document.querySelectorAll('[data-el=magic-item]')].map(x => [x.dataset.kind, x.textContent.replace(/\\s+/g, ' ').trim()])")
+            items = pg.evaluate("[...document.querySelectorAll('[data-el=magic-item]')].map(x => [x.dataset.kind, x.textContent.replace(/\\s+/g, ' ').replace(/\\s*↗/g, '').trim()])")
             print('A)', heads, items, '| Tag:', tag)
             print('   Vorschau:', prev[:400])
             two = [t for k, t in items if '1.2' in t]
@@ -3728,5 +3728,146 @@ def case_suppgroups3225():
         H.RULES_OFF = []
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+
+
+def case_covergroup3226():
+    """Credits Importer 3.226.0 (collected items Z-COVERGROUP, Z-MAGICWORKLINKS, Z-AWONEWORDING; rules S540, S541, S539): as magicwords3220, the
+    release by Joshua Redman, whose repertoire has "Song Three" (W2) too – it is found through him before the artist of the tribute.
+    A) "✨ Answer all": track 3 under "Covers of works by Sonny Rollins" with tracks 2 – "cover of “Song Three”"; each work answer has a ↗ to
+       /work/<gid> whose tip names where it was found.
+    B) S540 off (as 3.225.0): track 3 not a cover – under its reason ("among the works of Joshua Redman", S539)."""
+    SR = H.uid('dddddddd', 3900)
+    added_lts = {868: ('b41e7530-cde4-459c-b8c5-dfef08fc8295', 'dedicated to', 'artist', 'release_group'),
+                 9440: (H.uid('94409440', 1), 'tribute', 'artist', 'release_group')}
+    for i, (g, n, t0, t1) in added_lts.items():
+        H.lt(i, g, n, t0, t1, dates=False)
+    for k, n in [(567, 'cover'), (578, 'live')]:
+        H.attr(k, n, k)
+    H.lt(278, H.LTS[278]['gid'], 'performance', 'recording', 'work', (567, 578))
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    H.MB_SEARCH['artist'] = [{'id': SR, 'name': 'Sonny Rollins', 'disambiguation': 'jazz saxophonist', 'type': 'Person', 'score': 100}]
+    rel = lambda: [{'target-type': 'artist', 'type': 'composer', 'direction': 'backward', 'artist': {'id': SR, 'name': 'Sonny Rollins'}}]
+    works0 = list(H.WORK_SEARCH)
+    W = lambda k: H.uid('3a3a3a3a', k)
+    H.WORK_SEARCH[:] = [{'id': W(1), 'title': H.TITLES[1], 'aliases': [], 'type': 'Song', 'relations': rel()},
+                        {'id': W(2), 'title': H.TITLES[2], 'aliases': [], 'type': 'Song', 'relations': rel()}]
+    H.ARTIST_WORKS[SR] = [{'id': W(1), 'title': H.TITLES[1], 'aliases': []}, {'id': W(2), 'title': H.TITLES[2], 'aliases': []}]
+    H.ARTIST_RECORDINGS[SR] = [{'title': H.TITLES[3], 'work': {'id': W(3), 'title': H.TITLES[3]}}]
+    orig_ws, orig_js, orig_dg = H.ws_release, H.js_entity, H.discogs_release
+    JR = H.uid('dddddddd', 3901)
+    ac0 = list(H.RELEASE_AC)
+    H.RELEASE_AC[:] = [(JR, 'Joshua Redman', 'Joshua Redman', '')]
+    # Joshua Redman recorded "Song Three" before: the work is in his repertoire too
+    H.ARTIST_WORKS[JR] = [{'id': W(2), 'title': H.TITLES[2], 'aliases': []}]
+    H.WORK_SEARCH[:] = H.WORK_SEARCH[:1]  # "Song Three" only on the artists' pages
+    main0 = H.MAIN
+    H.MAIN = H.MAIN.replace('  const S = {', '  const S = window.__S = {', 1)
+    H.js_entity = lambda gid: ({'entityType': 'artist', 'id': 3900, 'gid': SR, 'name': 'Sonny Rollins', 'comment': 'jazz saxophonist'} if gid == SR else orig_js(gid))
+
+    def ws(full=False):
+        d = orig_ws(full)
+        d['title'] = 'If Ever You Would Leave Us (we play for Sonny Rollins)'
+        return d
+    H.ws_release = ws
+
+    def dg():
+        d = orig_dg()
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+    H.discogs_release = dg
+    BOX = """(() => { const b = document.querySelector('[data-el=dedbox]'); if (!b || b.hidden) return null;
+      return { list: [...b.querySelectorAll('.dci-dedlist li')].map(li => { const c = li.cloneNode(true); const sw = c.querySelector('.dci-dedsw');
+        if (sw) sw.replaceWith(((sw.querySelector('.dci-on') || {}).dataset || {}).kind === 'tribute' ? 'tribute to' : 'dedicated to'); return c.textContent.replace(/\\s+/g, ' ').trim(); }),
+        on: [...b.querySelectorAll('.dci-dedlist [data-act=ded-kind].dci-on')].map(x => x.dataset.kind),
+        sugg: [...b.querySelectorAll('.dci-dedsugg')].map(x => [...x.querySelectorAll('[data-act=ded-pick]')].map(y => y.textContent.replace(/\\s+/g, ' ').trim())) }; })()"""
+    TRIB = "[...document.querySelectorAll('[data-el=work-tribute]')].map(x => x.closest('[data-track], tr, .dci-mx-row, li') ? x.textContent.trim() : x.textContent.trim())"
+    results = []
+    ROW = """(() => { const r = document.querySelector('tr[data-work="1"]'); if (!r) return null;
+      const by = r.querySelector('.dci-mx-by'); const co = r.querySelector('.dci-wpill[data-attr=cover]');
+      return [by ? by.textContent.trim() : '', co ? [co.textContent.trim(), co.classList.contains('dci-wstrong')] : null]; })()"""
+    COVERS = "[...document.querySelectorAll('[data-el=magic-item][data-kind=cover]')].map(x => x.textContent.replace(/\\s+/g, ' ').trim())"
+
+    def open_page(p, off=()):
+        H.RULES_OFF = list(off)
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        ctx.add_init_script("localStorage.setItem('dci-aw-ask', '0'); localStorage.setItem('dci-magic-level', JSON.stringify('balanced'));")
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        pg.click('#dci-open')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(3000)
+        pg.click('[data-el=dedbox] [data-act=ded-pick]')
+        H.wait_ok(pg, "!!document.querySelector('tr[data-work=\"1\"] [data-act=work-pick]')", 30)
+        pg.wait_for_timeout(1500)
+        return b, pg, errs
+
+    def magic(pg):
+        pg.locator('[data-el=works] [data-act=magic-open]').first.evaluate('b => b.click()')
+        pg.wait_for_timeout(800)
+        got = pg.evaluate(COVERS)
+        print('   Vorschau:', pg.evaluate("(document.querySelector('[data-el=magic-preview]') || {textContent: 'keine'}).textContent.replace(/\\s+/g, ' ').slice(0, 400)"))
+        c = pg.locator('[data-act=magic-cancel]')
+        if c.count():
+            c.first.evaluate('b => b.click()')
+        pg.wait_for_timeout(300)
+        return got
+
+    results = []
+    HEADS = "[...document.querySelectorAll('[data-el=magic-preview] .dci-mx-magicgroup')].map(x => x.textContent.replace(/\\s+/g, ' ').trim())"
+    LINKS = "[...document.querySelectorAll('[data-el=magic-worklink]')].map(x => [x.closest('[data-el=magic-item]').textContent.replace(/\\s+/g, ' ').trim().slice(0, 4), x.getAttribute('href'), x.title])"
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        ctx.add_init_script("localStorage.setItem('dci-aw-ask', '0'); localStorage.setItem('dci-magic-level', JSON.stringify('balanced'));")
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        pg.click('#dci-open')
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        pg.wait_for_timeout(3000)
+        if pg.locator('[data-el=dedbox] [data-act=ded-pick]').count():
+            pg.click('[data-el=dedbox] [data-act=ded-pick]')
+        H.wait_ok(pg, "!!document.querySelector('tr[data-work=\"1\"] [data-act=work-pick]')", 30)
+        H.wait_ok(pg, "window.__S.workSearch.size >= 2 && [...window.__S.workSearch.values()].every(v => ['done', 'noWriters'].includes(v.state))", 40)
+        pg.wait_for_timeout(1500)
+        pg.locator('[data-el=works] [data-act=magic-open]').first.evaluate('b => b.click()')
+        H.wait_ok(pg, "!!document.querySelector('[data-act=magic-cancel]')", 30)
+        heads, links = pg.evaluate(HEADS), pg.evaluate(LINKS)
+        if __import__('os').environ.get('DBG'):
+            print(pg.evaluate("JSON.stringify([...window.__S.artistWorkHits.entries()].map(([i, ws]) => [i, ws.map(w => [w.title, w.tribute, w.coverOf, w.awArtist, w.writers])]))"))
+            print(pg.evaluate("JSON.stringify([...window.__S.workSearch.entries()].map(([i, v]) => [i, v.state, (v.results || []).map(w => w.title)]))"))
+        b.close()
+        return heads, links, errs
+    try:
+        with sync_playwright() as p:
+            heads, links, errs = run(p)
+            print('A)', heads, links, errs)
+            cov = [h for h in heads if h.startswith('Covers of works by Sonny Rollins')]
+            results.append(len(cov) == 1 and '(2)' in cov[0] and '1.2' in cov[0] and '1.3 – cover of' in cov[0] and links
+                           and all(h.startswith('/work/') for _, h, _ in links) and any('1.3' == k.strip() and W(2) in h and 'Joshua Redman' in t for k, h, t in links) and not errs)
+            heads2, links2, errs2 = run(p, off=['S540'])
+            print('B)', heads2, links2)
+            results.append(not any(h.startswith('Covers of works by Sonny Rollins') and '1.3' in h for h in heads2)
+                           and any('among the works of Joshua Redman' in h and '1.3' in h for h in heads2) and not errs2)
+    finally:
+        H.ws_release, H.js_entity, H.discogs_release = orig_ws, orig_js, orig_dg
+        H.MAIN = main0
+        H.RELEASE_AC[:] = ac0
+        H.WORK_SEARCH[:] = works0
+        H.ARTIST_WORKS.pop(SR, None)
+        H.ARTIST_WORKS.pop(JR, None)
+        H.ARTIST_RECORDINGS.pop(SR, None)
+        H.MB_SEARCH.pop('artist', None)
+        H.RULES_OFF = []
+        for i in added_lts:
+            H.LTS.pop(i, None)
+        H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 run_cases(globals())
