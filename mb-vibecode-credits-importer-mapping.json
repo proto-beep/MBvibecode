@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.228.0",
+  "version": "3.229.0",
   "about": "MB x Vibecode: Credits Importer – the data of its mapping register (role rules, company roles, questions, tables and word lists, the quick switches). Loaded by the script (@resource mapping); the rules with code stay in the script. Regular expressions are {\"$re\": source, \"$flags\": flags}, sets {\"$set\": [...]}, maps {\"$map\": [[key, value], ...]}.",
   "DEFAULT_OFF_RULES": {"$set":["D023","S452","S046","D026","S114","S155","S160","S297","S339","S343"]},
   "CHECKBOX_DETAILS": [
@@ -200,7 +200,7 @@
     {"id":"R054","kind":"simple","note":"","re":{"$re":"^(orchestrated by|orchestration|orchestrator)$","$flags":""},"types":["orchestrator"],"level":"recording"},
     {"id":"R055","kind":"simple","note":"","re":{"$re":"^(conductor|conducted by)$","$flags":""},"types":["conductor"],"level":"recording"},
     {"id":"R056","kind":"simple","note":"","re":{"$re":"^(music director|musical director)$","$flags":""},"types":["conductor"],"level":"recording","credit":true},
-    {"id":"R097","kind":"special","note":"\"Directed By\" is not always conducting: no type is assumed, the dashboard asks (Q003)","re":{"$re":"^directed by$","$flags":""},"types":[],"level":"recording"},
+    {"id":"R097","kind":"special","note":"\"Directed By\" is not always conducting: no type is assumed, the dashboard asks (Q003); \"direction\" alone too (3.229.0, S554: \"STEED COWART: direction\")","re":{"$re":"^(directed by|direction)$","$flags":""},"types":[],"level":"recording"},
     {"id":"R120","kind":"simple","note":"\"Second Engineer\", \"2nd Engineer\" (3.162.0; F-SMALLMAP): the engineer's assistant","re":{"$re":"^(second|2nd) engineer$","$flags":""},"types":["engineer"],"level":"recording","flags":["assistant"]},
     {"id":"R121","kind":"special","note":"\"Tenor\" alone (3.162.0; F-VOICEWORDS): a tenor saxophone or a tenor voice – nothing is assumed, the dashboard asks (Q017); no role credit","re":{"$re":"^(tenor|ténor)$","$flags":""},"types":[],"level":"recording"},
     {"id":"R122","kind":"special","note":"\"Baritone\" alone (3.162.0; F-VOICEWORDS): a baritone saxophone or a baritone voice – nothing is assumed, the dashboard asks (Q018); no role credit","re":{"$re":"^(baritone|bariton|barítono|baryton)$","$flags":""},"types":[],"level":"recording"},
@@ -318,6 +318,8 @@
     "shahi baja": ["bulbul tarang"],
     "tape loops": ["tape","magnetic tape"],
     "tape loop": ["tape","magnetic tape"],
+    "dundun": ["dunun"],
+    "dunduns": ["dunun"],
     "hammond organ": ["hammond organ","organ"],
     "congas": ["conga","congas"],
     "bongos": ["bongos","bongo"],

@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.228.0",
+  "version": "3.229.0",
   "about": "MB x Vibecode: Credits Importer – the texts of its dashboard in German, Spanish and French (English, the base of the keys and what shows when a text or this file is missing, stays in the script). Loaded by the script (@resource languages). Placeholders {name} are filled in by the script; keys ending in .one / .other are plural forms.",
   "de": {
     "title": "Credits Importer",
@@ -2664,6 +2664,7 @@
     "note.seriesFormat": "Eine Serie aus dem Format der Veröffentlichung (Record Store Day …) ohne ein Datum, das sie bestimmt: MusicBrainz' Serie oben wählen (oder ihre MBID angeben).",
     "note.abbrAlt": "„{abbr}“ kann auch sein: {list}",
     "note.improvised": "„improvised“ neben anderen Aufgaben: Performer, credited „improvised“ – MusicBrainz hat keine Rolle fürs Improvisieren",
+    "note.bracketInsts": "Ein Instrument der Klammer nach „{type}“: auf dem Release (der Text nennt keinen Track dafür), credited wie geschrieben",
     "note.seriesFromVideo": "Vorschlag: das Video liegt auf dem Kanal dieser Serie, mit ihrem Namen im Titel (Regel S117); die Nummer ist das Datum der Aufnahme.",
     "note.seriesFromVideoNoDate": "Vorschlag: das Video liegt auf dem Kanal dieser Serie, mit ihrem Namen im Titel (Regel S117). In der Beschreibung wurde kein einzelnes Aufnahmedatum gefunden – bitte gib die Nummer ein (JJJJ-MM-TT).",
     "note.seriesType": "MusicBrainz-Serien der Art „{type}“ lassen sich hier nicht mit dem Release verknüpfen.",
@@ -8540,6 +8541,7 @@
     "note.seriesFormat": "Una serie nombrada en el formato de la publicación (Record Store Day …) sin una fecha que diga cuál: elige arriba la serie de MusicBrainz (o da su MBID).",
     "note.abbrAlt": "«{abbr}» también puede ser: {list}",
     "note.improvised": "“improvised” junto a otras tareas: intérprete, acreditado “improvised” – MusicBrainz no tiene un rol para improvisar",
+    "note.bracketInsts": "Un instrumento del paréntesis tras “{type}”: en la publicación (el texto no nombra ninguna pista), acreditado tal como está escrito",
     "note.seriesFromVideo": "Sugerido: el vídeo está en el canal de esta serie con su nombre en el título (regla S117); el número es la fecha en que se grabó.",
     "note.seriesFromVideoNoDate": "Sugerido: el vídeo está en el canal de esta serie con su nombre en el título (regla S117). No se encontró una única fecha de grabación en la descripción – escribe el número (AAAA-MM-DD).",
     "rmx.ask": "Remezclador solo por el título {titles} (MusicBrainz): ¿tomarlo?",
@@ -13278,6 +13280,7 @@
     "note.seriesFormat": "Une série nommée dans le format de la parution (Record Store Day …) sans date qui dise laquelle : choisir la série de MusicBrainz ci-dessus (ou donner son MBID).",
     "note.abbrAlt": "« {abbr} » peut aussi être : {list}",
     "note.improvised": "« improvised » parmi d’autres tâches : interprète, crédité « improvised » – MusicBrainz n’a pas de rôle pour l’improvisation",
+    "note.bracketInsts": "Un instrument de la parenthèse après « {type} » : sur la parution (le texte ne nomme aucune piste), crédité tel qu’écrit",
     "note.seriesFromVideo": "Suggéré : la vidéo est sur la chaîne de cette série avec son nom dans le titre (règle S117) ; le numéro est la date de son enregistrement.",
     "note.seriesFromVideoNoDate": "Suggéré : la vidéo est sur la chaîne de cette série avec son nom dans le titre (règle S117). Aucune date d’enregistrement unique n’a été trouvée dans la description – veuillez saisir le numéro (AAAA-MM-JJ).",
     "rmx.ask": "Remixeur seulement d’après le titre {titles} (MusicBrainz) – le prendre ?",

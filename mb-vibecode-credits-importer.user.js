@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.228.0
+// @version      3.229.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.228.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.228.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.229.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.229.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.228.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.229.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -2778,6 +2778,7 @@
       "note.seriesFormat": "A series named in the format of the release (Record Store Day …) without a date that tells which: choose MusicBrainz's series above (or give its MBID).",
       "note.abbrAlt": "“{abbr}” can also be: {list}",
       "note.improvised": "“improvised” among other tasks: performer, credited “improvised” – MusicBrainz has no role for improvising",
+      "note.bracketInsts": "An instrument of the bracket after “{type}”: on the release (the text names no track for it), credited as written",
       "note.seriesFromVideo": "Suggested: the video is on this series’ channel with its name in the title (rule S117); the number is the date it was recorded.",
       "note.seriesFromVideoNoDate": "Suggested: the video is on this series’ channel with its name in the title (rule S117). No single recording date was found in the description – please type the number (YYYY-MM-DD).",
       "note.seriesType": "MusicBrainz series of type “{type}” cannot be related to this release here.",
@@ -5536,7 +5537,7 @@
    * list of the mapping rules shows it ticked and greyed ("always on") instead of a switch that changes nothing. The case review3159 of
    * t_static.py checks that every other S rule is asked somewhere (ruleOn, a rule's `special`).
    */
-  const FIXED_RULES = new Set(['S013', 'S015', 'S016', 'S023', 'S027', 'S028', 'S029', 'S030', 'S125', 'S515', 'S532']);
+  const FIXED_RULES = new Set(['S013', 'S015', 'S016', 'S023', 'S027', 'S028', 'S029', 'S030', 'S125', 'S515', 'S532', 'S556']);
   /**
    * [Z-QSSCOPE] (3.156.0) Quick switches changed for this import only: id → on. Not stored – a new import (or a reload) forgets them;
    * a quick switch whose "permanent" box is ticked is stored as before (QS_PERM_KEY: the ids with the box ticked).
@@ -6016,6 +6017,13 @@
     { id: 'S547', where: 'TEXT.parse (takeUrls, giveLinks), buildArtistSeed', note: 'Texts (3.228.0; collected item Z-NAMEURL; T032, S198): a site of its own right after a name ("Art "La Chute" by Alison Flora : www.alison-flora.com") is that name\'s link when its host is the name\'s letters (or their start) – "Create artist" fills it in as "official homepage"; a site of another name is not given. Switched off: only profiles of social sites, as until 3.227.0' },
     { id: 'S548', where: 'LEFTOUT_TABLE (r3228)', note: 'Texts (3.228.0; collected item Z-EDITIONLINES; S517): "CDr Limited Edition / hand made." (and "CD limited edition", "hand made.") left out as an edition, "WARNING! NO SHIPPING TO THE U.S." ("no shipping to", "we don\'t ship to") as shop – also alone, in the text of a Bandcamp edition; the same line of several editions once (S448). Switched off: such lines alone not recognized' },
     { id: 'S549', where: 'TEXT.parse (improvNames)', note: 'Texts (3.228.0; collected item Z-INITIALS; S222): the names of an improvisation do not end after an initial – "Improvised by Caleb R.K. Williams" is Caleb R.K. Williams (until 3.227.0 "Caleb R.K"). Switched off: as until 3.227.0' },
+    { id: 'S550', where: 'TEXT.parse (twoColumns, coverLines3223)', note: 'Texts (3.229.0; collected item Z-TWOCOLS): two columns of a cover read as one line by the text recognition – "MOOR MOTHER: spoken word ROCO CORDOVA: vocal (bass)", "TOMEKA REID: cello BRETT CARSON: piano" – are two lines: a second name (one to five words, one in capitals at least, or all capitalised after roles in small letters) right before a colon, after the roles of the first. Until 3.228.0 such lines were not recognized or – worse – "cello BRETT CARSON: piano" was her role. Switched off: as until 3.228.0' },
+    { id: 'S551', where: 'TEXT.parse (coverLines3223, finishMarks), bracketInstsUnder, addCreditRows, guessInstrument', note: 'Instruments (3.229.0; collected item Z-BRACKETINSTS): "FAMOUDOU DON MOYE: drums, percussions" with "(congas, djembé, dundun, gongs, congo bells, bendir, triangles, thai bells)" in the same line or alone below it – when every word MusicBrainz knows as an instrument is below the head instrument (the last of the line, here percussion) in MusicBrainz\'s tree: the head stays where the line puts it (drums, percussion on the recordings), the bracket\'s instruments on the release (the text names no track of them), credited as written where that is not MusicBrainz\'s name; a word MusicBrainz does not know is asked as ever, the head offered first – never taken by itself. A word not below the head: the bracket is no such list (as before). Switched off: as until 3.228.0' },
+    { id: 'S552', where: 'coverLines3223 (broken sentences; S504)', note: 'Texts (3.229.0; collected item Z-COMMABREAK; S504): a sentence that ends its line with a comma and goes on with a place – "Recorded live by … at Maison des Arts de Créteil," / "Créteil, France, as part of Festival Sons d’hiver" – is read as one (until 3.228.0 a line ending in a comma was never joined)' },
+    { id: 'S553', where: 'festivalName (festElided)', note: 'Festivals (3.229.0; collected item Z-FESTAPOS; S056): a word with an elided particle is part of the name – "Festival Sons d’hiver" (not "Festival Sons"), "l\'été", "dell’Arte"' },
+    { id: 'S554', where: 'mapping R097, addCreditRows', note: 'Roles (3.229.0; collected item Z-DIRECTION; R097, Q003): "direction" alone ("STEED COWART: direction") is "Directed By" – asked (conductor, chorus master, creative direction, miscellaneous) – credited "direction" (the mapping R097 knows the word; the credit is this rule\'s)' },
+    { id: 'S555', where: 'coverLines3223 (vocal kinds), addCreditRows (spoken word)', note: 'Voices (3.229.0; collected items Z-VOCALKIND, Z-SPOKENWORD): "vocal (soprano)", "vocals (bass)" – soprano vocals, bass vocals (alto, tenor, baritone, mezzo-soprano, contralto, countertenor, bass-baritone, treble the same); "spoken word" – spoken vocals credited "spoken word". Switched off: "vocal (bass)" not recognized, spoken word without role credit' },
+    { id: 'S556', where: 'mapping INSTRUMENT_ALIASES', note: 'Instruments (3.229.0; collected item Z-DUNUN; fixed – the mapping): "dundun" (and "dunduns") is the dunun of MusicBrainz. ("congo bells", "thai bells": bell credited as written, by the last word – S035; both of one person one relationship, the credits joined – S325)' },
     { id: 'S469', where: 'dgLineupApply, sendDiscogsStatus', note: 'Lineup and track credits (3.220.0; collected item Z-LOPEZ; S217): a row the answer leaves out (a lineup row on no track any more, a track credit taken into the lineup row) keeps its line at the source – its places go to the person\'s row still there, so the companion marks the line ("Ramón López – percussion" where the titles give him drums on all of his tracks)' },
     { id: 'S410', where: 'freshForget, repeatImport, loadRelease', note: '"↻ Repeat import" (3.209.0; collected item Z-FRESHALL): "Start afresh" forgets everything the dashboard holds of the release – not only the changes of the rows and the choices of the works matrix (Z-RI, 3.40.16), also the date pool, the track pool and the date matrix, the choices of the box "Dedications & tributes", "✕ No suite", texts and parts of sources switched off, "skip the works", entries joined by hand, the ticks of suggestions, what is remembered of the release ("Remember changes"; nothing of the import before is stored on the way). Kept: what was created in MusicBrainz through the dashboard (the lists of created works and suites), the source and the media chosen, the log' },
     { id: 'S409', where: 'mergeEntries, joinEntry, applyEntryMerges, dmTargetOf (entry-merge), groupHtml (grip)', note: 'Entries (3.208.0; collected item Z-ENTITYMERGE): two entries of the same kind that are one – from different sources, written otherwise – are joined by hand: the grip ⠿ before the kind of an entry dropped onto another entry. The entry dropped onto stays (its link to MusicBrainz counts; without one it takes the other\'s), the rows of the other come to it – the same role once, each row credited as its source writes it, the other\'s name one of its names. Two different entries of MusicBrainz, or entries of different kinds: not joined, a message says why. Remembered for the release (joined again at the next import); ↶ in the message undoes it' },
@@ -12100,6 +12108,27 @@
      * - S505 a month and year right after a name ("produced by Nik Rayne August 2016 at Eastland Studios"): a date, no person;
      * - S506 "LJUDKAMRATER IS A CARDINAL FUZZ (CF068) AND SKY LANTERN RECORDS (SLR204) CO-PRODUCTION": the labels of the release, left out.
      */
+    /**
+     * [Z-TWOCOLS] (3.229.0, S550) "NAME: roles NAME2: roles2" (two columns of a cover in one line of the text recognition) → the two
+     * lines; null when the line is no such pair. A name: one to five words in capitals ("JEAN COOK", "Junius PAUL"), the second
+     * two words at least; the roles of the first end in a small letter or a bracket ("vocal (soprano)"). Three columns: split again.
+     */
+    function twoColumns(line) {
+      const t = String(line || '').trim();
+      const m = t.match(/^((?:\p{Lu}[\p{L}'’.-]*\s+){0,4}\p{Lu}[\p{L}'’.-]*)\s*:\s+(.+)$/u);
+      if (!m || /\d:\d/.test(t)) return null;
+      const name1 = m[1];
+      if (!/\p{Lu}{2}/u.test(name1) && name1.split(/\s+/).length < 2) return null;
+      const rest = m[2];
+      const c = rest.match(/^(.*?[\p{Ll})\]])\s+((?:\p{Lu}[\p{L}'’.-]*\s+){1,4}\p{Lu}[\p{L}'’.-]*)\s*:\s+(\S.*)$/u);
+      if (!c) return null;
+      const name2 = c[2];
+      // (a name, not a capital word of a role: one word in capitals at least, or all its words capitalised and the roles in small letters)
+      if (!name2.split(/\s+/).some((w) => /^\p{Lu}[\p{Lu}'’.-]+$/u.test(w)) && !/^[\p{Ll}\s,&()/-]+$/u.test(c[1])) return null;
+      if (/\b(?:by|at|in|from|for)$/i.test(c[1].trim())) return null;
+      const second = `${name2}: ${c[3]}`;
+      return [`${name1}: ${c[1].trim()}`, ...(twoColumns(second) || [second])];
+    }
     function coverLines3223(P, lines0, keep) {
       let out = lines0.map((l) => String(l == null ? '' : l));
       const rawOf = (l) => P.rawOf.get(l) || l;
@@ -12407,6 +12436,14 @@
         }
         // [Z-LJ-BROKENSENTENCE] (S504) "Improvised and recorded by …": recorded by
         if (ruleOn('S504') && /^improvised\s+(?:and|&)\s+recorded\b/i.test(t)) t = cap(t.replace(/^improvised\s+(?:and|&)\s+/i, ''));
+        // [Z-TWOCOLS] (3.229.0, S550) two columns of a cover read as one line ("MOOR MOTHER: spoken word ROCO CORDOVA: vocal (bass)"): a
+        // second name right before a colon, after the roles of the first – two lines
+        // [Z-VOCALKIND] (3.229.0, S555) "vocal (soprano)", "vocals (bass)": the voice MusicBrainz names so – soprano vocals, bass vocals
+        if (ruleOn('S555')) t = t.replace(/\bvocals?\s*\((soprano|mezzo-soprano|alto|contralto|countertenor|tenor|baritone|bass-baritone|bass|treble)\)/gi, (x, v) => `${v.toLowerCase()} vocals`);
+        if (ruleOn('S550')) {
+          const two = twoColumns(t);
+          if (two) return two.map((x) => fin(x));
+        }
         // [Z-IMPROVISED] (3.228.0, S546) "Music composed, improvised and recorded by X": improvised among other tasks – X the performer,
         // credited "improvised" (MusicBrainz has no role for it; said at the row), the other tasks as they are
         if (ruleOn('S546')) {
@@ -12427,11 +12464,15 @@
         for (let k = 0; k < out.length - 1; k++) {
           const a = out[k].trim();
           const b = out[k + 1].trim();
-          if (!a || !b || /[.!?:;,]$/.test(a.replace(/\s*\((?:tracks?)\s[^)]*\)$/i, '')) || a.split(/\s+/).length < 5 || !/\b(?:by|recorded|mixed|produced|mastered)\b/i.test(a)) continue;
+          // [Z-COMMABREAK] (3.229.0, S552) a sentence that ends its line with a comma and goes on with a place ("… at Maison des Arts de
+          // Créteil," / "Créteil, France, as part of Festival Sons d’hiver"): one sentence
+          const commaGo = !!a && !!b && ruleOn('S552') && /,$/.test(a) && a.split(/\s+/).length >= 5 && /\b(?:by|recorded|mixed|produced|mastered|at|in)\b/i.test(a)
+            && /^\p{Lu}[\p{L}'’.-]*(?:\s+\p{Lu}[\p{L}'’.-]*){0,3},\s+\S/u.test(b) && !/:/.test(b) && !/^(?:\S+\s+){0,4}by\b/i.test(b) && !TRACK_DUR.test(b);
+          if (!commaGo && (!a || !b || /[.!?:;,]$/.test(a.replace(/\s*\((?:tracks?)\s[^)]*\)$/i, '')) || a.split(/\s+/).length < 5 || !/\b(?:by|recorded|mixed|produced|mastered)\b/i.test(a))) continue;
           const first = b.split(/[\s,]+/)[0] || '';
-          const country = COUNTRY_NAMES.test(first) && /^\S+\s+\p{Ll}/u.test(b.replace(/^\S+,?\s*/, (w) => w.replace(/,/, '')));
+          const country = !commaGo && COUNTRY_NAMES.test(first) && /^\S+\s+\p{Ll}/u.test(b.replace(/^\S+,?\s*/, (w) => w.replace(/,/, '')));
           // (small letters: a word that goes on a sentence – "in Tucson, …" –, not the next credit – "engineer Andrew Seidel")
-          if (!(/^(?:in|at|on|and|with|during|from|for|to|of|the|a|an|but|while|then|near|outside|over|under|until|between)\s/u.test(b) || country) || /^\p{L}[^:]{0,40}:\s/u.test(b) || TRACK_DUR.test(b)) continue;
+          if (!commaGo && (!(/^(?:in|at|on|and|with|during|from|for|to|of|the|a|an|but|while|then|near|outside|over|under|until|between)\s/u.test(b) || country) || /^\p{L}[^:]{0,40}:\s/u.test(b) || TRACK_DUR.test(b))) continue;
           const sa = a.match(/\s*(\((?:tracks?)\s[^)]*\))$/i);
           const sb = b.match(/\s*(\((?:tracks?)\s[^)]*\))$/i);
           if ((sa && !mine.has(out[k])) || (sb && !mine.has(out[k + 1]))) continue;
@@ -12440,6 +12481,38 @@
           out[k] = keep(`${body}${sc}`, rawOf(out[k]));
           out[k + 1] = '';
         }
+      }
+      // [Z-BRACKETINSTS] (3.229.0, S551) "NAME: drums, percussions (congas, djembé, …)" – the bracket also a line of its own below the
+      // person's: the bracket names the instruments of the head (its last instrument) when MusicBrainz has them below it – a line of their
+      // own ("NAME: congas, djembé, …"), marked for the release level; otherwise the line stays as it is
+      if (ruleOn('S551')) {
+        const LINE = /^([^:]{2,60}):\s*(.*?\S)\s*\(([^()]+)\)\s*\.?$/u;
+        const split = (line, raw) => {
+          const m = String(line).trim().match(LINE);
+          if (!m) return null;
+          const roles = m[2].split(/\s*,\s*|\s+(?:and|&)\s+/).filter(Boolean);
+          const items = m[3].split(/\s*,\s*|\s+(?:and|&)\s+/).map((x) => x.trim()).filter(Boolean);
+          if (items.length < 2 || !roles.length) return null;
+          const under = bracketInstsUnder(roles[roles.length - 1], items);
+          if (!under) return null;
+          const b = keep(`${m[1]}: ${items.join(', ')}`, raw);
+          P.bracketInstLines.set(String(b).trim(), under.head);
+          return [keep(`${m[1]}: ${m[2]}`, raw), b];
+        };
+        const res = [];
+        for (let k = 0; k < out.length; k++) {
+          const t = String(out[k] || '').trim();
+          if (/^\([^()]+,[^()]+\)\.?$/.test(t)) {
+            let j = res.length - 1;
+            while (j >= 0 && !String(res[j] || '').trim()) j--;
+            const prev = j >= 0 ? String(res[j]).trim() : '';
+            const r = prev && /^[^:]{2,60}:\s*\S/.test(prev) && !/\)\s*$/.test(prev) ? split(`${prev} ${t}`, rawOf(res[j])) : null;
+            if (r) { res.splice(j, 1, ...r); continue; }
+          }
+          const r = /\([^()]+,[^()]+\)\s*\.?$/.test(t) ? split(t, rawOf(out[k])) : null;
+          res.push(...(r || [out[k]]));
+        }
+        out = res;
       }
       return out;
     }
@@ -16352,6 +16425,9 @@
           if (p) Object.assign(c, { role: p.raw, base: p.base, details: p.mods, thanksFor: true });
         }
         if (P.lineupLines.has(keyOf(c))) Object.assign(c, { members: true, lineup: true });
+        // [Z-BRACKETINSTS] (3.229.0, S551) the instruments a bracket names of a head instrument ("percussions (congas, djembé, …)")
+        const bk = P.bracketInstLines ? [c.part, c.line].map((x) => String(x || '').trim()).find((x) => P.bracketInstLines.has(x)) : null;
+        if (bk) c.bracketHead = P.bracketInstLines.get(bk);
       }
       // [Z-IZ-JACKETS] (3.222.0, S495) "Pressed by Les Disques Garcia, France": a country after a company of the same line is where it is
       // (its area), no company of its own
@@ -17108,6 +17184,7 @@
       // credits get `thanksFor` / `members` after the text is read
       P.thanksLines = new Set();
       P.lineupLines = new Set();
+      P.bracketInstLines = new Map(); // [Z-BRACKETINSTS] (3.229.0, S551) line → its head instrument
       P.liveHeads = []; // [Z-LIVEEVENT] (3.147.0, S264) { song, event, venue, date, line }
       P.labelNames = uniq([...((P.ctx0 && P.ctx0.labelNames) || [])].map((n) => norm(n)).filter(Boolean));
     }
@@ -18416,6 +18493,7 @@
           group.roles.set(rKey, { role, anv, ...(ac.from ? { anvFrom: ac.from } : {}), allTracks: false, indexes: new Set(), unresolved: [], specs: [], positions: [], lines: [], refs: [],
             fromAbout: !!c.fromAbout, fromNotes: !!c.fromNotes, titleComposer: !!c.titleComposer, tcpSingle: !!c.tcpSingle, rmxTitle: !!c.rmxTitle, fromTitle: !!c.fromTitle,
             ...(c.thanksFor ? { thanksFor: true } : {}), ...(c.lineup ? { lineup: true } : {}), // [Z-THANKSFOR] [Z-LINEUPHEAD] (3.146.0)
+            ...(c.bracketHead ? { bracketHead: c.bracketHead } : {}), // [Z-BRACKETINSTS] (3.229.0, S551)
             ...(c.abbrAlt ? { abbr: c.abbr, abbrAlt: c.abbrAlt } : {}), // ([Z-ABBR] 3.101.0, review)
             ...(c.pkgMedium ? { pkgMedium: c.pkgMedium, fromPkg: c.fromPkg } : {}), // [Z-VINYLONLY] (3.161.0, S293)
             ...(c.promo ? { promo: c.promo } : {}), // [Z-BCEDITION] (3.187.0, S320)
@@ -31134,7 +31212,8 @@
     // [T058] (3.39.2) the instruments the word is offered as first ("objects": percussion, credited "objects"; collected item 187) –
     // the key in any case (a file imported as written), "other instruments" with its own answer only
     const ask = Object.entries(INSTRUMENT_ASK).find(([k]) => norm(k) === norm(word));
-    const offered = (ask ? ask[1] : []).map((n) => findChildAttr(root.id, n)).filter((x) => x && x !== other).map((x) => x.name)
+    // ([Z-BRACKETINSTS] 3.229.0, S551) a word of a bracket after a head instrument: the head offered first – never taken by itself
+    const offered = [...(row.bracketHead && ruleOn('S551') ? [row.bracketHead] : []), ...(ask ? ask[1] : [])].map((n) => findChildAttr(root.id, n)).filter((x) => x && x !== other).map((x) => x.name)
       .filter((n, i, all) => all.findIndex((x) => norm(x) === norm(n)) === i);
     const options = [...offered, ...similarInstruments(word).filter((n) => !offered.some((o) => norm(o) === norm(n)))].slice(0, Math.max(5, offered.length));
     if (!options.length && !other) {
@@ -31154,7 +31233,8 @@
       const via = Object.fromEntries(near.filter((x) => x.key !== norm(x.n)).map((x) => [x.n, x.key]));
       if (Object.keys(via).length) row.instrGuess.via = via;
       const one = near.filter((x) => x.d <= 1);
-      if (!offered.length && one.length === 1 && options.length >= 1) {
+      // ([Z-BRACKETINSTS] 3.229.0) the head offered for a bracket's word is no answer of its own here: "djembé" still suggests djembe
+      if (!offered.filter((n) => !(row.bracketHead && norm(n) === norm(row.bracketHead))).length && one.length === 1 && options.length >= 1) {
         Object.assign(row, { primaryText: one[0].n, primaryTouched: true });
         // (by another name of MusicBrainz – an alias: credited as written; by the instrument's own name – a slip: no role credit, as until now)
         Object.assign(row.instrGuess, { auto: one[0].n, typoAs: { name: one[0].n, typo: one[0].key === norm(one[0].n) } });
@@ -33124,10 +33204,15 @@
       const asConductor = musicalDirector(c, rel);
       const row = makeRow(artist.key, { raw: c.role.raw, base: asConductor ? 'music director' : c.role.base, mods: c.role.mods, anv: c.anv, artTask: !!c.role.artTask, artCredit: c.role.artCredit || '', guess: !!c.guess });
       if (asConductor) row.notes = [...(row.notes || []), 'directorConductor'];
+      if (c.bracketHead && ruleOn('S551')) row.bracketHead = c.bracketHead; // [Z-BRACKETINSTS] (3.229.0) its head offered (guessInstrument)
       // [Z-DIRECTORCREDIT] (3.224.0, S528) credited as written – "director" –, not "music director" (the way to the conductor only)
       if (asConductor && ruleOn('S528')) Object.assign(row, { roleCredit: String(c.role.base || 'director').trim().toLowerCase(), roleCreditTouched: true });
       // [Z-IMPROVISED] (3.228.0, S546) the performer of "composed, improvised and recorded by": said at the row
       if (ruleOn('S546') && /\[improvised\]/i.test(String(row.raw || ''))) row.notes = uniq([...(row.notes || []), 'improvised']);
+      // [Z-DIRECTION] (3.229.0, S554) "direction" alone (R097, asked as "Directed By"): credited as written
+      if (ruleOn('S554') && /^direction$/i.test(String(c.role.base || '').trim()) && !row.roleCredit) Object.assign(row, { roleCredit: 'direction', roleCreditTouched: true });
+      // [Z-SPOKENWORD] (3.229.0, S555) "spoken word": spoken vocals credited "spoken word"
+      if (ruleOn('S555') && /^spoken[\s-]word$/i.test(String(c.role.base || row.raw || '').trim()) && !row.roleCredit) Object.assign(row, { roleCredit: 'spoken word', roleCreditTouched: true });
       if (c.role.splitFrom) row.dSplitFrom = c.role.splitFrom; // [S018] the role as written at the source
       if (c.role.splitBase) row.dSplitBase = c.role.splitBase; // [S033] its role as written there (the companion finds the line by it)
       row.srcRefs = c.refs || []; // [3.17.0] where it is at the source (Bandcamp view)
@@ -33169,6 +33254,14 @@
         else Object.assign(row, { date: { ...emptyDate(), ...c.date }, dateOpen: true });
       } else if (c.date) Object.assign(row, { date: { ...emptyDate(), ...c.date }, dateOpen: true });
       if (c.roleCredit) Object.assign(row, { roleCredit: c.roleCredit, roleCreditTouched: true });
+      // [Z-BRACKETINSTS] (3.229.0, S551) an instrument of the bracket after a head instrument: on the release (the text names no track of
+      // it), credited as written where that is not MusicBrainz's name ("congas", "triangles")
+      if (row.bracketHead) {
+        if (row.level !== 'skip' && row.level !== 'release' && findRowType(row, 'release')) { row.level = 'release'; resolveRowType(row); }
+        const said = String(c.role.raw || '').trim();
+        if (said && !row.roleCredit && norm(said) !== norm(row.primaryText || '')) Object.assign(row, { roleCredit: said, roleCreditTouched: true });
+        row.notes = uniq([...(row.notes || []), 'bracketInsts']);
+      }
       if (c.workArr) row.workArr = true; // [Z-ARRL] (3.94.0, S150)
       if (c.recArr) row.recArr = true; // [Z-ARRGEN] (3.177.0)
       if (c.improv) row.improv = c.improv; // [Z-IMPROV] (3.133.0, S222) a composer of improvisations
@@ -34680,6 +34773,8 @@
 
   const FEST_PARTICLE = /^(?:of|de|du|der|des|di|da|del|della|la|le|les|am|an|im|and|&|et|y|und)$/i;
 
+  /** [Z-FESTAPOS] (3.229.0, S553) A word with an elided particle – "d’hiver", "l'été", "dell’Arte" – is part of a festival's name. */
+  const festElided = (w) => ruleOn('S553') && /^(?:d|l|dell|dall|all|nell|sull|qu)['’]\p{L}/iu.test(w);
   /** The name of a festival from the words around its word: those in capitals (and small words between them) up to a comma. */
   function festivalName(before, word, after) {
     const lw = String(before).split(/[,;:()"“”„]/).pop().trim().split(/\s+/).filter(Boolean);
@@ -34687,14 +34782,14 @@
     for (let i = lw.length - 1; i >= 0; i--) {
       const w = lw[i];
       // an abbreviation ("Ltd.") ends it
-      if (/\.$/.test(w) || !(/^\p{Lu}/u.test(w) || FEST_PARTICLE.test(w))) break;
+      if (/\.$/.test(w) || !(/^\p{Lu}/u.test(w) || FEST_PARTICLE.test(w) || festElided(w))) break;
       left.unshift(w);
     }
     while (left.length && FEST_PARTICLE.test(left[0])) left.shift();
     const right = [];
     for (const w0 of String(after).split(/[,;:()"“”„]/)[0].trim().split(/\s+/).filter(Boolean)) {
       const w = w0.replace(/\.$/, '');
-      if (!(/^\p{Lu}/u.test(w) || /^(?:19|20)\d{2}$/.test(w) || FEST_PARTICLE.test(w))) break;
+      if (!(/^\p{Lu}/u.test(w) || /^(?:19|20)\d{2}$/.test(w) || FEST_PARTICLE.test(w) || festElided(w))) break;
       right.push(w);
       if (w !== w0) break;
     }
@@ -39828,7 +39923,7 @@
   const srcOffHtml = (row) => (row.srcOff ? `<div class="dci-note dci-srcoff">${esc(tr('bc.offNote', { site: VIEW_NAMES[viewSite()] }))}</div>` : '');
 
   function roleCell(row) {
-    const notes = (row.notes || []).map((k) => `<div class="dci-note">${esc(tr(`note.${k}`, { type: row.seriesType || '' }))}</div>`).join('')
+    const notes = (row.notes || []).map((k) => `<div class="dci-note">${esc(tr(`note.${k}`, { type: k === 'bracketInsts' ? row.bracketHead || '' : row.seriesType || '' }))}</div>`).join('')
       // [Z-INSTS] (3.103.0, S169) the automatic row of "on the release" (a group the source does not name: said)
       + (row.instsAuto ? `<div class="dci-note dci-insts-note">${esc(tr(row.instsHint ? 'insts.autoHint' : 'insts.auto', { group: row.instsHint || '' }))}</div>` : '')
       // [Z-ABBR] (3.101.0, S166) an abbreviation of two readings: the others named (3.102.0: asked – abbrAskHtml – while S166 is on)
@@ -47865,6 +47960,24 @@
     const list = out.length ? out : [n];
     cache.map.set(n, list);
     return list;
+  }
+  /**
+   * [Z-BRACKETINSTS] (3.229.0, S551) Whether the words of a bracket are instruments below a head instrument in MusicBrainz's tree
+   * ("percussions (congas, djembé, gongs, …)"): every word MusicBrainz knows as an instrument below the head, one of them at least –
+   * { head } (the head's name), else null (also without MusicBrainz's attributes: nothing assumed).
+   */
+  function bracketInstsUnder(head, items) {
+    let ix = null;
+    try { ix = idx(); } catch (e) { return null; }
+    if (!ix || !ix.atById) return null;
+    const c = bracketInstsUnder.cache && bracketInstsUnder.cache.ix === ix ? bracketInstsUnder.cache : (bracketInstsUnder.cache = { ix, names: new Set([...ix.atById.values()].filter((a) => a.parent_id).map((a) => norm(a.name))) });
+    const known = (w) => instrumentCandidates(w, [], { head: false }).find((n) => c.names.has(n)) || '';
+    const h = known(head);
+    if (!h) return null;
+    const ks = items.map(known).filter(Boolean);
+    if (!ks.length || !ks.every((k) => k !== h && attrChain(k).includes(h))) return null;
+    const a = [...ix.atById.values()].find((x) => norm(x.name) === h && x.parent_id);
+    return { head: a ? a.name : h };
   }
   const DSUP_ROOTS = new Set(['instrument', 'vocal']);
   /** The instrument or voice of a relationship of MusicBrainz ('' – none: "instruments", plain vocals). */

@@ -2768,4 +2768,104 @@ Improvised by Jane R.K. Doe"""
         H.RULES_OFF = []
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
+
+def case_aeoc3229():
+    """Credits Importer 3.229.0 (collected items Z-TWOCOLS, Z-BRACKETINSTS, Z-COMMABREAK, Z-FESTAPOS, Z-DIRECTION, Z-VOCALKIND, Z-SPOKENWORD;
+    rules S550 – S555): the back cover of "The Sixth Decade – From Paris to Paris" (Art Ensemble of Chicago) as the text recognition reads
+    it – two columns in one line, the percussion's instruments in a bracket line, a sentence broken after a comma.
+    A) Two columns: each person their roles ("TOMEKA REID: cello BRETT CARSON: piano" – cello for her, piano for him); "vocal (bass)" bass
+       vocals, "vocal (soprano)" soprano vocals, "spoken word" spoken vocals credited "spoken word", "direction" asked as "Directed By"
+       credited "direction"; none of these lines not recognized.
+    B) "FAMOUDOU DON MOYE: drums, percussions" / "(congas, djembé, dundun, gongs, congo bells, bendir, triangles, thai bells)": drums and
+       percussion on the recordings, the bracket's instruments on the release, credited as written where that is not MusicBrainz's name;
+       "dundun" the dunun (S556), "congo bells" and "thai bells" bell credited so (S035; one relationship at staging, S325); a word the
+       harness does not know ("shekere", added for the case) asked with percussion offered first – not taken.
+    C) "… Maison des Arts de Créteil," / "Créteil, France, as part of Festival Sons d’hiver": one sentence (nothing not recognized); the
+       festival is "Festival Sons d’hiver".
+    D) Off: the lines not recognized as before."""
+    TEXT = """ROSCOE MITCHELL: sopranino and alto saxophones
+FAMOUDOU DON MOYE: drums, percussions
+(congas, djembé, dundun, gongs, congo bells, bendir, triangles, thai bells, shekere)
+MOOR MOTHER: spoken word ROCO CORDOVA: vocal (bass)
+ERINA NEWKIRK: vocal (soprano) NICOLE MITCHELL: flutes, piccolo
+HUGH RAGIN: trumpet, flugelhorn SIMON SIEGER: trombone, tuba
+JEAN COOK: violin EDDY KWON: viola
+TOMEKA REID: cello BRETT CARSON: piano
+SILVIA BOLOGNESI: double bass Junius PAUL: double bass
+JARIBU SHAHID: double bass, bass STEED COWART: direction
+
+Recorded live by Olivier Gascoin on February 7 2020 at Maison des Arts de Créteil,
+Créteil, France, as part of Festival Sons d’hiver"""
+    LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
+    added = [(9300, 'percussion', 14, 14), (9301, 'conga', 14, 9300), (9302, 'djembe', 14, 9300), (9303, 'gong', 14, 9300), (9304, 'bendir', 14, 9300),
+             (9305, 'triangle', 14, 9300), (9306, 'bell', 14, 9300), (9307, 'dunun', 14, 9300), (9310, 'violin', 14, 14), (9311, 'viola', 14, 14), (9312, 'cello', 14, 14), (9313, 'trumpet', 14, 14),
+             (9314, 'flugelhorn', 14, 14), (9315, 'trombone', 14, 14), (9316, 'tuba', 14, 14), (9317, 'flute', 14, 14), (9318, 'piccolo', 14, 14),
+             (9319, 'sopranino saxophone', 14, 14), (9320, 'spoken vocals', 3, 3), (9321, 'soprano vocals', 3, 3), (9322, 'bass vocals', 3, 3)]
+    for i, n, r, par in added:
+        H.attr(i, n, r, par)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    # MusicBrainz's instrument on the release (44), for this case only (caserun restores the harness)
+    H.lt(44, '67555849-61e5-455b-96e3-29733f0115f5', 'instrument', 'artist', 'release', (14, 1, 194, 596))
+    H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+    main0 = H.MAIN
+    H.MAIN = H.MAIN.replace('  const S = {', '  const S = window.__S = {', 1)
+    ROWS = """window.__S.rows.map(r => [(window.__S.artists.get(r.artistKey) || {}).name, r.raw, r.level, r.roleCredit || '', r.primaryText || '',
+      r.instrGuess ? (r.instrGuess.offered || r.instrGuess.options || []).slice(0, 2) : null])"""
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, f"{LOGS}.filter(x => /Import complete/.test(x)).length >= 2", 60)
+        pg.wait_for_timeout(1500)
+        rows = pg.evaluate(ROWS)
+        unrec = pg.evaluate("(window.__S.release.unrecognized || []).slice()")
+        fest = pg.evaluate("(document.querySelector('[data-el=festival], .dci-festival') || document.body).textContent.match(/Festival recording:[^.]*/) || ['']")[0]
+        b.close()
+        return rows, unrec, fest, errs
+
+    results = []
+    try:
+        with sync_playwright() as p:
+            rows, unrec, fest, errs = run(p)
+            by = lambda n: [r for r in rows if (r[0] or '').lower() == n.lower()]
+            for n in ['TOMEKA REID', 'BRETT CARSON', 'MOOR MOTHER', 'ROCO CORDOVA', 'ERINA NEWKIRK', 'STEED COWART', 'FAMOUDOU DON MOYE']:
+                print('  ', n, by(n))
+            print('   nicht erkannt:', unrec, '| Festival:', fest)
+            tr = by('TOMEKA REID')
+            results.append(len(tr) == 1 and 'BRETT' not in tr[0][1] and [r[4] for r in by('BRETT CARSON')] == ['piano']
+                           and any(r[4] == 'spoken vocals' and r[3] == 'spoken word' for r in by('MOOR MOTHER'))
+                           and any(r[4] == 'bass vocals' for r in by('ROCO CORDOVA')) and any(r[4] == 'soprano vocals' for r in by('ERINA NEWKIRK'))
+                           and any(r[3] == 'direction' for r in by('STEED COWART')) and not any(':' in u for u in unrec))
+            fm = by('FAMOUDOU DON MOYE')
+            lv = {r[4] or r[1]: r[2] for r in fm}
+            print('B)', lv)
+            results.append(lv.get('drums (drum set)') == 'recording' and lv.get('percussion') == 'recording'
+                           and all(lv.get(x) == 'release' for x in ['conga', 'gong', 'bendir', 'triangle', 'dunun'])
+                           and any(r[4] == 'conga' and r[3] == 'congas' for r in fm)
+                           and any(r[4] == 'dunun' and r[3] == 'dundun' for r in fm) and len([r for r in fm if r[4] == 'bell' and r[2] == 'release']) == 2
+                           and {r[3] for r in fm if r[4] == 'bell'} == {'congo bells', 'thai bells'}
+                           and any(r[1] == 'shekere' and r[5] and r[5][0] == 'percussion' and r[4] != 'percussion' for r in fm) and not errs)
+            results.append(not any('Créteil' in u for u in unrec) and 'Sons d’hiver' in fest)
+            rows2, unrec2, fest2, errs2 = run(p, ['S550', 'S551', 'S552', 'S553', 'S554', 'S555'])
+            print('D)', unrec2, fest2)
+            results.append(any('TOMEKA REID' in u or 'BRETT' in u for u in unrec2 + [r[1] for r in rows2]) and any('Créteil, France' in u for u in unrec2)
+                           and 'Sons d’hiver' not in fest2 and not errs2)
+    finally:
+        H.MAIN = main0
+        H.RULES_OFF = []
+        for i, *_ in added:
+            H.ATTRS.pop(i, None)
+        H.LTS.pop(44, None)
+        H.LINKED['link_type'] = {str(k): v for k, v in H.LTS.items()}
+        H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 run_cases(globals())
