@@ -1738,4 +1738,69 @@ def case_recdisamb3213():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_dtnotes3223():
+    """Credits Importer 3.223.0 (collected items Z-DT-*, Z-OTHERMEDIA; rules S507, S510, S513, S520, S521): Discogs notes of a release of 11 tracks –
+    "Recorded and Mixed by Darek Mudge at The Shed Recordings Studio, Gamma Globulin and Serpent's Tongue Recorded and Mixed by George Bennett at
+    Unicorn Planet." (one line), "Layout and Photo Collage by ZAc Anderson." (Discogs credits "Zac Anderson (3)"), "Sam Giles Gatefold Handmade CD sleeve
+    and vinyl replica CDr.", "LTD TO 90 COPIES WORLDWIDE - 40 FOR EUROPE.", "Tracks 2-5 to 2-10: Recorded November 9, 1964 in Hilversum, The Netherlands"
+    (MusicBrainz has one medium).
+    A) George Bennett on 10–11, Darek Mudge on 1–9 (S507, in one line).
+    B) Zac Anderson as Discogs writes him (S510); Sam Giles the design, credited "sleeve" (S513).
+    C) Left out and listed: the edition (S520), the line for tracks of another medium (S521).
+    D) Off (as 3.222.0): neither line listed."""
+    notes = ("Recorded and Mixed by Darek Mudge at The Shed Recordings Studio, Gamma Globulin and Serpent's Tongue Recorded and Mixed by George Bennett at Unicorn Planet.\n"
+             "Layout and Photo Collage by ZAc Anderson.\nSam Giles Gatefold Handmade CD sleeve and vinyl replica CDr.\nLTD TO 90 COPIES WORLDWIDE - 40 FOR EUROPE.\n"
+             "Tracks 2-5 to 2-10: Recorded November 9, 1964 in Hilversum, The Netherlands")
+    titles = ['Luminous Night', 'River Spites', 'Three', 'The Sentient', 'Five', 'Six', 'Seven', 'Eight', 'Strange Pleasures', 'Gamma Globulin', "Serpent's Tongue"]
+    rec0, titles0, main0, dg0 = list(H.REC), list(H.TITLES), H.MAIN, H.discogs_release
+    H.REC[:] = [H.uid('bbbbbbbb', i) for i in range(1, 12)]
+    H.TITLES[:] = titles
+    H.MAIN = H.MAIN.replace('  const S = {', '  const S = window.__S = {', 1)
+
+    def rel():
+        d = dg0()
+        d['tracklist'] = [{'position': str(i + 1), 'title': t, 'duration': '5:00', 'type_': 'track', 'extraartists': []} for i, t in enumerate(titles)]
+        d['extraartists'] = [{'name': 'Zac Anderson (3)', 'anv': '', 'role': 'Guitar', 'tracks': '', 'id': 3950, 'join': ''}]
+        d['notes'] = notes
+        d['companies'] = []
+        return d
+    H.discogs_release = rel
+    results = []
+
+    def load(p, off=()):
+        H.RULES_OFF = list(off)
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 90)
+        H.wait_still(pg, "document.body.innerHTML", 10, 400)
+        rows = pg.evaluate("window.__S.rows.filter(r => r.level !== 'skip').map(r => [(window.__S.artists.get(r.artistKey) || {}).name, r.raw, [...r.tracks].sort((a, b) => a - b).map(i => i + 1).join(','), r.roleCredit || ''])")
+        ign = pg.evaluate("((window.__S.release || {}).ignored || []).map(x => [x.text, x.why])")
+        b.close()
+        return rows, ign, errs
+    try:
+        with sync_playwright() as p:
+            rows, ign, errs = load(p)
+            rr = lambda n: sorted((r[1], r[2]) for r in rows if r[0] == n)
+            print('A)', rr('George Bennett'), rr('Darek Mudge'))
+            results.append(rr('George Bennett') == [('Mixed By', '10,11'), ('Recorded By', '10,11')] and rr('Darek Mudge') == [('Mixed By', '1,2,3,4,5,6,7,8,9'), ('Recorded By', '1,2,3,4,5,6,7,8,9')])
+            zac = sorted({r[0] for r in rows if 'zac' in r[0].lower()})
+            sam = [(r[1], r[3]) for r in rows if r[0] == 'Sam Giles']
+            print('B)', zac, sam)
+            results.append(zac == ['Zac Anderson'] and sam in ([('Design', 'sleeve')], [('Design By', 'sleeve')]))
+            print('C)', ign)
+            results.append(['LTD TO 90 COPIES WORLDWIDE - 40 FOR EUROPE.', 'edition'] in ign
+                           and ['Tracks 2-5 to 2-10: Recorded November 9, 1964 in Hilversum, The Netherlands', 'noTracks'] in ign and not errs)
+            rows2, ign2, errs2 = load(p, off=['S520', 'S521'])
+            print('D)', ign2)
+            results.append(not any(w in ('edition', 'noTracks') for _, w in ign2) and not errs2)
+    finally:
+        H.REC[:], H.TITLES[:], H.MAIN, H.discogs_release = rec0, titles0, main0, dg0
+        H.RULES_OFF = []
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

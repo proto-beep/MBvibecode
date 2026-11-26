@@ -402,7 +402,7 @@ console.log(JSON.stringify(out));
     al = mapping['INSTRUMENT_ALIASES']
     ok_e = al.get('bug shaker', [''])[0] == 'shakers' and al.get('tenor horn', [''])[0] == 'tenor horn / alto horn' and al.get('alto horn', [''])[0] == 'tenor horn / alto horn'
     print('E)', al.get('bug shaker'), al.get('tenor horn'), al.get('alto horn'))
-    results = [not twice, not never and not both and len(fixed) == 9, not gone, ok_d, ok_e,
+    results = [not twice, not never and not both and len(fixed) == 10,  # (3.223.0) S515: an alias of the mapping, always on not gone, ok_d, ok_e,
                'data-rule-fixed=' in src and '"rules.fixedTitle"' in src]
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
