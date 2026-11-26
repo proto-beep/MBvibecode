@@ -3730,6 +3730,77 @@ def case_suppgroups3225():
 
 
 
+def case_ui3227():
+    """Credits Importer 3.227.0 (collected items Z-CMPGROUP, Z-UNRECPENDING, Z-STICKYOVERLAP, Z-BCHIRES; rules S542 – S545): the release from
+    Discogs; a text added as "+ Source" (typed): "Guitar Guy: vocals, organ, bells, flute" (four new roles of one line), and "Some odd words here".
+    A) The comparison: one row for Guitar Guy, "4 new roles" with a tick each (S544); the group's tick takes all four off; ▸ shows the rows.
+    B) While the import reads (S.unrecReading): the lines not recognized set off, ⏳ at the heading and each line (S542); after: neither.
+    C) The bar "Add entry manually": no top margin pulling it upwards (S543); "High-resolution images" in the settings (S545), status-map with
+       lang and hiRes.
+    D) Off: a row per role, no mark, no setting."""
+    TEXT = 'Guitar Guy: vocals, organ, bells, flute\nSome odd words here'
+    for k, n in [(9191, 'organ'), (9194, 'bell'), (9195, 'flute')]:
+        H.attr(k, n, 14, 14)
+    H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+    main0 = H.MAIN
+    H.MAIN = H.MAIN.replace('  const S = {', '  const S = window.__S = {', 1).replace('  function renderSource() {', '  window.__renderSource = () => renderSource();\n  function renderSource() {', 1)
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.open_supp(pg)
+        pg.click('[data-act=supp-text]')
+        pg.wait_for_timeout(300)
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=supp-text-load]')
+        H.wait_for(pg, "!!document.querySelector('[data-act=supp-apply]')", 30)
+        pg.wait_for_timeout(800)
+        out = {'group': pg.evaluate("[...document.querySelectorAll('[data-el=supp-group]')].map(r => [r.dataset.n, r.textContent.replace(/\\s+/g, ' ').trim()])"),
+               'rows': pg.evaluate("document.querySelectorAll('.dci-supp-row-role').length")}
+        if __import__('os').environ.get('DBG'):
+            print(pg.evaluate("JSON.stringify(window.__S.supp.items.map(x => [x.kind, x.name, x.rel, x.line, x.artistKey]))"))
+        if out['group']:
+            pg.locator('[data-f=supp-group]').first.evaluate('c => c.click()')
+            pg.wait_for_timeout(300)
+            out['sel'] = pg.evaluate("window.__S.supp.items.filter(x => x.kind === 'role').map(x => x.sel)")
+            pg.locator('[data-act=supp-group-open]').first.evaluate('b => b.click()')
+            pg.wait_for_timeout(300)
+            out['open'] = pg.evaluate("document.querySelectorAll('.dci-supp-row-role').length")
+        pg.evaluate("window.__S.release.unrecognized = ['Some odd words here']; window.__S.unrecReading = true; window.__renderSource()")
+        out['pend'] = pg.evaluate("[!!document.querySelector('.dci-unrec.dci-unrec-pending'), document.querySelectorAll('.dci-unrec .dci-unrec-wait').length]")
+        pg.evaluate("window.__S.unrecReading = false; window.__renderSource()")
+        out['after'] = pg.evaluate("[!!document.querySelector('.dci-unrec.dci-unrec-pending'), document.querySelectorAll('.dci-unrec .dci-unrec-wait').length, !!document.querySelector('.dci-unrec')]")
+        out['stick'] = pg.evaluate("(() => { const s = document.querySelector('[data-el=stick]'); return [s.classList.contains('dci-stick-gap'), getComputedStyle(s).marginTop]; })()")
+        out['hires'] = pg.evaluate("document.querySelectorAll('[data-bc-hires]').length + '|' + window.__S.bcHiRes")
+        b.close()
+        return out, errs
+    results = []
+    try:
+        with sync_playwright() as p:
+            o, errs = run(p)
+            print('A-C)', o, errs)
+            results.append(len(o['group']) == 1 and o['group'][0][0] == '4' and '4 new roles' in o['group'][0][1] and 'Guitar Guy' in o['group'][0][1]
+                           and o['rows'] == 0 and o.get('sel') == [False] * 4 and o.get('open') == 4)
+            results.append(o['pend'] == [True, 2] and o['after'] == [False, 0, True])
+            results.append(o['stick'] == [True, '0px'] and o['hires'].endswith('|true') and not errs)  # (the setting itself: in ⚙ Settings)
+            o2, errs2 = run(p, off=['S542', 'S543', 'S544', 'S545'])
+            print('D)', o2, errs2)
+            results.append(not o2['group'] and o2['rows'] == 4 and o2['pend'][1] == 0 and not o2['stick'][0] and not errs2)
+    finally:
+        for k in (9191, 9194, 9195):
+            H.ATTRS.pop(k, None)
+        H.LINKED['link_attribute_type'] = {str(k): v for k, v in H.ATTRS.items()}
+        H.MAIN = main0
+        H.RULES_OFF = []
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_covergroup3226():
     """Credits Importer 3.226.0 (collected items Z-COVERGROUP, Z-MAGICWORKLINKS, Z-AWONEWORDING; rules S540, S541, S539): as magicwords3220, the
     release by Joshua Redman, whose repertoire has "Song Three" (W2) too – it is found through him before the artist of the tribute.

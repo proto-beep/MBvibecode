@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer Companion
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      1.24.0
+// @version      1.25.0
 // @date         2026-11-03
 // @description  Companion for "MB x Vibecode: Credits Importer": connects the import dashboard with a Discogs, Bandcamp or YouTube tab (e.g. the other half of a split view), loads the release there and highlights where each credit comes from.
 // @description:de Ergänzung zu „MB x Vibecode: Credits Importer“: verbindet das Import-Dashboard mit einem Discogs-, Bandcamp- oder YouTube-Tab (z. B. der anderen Hälfte einer geteilten Ansicht), lädt dort das Release und markiert, woher jeder Credit stammt.
@@ -50,7 +50,7 @@
   // The main script never needs special permissions; only this companion does.
 
   // [1.10.0] sent with each status (the dashboard names an older companion: several imports at once need 1.10.0)
-  const COMPANION_VERSION = '1.24.0';
+  const COMPANION_VERSION = '1.25.0';
   const HEARTBEAT_MS = 2000;
   const STALE_MS = 7000;
   // [1.8.2] how long the status of an edit or release page in a background tab counts as alive without a new beat;
@@ -259,6 +259,9 @@
         const map = { ...msg, pageId, ts: Date.now() };
         // [1.8.3] the dashboard's switch "Keep marks", for the Discogs and Bandcamp tabs when no editor is open
         if (GM_getValue('keepMarks') !== !!msg.keepAfterClose) GM_setValue('keepMarks', !!msg.keepAfterClose);
+        // [1.25.0] (Credits Importer 3.227.0, Z-COMPLANG, Z-BCHIRES) the dashboard's language and "High-resolution images", for the other sites
+        if (COMP_LANGS.includes(msg.lang) && GM_getValue('lang') !== msg.lang) GM_setValue('lang', msg.lang);
+        if (typeof msg.hiRes === 'boolean' && GM_getValue('bcHiRes') !== msg.hiRes) GM_setValue('bcHiRes', msg.hiRes);
         keepPerRelease(map, key);
         beatSite = siteOf(map);
         beatRel = String(map.releaseId || '');
@@ -923,17 +926,45 @@
   // which reads it and adds its text to its window of the text from cover art (✕ there takes it out here too)
   // ---------------------------------------------------------------------------
   const cocr = { frames: [], n: 0, drag: null, ctx: null, images: new Map() };
-  const COCR_DE = /^de\b/i.test(navigator.language || '');
-  const cocrText = {
-    hint: COCR_DE ? 'Rahmen für die Texterkennung: über das Bild ziehen – jeder Rahmen geht sofort ins Import-Dashboard.' : 'Frames for the text recognition: drag across the image – each frame goes to the import dashboard at once.',
-    del: COCR_DE ? 'Rahmen herausnehmen' : 'Take out the frame',
-    noTab: COCR_DE ? 'Kein Import-Dashboard für dieses Release offen.' : 'No import dashboard open for this release.',
-    open: COCR_DE ? 'Release auf MusicBrainz öffnen und Import starten' : 'Open the release on MusicBrainz and start the import',
-    notLinked: isBandcamp ? (COCR_DE ? 'Diese Bandcamp-Seite ist mit keinem Release auf MusicBrainz verknüpft.' : 'This Bandcamp page is linked to no release on MusicBrainz.')
-      : COCR_DE ? 'Dieses Discogs-Release ist mit keinem Release auf MusicBrainz verknüpft.' : 'This Discogs release is linked to no release on MusicBrainz.',
-    search: COCR_DE ? 'Auf MusicBrainz suchen' : 'Search on MusicBrainz',
-    failed: COCR_DE ? 'Der Ausschnitt ließ sich nicht schneiden (das Bild war nicht zu laden).' : 'The frame could not be cut out (the image could not be loaded).',
+  // [1.25.0] (Credits Importer 3.227.0, Z-COMPLANG) the language of the importer's dashboard ("dci-lang" on musicbrainz.org – English
+  // when it was never chosen, as there), kept for the other sites; the browser's language only while the dashboard was never opened
+  const COMP_LANGS = ['en', 'de', 'es', 'fr'];
+  const compLang = (() => {
+    try {
+      if (isMusicBrainz) {
+        let code = 'en';
+        try { code = JSON.parse(window.localStorage.getItem('dci-lang')) || 'en'; } catch (e) { /* none */ }
+        if (!COMP_LANGS.includes(code)) code = 'en';
+        if (GM_getValue('lang') !== code) GM_setValue('lang', code);
+        return code;
+      }
+      const kept = GM_getValue('lang');
+      if (COMP_LANGS.includes(kept)) return kept;
+    } catch (e) { /* below */ }
+    const nav = String(navigator.language || '').slice(0, 2).toLowerCase();
+    return COMP_LANGS.includes(nav) ? nav : 'en';
+  })();
+  const COMP_TEXTS = {
+    hint: { en: 'Frames for the text recognition: drag across the image – each frame goes to the import dashboard at once.', de: 'Rahmen für die Texterkennung: über das Bild ziehen – jeder Rahmen geht sofort ins Import-Dashboard.', es: 'Marcos para el reconocimiento de texto: arrastra sobre la imagen; cada marco va enseguida al panel de importación.', fr: 'Cadres pour la reconnaissance de texte\u00a0: faites glisser sur l’image – chaque cadre part aussitôt vers le tableau d’import.' },
+    del: { en: 'Take out the frame', de: 'Rahmen herausnehmen', es: 'Quitar el marco', fr: 'Retirer le cadre' },
+    noTab: { en: 'No import dashboard open for this release.', de: 'Kein Import-Dashboard für dieses Release offen.', es: 'No hay ningún panel de importación abierto para esta publicación.', fr: 'Aucun tableau d’import ouvert pour cette parution.' },
+    open: { en: 'Open the release on MusicBrainz and start the import', de: 'Release auf MusicBrainz öffnen und Import starten', es: 'Abrir la publicación en MusicBrainz e iniciar la importación', fr: 'Ouvrir la parution sur MusicBrainz et lancer l’import' },
+    notLinkedBc: { en: 'This Bandcamp page is linked to no release on MusicBrainz.', de: 'Diese Bandcamp-Seite ist mit keinem Release auf MusicBrainz verknüpft.', es: 'Esta página de Bandcamp no está enlazada a ninguna publicación de MusicBrainz.', fr: 'Cette page Bandcamp n’est liée à aucune parution de MusicBrainz.' },
+    notLinkedDg: { en: 'This Discogs release is linked to no release on MusicBrainz.', de: 'Dieses Discogs-Release ist mit keinem Release auf MusicBrainz verknüpft.', es: 'Esta publicación de Discogs no está enlazada a ninguna publicación de MusicBrainz.', fr: 'Cette parution Discogs n’est liée à aucune parution de MusicBrainz.' },
+    search: { en: 'Search on MusicBrainz', de: 'Auf MusicBrainz suchen', es: 'Buscar en MusicBrainz', fr: 'Rechercher sur MusicBrainz' },
+    failed: { en: 'The frame could not be cut out (the image could not be loaded).', de: 'Der Ausschnitt ließ sich nicht schneiden (das Bild war nicht zu laden).', es: 'No se pudo recortar el marco (no se pudo cargar la imagen).', fr: 'Le cadre n’a pas pu être découpé (l’image n’a pas pu être chargée).' },
   };
+  const compText = (k) => (COMP_TEXTS[k] && (COMP_TEXTS[k][compLang] || COMP_TEXTS[k].en)) || '';
+  const cocrText = {
+    hint: compText('hint'),
+    del: compText('del'),
+    noTab: compText('noTab'),
+    open: compText('open'),
+    notLinked: compText(isBandcamp ? 'notLinkedBc' : 'notLinkedDg'),
+    search: compText('search'),
+    failed: compText('failed'),
+  };
+
   /** The image as a bitmap of its own pixels (Discogs's images allow it, else through the userscript manager). */
   function cocrBitmap(url) {
     if (!cocr.images.has(url)) {
@@ -1060,12 +1091,14 @@
       el.append(' ', a);
     }
   }
+  /** [1.25.0] (Z-BCHIRES) The address of the image shown as the page lists it ("_10" also while "_0" is shown): the frames' image. */
+  const bigImgUrl = (big) => { const img = big && big.querySelector('.dci-big-img'); return img ? img.dataset.listUrl || img.getAttribute('src') : ''; };
   /** The frames of the image shown, on it. */
   function cocrDraw() {
     const big = document.getElementById('dci-art-big');
     const layer = big && big.querySelector('.dci-cocr-layer');
     if (!layer) return;
-    const url = big.querySelector('.dci-big-img').getAttribute('src');
+    const url = bigImgUrl(big);
     layer.innerHTML = cocr.frames.filter((f) => f.url === url).map((f) => `<div class="dci-cocr-frame" data-cocr="${f.id}" style="left:${f.x * 100}%;top:${f.y * 100}%;width:${f.w * 100}%;height:${f.h * 100}%">
       <span class="dci-cocr-n">${f.n}</span><button type="button" class="dci-cocr-x" title="${cocrText.del}" aria-label="${cocrText.del}">✕</button><span class="dci-cocr-h"></span></div>`).join('');
   }
@@ -1091,7 +1124,7 @@
       cocrRemove(el.dataset.cocr, true);
       return;
     }
-    const url = layer.closest('#dci-art-big').querySelector('.dci-big-img').getAttribute('src');
+    const url = bigImgUrl(layer.closest('#dci-art-big'));
     let f = el ? cocr.frames.find((y) => y.id === el.dataset.cocr) : null;
     let mode = 'move';
     if (!f) {
@@ -1254,13 +1287,26 @@
     const box = document.getElementById('dci-artwork');
     if (!big || !box) return;
     const list = JSON.parse(box.dataset.list || '[]');
-    const url = list[i] || box.querySelector('img').getAttribute('src') || '';
+    const url0 = list[i] || box.querySelector('img').getAttribute('src') || '';
+    // [1.25.0] (Credits Importer 3.227.0, Z-BCHIRES) Bandcamp: the image as uploaded ("_0") in place of the page's large view ("_10") –
+    // "High-resolution images" of the dashboard (on unless switched off); one that does not load: the large view again
+    const url = bcHiResOf(url0);
     const img = big.querySelector('.dci-big-img');
-    if (img.getAttribute('src') !== url) img.src = url;
+    img.dataset.listUrl = url0;
+    if (img.getAttribute('src') !== url) {
+      img.onerror = url !== url0 ? () => { img.onerror = null; img.src = url0; big.querySelector('.dci-big-tab').href = url0; } : null;
+      img.src = url;
+    }
     big.querySelector('.dci-big-tab').href = url;
     big.querySelector('.dci-big-n').textContent = `${i + 1} / ${Math.max(1, list.length)}`;
     big.querySelectorAll('.dci-big-prev, .dci-big-next').forEach((b) => { b.disabled = list.length < 2; });
     cocrDraw();
+  }
+  /** [1.25.0] (Z-BCHIRES) A Bandcamp image's address as uploaded ("…_0.jpg"), with "High-resolution images" on; else as it is. */
+  function bcHiResOf(url) {
+    let on = true;
+    try { on = GM_getValue('bcHiRes') !== false; } catch (e) { /* on */ }
+    return isBandcamp && on && /bcbits\.com\/img\/.+_10\.\w+$/.test(url) ? url.replace(/_10(\.\w+)$/, '_0$1') : url;
   }
   function artBigClose() {
     // ((Z-COCR 1.18.0, review) a frame being drawn: finished as it is

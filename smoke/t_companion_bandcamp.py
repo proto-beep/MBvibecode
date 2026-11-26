@@ -643,6 +643,8 @@ def case_cocrbc3119():
     ALBUM = f'{BAND}/album/testalbum'
     ART = 'https://f4.bcbits.com/img/a0111111111_10.jpg'
     PHOTO = 'https://f4.bcbits.com/img/0022222222_10.jpg'
+    # [3.227.0] (Z-BCHIRES, companion 1.25.0) the large image shows the image as uploaded ("_0"; "High-resolution images" on by default)
+    ART_HI, PHOTO_HI = ART.replace('_10', '_0'), PHOTO.replace('_10', '_0')
     H.ARTISTS[3040] = (H.uid('dddddddd', 40), 'Test Band')
     H.BC_ARTISTS[BAND + '/'] = H.ARTISTS[3040]
     H.RELEASE_AC[:] = [(H.ARTISTS[3040][0], 'Test Band', 'Test Band', '')]
@@ -685,7 +687,7 @@ def case_cocrbc3119():
         a.append(bc.evaluate("document.querySelector('#dci-art-big .dci-big-img').getAttribute('src')"))
         bc.click('#dci-art-big .dci-big-next')
         print('A)', a)
-        results.append(a[0] == '2 / 2' and a[1] == PHOTO and 'Frames for the text recognition' in a[2] and a[3] == ART)
+        results.append(a[0] == '2 / 2' and a[1] == PHOTO_HI and 'Frames for the text recognition' in a[2] and a[3] == ART_HI)
         # [3.220.0] (Z-IMGARROWS2, companion 1.24.0) ← / → in the large image: after the last the first again, before the first the last
         IMG = "document.querySelector('#dci-art-big .dci-big-img').getAttribute('src')"
         keys = []
@@ -694,7 +696,7 @@ def case_cocrbc3119():
             bc.wait_for_timeout(200)
             keys.append(bc.evaluate(IMG))
         print('A2) ← / →:', keys)
-        results.append(keys == [ART, PHOTO])
+        results.append(keys == [ART_HI, PHOTO_HI])
         r = bc.evaluate("(() => { const r = document.querySelector('#dci-art-big .dci-cocr-layer').getBoundingClientRect(); return [r.left, r.top, r.width, r.height]; })()")
         bc.mouse.move(r[0] + r[2] * 0.1, r[1] + r[3] * 0.1)
         bc.mouse.down()
