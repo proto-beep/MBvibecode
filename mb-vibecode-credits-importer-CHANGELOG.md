@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-26 | 3.224.0 – 3.228.0 | 1.25.0 |
+| 2026-11-26 | 3.224.0 – 3.229.0 | 1.25.0 |
 | 2026-11-25 | 3.218.0 – 3.223.0 | 1.24.0 |
 | 2026-11-24 | 3.213.0 – 3.217.0 | – |
 | 2026-11-23 | 3.210.0 – 3.212.0 | – |
@@ -140,6 +140,17 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.229.0
+
+**A cover's two columns, a bracket of instruments, sentences broken after a comma, voices, dunun.**
+
+- **Two columns in one line** (rule S550): "MOOR MOTHER: spoken word ROCO CORDOVA: vocal (bass)" as the text recognition reads a cover – two lines, each person their roles ("TOMEKA REID: cello BRETT CARSON: piano" was her role "cello BRETT CARSON: piano").
+- **A bracket of instruments** (rule S551): "drums, percussions" with "(congas, djembé, dundun, gongs, …)" – when MusicBrainz has them below percussion: drums and percussion on the recordings, the bracket's instruments on the release, credited as written; a word MusicBrainz does not know is asked, percussion offered first (never taken by itself).
+- **A sentence broken after a comma** (rule S552): "… at Maison des Arts de Créteil," / "Créteil, France, as part of Festival Sons d’hiver" – one sentence.
+- **Festival names** (rule S553): "Festival Sons d’hiver", not "Festival Sons".
+- **Roles** (rules S554, S555): "direction" asked as "Directed By", credited "direction"; "vocal (soprano)", "vocal (bass)" – soprano vocals, bass vocals; "spoken word" – spoken vocals credited "spoken word".
+- **Instruments** (rule S556): "dundun" is the dunun; "congo bells" and "thai bells" bell credited so – of one person one relationship, "congo bells, thai bells".
 
 ### Import 3.228.0
 
