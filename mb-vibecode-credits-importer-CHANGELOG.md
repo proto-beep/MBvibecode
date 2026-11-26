@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-26 | 3.224.0 – 3.225.0 | 1.24.0 |
+| 2026-11-26 | 3.224.0 – 3.226.0 | 1.24.0 |
 | 2026-11-25 | 3.218.0 – 3.223.0 | 1.24.0 |
 | 2026-11-24 | 3.213.0 – 3.217.0 | – |
 | 2026-11-23 | 3.210.0 – 3.212.0 | – |
@@ -140,6 +140,15 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.226.0
+
+**Works: ties counted in MusicBrainz, clearer reasons, covers of a tribute's artist, each work to open.**
+
+- **Ties** (rule S538): two works of a track's title still tied after the writers and the recordings read on the artists' pages – the recordings MusicBrainz links to each are loaded (once per work), "✨ Answer all" takes the one with the most; while they load the track is listed as "counting".
+- **Reasons** (rule S539): no search runs over all of MusicBrainz – "the only work of this title among the works of {artist}" (an artist's page) or "… by {writers}" (the search among the track's writers), not "in MusicBrainz".
+- **Covers** (rule S540): a work in the repertoire of the artist of a tribute is a cover of his in "✨ Answer all" also when an artist of the release has it too ("Pent-Up House" on a Sonny Rollins tribute by Joshua Redman); the yellow mark (found through him only) as before.
+- **Links** (rule S541): each work the preview links has a ↗ to open it, its writers and where it was found as the tip.
 
 ### Import 3.225.0
 

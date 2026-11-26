@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.225.0
+// @version      3.226.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.225.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.225.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.226.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.226.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.225.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.226.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -2574,7 +2574,7 @@
       "magic.what.coldate": "{name}: date {date} (from its column)",
       "magic.what.ded": "{phrase}: {name}",
       "magic.why.exact": "same title, same writers",
-      "magic.why.one": "the only work of this title in MusicBrainz",
+      "magic.why.one": "the only work of this title found",
       "magic.why.most": "same title, most of the writers",
       "magic.what.link": "link “{title}”",
       "magic.what.linkWhy": "link “{title}” – {why}",
@@ -2588,12 +2588,21 @@
       "magic.group.coverPerformed": "Covers of songs performed by {name}",
       "magic.group.exact": "Same title, same writers",
       "magic.group.most": "Same title, most of the writers",
-      "magic.group.one": "The only work of this title in MusicBrainz",
+      "magic.group.one": "The only work of this title found",
+      "magic.why.oneArtist": "the only work of this title among the works of {name}",
+      "magic.why.oneBy": "the only work of this title by {name}",
+      "magic.group.oneArtist": "The only work of this title among the works of {name}",
+      "magic.group.oneBy": "The only work of this title by {name}",
       "magic.why.dupWriter": "of the works of this title, the one written by the release's artist",
       "magic.why.dupRecs": "of the works of this title, the one recorded most",
+      "magic.why.dupCount": "of the works of this title, the one with the most recordings in MusicBrainz",
       "magic.why.dupPlain": "of the works of this title, the one without a version in its disambiguation",
       "magic.group.dupWriter": "Several works of this title: written by the release's artist",
       "magic.group.dupRecs": "Several works of this title: recorded most",
+      "magic.openWork": "Open the work in MusicBrainz (new tab)",
+      "magic.workWriters": "Writers: {names}",
+      "magic.workNoWriters": "No writers in MusicBrainz",
+      "magic.group.dupCount": "Several works of this title: most recordings in MusicBrainz",
       "magic.group.dupPlain": "Several works of this title: no version in the disambiguation",
       "magic.skipHead.one": "Not answered: {n} track – choose by hand in its row",
       "magic.skipHead.other": "Not answered: {n} tracks – choose by hand in their rows",
@@ -2602,6 +2611,7 @@
       "magic.skip.tribute": "a work of the artist of the tribute – check it",
       "magic.skip.level": "one work of this title, not answered at this level",
       "magic.skip.searching": "its search is still running",
+      "magic.skip.counting": "counting the recordings of its {n} works …",
       "magic.group.same": "One work for several tracks",
       "magic.group.part": "Parts of a suite or a medley",
       "magic.group.new": "New works",
@@ -5986,6 +5996,10 @@
     { id: 'S535', where: 'foundDateText', note: 'Dates (3.225.0; collected item Z-OCRDATES): the dates of a text added as a source – read from images, typed or pasted, a Bandcamp page – are found too (until 3.224.0 only those of the source imported and of Wikipedia), with their sections (S534)' },
     { id: 'S536', where: 'loadSupplement (groups), checkGroupMembers', note: 'Members (3.225.0; collected item Z-SUPPGROUPS; S087, S213): the groups of a text added as a source ("Dreamtime is:" with its members below) join those of the source imported and are checked again – "＋ member of Dreamtime" and "Create artist" fill in the group and the instruments of this release from it too' },
     { id: 'S537', where: 'instsVocalOne, loadRelease (S339)', note: 'Instruments (3.225.0; collected item Z-VOCALSKEEP; S339, S490): vocals beside one instrument ("Zac Anderson - Guitar, Lead Vocals"), or beside a pair of S490 – stay on the tracks: the quick switch S339 does not put them on the release; two instruments or more beside the vocals are grouped as before' },
+    { id: 'S538', where: 'awDupPick, awCountLoad, magicPlan (pickFor, skip "counting")', note: 'Works (3.226.0; collected item Z-AWDUPCOUNT; S496): several works of exactly a track\'s title still tied after the writers and the counts read on the artists\' pages (those are budget-limited, a page from the cache has none): the recordings MusicBrainz links to each of them are loaded (once per work) – "✨ Answer all" takes the one with the most; while they load the track is listed as "counting". Still a tie: not answered. Switched off: as in 3.225.0 (not answered)' },
+    { id: 'S539', where: 'matchArtistWorks (awArtist), magicPlan (pickFor), sameNamed', note: 'Works (3.226.0; collected item Z-AWONEWORDING): no search runs over all of MusicBrainz – "the only work of this title" says where: "among the works of {artist}" (found on the page of an artist of the release) or "by {writers}" (the search among the works of the track\'s writers); the groups of the preview the same. Switched off: "the only work of this title found" for both' },
+    { id: 'S540', where: 'matchArtistWorks (coverOf), sameNamed, magicPlan', note: 'Works (3.226.0; collected item Z-COVERGROUP; S458, S467): a work in the repertoire of the artist of a tribute is a cover of his in "✨ Answer all" ("cover of … by / performed by …", "cover" on its link) – also when it was found through an artist of the release or the search too; the yellow mark of S407 (found through him only) stays as it was. Switched off: such a work is linked without "cover", as until 3.225.0' },
+    { id: 'S541', where: 'magicWorkTip, magicPopHtml (magic-worklink)', note: 'Works (3.226.0; collected item Z-MAGICWORKLINKS): each work the preview of "✨ Answer all" links has a small ↗ (the work in MusicBrainz, a new tab) – its tip: title and disambiguation, its writers (when the search loaded them) and where it was found ("work of {artist}", "recorded by …"). Switched off: no ↗' },
     { id: 'S469', where: 'dgLineupApply, sendDiscogsStatus', note: 'Lineup and track credits (3.220.0; collected item Z-LOPEZ; S217): a row the answer leaves out (a lineup row on no track any more, a track credit taken into the lineup row) keeps its line at the source – its places go to the person\'s row still there, so the companion marks the line ("Ramón López – percussion" where the titles give him drums on all of his tracks)' },
     { id: 'S410', where: 'freshForget, repeatImport, loadRelease', note: '"↻ Repeat import" (3.209.0; collected item Z-FRESHALL): "Start afresh" forgets everything the dashboard holds of the release – not only the changes of the rows and the choices of the works matrix (Z-RI, 3.40.16), also the date pool, the track pool and the date matrix, the choices of the box "Dedications & tributes", "✕ No suite", texts and parts of sources switched off, "skip the works", entries joined by hand, the ticks of suggestions, what is remembered of the release ("Remember changes"; nothing of the import before is stored on the way). Kept: what was created in MusicBrainz through the dashboard (the lists of created works and suites), the source and the media chosen, the log' },
     { id: 'S409', where: 'mergeEntries, joinEntry, applyEntryMerges, dmTargetOf (entry-merge), groupHtml (grip)', note: 'Entries (3.208.0; collected item Z-ENTITYMERGE): two entries of the same kind that are one – from different sources, written otherwise – are joined by hand: the grip ⠿ before the kind of an entry dropped onto another entry. The entry dropped onto stays (its link to MusicBrainz counts; without one it takes the other\'s), the rows of the other come to it – the same role once, each row credited as its source writes it, the other\'s name one of its names. Two different entries of MusicBrainz, or entries of different kinds: not joined, a message says why. Remembered for the release (joined again at the next import); ↶ in the message undoes it' },
@@ -50703,7 +50717,8 @@
     // [179] (3.38.16) a work both found: why the works of the artists found it, and its composer, with the search's entry
     const merged = own.map((x) => {
       const h = hits.find((w) => w.gid === x.gid);
-      return h ? { ...x, writers: uniq([...x.writers, ...h.writers]), ...(h.composer ? { composer: h.composer, composerName: h.composerName } : {}) } : x;
+      return h ? { ...x, writers: uniq([...x.writers, ...h.writers]), ...(h.composer ? { composer: h.composer, composerName: h.composerName } : {}),
+        ...(h.coverOf ? { coverOf: h.coverOf, coverBy: h.coverBy } : {}), ...(h.awArtist ? { awArtist: h.awArtist } : {}) } : x;
     });
     return [...merged, ...more];
   }
@@ -50917,6 +50932,8 @@
             : similar ? tr('works.viaComposer', { name: info.name })
             : tr(w.via === 'recorded' ? 'works.viaRecorded' : 'works.viaLinked', { name: info.name, recording: w.recording || '' });
           const hit = found.get(w.gid) || { gid: w.gid, title: w.title, type: w.type, disambiguation: w.disambiguation, aliases: w.aliases, writerIds: [], writers: [], artistWork: true };
+          // [Z-AWONEWORDING] (3.226.0, S539) whose works it was found among ("the only work of this title among the works of …")
+          if (!hit.awArtist) hit.awArtist = info.name;
           if (!hit.writers.includes(via)) hit.writers.push(via);
           // [Z-AWDUP] (3.223.0, S496) a work on the page of an artist of the release or a writer of the track (written by them), and the most
           // recordings of it read of one artist – what decides between works of one title
@@ -50925,6 +50942,9 @@
           // [Z-TRIBUTEWORKS2] (3.207.0, S407) found only through the artist of a tribute: a suggestion in yellow ("work of Sonny Rollins")
           if (info.why === 'tribute' && !comp) {
             if (!found.has(w.gid)) hit.tribute = info.name;
+            // [Z-COVERGROUP] (3.226.0, S540) in the repertoire of the artist of the tribute: a cover, whatever else found it (the yellow mark of
+            // S407 stays for a work found through him only)
+            if (ruleOn('S540')) Object.assign(hit, { coverOf: info.name, coverBy: hit.coverBy || w.via === 'linked' });
             // [Z-COVERSHOW] (3.218.0, S458) a work on the artist's own page (written by the artist of the tribute – no performer of the
             // release: a tribute is no credit): its composer, for "by …" at the work and "co?" (a cover) at its link
             if (ruleOn('S458') && w.via === 'linked' && !hit.composer) Object.assign(hit, { composer: mbid, composerName: info.name });
@@ -53233,7 +53253,44 @@
     const recs = (w) => w.awRecs || 0;
     const best = Math.max(...byWriter.map(recs));
     const top = byWriter.filter((w) => recs(w) === best);
-    return best > 0 && top.length === 1 ? { pick: top[0], why: 'magic.why.dupRecs' } : null;
+    if (best > 0 && top.length === 1) return { pick: top[0], why: 'magic.why.dupRecs' };
+    // [Z-AWDUPCOUNT] (3.226.0, S538) still a tie (the counts of the artists' pages are budget-limited, a cached page has none): the
+    // recordings MusicBrainz links to each work, loaded once per work – while they load the track waits ("counting")
+    if (!ruleOn('S538')) return null;
+    const cnt = S.awRecCount || (S.awRecCount = new Map());
+    const missing = byWriter.filter((w) => !cnt.has(w.gid));
+    if (missing.length) {
+      missing.forEach((w) => awCountLoad(w.gid));
+      return { pending: true };
+    }
+    const n = (w) => (typeof cnt.get(w.gid) === 'number' ? cnt.get(w.gid) : -1);
+    if (byWriter.some((w) => n(w) < 0 && cnt.get(w.gid) === 'loading')) return { pending: true };
+    const most = Math.max(...byWriter.map(n));
+    const top2 = byWriter.filter((w) => n(w) === most);
+    return most > 0 && top2.length === 1 ? { pick: top2[0], why: 'magic.why.dupCount' } : null;
+  }
+  /** [Z-AWDUPCOUNT] (3.226.0, S538) the number of recordings linked to a work ('loading' while it loads, -1 when it failed). */
+  function awCountLoad(gid) {
+    const cnt = S.awRecCount || (S.awRecCount = new Map());
+    if (cnt.has(gid) || !MBID_RE.test(String(gid || ''))) return;
+    cnt.set(gid, 'loading');
+    const rel = S.release;
+    mbWs(`work/${gid}?inc=recording-rels`).then((w) => {
+      cnt.set(gid, new Set(((w && w.relations) || []).filter((r) => r['target-type'] === 'recording' && r.recording).map((r) => r.recording.id)).size);
+    }).catch((e) => { cnt.set(gid, -1); console.warn('[Discogs-Credits]', e); })
+      .finally(() => { if (S.release === rel) { renderWorks(); refresh(); } });
+  }
+  /** [Z-MAGICWORKLINKS] (3.226.0, S541) The tip at a work of "✨ Answer all": its title and disambiguation, its writers, where it was found. */
+  function magicWorkTip(w) {
+    const known = !!(S.foundWorkRels && S.foundWorkRels.has(w.gid));
+    const rels = (known && S.foundWorkRels.get(w.gid)) || [];
+    const writers = uniq(rels.filter((r) => r['target-type'] === 'artist' && r.artist && /^(composer|lyricist|writer|librettist|translator|arranger|orchestrator)$/i.test(r.type || ''))
+      .map((r) => `${r.artist.name} (${r.type})`));
+    const lines = [`${w.title}${w.disambiguation ? ` (${w.disambiguation})` : ''}`];
+    if (known) lines.push(writers.length ? tr('magic.workWriters', { names: writers.join(', ') }) : tr('magic.workNoWriters'));
+    const via = (w.writers || []).filter((x) => !writers.includes(x) && !/\((composer|lyricist|writer|librettist|translator|arranger|orchestrator)\)$/i.test(x));
+    if (via.length) lines.push(...via);
+    return lines.join('\n');
   }
   function magicPlan() {
     if (!S.release || S.worksSkip) return [];
@@ -53313,6 +53370,13 @@
           if (ex.length === 1 && cands.filter((w) => normTitle(w.title) === title).length === 1 && magicAt('balanced')) [pick, why] = [ex[0], 'magic.why.tribute'];
         } else if (cands.length === 1 && exact.length === 1 && sameWriters(exact[0])) [pick, why] = [exact[0], 'magic.why.exact'];
         else if (cands.length === 1 && magicAt('balanced')) [pick, why] = [cands[0], 'magic.why.one'];
+        // [Z-AWONEWORDING] (3.226.0, S539) no search runs over all of MusicBrainz: the only work among the works of an artist of the release
+        // (its page) or among those of the track's writers (the search) – said so
+        if (pick && why === 'magic.why.one' && ruleOn('S539')) {
+          const writers = [...creditedWritersOf(i).values()];
+          if (pick.awArtist) [pick, why] = [{ ...pick, oneName: pick.awArtist }, 'magic.why.oneArtist'];
+          else if (writers.length) [pick, why] = [{ ...pick, oneName: writers.join(', ') }, 'magic.why.oneBy'];
+        }
         else if (cands.length > 1 && magicAt('bold')) {
           // (several: the one of exactly this title with the most of the track's writers – MusicBrainz's numbers of recordings are not loaded)
           const score = (w) => (Array.isArray(w.writerIds) ? people.filter((id) => w.writerIds.includes(id)).length : 0);
@@ -53324,6 +53388,7 @@
         // one recorded most; a disambiguation naming a version ("second variation") is not the work of the plain title
         if (!pick && cands.length > 1 && ruleOn('S496') && magicAt('balanced') && !cands.some((w) => w.loose || w.tribute)) {
           const r = awDupPick(i, cands, title);
+          if (r && r.pending) return { pick: null, why: '', cands, counting: true };
           if (r) [pick, why] = [r.pick, r.why];
         }
         return { pick, why, cands };
@@ -53351,12 +53416,12 @@
         const r = rs.find((x) => x.pick) || { pick: null, why: '', cands: rs.flatMap((x) => x.cands) };
         if (r.pick) {
           const w = r.pick;
-          out.push({ kind: 'work', i: open[0], tracks: [...g.tracks], label, group: 'same', what: `${tr('magic.what.sameOne', { title: w.title, n: g.tracks.length })} – ${tr(r.why)}`,
-            apply: () => sameWorkOne(g, { gid: w.gid, title: w.title }) });
+          out.push({ kind: 'work', i: open[0], tracks: [...g.tracks], label, group: 'same', what: `${tr('magic.what.sameOne', { title: w.title, n: g.tracks.length })} – ${tr(r.why, { name: w.oneName || '' })}`,
+            ...(ruleOn('S541') ? { workGid: w.gid, workTip: magicWorkTip(w) } : {}), apply: () => sameWorkOne(g, { gid: w.gid, title: w.title }) });
         } else if (!r.cands.length && (magicAt('bold') || (magicAt('balanced') && g.exact && g.sameWriters))) {
           out.push({ kind: 'work', i: open[0], tracks: [...g.tracks], label, group: 'same', what: tr('magic.what.sameNew', { title: g.title, n: g.tracks.length }), apply: () => sameWorkOne(g) });
         } else if (r.cands.length) {
-          skip(label, open[0], g.title, skipWhy([...new Map(r.cands.map((w) => [w.gid, w])).values()]), r.cands, open.length);
+          skip(label, open[0], g.title, rs.some((x) => x.counting) ? 'counting' : skipWhy([...new Map(r.cands.map((w) => [w.gid, w])).values()]), r.cands, open.length);
         } else if (!r.cands.length) {
           const i = open[0];
           out.push({ kind: 'work', i, label: tl(i), group: 'same', what: tr('magic.what.sameFirst', { title: g.title }),
@@ -53377,18 +53442,21 @@
           continue;
         }
         const { pick, why, cands } = r;
-        if (!pick && cands.length) skip(tl(i), i, workTitleOf(t.title), skipWhy(cands), cands);
+        if (!pick && cands.length) skip(tl(i), i, workTitleOf(t.title), r.counting ? 'counting' : skipWhy(cands), cands);
         if (pick) {
           const w = pick;
           // [Z-MAGICWORDS] (3.220.0, S467) a work of the artist of a tribute: "cover of “Doxy” by Sonny Rollins" (his work) or "… performed by
           // Sonny Rollins" (a song he played) – linked and "cover" on its link in one answer; a click on "cover" strikes it (linked only)
-          const trib = ruleOn('S467') && why === 'magic.why.tribute' && magicKindOn('cover');
-          const item = { kind: 'work', i, label: tl(i), what: tr('magic.what.pick', { title: w.title, why: tr(why) }) };
+          // [Z-COVERGROUP] (3.226.0, S540) a work also in the repertoire of the artist of the tribute: a cover of his like the others
+          const coverAlso = ruleOn('S540') && why !== 'magic.why.tribute' && !!w.coverOf;
+          const trib = ruleOn('S467') && (why === 'magic.why.tribute' || coverAlso) && magicKindOn('cover');
+          const item = { kind: 'work', i, label: tl(i), what: tr('magic.what.pick', { title: w.title, why: tr(why, { name: w.oneName || '' }) }) };
           if (ruleOn('S467')) {
-            const name = w.tribute || w.composerName || '';
-            const g = why === 'magic.why.tribute' ? (tributeBy(w) ? 'coverBy' : 'coverPerformed') : why.replace('magic.why.', '');
+            const name = coverAlso ? w.coverOf : (['magic.why.oneArtist', 'magic.why.oneBy'].includes(why) && w.oneName) || w.tribute || w.composerName || '';
+            const by = coverAlso ? !!w.coverBy : tributeBy(w);
+            const g = why === 'magic.why.tribute' || coverAlso ? (by ? 'coverBy' : 'coverPerformed') : why.replace('magic.why.', '');
             Object.assign(item, { group: g, groupName: name, short: tr(trib ? 'magic.what.coverOf' : 'magic.what.link', { title: w.title }), coverToggle: trib,
-              what: trib ? tr(tributeBy(w) ? 'magic.what.coverBy' : 'magic.what.coverPerformed', { title: w.title, name }) : tr('magic.what.linkWhy', { title: w.title, why: tr(why) }) });
+              what: trib ? tr(by ? 'magic.what.coverBy' : 'magic.what.coverPerformed', { title: w.title, name }) : tr('magic.what.linkWhy', { title: w.title, why: tr(why, { name: w.oneName || '' }) }) });
           }
           item.apply = () => {
             S.workPlan.set(i, { gid: w.gid, title: w.title, origin: 'search', flags: new Set(), composer: w.composer || '', composerName: w.composerName || '', magic: true });
@@ -53396,6 +53464,8 @@
             const coverUndo = trib && !S.magicNoCover.has(magicKey(item)) ? attrStep(i, { gid: w.gid, title: w.title, planned: true }, 'cover')() : null;
             return () => { if (coverUndo) coverUndo(); if ((S.workPlan.get(i) || {}).gid === w.gid) S.workPlan.delete(i); };
           };
+          // [Z-MAGICWORKLINKS] (3.226.0, S541) its work to open (↗), its writers as the tip
+          if (ruleOn('S541')) Object.assign(item, { workGid: w.gid, workTip: magicWorkTip(w) });
           out.push(item);
         } else if (!cands.length && magicAt('balanced')) {
           out.push({ kind: 'work', i, label: tl(i), group: 'new', what: tr('magic.what.new', { title: workTitleOf(t.title) }),
@@ -53623,11 +53693,13 @@
       const btn = `<button type="button" class="dci-textbtn dci-magic-cover${off ? ' dci-struck' : ''}" data-act="magic-nocover" data-key="${esc(magicKey(x))}" aria-pressed="${!off}" title="${esc(tr(off ? 'magic.coverOnTitle' : 'magic.coverOffTitle'))}">${esc(word)}</button>`;
       return at < 0 ? `${esc(s)} ${btn}` : `${esc(s.slice(0, at))}${btn}${esc(s.slice(at + word.length))}`;
     };
+    // [Z-MAGICWORKLINKS] (3.226.0, S541) the work of an answer opened in a new tab, its writers as the tip
+    const open = (x) => (x.workGid && ruleOn('S541') ? ` <a class="dci-mx-arropen" data-el="magic-worklink" href="/work/${esc(x.workGid)}" target="_blank" rel="noopener" title="${esc(x.workTip || '')}" aria-label="${esc(tr('magic.openWork'))}">↗</a>` : '');
     const item = (x, k) => (ticks
-      ? `<li data-el="magic-item" data-kind="${k}"><label title="${esc(tr('magic.itemTitle'))}"><input type="checkbox" data-f="magic-item" data-key="${esc(magicKey(x))}"${S.magicSkip.has(magicKey(x)) ? '' : ' checked'}> ${esc(x.label)} – </label>${textOf(x)}${nameField(x)}</li>`
-      : `<li data-el="magic-item" data-kind="${k}">${esc(x.label)} – ${textOf(x)}</li>`);
+      ? `<li data-el="magic-item" data-kind="${k}"><label title="${esc(tr('magic.itemTitle'))}"><input type="checkbox" data-f="magic-item" data-key="${esc(magicKey(x))}"${S.magicSkip.has(magicKey(x)) ? '' : ' checked'}> ${esc(x.label)} – </label>${textOf(x)}${open(x)}${nameField(x)}</li>`
+      : `<li data-el="magic-item" data-kind="${k}">${esc(x.label)} – ${textOf(x)}${open(x)}</li>`);
     // [Z-MAGICWORDS] (3.220.0, S467) the answers of a kind in groups by their reason (its heading once), each by its track
-    const GROUPS = ['coverBy', 'coverPerformed', 'exact', 'most', 'dupWriter', 'dupRecs', 'dupPlain', 'one', 'same', 'part', 'new'];
+    const GROUPS = ['coverBy', 'coverPerformed', 'exact', 'most', 'dupWriter', 'dupRecs', 'dupCount', 'dupPlain', 'one', 'oneArtist', 'oneBy', 'same', 'part', 'new'];
     const groupsOf = (xs) => {
       const by = new Map();
       xs.forEach((x) => { const g = `${x.group || ''}\u0000${x.groupName || ''}`; if (!by.has(g)) by.set(g, []); by.get(g).push(x); });

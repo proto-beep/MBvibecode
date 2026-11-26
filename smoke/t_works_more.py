@@ -1733,7 +1733,7 @@ def case_magic3155():
     H.JS_WORKS[FOUND] = (7155, 'Song Two')
     H.WORK_SEARCH[:] = [{'id': FOUND, 'title': 'Song Two', 'type': 'Song', 'relations': [
         {'target-type': 'artist', 'type': 'composer', 'direction': 'backward', 'attributes': [], 'artist': {'id': WW, 'name': 'Writer W'}}]}]
-    PREVIEW = """(() => { const p = document.querySelector('[data-el=magic-preview]'); return p ? { items: [...p.querySelectorAll('[data-el=magic-item]')].map(x => [x.dataset.kind, x.textContent.trim()]),
+    PREVIEW = """(() => { const p = document.querySelector('[data-el=magic-preview]'); return p ? { items: [...p.querySelectorAll('[data-el=magic-item]')].map(x => [x.dataset.kind, x.textContent.replace(/\\s*↗/g, '').trim()]),
       text: p.textContent.replace(/\\s+/g, ' ').trim() } : null; })()"""
     PLAN = f"""(() => [...document.querySelectorAll('.dci-matrix tr[data-work="1"]')].map(tr => tr.textContent.includes('Song Two') && !!tr.querySelector('[data-act=work-unplan]')).some(Boolean))()"""
     MARK = "(() => { const m = document.querySelector('.dci-matrix tr[data-work=\"1\"] [data-el=magic-mark]'); return m ? m.title : null; })()"
@@ -3122,6 +3122,92 @@ def case_awdup3223():
         H.ARTIST_WORKS.pop(AY, None)
         H.ARTIST_WORKS.pop(DC, None)
         H.ARTIST_RECORDINGS.pop(AY, None)
+        H.RULES_OFF = []
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_awcount3226():
+    """Credits Importer 3.226.0 (collected items Z-AWDUPCOUNT, Z-AWONEWORDING; rules S538, S539): as awdup3223, but each "Spirits" recorded
+    once by Ayler on his page (a tie): MusicBrainz links three recordings to the second, one to the first.
+    A) "✨ Answer all" (balanced): "Spirits" – the second, "the one with the most recordings in MusicBrainz" (its recordings loaded: work
+       lookups of both); "Angels" "among the works of Albert Ayler"; "Children" (no recordings either) still listed: 2 works, none decides.
+    B) S538 off: "Spirits" not answered ("several"), no lookup of the works' recordings."""
+    T = ['Spirits', 'Vibrations', 'Saints', 'Mothers', 'Children', 'Spirits', 'Vibrations', 'Saints', 'Spirits', 'Ghosts', 'Children',
+         'Holy Spirit', 'Ghosts', 'Vibrations', 'Mothers', 'Angels', 'C.A.C.', 'Ghosts', 'Infant Happiness', 'Spirits', 'No Name']
+    rec0, titles0, media0, ac0, dg0, ws0 = list(H.REC), list(H.TITLES), H.MEDIA, list(H.RELEASE_AC), H.discogs_release, H.ws_release
+    H.TITLES[:] = T
+    H.REC[:] = [H.uid('bbbbbbbb', i) for i in range(1, 22)]
+    H.MEDIA = [11, 10]
+    AY, DC = H.uid('dddddddd', 3870), H.uid('dddddddd', 3871)
+    H.RELEASE_AC[:] = [(AY, 'Albert Ayler', 'Albert Ayler', ' with '), (DC, 'Don Cherry', 'Don Cherry', '')]
+    W = lambda k: H.uid('7a7a7a7a', k)
+    works = {'Spirits': 1, 'Vibrations': 2, 'Saints': 3, 'Mothers': 4, 'Children': 5, 'Ghosts': 6, 'Holy Spirit': 7, 'Angels': 8, 'Infant Happiness': 9}
+    ayw = [{'id': W(k), 'title': t, 'type': 'Song', 'aliases': []} for t, k in works.items()]
+    ayw += [{'id': W(11), 'title': 'Spirits', 'type': 'Song', 'aliases': []}, {'id': W(13), 'title': 'Saints', 'type': '', 'aliases': []},
+            {'id': W(16), 'title': 'Ghosts', 'type': 'Song', 'aliases': [], 'disambiguation': 'second variation'}, {'id': W(15), 'title': 'Children', 'type': 'Song', 'aliases': []},
+            {'id': W(22), 'title': 'Angel', 'type': 'Song', 'aliases': []}]
+    rw = lambda k, t: {'title': t, 'work': {'id': W(k), 'title': t}}
+    H.ARTIST_WORKS.update({AY: ayw, DC: [{'id': W(30), 'title': 'C.A.C.', 'type': 'Song', 'aliases': []}]})
+    H.ARTIST_RECORDINGS[AY] = [rw(1, 'Spirits'), rw(11, 'Spirits')] + [rw(3, 'Saints')] * 2 + [rw(13, 'Saints')] * 3
+    recrel = lambda k: {'target-type': 'recording', 'type': 'performance', 'direction': 'backward', 'recording': {'id': H.uid('cccccccc', k), 'title': 'Spirits'}}
+    H.MB_EXTRA[W(1)] = [recrel(1)]
+    H.MB_EXTRA[W(11)] = [recrel(2), recrel(3), recrel(4)]
+
+    def dg():
+        d = dg0()
+        d['artists'] = [{'name': 'Albert Ayler', 'id': 2999, 'anv': '', 'role': '', 'join': 'with'}]
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+
+    def ws(full=False):
+        d = ws0(full)
+        for m in d.get('media', []):
+            for t in m.get('tracks', []):
+                r = t.get('recording', {})
+                r['relations'] = [x for x in r.get('relations', []) if x.get('target-type') != 'work']
+        return d
+    H.discogs_release, H.ws_release = dg, ws
+    results = []
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        ctx.add_init_script("localStorage.setItem('dci-aw-ask', '0'); localStorage.setItem('dci-magic-level', JSON.stringify('balanced'));")
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Works of the artists compared/.test(li.textContent))", 120)
+        pg.wait_for_timeout(2500)
+        pg.locator('[data-el=works] [data-act=magic-open]').first.evaluate('b => b.click()')
+        pg.wait_for_timeout(1000)
+        items = pg.evaluate("[...document.querySelectorAll('[data-el=magic-item]')].map(x => x.textContent.replace(/\\s+/g, ' ').trim())")
+        skip = pg.evaluate("[...document.querySelectorAll('[data-el=magic-skip]')].map(x => [x.dataset.why, x.textContent.replace(/\\s+/g, ' ').trim()])")
+        b.close()
+        return items, skip, errs
+    try:
+        with sync_playwright() as p:
+            H.WORK_LOOKUPS.clear()
+            items, skip, errs = run(p)
+            has = lambda xs, a, b: any(a in x and b in x for x in xs)
+            print('A)', items, skip, H.WORK_LOOKUPS)
+            results.append(has(items, '“Spirits”', 'most recordings in MusicBrainz') and W(1) in H.WORK_LOOKUPS and W(11) in H.WORK_LOOKUPS
+                           and any('“Spirits”' in x and '↗' in x for x in items) and has(items, '“Vibrations”', 'among the works of Albert Ayler')
+                           and any(w == 'several' and 'Children' in t for w, t in skip) and not errs)
+            H.WORK_LOOKUPS.clear()
+            items2, skip2, errs2 = run(p, off=['S538'])
+            print('B)', items2, skip2, H.WORK_LOOKUPS)
+            results.append(not any('“Spirits”' in x for x in items2) and any(w == 'several' and 'Spirits' in t for w, t in skip2) and W(11) not in H.WORK_LOOKUPS and not errs2)
+    finally:
+        H.REC[:], H.TITLES[:], H.MEDIA, H.RELEASE_AC[:] = rec0, titles0, media0, ac0
+        H.discogs_release, H.ws_release = dg0, ws0
+        H.ARTIST_WORKS.pop(AY, None)
+        H.ARTIST_WORKS.pop(DC, None)
+        H.ARTIST_RECORDINGS.pop(AY, None)
+        H.MB_EXTRA.pop(W(1), None)
+        H.MB_EXTRA.pop(W(11), None)
         H.RULES_OFF = []
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
