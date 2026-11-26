@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-26 | 3.224.0 | 1.24.0 |
+| 2026-11-26 | 3.224.0 – 3.225.0 | 1.24.0 |
 | 2026-11-25 | 3.218.0 – 3.223.0 | 1.24.0 |
 | 2026-11-24 | 3.213.0 – 3.217.0 | – |
 | 2026-11-23 | 3.210.0 – 3.212.0 | – |
@@ -140,6 +140,15 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.225.0
+
+**Sections of a cover as the text recognition reads it, their dates, members and vocals from an added text.**
+
+- **Sections** (rule S533): a lineup with track lines of its own is a section even without the band's heading (the text recognition skips ornamental letters) – its lineup and credits on its tracks; the track lines found also as the text recognition reads them ("01 1E" – "I E"), else by their numbers counted on.
+- **Dates** (rules S534, S535): a date in such a section is a date of its tracks ("Recorded and produced by Nik Rayne August 2016 …" – 2016-08 for tracks 4 and 5; "… summer of 2016" – 2016 for 1–3); the dates of a text added as a source (from images, typed, a Bandcamp page) are found and placed too.
+- **Members** (rule S536): "Dreamtime is:" with its members in an added text – "＋ member of Dreamtime" and "Create artist" fill in the group and the instruments from it.
+- **Vocals** (rule S537): vocals beside one instrument stay on the tracks (the quick switch "Instruments → release" leaves them); two instruments or more are grouped as before.
 
 ### Import 3.224.0
 
