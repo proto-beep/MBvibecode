@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-26 | 3.224.0 – 3.227.0 | 1.25.0 |
+| 2026-11-26 | 3.224.0 – 3.228.0 | 1.25.0 |
 | 2026-11-25 | 3.218.0 – 3.223.0 | 1.24.0 |
 | 2026-11-24 | 3.213.0 – 3.217.0 | – |
 | 2026-11-23 | 3.210.0 – 3.212.0 | – |
@@ -140,6 +140,15 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.228.0
+
+**Bandcamp lines: improvised among other tasks, a name's own site, edition and shipping lines, initials.**
+
+- **"Music composed, improvised and recorded by …"** (rule S546): composer and recorded by as written, the person also the performer credited "improvised" – MusicBrainz has no role for improvising, the row says so. "Improvised by …" alone stays the composer of improvisations.
+- **A name's own site** (rule S547): "Art "La Chute" by Alison Flora : www.alison-flora.com" – the site is her link, "Create artist" fills it in as "official homepage" (only a site whose address is the name's letters).
+- **Edition and shop lines** (rule S548): "CDr Limited Edition / hand made." left out as an edition, "WARNING! NO SHIPPING TO THE U.S." as shop – also alone in the text of a Bandcamp edition.
+- **Initials** (rule S549): "Improvised by Caleb R.K. Williams" – the whole name.
 
 ### Import 3.227.0 · COMPANION 1.25.0
 
