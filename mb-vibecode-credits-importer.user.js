@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.226.0
+// @version      3.227.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.226.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.226.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.227.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.227.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.226.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.227.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -271,6 +271,8 @@
       "supp.th.name": "Name",
       "supp.th.rel": "MB relationship",
       "supp.kind.role": "new role",
+      "supp.group.role": "{n} new roles",
+      "supp.group.openTitle": "Show or fold the single entries of this line",
       "supp.kind.entry": "new entry",
       "supp.kind.differ": "differs",
       "supp.kind.unrec": "not recognized",
@@ -378,6 +380,8 @@
       "textsrc.hint": "One credit per line works best: “Mixed by X”, “X – guitar, vocals”, “Guitar: X, Y”, “Tracks 3–5: Strings arranged by Z”. Names are only suggested; you assign them.",
       "unrec.title.one": "{n} line not recognized",
       "unrec.title.other": "{n} lines not recognized",
+      "unrec.reading": "still being read",
+      "unrec.readingTitle": "The import is still reading – these lines may yet be recognized or left out with a reason",
       "unrec.hint": "Add what is missing by hand (“Add entry manually”) or rewrite the line and read the text again.",
       "una.hint": "Click a word to give it an entry (⇧-click: the words up to it).",
       "una.wordTitle": "Click: the group of words (a name, a label, a place …) · click it again: only this word · ⇧-click: the words up to it",
@@ -3280,6 +3284,9 @@
       "settings.compNone": "The Script Companion has not been seen in this browser yet – its switches show here once it is installed (and a Discogs or Bandcamp tab was open).",
       "settings.compInstall": "Install the Script Companion",
       "sync.dgArtworkHint": "Only on Discogs: the small cover at the top of the tab – it can be dragged and shows the artwork larger.",
+      "sync.bcHiRes": "High-resolution images",
+      "sync.bcHiResTitle": "Bandcamp: the companion's large image shows the artwork as uploaded, not Bandcamp's smaller view (companion 1.25.0)",
+      "log.bcHiRes": "High-resolution images on Bandcamp: {state}",
       "log.dgArtwork": "Cover miniature on Discogs: {state}",
       "dgStatus.artwork": "Cover art from Discogs – click: large in the page, drag to move",
       "dgStatus.artworkHide": "Hide the cover",
@@ -6000,6 +6007,10 @@
     { id: 'S539', where: 'matchArtistWorks (awArtist), magicPlan (pickFor), sameNamed', note: 'Works (3.226.0; collected item Z-AWONEWORDING): no search runs over all of MusicBrainz – "the only work of this title" says where: "among the works of {artist}" (found on the page of an artist of the release) or "by {writers}" (the search among the works of the track\'s writers); the groups of the preview the same. Switched off: "the only work of this title found" for both' },
     { id: 'S540', where: 'matchArtistWorks (coverOf), sameNamed, magicPlan', note: 'Works (3.226.0; collected item Z-COVERGROUP; S458, S467): a work in the repertoire of the artist of a tribute is a cover of his in "✨ Answer all" ("cover of … by / performed by …", "cover" on its link) – also when it was found through an artist of the release or the search too; the yellow mark of S407 (found through him only) stays as it was. Switched off: such a work is linked without "cover", as until 3.225.0' },
     { id: 'S541', where: 'magicWorkTip, magicPopHtml (magic-worklink)', note: 'Works (3.226.0; collected item Z-MAGICWORKLINKS): each work the preview of "✨ Answer all" links has a small ↗ (the work in MusicBrainz, a new tab) – its tip: title and disambiguation, its writers (when the search loaded them) and where it was found ("work of {artist}", "recorded by …"). Switched off: no ↗' },
+    { id: 'S542', where: 'loadRelease (unrecReading), renderSource (dci-unrec-pending)', note: 'Texts (3.227.0; collected item Z-UNRECPENDING): while the import still reads (editions, track pages, notes), its lines not recognized are set off – a light block with a dashed line at its left, ⏳ "still being read" at the heading and each line (they may still be recognized or left out with a reason); when it is complete the mark and the colour just go, no hint. Switched off: no mark' },
+    { id: 'S543', where: 'the dashboard\'s body (dci-stick-gap)', note: 'Layout (3.227.0; collected item Z-STICKYOVERLAP): the bar "Add entry manually" (with the date pool, sticking when scrolling) no longer pulls itself over the line above it – "▸ 1 line left out on purpose" was cut in half. Switched off: as until 3.226.0' },
+    { id: 'S544', where: 'renderSupp (groupedRows), supp-group, supp-group-open', note: 'Added sources (3.227.0; collected item Z-CMPGROUP): the new roles one line of an added source gives one person ("NIK RAYNE: vocals, guitar, tape loops …") are one row of the comparison – the person, "6 new roles" with a tick each and one for all, the line once, why the trust of the sources chose so once; ▸ shows the single rows. Switched off: a row each, as until 3.226.0' },
+    { id: 'S545', where: 'sendDiscogsStatus (lang, hiRes), settings (data-bc-hires); the companion 1.25.0', note: 'Companion 1.25.0 (3.227.0; collected items Z-BCHIRES, Z-COMPLANG): "High-resolution images" (⚙ Settings → Source pages, on) – on Bandcamp the companion\'s large image shows the artwork as uploaded ("_0") in place of the page\'s large view ("_10"; that one again when it does not load), also the photos of the editions; the companion\'s own texts in the dashboard\'s language (en/de/es/fr; on musicbrainz.org read, kept for the other sites). Switched off: Bandcamp\'s large view; the language is passed on either way' },
     { id: 'S469', where: 'dgLineupApply, sendDiscogsStatus', note: 'Lineup and track credits (3.220.0; collected item Z-LOPEZ; S217): a row the answer leaves out (a lineup row on no track any more, a track credit taken into the lineup row) keeps its line at the source – its places go to the person\'s row still there, so the companion marks the line ("Ramón López – percussion" where the titles give him drums on all of his tracks)' },
     { id: 'S410', where: 'freshForget, repeatImport, loadRelease', note: '"↻ Repeat import" (3.209.0; collected item Z-FRESHALL): "Start afresh" forgets everything the dashboard holds of the release – not only the changes of the rows and the choices of the works matrix (Z-RI, 3.40.16), also the date pool, the track pool and the date matrix, the choices of the box "Dedications & tributes", "✕ No suite", texts and parts of sources switched off, "skip the works", entries joined by hand, the ticks of suggestions, what is remembered of the release ("Remember changes"; nothing of the import before is stored on the way). Kept: what was created in MusicBrainz through the dashboard (the lists of created works and suites), the source and the media chosen, the log' },
     { id: 'S409', where: 'mergeEntries, joinEntry, applyEntryMerges, dmTargetOf (entry-merge), groupHtml (grip)', note: 'Entries (3.208.0; collected item Z-ENTITYMERGE): two entries of the same kind that are one – from different sources, written otherwise – are joined by hand: the grip ⠿ before the kind of an entry dropped onto another entry. The entry dropped onto stays (its link to MusicBrainz counts; without one it takes the other\'s), the rows of the other come to it – the same role once, each row credited as its source writes it, the other\'s name one of its names. Two different entries of MusicBrainz, or entries of different kinds: not joined, a message says why. Remembered for the release (joined again at the next import); ↶ in the message undoes it' },
@@ -31572,9 +31583,35 @@
     const unrecs = sp.items.filter((it) => it.kind === 'unrec');
     const foldUnrec = ruleOn('S477') && unrecs.length >= 4;
     const unrecOpen = foldUnrec && !!readJson('localStorage', SUPP_UNREC_KEY, false);
+    // [Z-CMPGROUP] (3.227.0, S544) the roles one line of the added source gives one person ("NIK RAYNE: vocals, guitar, tape loops …"):
+    // one row – the person, "6 new roles" with a tick each and one for all, the line once, why the trust chose so once; ▸ opens the rows
+    const groupKey = (it) => (it.kind === 'role' && !it.more && it.artistKey && it.line ? `${it.artistKey}|${it.line}` : '');
+    const groupedRows = (items) => {
+      if (!ruleOn('S544')) return items.map(rowOf).join('');
+      const by = new Map();
+      items.forEach((it) => { const k = groupKey(it); if (k) { if (!by.has(k)) by.set(k, []); by.get(k).push(it); } });
+      const done = new Set();
+      return items.map((it) => {
+        const k = groupKey(it);
+        const g = k ? by.get(k) : null;
+        if (!g || g.length < 2) return rowOf(it);
+        if (done.has(k)) return '';
+        done.add(k);
+        const a = S.artists.get(it.artistKey) || { name: it.name };
+        const open = !!(S.suppGroupOpen && S.suppGroupOpen.has(k));
+        const head = tr('supp.group.role', { n: g.length });
+        const allOn = g.every((x) => x.sel);
+        const chips = g.map((x) => `<label class="dci-supp-gchip"><input type="checkbox" data-f="supp-sel" data-id="${x.id}" ${x.sel ? 'checked' : ''}> ${esc(String(x.rel || '–').replace(/^instrument · /, ''))}</label>`).join(' ');
+        const why = g.map(whyRow).find(Boolean) || '';
+        return `<tr class="dci-supp-row dci-supp-grouprow" data-el="supp-group" data-n="${g.length}">
+          <td><input type="checkbox" data-f="supp-group" data-ids="${esc(g.map((x) => x.id).join(' '))}" ${allOn ? 'checked' : ''} aria-label="${esc(`${head}: ${a.name}`)}"></td>
+          <td><button type="button" class="dci-textbtn" data-act="supp-group-open" data-key="${esc(k)}" aria-expanded="${open}" title="${esc(tr('supp.group.openTitle'))}">${open ? '▾' : '▸'}</button></td>
+          <td><strong>${esc(a.name)}</strong></td><td colspan="2"><div>${esc(head)}: ${chips}</div><div class="dci-sub">${mainCell(g[0])}</div></td><td>${addCell(g[0])}</td><td>${mbCell(g[0])}</td></tr>${why}${open ? g.map((x) => rowOf(x).replace(/<tr class="dci-supp-why">[\s\S]*$/, '')).join('') : ''}`;
+      }).join('');
+    };
     const rows = foldUnrec
-      ? `${sp.items.filter((it) => it.kind !== 'unrec').map(rowOf).join('')}<tr class="dci-supp-unrecfold"><td></td><td colspan="6"><button type="button" class="dci-textbtn" data-act="supp-unrec-fold" aria-expanded="${unrecOpen}">${unrecOpen ? '▾' : '▸'} ${esc(tr('supp.unrecFold', { n: unrecs.length }))}</button></td></tr>${unrecOpen ? unrecs.map(rowOf).join('') : ''}`
-      : sp.items.map(rowOf).join('');
+      ? `${groupedRows(sp.items.filter((it) => it.kind !== 'unrec'))}<tr class="dci-supp-unrecfold"><td></td><td colspan="6"><button type="button" class="dci-textbtn" data-act="supp-unrec-fold" aria-expanded="${unrecOpen}">${unrecOpen ? '▾' : '▸'} ${esc(tr('supp.unrecFold', { n: unrecs.length }))}</button></td></tr>${unrecOpen ? unrecs.map(rowOf).join('') : ''}`
+      : groupedRows(sp.items);
     // ((review) the more precise ones and the names to check counted too
     const summary = tr('supp.summary', { confirmed: sp.confirmed, added: count('role') + count('entry'), differ: count('differ'), unrec: count('unrec') })
       + (count('precise') + count('name') ? tr('supp.summaryPrecise', { n: count('precise') + count('name') }) : '') + (count('spell') ? tr('supp.summarySpell', { n: count('spell') }) : '');
@@ -33644,6 +33681,8 @@
       S.source = source;
       SOURCE_NAME = source.name;
       S.release = rel;
+      // [Z-UNRECPENDING] (3.227.0, S542) until the import is complete its lines not recognized may still be read or left out with a reason
+      S.unrecReading = ruleOn('S542');
       // [Z-EXC] (3.49.0) the covers and quotes of the text (their works looked up once the rows are there)
       S.workNotesRel = rel;
       // [Z-CIMP] (3.101.0, S162) "track 7 SOLO: …" asked at the person; duos … applied by the text (logged)
@@ -33963,8 +34002,10 @@
         }
       }
       setBusy('');
+      if (S.unrecReading) { S.unrecReading = false; renderSource(); }
     } catch (e) {
       setBusy('');
+      if (S.unrecReading) { S.unrecReading = false; renderSource(); }
       showError(e);
       // [AY] (3.40.0, review) the tab of "Count exactly": the release page is told (on the flag of the release)
       if (S.autostartFrom === 'count' && releaseMbid) writeJson('localStorage', `${GAP_COUNT_PREFIX}${releaseMbid.toLowerCase()}`, { failed: true, at: Date.now() });
@@ -36345,8 +36386,12 @@
     // [3.37.4] a line of the cover art: its place in the image while the mouse rests on it (item 154)
     const peekHint = (lines) => (lines.some((l) => linePeekHits(l).length) ? `<p class="dci-sub dci-linepeek-hint">${esc(tr('cover.linePeekHint'))}</p>` : '');
     // [Z-UNA] (3.42.4) each word to click (⇧: the words up to it), a form below the line gives them an entry
-    const unrecHtml = unrec.length ? `<details class="dci-unrec"${S.una || S.unaOpen ? ' open' : ''}><summary>${esc(tr('unrec.title', { n: unrec.length }))}</summary>
-      <ol>${unrec.map((l, i) => `<li${linePeekAttrs(l)}>${unaWordsHtml(l, i)}${S.una && S.una.li === i && S.una.line === l ? unaFormHtml(l) : ''}</li>`).join('')}</ol>${peekHint(unrec)}
+    // [Z-UNRECPENDING] (3.227.0, S542) while the import still reads: the block set off (light, dashed) and ⏳ at its heading and each line
+    const pend = !!S.unrecReading && ruleOn('S542');
+    const pendMark = pend ? ` <span class="dci-unrec-wait" data-el="unrec-wait" title="${esc(tr('unrec.readingTitle'))}">⏳ ${esc(tr('unrec.reading'))}</span>` : '';
+    const pendLine = pend ? `<span class="dci-unrec-wait" title="${esc(tr('unrec.readingTitle'))}" aria-label="${esc(tr('unrec.reading'))}">⏳</span> ` : '';
+    const unrecHtml = unrec.length ? `<details class="dci-unrec${pend ? ' dci-unrec-pending' : ''}"${pend ? ' data-pending="1"' : ''}${S.una || S.unaOpen ? ' open' : ''}><summary>${esc(tr('unrec.title', { n: unrec.length }))}${pendMark}</summary>
+      <ol>${unrec.map((l, i) => `<li${linePeekAttrs(l)}>${pendLine}${unaWordsHtml(l, i)}${S.una && S.una.li === i && S.una.line === l ? unaFormHtml(l) : ''}</li>`).join('')}</ol>${peekHint(unrec)}
       <p class="dci-sub">${esc(tr('unrec.hint'))} ${esc(tr('una.hint'))}</p></details>` : '';
     // [3.21.0] lines left out on purpose (thanks, endorsements, web addresses – T030, T032), apart from those not recognized
     const ign0 = (rel && rel.ignored) || [];
@@ -45139,6 +45184,7 @@
   S.fillCredits = readJson('localStorage', 'dci-fill-credits', false) === true;
   S.dgRelease = readJson('localStorage', 'dci-dg-release', true) !== false;
   S.dgArtwork = readJson('localStorage', 'dci-dg-artwork', true) !== false;
+  S.bcHiRes = readJson('localStorage', 'dci-bc-hires', true) !== false; // [Z-BCHIRES] (3.227.0, S545) companion 1.25.0
   // [3.17.5] a click on a mark switches its credit (on), the marks stay after the editor is closed (off)
   S.clickToggle = readJson('localStorage', 'dci-click-toggle', true) !== false;
   S.keepMarks = readJson('localStorage', 'dci-keep-marks', false) === true;
@@ -55474,7 +55520,9 @@
       const wiki = wItems.length ? (S.supp.rel.wikiRead || []).map((art) => ({ releaseId: `${art.lang}:${art.title}`, items: wItems })) : [];
       toDiscogs({ type: 'status-map', site, releaseId, enabled: !!S.dgStatus, artwork: site === 'discogs' && !!S.dgArtwork, items: releaseId ? items : [], labels, texts,
         targets: [...targetIndex.keys()], mbRelease: (location.pathname.match(MBID_RE) || [])[0] || '', keepOnRelease: !!S.dgRelease,
-        toggle: !!S.clickToggle, keepAfterClose: !!S.keepMarks, ...(wiki.length ? { wiki } : {}) });
+        toggle: !!S.clickToggle, keepAfterClose: !!S.keepMarks, ...(wiki.length ? { wiki } : {}),
+        // [Z-COMPLANG] [Z-BCHIRES] (3.227.0, S545) the dashboard's language and "High-resolution images" for the companion (1.25.0)
+        lang: LANG, hiRes: !!S.bcHiRes && ruleOn('S545') });
     };
     // ([Z-CPREMOVED] 3.131.0) at "Enter edit" at once – the page is left
     if (now) send();
@@ -59801,6 +59849,15 @@
         renderGroups();
         renderWorks();
         break;
+      case 'supp-group-open': { // [Z-CMPGROUP] (3.227.0, S544) the rows of a group shown or folded
+        if (!S.suppGroupOpen) S.suppGroupOpen = new Set();
+        const k = btn.dataset.key || '';
+        if (S.suppGroupOpen.has(k)) S.suppGroupOpen.delete(k); else S.suppGroupOpen.add(k);
+        renderSupp();
+        const b2 = [...S.overlay.querySelectorAll('[data-act="supp-group-open"]')].find((x) => x.dataset.key === k);
+        if (b2) b2.focus({ preventScroll: true });
+        break;
+      }
       case 'supp-unrec-fold': { // [Z-SUPPUNRECFOLD] (3.221.0, S477)
         writeJson('localStorage', SUPP_UNREC_KEY, btn.getAttribute('aria-expanded') !== 'true');
         renderSupp();
@@ -60689,6 +60746,12 @@
         renderSupp();
         break;
       }
+      case 'supp-group': { // [Z-CMPGROUP] (3.227.0, S544) the roles of one line of the added source at once
+        const ids = new Set(String(el.dataset.ids || '').split(' '));
+        if (S.supp) S.supp.items.forEach((x) => { if (ids.has(x.id)) Object.assign(x, { sel: el.checked, touched: true }); });
+        renderSupp();
+        break;
+      }
       case 'supp-all':
         // ((3.148.0, review) not the names to check; chosen by hand)
         if (S.supp) S.supp.items.forEach((x) => { if (x.kind !== 'unrec' && x.kind !== 'spell') Object.assign(x, { sel: el.checked, touched: true }); });
@@ -61411,7 +61474,7 @@
           <div class="dci-srcpanels" data-el="srcpanels"></div>
           <div class="dci-busy" data-el="busy" role="status" hidden></div>
           <div class="dci-msgs" data-el="msgs" aria-live="polite"></div>
-          <div class="dci-stick" data-el="stick">
+          <div class="dci-stick${ruleOn('S543') ? ' dci-stick-gap' : ''}" data-el="stick">
             <div class="dci-manual" data-el="manual" role="group" aria-label="${esc(tr('manual.title'))}" hidden>
               <strong class="dci-manual-title" title="${esc(tr('manual.hint'))}">${esc(tr('manual.title'))}</strong>
               <input type="text" data-f="manual-artist" placeholder="${esc(tr('manual.entityPlaceholder'))}" aria-label="${esc(tr('manual.artistAria'))}" title="${esc(tr('manual.hint'))}">
@@ -61852,7 +61915,7 @@
     developer: [GAP_WHY_KEY, DSUP_WHY_KEY],
     texts: ['dci-weblinks-show'],
     connections: [],
-    discogs: ['dci-sync-mode', 'dci-dg-status', 'dci-dg-hover', 'dci-dg-jump', 'dci-dg-release', 'dci-dg-artwork', 'dci-click-toggle', 'dci-keep-marks'],
+    discogs: ['dci-sync-mode', 'dci-dg-status', 'dci-dg-hover', 'dci-dg-jump', 'dci-dg-release', 'dci-dg-artwork', 'dci-click-toggle', 'dci-keep-marks', 'dci-bc-hires'],
     works: ['dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-role-codes', 'dci-wattr-long', 'dci-mx-skiprows', SUITE_NAMING_KEY, 'dci-work-dates', 'dci-magic-level', 'dci-magic-off'],
     staging: [QF_KEY, 'dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', LIVE_COM_KEY, JOIN_KEY, EDIT_NOTE_KEY, 'dci-note-dup', 'dci-yell-one'],
     dates: ['dci-dm-auto', DM_FOLD_KEY, 'dci-pools-keep', WORK_GROUPS_KEY, DROP_KEY],
@@ -64460,6 +64523,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
         // ([Z-COMPSETTINGS] 3.201.0) always here, whatever the source of the import: the cover is shown on Discogs only
         cb('data-dg-artwork', S.dgArtwork, tr('sync.dgArtwork'), tr('sync.dgArtworkTitle'), { def: true, hint: tr('sync.dgArtworkHint') }),
         cb('data-keep-marks', S.keepMarks, tr('sync.keepMarks'), tr('sync.keepMarksTitle'), { def: false }),
+        ...(ruleOn('S545') ? [cb('data-bc-hires', S.bcHiRes, tr('sync.bcHiRes'), tr('sync.bcHiResTitle'), { def: true })] : []),
         sh('navFrom'),
         cb('data-dg-hover', S.dgHover, tr('sync.trackHover'), trView('sync.trackHoverTitle'), { def: true }),
         cb('data-dg-jump', S.dgJump, tr('sync.dgJump'), trView('sync.dgJumpTitle'), { def: false }),
@@ -64972,8 +65036,8 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       : active.dataset.statsImport != null ? '[data-stats-import]' : active.dataset.profilesImport != null ? '[data-profiles-import]'
         // ([Z-SETTABS2] 3.137.0, review) the switches of the companion and its "jump to source"
         : active.dataset.syncMode ? `[data-sync-mode="${active.dataset.syncMode}"]`
-        : ['dgStatus', 'dgHover', 'dgJump', 'dgRelease', 'dgArtwork', 'clickToggle', 'keepMarks'].find((k) => active.dataset[k] != null)
-          ? `[data-${['dgStatus', 'dgHover', 'dgJump', 'dgRelease', 'dgArtwork', 'clickToggle', 'keepMarks'].find((k) => active.dataset[k] != null).replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)}]`
+        : ['dgStatus', 'dgHover', 'dgJump', 'dgRelease', 'dgArtwork', 'clickToggle', 'keepMarks', 'bcHires'].find((k) => active.dataset[k] != null)
+          ? `[data-${['dgStatus', 'dgHover', 'dgJump', 'dgRelease', 'dgArtwork', 'clickToggle', 'keepMarks', 'bcHires'].find((k) => active.dataset[k] != null).replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)}]`
         : active.dataset.act ? `[data-act="${active.dataset.act}"]${active.dataset.topic ? `[data-topic="${active.dataset.topic}"]` : ''}${active.dataset.kind ? `[data-kind="${active.dataset.kind}"]` : ''}${active.dataset.id ? `[data-id="${active.dataset.id}"]` : ''}` : '') : '';
     el.innerHTML = settingsHtml();
     const again = key && el.querySelector(key);
@@ -65540,7 +65604,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       renderRulesBody();
       renderGroups();
     } else if (t === 'discogs') {
-      Object.assign(S, { syncMode: 'click', dgStatus: true, dgHover: true, dgJump: false, dgRelease: true, dgArtwork: true, clickToggle: true, keepMarks: false });
+      Object.assign(S, { syncMode: 'click', dgStatus: true, dgHover: true, dgJump: false, dgRelease: true, dgArtwork: true, clickToggle: true, keepMarks: false, bcHiRes: true });
       renderSync();
       sendDiscogsStatus();
     } else if (t === 'works') {
@@ -65578,7 +65642,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
   }
 
   /** Settings of this script in the browser's storage for musicbrainz.org (see "Settings" in the README). */
-  const SETTINGS_KEYS = ['dci-lang', 'dci-scale', 'dci-log-open', 'dci-sync-mode', 'dci-dg-status', 'dci-dg-release', 'dci-dg-artwork',
+  const SETTINGS_KEYS = ['dci-lang', 'dci-scale', 'dci-log-open', 'dci-sync-mode', 'dci-dg-status', 'dci-dg-release', 'dci-dg-artwork', 'dci-bc-hires',
     'dci-dg-hover', 'dci-dg-jump', 'dci-fill-credits', 'dci-stage-cap-on', 'dci-stage-cap', 'dci-role-codes', 'dci-pools-open', 'dci-pools-keep', 'dci-dm-auto', DM_FOLD_KEY,
     'dci-place', 'dci-log-place', 'dci-log-dock-h', 'dci-log-note-w', 'dci-media-sel', 'dci-media-load', 'dci-wattr-long', 'dci-work-dates', 'dci-magic-level', 'dci-magic-off', 'dci-qs-perm', 'dci-ign-order', 'dci-source-order', 'dci-source-trust', 'dci-wiki-bg', 'dci-beta-qf', 'dci-source-pick', 'dci-bc-tracks',
     'dci-aw-on', ...Object.values(AW_SETTINGS).map((d) => d.key), 'dci-click-toggle', 'dci-keep-marks', AFTER_EDIT_BTN_KEY, AFTER_EDIT_BG_KEY, 'dci-mx-skiprows', 'dci-weblinks-show', 'dci-inst-links', 'dci-smart-quotes',
@@ -65626,7 +65690,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
   const PROFILE_KEY = 'dci-profile'; // the active one: 'std' or an id
   const IO_LOG_KEY = 'dci-io-log'; // [{ at, dir: 'E' | 'I', what, file, n, skipped }] – never cleared
   const PROFILE_FILE_FORMAT = 'mb-vibecode-profiles';
-  const PROFILE_NOT = new Set(['dci-log-note-w', 'dci-sync-mode', 'dci-dg-status', 'dci-dg-release', 'dci-dg-artwork', 'dci-dg-hover', 'dci-click-toggle', 'dci-keep-marks',
+  const PROFILE_NOT = new Set(['dci-log-note-w', 'dci-sync-mode', 'dci-dg-status', 'dci-dg-release', 'dci-dg-artwork', 'dci-bc-hires', 'dci-dg-hover', 'dci-click-toggle', 'dci-keep-marks',
     REMEMBER_ON_KEY, REMEMBER_MAX_KEY, STATS_ON_KEY, STATS_PERIOD_KEY, STATS_GENRES_KEY, STATS_TIME_KEY, STATS_IDLE_KEY, STATS_SCOPE_KEY, STATS_DAILY_KEY,
     STATS_GLOBAL_ON_KEY, STATS_LEN_KEY, STATS_FOLD_KEY, STATS_DUR_KEY, STATS_LEN_OF_KEY, SETTINGS_TAB_KEY, POOL_FOLD_KEY, 'dci-pools-open', HINT_COMPACT_KEY, 'dci-media-sel', 'dci-source-pick', 'dci-log-dock-h',
     // ((review) a window's state, and the frames of the cover art kept per release – no settings)
@@ -66076,7 +66140,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
   function resetSettings({ rules = false, pools = false, stats = false } = {}) {
     [...SETTINGS_KEYS, ...Object.values(GEOM_KEYS)].forEach((k) => writeJson('localStorage', k, null));
     Object.assign(S, {
-      scale: 1, syncMode: 'click', dgStatus: true, dgRelease: true, dgArtwork: true, dgHover: true, dgJump: false, clickToggle: true, keepMarks: false, fillCredits: false,
+      scale: 1, syncMode: 'click', dgStatus: true, dgRelease: true, dgArtwork: true, bcHiRes: true, dgHover: true, dgJump: false, clickToggle: true, keepMarks: false, fillCredits: false,
       capOn: true, capLimit: 500, roleCodes: 'names', poolsOpen: null, poolsKeep: true, dmAuto: false, dmFold: true, dmFoldWait: false, resetOpen: false, place: 'window', logPlace: 'window', wattrLong: false,
       sourceOrder: { physical: [...SOURCE_ORDER_DEFAULT.physical], digital: [...SOURCE_ORDER_DEFAULT.digital] }, bcTracks: true,
       sourceTrust: SOURCE_TRUST_DEFAULT.slice(), // [Z-SRCTRUST] (3.148.0)
@@ -67143,6 +67207,13 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       renderSync();
       sendDiscogsStatus();
     }
+    if (e.target.closest && e.target.closest('[data-bc-hires]')) { // [Z-BCHIRES] (3.227.0, S545)
+      S.bcHiRes = !S.bcHiRes;
+      writeJson('localStorage', 'dci-bc-hires', S.bcHiRes ? null : false);
+      log('info', 'bcHiRes', { state: tr(S.bcHiRes ? 'common.on' : 'common.off') });
+      renderSync();
+      sendDiscogsStatus();
+    }
     if (e.target.closest && e.target.closest('[data-dg-artwork]')) {
       S.dgArtwork = !S.dgArtwork;
       writeJson('localStorage', 'dci-dg-artwork', S.dgArtwork);
@@ -68049,6 +68120,8 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       .dci-festival-offers button { border-color: var(--dci-kind-event, #8a4f7d); }
       .dci-unrec { width: 100%; margin-top: calc(var(--u, 1px) * 6); font-size: calc(var(--u, 1px) * 12); }
       .dci-unrec summary { cursor: pointer; color: var(--warn); }
+      .dci-unrec.dci-unrec-pending { background: var(--trib-bg); border-left: calc(var(--u, 1px) * 3) dashed var(--trib-line); padding: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); border-radius: calc(var(--u, 1px) * 4); }
+      .dci-unrec-wait { color: var(--trib-ink); font-size: 0.92em; white-space: nowrap; }
       .dci-unrec ol { margin: calc(var(--u, 1px) * 4) 0; padding-left: calc(var(--u, 1px) * 22); color: var(--muted); }
       .dci-unrec li[data-line-peek], .dci-ignored li[data-line-peek] { cursor: zoom-in; text-decoration: underline dotted #9f9bc0; text-underline-offset: 3px; }
       /* [Z-UNA] (3.42.4) the words of a line not recognized to click, the ones chosen, those given an entry; the form below */
@@ -68110,6 +68183,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       .dci-supp-precise, .dci-supp-name { border: 1px solid var(--sugg-line); color: var(--sugg-ink); }
       .dci-supp-spell { border: 1px dashed #c8c5d6; color: var(--muted); }
       .dci-supp-conflict td { border-bottom: 0; }
+      .dci-supp-gchip { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 3); white-space: nowrap; }
       .dci-supp-why td { background: #fdf0e8; color: #6e2c0b; font-size: calc(var(--u, 1px) * 12); padding-top: 0; }
       .dci-srctrust-fixed { cursor: default; color: var(--muted); }
       .dci-supp-rg { display: flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 6); flex-basis: 100%; padding-left: calc(var(--u, 1px) * 12); border-left: 3px solid var(--line); }
@@ -68894,6 +68968,8 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       /* Date pool: stays visible at the top while scrolling */
       .dci-stick { position: sticky; top: calc(var(--u, 1px) * -14); z-index: 3; margin: calc(var(--u, 1px) * -14) calc(var(--u, 1px) * -20) calc(var(--u, 1px) * 14); background: #fbfaff; border-bottom: 1px solid var(--line); box-shadow: 0 2px 4px rgba(38, 36, 48, 0.06); }
       .dci-stick:not(:has(> :not([hidden]))) { display: none; }
+      /* [Z-STICKYOVERLAP] (3.227.0, S543) no pull upwards over the line above it ("▸ 1 line left out on purpose" was cut in half) */
+      .dci-stick.dci-stick-gap { margin-top: 0; }
       .dci-dates { padding: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 20); }
       .dci-manual { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 8); padding: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 20); }
       .dci-manual:not([hidden]) + .dci-dates:not([hidden]) { border-top: 1px dashed var(--line); }

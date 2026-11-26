@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.226.0, Companion 1.6.0 – 1.24.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.227.0, Companion 1.6.0 – 1.25.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,14 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.227.0 · Companion 1.25.0 · 2026-11-26
+
+- S542: `loadRelease` sets `S.unrecReading` with the release, clears it (and renders the source) at its end or its error; `renderSource` – `dci-unrec-pending`, `data-el="unrec-wait"`; texts `unrec.reading`, `unrec.readingTitle`.
+- S543: the body's `.dci-stick` gets `dci-stick-gap` (CSS: `margin-top: 0`).
+- S544: `renderSupp` – `groupedRows` (key: entry and line of the new roles), `data-el="supp-group"`, `data-f="supp-group"` (`onChange`), `data-act="supp-group-open"` (`S.suppGroupOpen`); texts `supp.group.role`, `supp.group.openTitle`.
+- S545: `S.bcHiRes` (`dci-bc-hires`, settings → Source pages, `data-bc-hires`); `sendDiscogsStatus` sends `lang` and `hiRes`. Companion: `compLang`, `COMP_TEXTS`, `compText` (in place of `COCR_DE`), GM values `lang`, `bcHiRes`; `bcHiResOf`, `bigImgUrl` (the frames keep the page's address).
+- Tests: `case_ui3227` (t_notes_companies); `case_cocrbc3119` (t_companion_bandcamp) expects the `_0` addresses.
 
 ## Import 3.226.0 · 2026-11-26
 

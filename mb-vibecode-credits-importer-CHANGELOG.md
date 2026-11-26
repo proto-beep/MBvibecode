@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-26 | 3.224.0 – 3.226.0 | 1.24.0 |
+| 2026-11-26 | 3.224.0 – 3.227.0 | 1.25.0 |
 | 2026-11-25 | 3.218.0 – 3.223.0 | 1.24.0 |
 | 2026-11-24 | 3.213.0 – 3.217.0 | – |
 | 2026-11-23 | 3.210.0 – 3.212.0 | – |
@@ -140,6 +140,15 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.227.0 · COMPANION 1.25.0
+
+**Reading marked, the bar above the lines, an added source grouped, the companion's images and language.**
+
+- **Still reading** (rule S542): while the import still reads (editions, track pages, notes), its lines not recognized are set off – a light block with a dashed line, ⏳ "still being read" at its heading and each line; when the import is complete the mark just goes.
+- **The bar "Add entry manually"** (rule S543): no longer covers half of the line above it ("▸ 1 line left out on purpose").
+- **An added source** (rule S544): the new roles one line gives one person ("NIK RAYNE: vocals, guitar, tape loops …") are one row of the comparison – "6 new roles" with a tick each and one for all, the line and the trust's reason once; ▸ shows the single rows.
+- **COMPANION 1.25.0** (rule S545): on Bandcamp the large image shows the artwork as uploaded, in high resolution (⚙ Settings → Source pages → "High-resolution images", on; Bandcamp's large view when it does not load); the companion's texts in the dashboard's language (English, Deutsch, Español, Français), on every site. Install the companion anew for it.
 
 ### Import 3.226.0
 
