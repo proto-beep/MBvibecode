@@ -2696,4 +2696,76 @@ Licensed by the Don Cherry Estate and producer James Quinlan."""
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+
+def case_eaglestone3228():
+    """Credits Importer 3.228.0 (collected items Z-IMPROVISED, Z-NAMEURL, Z-EDITIONLINES, Z-INITIALS; rules S546 – S549): a pasted text of the
+    Bandcamp page of "Blood" (Eaglestone), with the text of its CD edition.
+    A) "Music composed, improvised and recorded by Caleb R.K. Williams": composer, recorded by and a performer credited "improvised" with its
+       note at the row (S546); nothing not recognized.
+    B) "Art "La Chute" by Alison Flora : www.alison-flora.com": her credit with the site as her link (S547) – "Create artist" fills it in as
+       "official homepage" (link type 183).
+    C) "CDr Limited Edition / hand made." (edition) and "WARNING! NO SHIPPING TO THE U.S." (shop) left out with their reasons (S548);
+       "Improvised by Jane R.K. Doe" – the whole name (S549).
+    D) Off: the first line not recognized, no link (the two edition lines are left out by the block of a shop there anyway)."""
+    TEXT = """TESC204
+
+Music composed, improvised and recorded by Caleb R.K. Williams
+
+Art "La Chute" by Alison Flora : www.alison-flora.com
+
+CDr Limited Edition / hand made.
+WARNING! NO SHIPPING TO THE U.S.
+Improvised by Jane R.K. Doe"""
+    LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
+    ROLES = """[...document.querySelectorAll('section.dci-group')].map(g => [g.querySelector('.dci-gname strong').textContent.trim(),
+      [...g.querySelectorAll('tr.dci-row')].map(r => (r.querySelector('.dci-drole') || { dataset: { raw: '' } }).dataset.raw.trim()),
+      [...g.querySelectorAll('.dci-note')].map(n => n.textContent.trim())])"""
+    main0 = H.MAIN
+    H.MAIN = H.MAIN.replace('  const S = {', '  const S = window.__S = {', 1)
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.src_menu(pg, 'text-open')
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=text-load]')
+        H.wait_for(pg, f"{LOGS}.filter(x => /Import complete/.test(x)).length >= 2", 60)
+        pg.wait_for_timeout(1500)
+        roles, notes = {}, {}
+        for n, r, nt in pg.evaluate(ROLES):
+            notes.setdefault(n, []).extend(nt)
+        for n, r in pg.evaluate("window.__S.rows.map(r => [(window.__S.artists.get(r.artistKey) || {}).name, r.raw])"):
+            roles.setdefault(n, []).append(r)
+        unrec = pg.evaluate("(window.__S.release.unrecognized || []).slice()")
+        ign = pg.evaluate("(window.__S.release.ignored || []).map(x => [x.text || x, x.why || ''])")
+        links = pg.evaluate("[...window.__S.artists.values()].filter(a => a.name === 'Alison Flora').map(a => a.links || [])")
+        b.close()
+        return roles, notes, unrec, ign, links, errs
+
+    results = []
+    try:
+        with sync_playwright() as p:
+            roles, notes, unrec, ign, links, errs = run(p)
+            print('A)', roles.get('Caleb R.K. Williams'), notes.get('Caleb R.K. Williams'), '| nicht erkannt:', unrec)
+            cw = [r.lower() for r in roles.get('Caleb R.K. Williams', [])]
+            results.append(any('compos' in r for r in cw) and any('record' in r for r in cw) and any('improvised' in r for r in cw)
+                           and any('improvised' in n for n in notes.get('Caleb R.K. Williams', [])) and not any('Caleb' in u for u in unrec))
+            print('B)', roles.get('Alison Flora'), links)
+            results.append(bool(roles.get('Alison Flora')) and links and 'https://www.alison-flora.com/' in links[0])
+            print('C)', ign, sorted(roles))
+            results.append(['CDr Limited Edition / hand made.', 'edition'] in ign and ['WARNING! NO SHIPPING TO THE U.S.', 'shop'] in ign
+                           and 'Jane R.K. Doe' in roles and not errs)
+            roles2, notes2, unrec2, ign2, links2, errs2 = run(p, ['S546', 'S547', 'S548', 'S549'])
+            print('D)', unrec2, links2, sorted(roles2))
+            results.append(any('improvised' in u for u in unrec2) and not (links2 and links2[0]) and not errs2)
+    finally:
+        H.MAIN = main0
+        H.RULES_OFF = []
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
 run_cases(globals())

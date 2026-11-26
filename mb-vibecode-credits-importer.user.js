@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.227.0
+// @version      3.228.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.227.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.227.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.228.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.228.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.227.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.228.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -2777,6 +2777,7 @@
       "log.runoutDate": "{n} dates of the pressing plant taken from the matrix / runout (S398)",
       "note.seriesFormat": "A series named in the format of the release (Record Store Day …) without a date that tells which: choose MusicBrainz's series above (or give its MBID).",
       "note.abbrAlt": "“{abbr}” can also be: {list}",
+      "note.improvised": "“improvised” among other tasks: performer, credited “improvised” – MusicBrainz has no role for improvising",
       "note.seriesFromVideo": "Suggested: the video is on this series’ channel with its name in the title (rule S117); the number is the date it was recorded.",
       "note.seriesFromVideoNoDate": "Suggested: the video is on this series’ channel with its name in the title (rule S117). No single recording date was found in the description – please type the number (YYYY-MM-DD).",
       "note.seriesType": "MusicBrainz series of type “{type}” cannot be related to this release here.",
@@ -6011,6 +6012,10 @@
     { id: 'S543', where: 'the dashboard\'s body (dci-stick-gap)', note: 'Layout (3.227.0; collected item Z-STICKYOVERLAP): the bar "Add entry manually" (with the date pool, sticking when scrolling) no longer pulls itself over the line above it – "▸ 1 line left out on purpose" was cut in half. Switched off: as until 3.226.0' },
     { id: 'S544', where: 'renderSupp (groupedRows), supp-group, supp-group-open', note: 'Added sources (3.227.0; collected item Z-CMPGROUP): the new roles one line of an added source gives one person ("NIK RAYNE: vocals, guitar, tape loops …") are one row of the comparison – the person, "6 new roles" with a tick each and one for all, the line once, why the trust of the sources chose so once; ▸ shows the single rows. Switched off: a row each, as until 3.226.0' },
     { id: 'S545', where: 'sendDiscogsStatus (lang, hiRes), settings (data-bc-hires); the companion 1.25.0', note: 'Companion 1.25.0 (3.227.0; collected items Z-BCHIRES, Z-COMPLANG): "High-resolution images" (⚙ Settings → Source pages, on) – on Bandcamp the companion\'s large image shows the artwork as uploaded ("_0") in place of the page\'s large view ("_10"; that one again when it does not load), also the photos of the editions; the companion\'s own texts in the dashboard\'s language (en/de/es/fr; on musicbrainz.org read, kept for the other sites). Switched off: Bandcamp\'s large view; the language is passed on either way' },
+    { id: 'S546', where: 'coverLines3223, addCreditRows (note.improvised)', note: 'Texts (3.228.0; collected item Z-IMPROVISED; S222, S504): "Music composed, improvised and recorded by Caleb R.K. Williams" – "improvised" among other tasks: the person the performer, credited "improvised" (MusicBrainz has no role for improvising; said at the row), the other tasks as written (composer, recorded by). "Improvised by …" alone stays the composer of improvisations (S222). Switched off: such a line is not recognized' },
+    { id: 'S547', where: 'TEXT.parse (takeUrls, giveLinks), buildArtistSeed', note: 'Texts (3.228.0; collected item Z-NAMEURL; T032, S198): a site of its own right after a name ("Art "La Chute" by Alison Flora : www.alison-flora.com") is that name\'s link when its host is the name\'s letters (or their start) – "Create artist" fills it in as "official homepage"; a site of another name is not given. Switched off: only profiles of social sites, as until 3.227.0' },
+    { id: 'S548', where: 'LEFTOUT_TABLE (r3228)', note: 'Texts (3.228.0; collected item Z-EDITIONLINES; S517): "CDr Limited Edition / hand made." (and "CD limited edition", "hand made.") left out as an edition, "WARNING! NO SHIPPING TO THE U.S." ("no shipping to", "we don\'t ship to") as shop – also alone, in the text of a Bandcamp edition; the same line of several editions once (S448). Switched off: such lines alone not recognized' },
+    { id: 'S549', where: 'TEXT.parse (improvNames)', note: 'Texts (3.228.0; collected item Z-INITIALS; S222): the names of an improvisation do not end after an initial – "Improvised by Caleb R.K. Williams" is Caleb R.K. Williams (until 3.227.0 "Caleb R.K"). Switched off: as until 3.227.0' },
     { id: 'S469', where: 'dgLineupApply, sendDiscogsStatus', note: 'Lineup and track credits (3.220.0; collected item Z-LOPEZ; S217): a row the answer leaves out (a lineup row on no track any more, a track credit taken into the lineup row) keeps its line at the source – its places go to the person\'s row still there, so the companion marks the line ("Ramón López – percussion" where the titles give him drums on all of his tracks)' },
     { id: 'S410', where: 'freshForget, repeatImport, loadRelease', note: '"↻ Repeat import" (3.209.0; collected item Z-FRESHALL): "Start afresh" forgets everything the dashboard holds of the release – not only the changes of the rows and the choices of the works matrix (Z-RI, 3.40.16), also the date pool, the track pool and the date matrix, the choices of the box "Dedications & tributes", "✕ No suite", texts and parts of sources switched off, "skip the works", entries joined by hand, the ticks of suggestions, what is remembered of the release ("Remember changes"; nothing of the import before is stored on the way). Kept: what was created in MusicBrainz through the dashboard (the lists of created works and suites), the source and the media chosen, the log' },
     { id: 'S409', where: 'mergeEntries, joinEntry, applyEntryMerges, dmTargetOf (entry-merge), groupHtml (grip)', note: 'Entries (3.208.0; collected item Z-ENTITYMERGE): two entries of the same kind that are one – from different sources, written otherwise – are joined by hand: the grip ⠿ before the kind of an entry dropped onto another entry. The entry dropped onto stays (its link to MusicBrainz counts; without one it takes the other\'s), the rows of the other come to it – the same role once, each row credited as its source writes it, the other\'s name one of its names. Two different entries of MusicBrainz, or entries of different kinds: not joined, a message says why. Remembered for the release (joined again at the next import); ↶ in the message undoes it' },
@@ -6709,6 +6714,8 @@
   // guitar" are two)
   const INSTRUMENT_MODIFIER = MAP.INSTRUMENT_MODIFIER;
   // [Z-DT-MADEIN] (3.223.0, S511) "Made in Brisbane, Australia 2016": the line and the year of the making
+  // ([Z-WEBDOM] 3.124.0; [Z-NAMEURL] 3.228.0: early, the text recognition uses it) the letters of a name or a site
+  const siteKey = (x) => String(x || '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '');
   const MADE_IN_YEAR = /^made\s+in\s+\p{Lu}[^.;]{1,60}?,?\s+((?:19|20)\d{2})\.?$/iu;
   // [Z-OCRSECTIONS] (3.225.0, S533) a track line of a cover: number, title, length, a mark (the text recognition writes "°", "__")
   const COVER_TRACK_DUR = /^\s*(\d{1,3})[.)]?\s+(.+?)\s*\(\s*\d{1,2}:\d{2}(?::\d{2})?\s*\)\s*([*†‡°]+)?[\s_]*$/u;
@@ -7728,7 +7735,9 @@
   // ([Z-LEFTOUT-TABLE] 3.223.0, S517) in the mapping as one table: each group its reason, its lines and the rule that reads them (S485 –
   // the lines of 3.222.0, S517 – those added since); a line with "<role> by <Name>" is a credit in any group
   const LEFTOUT_TABLE = MAP.LEFTOUT_TABLE;
-  const LEFTOUT_LINES = Object.values(LEFTOUT_TABLE || {}).flatMap((g) => [...(g.lines || []).map((re) => [re, g.why, 'S485']), ...(g.more || []).map((re) => [re, g.why, 'S517'])]);
+  /** The rule a line of LEFTOUT_TABLE comes with switched on (S485 asks for all of them first). */
+  const leftOutOn = (r) => (r === 'S517' ? ruleOn('S517') : r === 'S548' ? ruleOn('S548') : true);
+  const LEFTOUT_LINES = Object.values(LEFTOUT_TABLE || {}).flatMap((g) => [...(g.lines || []).map((re) => [re, g.why, 'S485']), ...(g.more || []).map((re) => [re, g.why, 'S517']), ...(g.r3228 || []).map((re) => [re, g.why, 'S548'])]);
   // [Z-EDITIONSIZES] (3.221.0, S475) a variant of an edition with its number of copies – "100x Kallisto Edition (Half/Half Colored) + A3
   // Poster + 6x6cm Patch", "250x Solid Black Edition", "20x Testpress w/ Signed Cover", "300 copies on clear vinyl": left out as "edition"
   const SHOP_EDITION_VARIANT = /^(?:ltd\.?\s+|limited\s+)?\d{1,5}\s*(?:x|×|copies|pcs\.?|pieces)\s+(?:(?:[\p{L}\d'’/&.-]+\s+){0,5}(?:edition|editions|testpress(?:ings?)?|test\s+press(?:ings?)?|pressing|vinyl|lp|cd|cassettes?|tapes?|copies)\b|testpress|test\s+press|on\s+[\p{L}\s/-]{2,40}vinyl\b)/iu;
@@ -10263,6 +10272,15 @@
         text += src.slice(last, m.index);
         const url = webProfile(m[0]);
         if (url && !links.some((l) => l.url === url)) links.push({ url, before: text });
+        // [Z-NAMEURL] (3.228.0, S547) a site of its own right after a name ("Alison Flora : www.alison-flora.com"): the name's link
+        // (its homepage for "Create artist") when its host is the name's letters – giveLinks checks that
+        else if (!url && ruleOn('S547')) {
+          let site = m[0].replace(/[.,;:!?)\]]+$/, '');
+          if (!/^https?:\/\//i.test(site)) site = `https://${site}`;
+          let host = '';
+          try { host = new URL(site).hostname.toLowerCase(); } catch (e) { host = ''; }
+          if (host && !SOCIAL_HOSTS.test(host.replace(/^www\./, '')) && !links.some((l) => l.url === site)) links.push({ url: /\/$/.test(site) || new URL(site).pathname !== '/' ? site : `${site}/`, before: text, host: host.replace(/^www\./, '') });
+        }
         text += ' ';
         last = m.index + m[0].length;
       }
@@ -10695,8 +10713,8 @@
           const goesOn = wasShop && /^(?:and|but|so|also|plus|which|that)\b|\b(?:I['’]m|I\s+am|I['’]ll|we['’]re|we\s+are|we['’]ll|our|my)\b/i.test(b) && !/:|\sby\s|\s[–—-]\s/.test(b);
           // (a credit after it – "…, cover art by Jane Doe" – keeps the line for the reader)
           // ([3.222.0] S485) more lines of a shop, an edition or a package – each with its reason
-          const lo1 = ruleOn('S485') && !/\bby\s+\p{Lu}/u.test(b) ? LEFTOUT_LINES.find(([re, , r]) => (r === 'S517' ? ruleOn('S517') : true) && re.test(b)) : null;
-          const lo = lo1 ? [lo1] : ruleOn('S485') && !/\bby\s+\p{Lu}/u.test(b) ? b.split(/(?<=[.!?])\s+(?=\p{Lu})/u).map((x) => LEFTOUT_LINES.find(([re, , r]) => (r === 'S517' ? ruleOn('S517') : true) && re.test(x.trim()))) : [];
+          const lo1 = ruleOn('S485') && !/\bby\s+\p{Lu}/u.test(b) ? LEFTOUT_LINES.find(([re, , r]) => leftOutOn(r) && re.test(b)) : null;
+          const lo = lo1 ? [lo1] : ruleOn('S485') && !/\bby\s+\p{Lu}/u.test(b) ? b.split(/(?<=[.!?])\s+(?=\p{Lu})/u).map((x) => LEFTOUT_LINES.find(([re, , r]) => leftOutOn(r) && re.test(x.trim()))) : [];
           if (lo.length && lo.every(Boolean)) {
             P.ignored.push({ text: t, why: lo[0][1] });
             prevShop = true;
@@ -12389,6 +12407,18 @@
         }
         // [Z-LJ-BROKENSENTENCE] (S504) "Improvised and recorded by …": recorded by
         if (ruleOn('S504') && /^improvised\s+(?:and|&)\s+recorded\b/i.test(t)) t = cap(t.replace(/^improvised\s+(?:and|&)\s+/i, ''));
+        // [Z-IMPROVISED] (3.228.0, S546) "Music composed, improvised and recorded by X": improvised among other tasks – X the performer,
+        // credited "improvised" (MusicBrainz has no role for it; said at the row), the other tasks as they are
+        if (ruleOn('S546')) {
+          const m = t.match(/^((?:(?:all\s+)?(?:the\s+)?(?:music|tracks?|pieces?|songs?)\s+)?)((?:[a-z]+(?:ed|en)\s*(?:,\s*|\s+(?:and|&)\s+)){1,5}[a-z]+(?:ed|en))\s+by\s+(\S.*?)\.?$/i);
+          const tasks = m ? m[2].split(/\s*,\s*|\s+(?:and|&)\s+/) : [];
+          const imp = tasks.findIndex((x) => /^improvised$/i.test(x));
+          if (imp >= 0 && tasks.length >= 2) {
+            const rest = tasks.filter((x, k) => k !== imp);
+            const list = rest.length === 1 ? rest[0] : `${rest.slice(0, -1).join(', ')} and ${rest[rest.length - 1]}`;
+            return [fin(cap(`${m[1]}${list} by ${m[3]}`)), fin(`${m[3]}: performer [improvised]`)];
+          }
+        }
         return [`${t}${sfx}` === l.trim() ? l : fin(t)];
       });
       // [Z-LJ-BROKENSENTENCE] (S504) a sentence broken over two lines: the line without its end and the next one that goes on – in small
@@ -13116,7 +13146,9 @@
     };
 
     const improvNames = (P, rest) => {
-      const cut = rest.search(/[.;]\s|,\s*\p{L}+\s+(?:by|von|por|par)\b|\s+(?:and|und|y|et)\s+\p{Ll}+(?:ed|é|ée|és|ado|ada|iert)\s+(?:by|von|por|par)\b/u);
+      // ([Z-INITIALS] 3.228.0, S549) no end after an initial ("Caleb R.K. Williams")
+      const cut = rest.search(ruleOn('S549') ? /(?<!(?:^|[\s.])\p{Lu})[.;]\s|,\s*\p{L}+\s+(?:by|von|por|par)\b|\s+(?:and|und|y|et)\s+\p{Ll}+(?:ed|é|ée|és|ado|ada|iert)\s+(?:by|von|por|par)\b/u
+        : /[.;]\s|,\s*\p{L}+\s+(?:by|von|por|par)\b|\s+(?:and|und|y|et)\s+\p{Ll}+(?:ed|é|ée|és|ado|ada|iert)\s+(?:by|von|por|par)\b/u);
       const names = cut >= 0 ? rest.slice(0, cut) : rest;
       return { names: names.replace(/[.\s]+$/, ''), tail: cut >= 0 ? rest.slice(cut).replace(/^[.;,\s]+/, '') : '' };
     };
@@ -14737,6 +14769,12 @@
           if (c.who.name && i > bestAt) [best, bestAt] = [c.who.name, i];
         }
         if (best == null) continue;
+        // ([Z-NAMEURL] 3.228.0, S547) a site: only of the name whose letters it is ("alison-flora.com" – Alison Flora)
+        if (l.host) {
+          const nk = siteKey(best);
+          const hk = siteKey(l.host.split('.').slice(0, -1).join('.'));
+          if (nk.length < 5 || !(hk === nk || (hk.length >= 5 && nk.startsWith(hk)) || (nk.length >= 5 && hk.startsWith(nk)))) continue;
+        }
         list.filter((c) => c.who.name === best && !c.who.links.includes(l.url)).forEach((c) => c.who.links.push(l.url));
       }
     };
@@ -18700,7 +18738,11 @@
     if (sourceUrl) urls.push({ text: sourceUrl, type: sourceLinkTypeId });
     for (const u of (person && person.urls) || []) {
       const text = String(u || '').trim();
-      if (/^https?:\/\//i.test(text) && !urls.some((x) => x.text === text)) urls.push({ text });
+      // ([Z-NAMEURL] 3.228.0, S547) a site of its own (no social profile): "official homepage"
+      let host = '';
+      try { host = new URL(text).hostname.toLowerCase().replace(/^www\./, ''); } catch (e) { host = ''; }
+      const home = ruleOn('S547') && host && !SOCIAL_HOSTS.test(host) && !/(?:^|\.)(?:bandcamp\.com|discogs\.com|musicbrainz\.org|wikipedia\.org|linktr\.ee)$/i.test(host);
+      if (/^https?:\/\//i.test(text) && !urls.some((x) => x.text === text)) urls.push(home ? { text, type: 183 } : { text });
     }
     urls.slice(0, 25).forEach((u, i) => {
       params.push([`edit-artist.url.${i}.text`, u.text]);
@@ -33084,6 +33126,8 @@
       if (asConductor) row.notes = [...(row.notes || []), 'directorConductor'];
       // [Z-DIRECTORCREDIT] (3.224.0, S528) credited as written – "director" –, not "music director" (the way to the conductor only)
       if (asConductor && ruleOn('S528')) Object.assign(row, { roleCredit: String(c.role.base || 'director').trim().toLowerCase(), roleCreditTouched: true });
+      // [Z-IMPROVISED] (3.228.0, S546) the performer of "composed, improvised and recorded by": said at the row
+      if (ruleOn('S546') && /\[improvised\]/i.test(String(row.raw || ''))) row.notes = uniq([...(row.notes || []), 'improvised']);
       if (c.role.splitFrom) row.dSplitFrom = c.role.splitFrom; // [S018] the role as written at the source
       if (c.role.splitBase) row.dSplitBase = c.role.splitBase; // [S033] its role as written there (the companion finds the line by it)
       row.srcRefs = c.refs || []; // [3.17.0] where it is at the source (Bandcamp view)
@@ -37507,7 +37551,6 @@
    * start of it ("warringtonruncorn.com": "Warrington-Runcorn New Town Development Plan") – and that MusicBrainz does not have for the
    * linked entry yet: a note with a link to the entry's page for editing (the address filled in). Looked up once per entry.
    */
-  const siteKey = (x) => String(x || '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '');
   // ((review) "official homepage" of each kind; an area's links need its own editor: none)
   const SITE_LINK_TYPE = { artist: 183, label: 219, place: 363 };
   function siteOf(a) {

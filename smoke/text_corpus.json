@@ -224,7 +224,10 @@
           ],
           [
             "John Doe",
-            "Mastered By"
+            "Mastered By",
+            [
+              "https://www.johndoe-mastering.com/"
+            ]
           ]
         ],
         "companies": [],
