@@ -3680,4 +3680,53 @@ def case_legalname3216():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_suppgroups3225():
+    """Credits Importer 3.225.0 (collected items Z-SUPPGROUPS, Z-OCRDATES; rules S535, S536): the release imported from Discogs; a text added as
+    "+ Source" (typed): "Dreamtime is:" with "Zac Anderson - Guitar, Lead Vocals", "Cat Maddin - Bass, Lead Vocals" below it, and "Recorded and
+    produced by Zac Anderson August 2016 at Eastland Studios".
+    A) The group of the added text joins the groups checked (S536): Dreamtime with its two members.
+    B) Its date is found (S535): 2016-08 in the date pool.
+    C) Off (as 3.224.0): neither."""
+    TEXT = ('Dreamtime is:\nZac Anderson - Guitar, Lead Vocals\nCat Maddin - Bass, Lead Vocals\n\n'
+            'Recorded and produced by Zac Anderson August 2016 at Eastland Studios')
+    main0 = H.MAIN
+    H.MAIN = H.MAIN.replace('  const S = {', '  const S = window.__S = {', 1)
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+        H.open_supp(pg)
+        pg.click('[data-act=supp-text]')
+        pg.wait_for_timeout(300)
+        pg.fill('[data-f=text-src]', TEXT)
+        pg.click('[data-act=supp-text-load]')
+        H.wait_for(pg, "!!document.querySelector('[data-act=supp-apply]')", 30)
+        pg.wait_for_timeout(1500)
+        groups = pg.evaluate("((window.__S.workNotesRel || {}).groups || []).map(g => [g.name, (g.members || []).length])")
+        pool = pg.evaluate("window.__S.datePool.map(d => d.begin ? [d.begin.year, d.begin.month || ''].join('-') : '')")
+        b.close()
+        return groups, pool, errs
+    results = []
+    try:
+        with sync_playwright() as p:
+            groups, pool, errs = run(p)
+            print('A)', groups)
+            results.append(['Dreamtime', 2] in groups and not errs)
+            print('B)', pool)
+            results.append('2016-8' in pool)
+            groups2, pool2, errs2 = run(p, off=['S535', 'S536'])
+            print('C)', groups2, pool2)
+            results.append(not any(g[0] == 'Dreamtime' for g in groups2) and '2016-8' not in pool2 and not errs2)
+    finally:
+        H.MAIN = main0
+        H.RULES_OFF = []
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

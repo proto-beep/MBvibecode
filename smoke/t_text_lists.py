@@ -694,7 +694,7 @@ def case_onetrack3200():
             results.append(bool(r) and all(x[2] == 'recording' and x[3] == '1 of 4 tracks' for x in r) and (btn is None or (btn[0] and 'one track only' in btn[1])))
             raws = sorted(x[1] for x in r)
             results.append(len([x for x in raws if 'jaw harp' in x]) == 1 and not any(x.startswith('vocal') for x in raws) and not errs)
-            r, btn, errs = read(p, off=['S382'])
+            r, btn, errs = read(p, off=['S382', 'S537'])  # (3.225.0: S537 keeps a voice beside one instrument on its tracks too)
             print('C)', r, btn, errs)
             results.append(any(x[2] == 'release' for x in r) and not errs)
     finally:

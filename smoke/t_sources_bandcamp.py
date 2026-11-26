@@ -3049,7 +3049,8 @@ def case_percdrums3222():
     A) Anna Bell and Dora Eck keep their instruments on the tracks (not put on the release); Carl Dee is put on the release as before.
     B) S490 off (as 3.221.0): all three on the release."""
     credits = "Anna Bell – drums, percussion\nCarl Dee – drums, percussion, vocals\nDora Eck – percussion, congas"
-    init = "localStorage.setItem('dci-rules-off', JSON.stringify(['+S339']));"
+    # (3.225.0: S537 keeps vocals beside one instrument – or beside such a pair – on the tracks too: off here, Carl Dee shows S490 alone)
+    init = "localStorage.setItem('dci-rules-off', JSON.stringify(['+S339', 'S537']));"
     results = []
     with sync_playwright() as p:
         o = bc3222(p, 'https://percdrums.bandcamp.com/album/test', credits, init=init)
@@ -3102,7 +3103,7 @@ def case_lj3223():
         print('D)', ma, o['unrec'], [w for t, w in o['ign'] if 'GLAD' in t or 'CO-PRODUCTION' in t])
         results.append(('Chris Hardman', 'Mastered By [Both sides]', 'release') in ma and ('Manchester', 'Mastered In', 'release') in ma and not o['unrec']
                        and [w for t, w in o['ign'] if 'GLAD' in t or 'CO-PRODUCTION' in t] == ['labelInfo', 'footnote'] and not o['errs'])
-        o2 = bc3222(p, D['url'], D['credits'], D['about'], titles=D['titles'], media_format='12" Vinyl', off=['S499', 'S500', 'S501', 'S502', 'S503', 'S504', 'S505', 'S506'])
+        o2 = bc3222(p, D['url'], D['credits'], D['about'], titles=D['titles'], media_format='12" Vinyl', off=['S499', 'S500', 'S501', 'S502', 'S503', 'S504', 'S505', 'S506', 'S533'])  # (3.225.0: S533 finds the sections without the headings too)
         print('E)', [r[4] for r in _rows(o2, 'Ulrik Lindblom')][:1], bool(_rows(o2, 'August')))
         results.append([r[4] for r in _rows(o2, 'Ulrik Lindblom')][:1] == ['1,2,3,4,5'] and bool(_rows(o2, 'August')) and not o2['errs'])
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
@@ -3200,6 +3201,42 @@ def case_sig3224():
         o3 = bc3222(p, D['url'], D['credits'], D['about'], titles=D['titles'], off=['S522', 'S525'])
         print('E)', [r[0] for r in o3['rows'] if ')' in r[0]], o3['unrec'][:2])
         results.append(any(')' in r[0] for r in o3['rows']) and not o3['errs'])
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_ocr3225():
+    """Credits Importer 3.225.0 (collected items Z-OCRSECTIONS, Z-OCRDATES, Z-VOCALSKEEP; rules S533, S534, S537): the back cover of Ljudkamrater as the
+    text recognition reads it (smoke/data/ljocr3225.json): three frames – "CENTRALSTODET" with its lineup, "01 1E (10:07)" … "03 VEGAS BODEGA (04:50)",
+    "Improvised and recorded by Centralstodet at Musikens Hus in Gothenburg" / "Sweden during the summer of 2016 …"; a lineup without the heading
+    "THE MYRRORS", "01 KHALIVERA (6:29) __", "02 NIGHT FLOWER CODEX (12:36)°", "Recorded and produced by Nik Rayne August 2016 at Eastland Studios";
+    the release's lines (mastering, design, thanks, co-production).
+    A) Sections (S533): Ulrik Lindblom on 1–3, Nik Rayne's guitar on 4–5, Eastland Studios 4–5, Chris Hardman on the release.
+    B) Dates (S534): 2016-08 in the matrix for 4 and 5, 2016 for 1–3.
+    C) Vocals beside one instrument (S537, the quick switch S339 on): the lineup of Dreamtime – Zac Anderson (guitar, lead vocals) stays on the tracks,
+       Fergus Smith (synth, guitar, vocals) goes on the release.
+    D) Off (as 3.224.0): everyone on all tracks; Zac Anderson on the release."""
+    D = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'ljocr3225.json'), encoding='utf-8'))
+    L = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'lj3223.json'), encoding='utf-8'))
+    text = '\n\n'.join(D['blocks'])
+    results = []
+    with sync_playwright() as p:
+        H.attr(9596, 'tape', 14, 14)
+        o = bc3222(p, L['url'], text, '', titles=L['titles'], media_format='12" Vinyl')
+        tr = lambda n, role: [r[4] for r in _rows(o, n) if r[1] == role]
+        print('A)', tr('Ulrik Lindblom', 'electric guitar'), tr('Nik Rayne', 'guitar'), tr('Eastland Studios', 'Recorded At'), tr('Chris Hardman', 'Mastered By [Both sides]'))
+        results.append(tr('Ulrik Lindblom', 'electric guitar') == ['1,2,3'] and tr('Nik Rayne', 'guitar') == ['4,5'] and tr('Eastland Studios', 'Recorded At') == ['4,5']
+                       and tr('Chris Hardman', 'Mastered By [Both sides]') == ['1,2,3,4,5'] and not o['errs'])
+        cells = [(c[0], str(c[1].get('year')), str(c[1].get('month') or ''), ','.join(c[2])) for c in o['cells']]
+        print('B)', cells)
+        results.append(any(y == '2016' and mo == '8' and ts == '4,5' for _, y, mo, ts in cells) and any(y == '2016' and not mo and ts == '1,2,3' for _, y, mo, ts in cells))
+        lineup = 'Zac Anderson - Guitar, Lead Vocals\nFergus Smith - Synth, Guitar, Vocals'
+        o2 = bc3222(p, L['url'], lineup, '', off=['+S339'])
+        print('C)', {k: o2['insts'].get(k) for k in ('Zac Anderson', 'Fergus Smith')})
+        results.append(o2['insts'].get('Zac Anderson') == '' and o2['insts'].get('Fergus Smith') == 'release' and not o2['errs'])
+        o3 = bc3222(p, L['url'], text, '', titles=L['titles'], media_format='12" Vinyl', off=['S533', 'S534'])
+        o4 = bc3222(p, L['url'], lineup, '', off=['+S339', 'S537'])
+        print('D)', [r[4] for r in _rows(o3, 'Ulrik Lindblom')][:1], o4['insts'].get('Zac Anderson'))
+        results.append([r[4] for r in _rows(o3, 'Ulrik Lindblom')][:1] == ['1,2,3,4,5'] and o4['insts'].get('Zac Anderson') == 'release')
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
