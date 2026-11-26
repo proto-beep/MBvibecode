@@ -3064,4 +3064,97 @@ def case_percdrums3222():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+
+
+def case_lj3223():
+    """Credits Importer 3.223.0 (collected items Z-LJ-*, Z-CAPSPROMO; rules S499 – S506): the back cover of a split LP (text from smoke/data/lj3223.json):
+    "CENTRALSTÖDET" above "ULRIK LINDBLOM: electric guitar" …, its tracks "01 I E (10:07)" … each with "LINDBLOM/JOHANSSON/HUTTUNEN/FRIDLUND ©2016
+    CENTRALSTÖDET" below, "Improvised and recorded by Centralstödet at Musikens Hus in Gothenburg" / "Sweden during the summer of 2016 and mixed by Daniel
+    Johansson."; "THE MYRRORS" above its lineup and "01 KHALIVERA (6:29)" (track 4) with "MUSIC COMPOSED BY NIK RAYNE ©2016 SKY LANTERN MUSIC", "02 NIGHT
+    FLOWER CODEX (12:36)*", "Recorded and produced by Nik Rayne August 2016 at Eastland Studios" / "in Tucson, Arizona …", "* BE GLAD FOR THE SONG HAS NO
+    ENDING"; then "BOTH SIDES MASTERED BY CHRIS HARDMAN IN MANCHESTER", "ALBUM DESIGN & ARTWORK BY NIK RAYNE", "LJUDKAMRATER IS A CARDINAL FUZZ (CF068) AND
+    SKY LANTERN RECORDS (SLR204) CO-PRODUCTION".
+    A) Split (S499): Ulrik Lindblom's guitar on tracks 1–3, Kellen Fortier's bass on 4–5; the headings left out as headings of a group.
+    B) Composers (S501, S502): the four surnames and Centralstödet compose 1–3, Nik Rayne 4–5, Sky Lantern Music publishes 4–5.
+    C) Sentences (S504, S505): Centralstödet recorded 1–3 at Musikens Hus, Daniel Johansson mixed 1–3; no person "August"; Nik Rayne recorded and produced 4–5.
+    D) Capitals (S503): Chris Hardman masters the release, Manchester its area (mastered in); "* BE GLAD …" a footnote (S500), the co-production about the
+       labels (S506); nothing not recognized but the viola of a test without it.
+    E) The rules off (as 3.222.0): the lineup on all five tracks, "August" a person."""
+    D = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'lj3223.json'), encoding='utf-8'))
+    results = []
+    with sync_playwright() as p:
+        H.attr(9590, 'viola', 14, 14)
+        o = bc3222(p, D['url'], D['credits'], D['about'], titles=D['titles'], media_format='12" Vinyl')
+        tr = lambda n, role: [r[4] for r in _rows(o, n) if r[1] == role]
+        whys = {t: w for t, w in o['ign']}
+        print('A)', tr('Ulrik Lindblom', 'electric guitar'), tr('Kellen Fortier', 'bass'), whys.get('CENTRALSTÖDET'), whys.get('THE MYRRORS'))
+        results.append(tr('Ulrik Lindblom', 'electric guitar') == ['1,2,3'] and tr('Kellen Fortier', 'bass') == ['4,5'] and whys.get('CENTRALSTÖDET') == 'groupHeading' and whys.get('THE MYRRORS') == 'groupHeading')
+        comp = sorted((r[0], r[4]) for r in o['rows'] if r[1] == 'Composed By')
+        pub = [(r[0], r[4]) for r in o['rows'] if r[1] == 'Published By']
+        print('B)', comp, pub)
+        results.append(comp == [('Centralstödet', '1,2,3'), ('Daniel Johansson', '1,2,3'), ('Jonas Fridlund', '1,2,3'), ('Joni Huttunen', '1,2,3'), ('Nik Rayne', '4,5'), ('Ulrik Lindblom', '1,2,3')]
+                       and pub == [('Sky Lantern Music', '4,5')])
+        rec = sorted((r[0], r[1], r[4]) for r in o['rows'] if r[1] in ('Recorded By', 'Mixed By', 'Produced By', 'Recorded At'))
+        print('C)', rec)
+        results.append(rec == [('Centralstödet', 'Recorded By', '1,2,3'), ('Daniel Johansson', 'Mixed By', '1,2,3'), ('Eastland Studios', 'Recorded At', '4,5'), ('Musikens Hus', 'Recorded At', '1,2,3'),
+                               ('Nik Rayne', 'Produced By', '4,5'), ('Nik Rayne', 'Recorded By', '4,5')] and not _rows(o, 'August'))
+        ma = [(r[0], r[1], r[3]) for r in o['rows'] if r[1].startswith('Mastered')]
+        print('D)', ma, o['unrec'], [w for t, w in o['ign'] if 'GLAD' in t or 'CO-PRODUCTION' in t])
+        results.append(('Chris Hardman', 'Mastered By [Both sides]', 'release') in ma and ('Manchester', 'Mastered In', 'release') in ma and not o['unrec']
+                       and [w for t, w in o['ign'] if 'GLAD' in t or 'CO-PRODUCTION' in t] == ['labelInfo', 'footnote'] and not o['errs'])
+        o2 = bc3222(p, D['url'], D['credits'], D['about'], titles=D['titles'], media_format='12" Vinyl', off=['S499', 'S500', 'S501', 'S502', 'S503', 'S504', 'S505', 'S506'])
+        print('E)', [r[4] for r in _rows(o2, 'Ulrik Lindblom')][:1], bool(_rows(o2, 'August')))
+        results.append([r[4] for r in _rows(o2, 'Ulrik Lindblom')][:1] == ['1,2,3,4,5'] and bool(_rows(o2, 'August')) and not o2['errs'])
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_dt3223():
+    """Credits Importer 3.223.0 (collected items Z-DT-*, Z-LEFTOUT-TABLE; rules S507 – S519): a Bandcamp album of 11 tracks (smoke/data/dt3223.json),
+    a CD release; its credits "Tara Wardrop - Drums Percussion, Vocals", "Fergus Smith - Synth, Guiar, Shahi Baaja, Vocals", "Recorded and Mixed by Darek
+    Mudge at The Shed Recording Studio", "Gamma Globulin and Serpent's Tongue Recorded and Mixed by George Bennett at Unicorn Planet.", "Original Oil on
+    Canvas Cover Artwork by Riandy Karuniawan", "Layout and Photo Collage by Zac Anderson", "Made in Brisbane, Australia 2016", "Copyright Dreamtime (Band)
+    2016"; the about text "Recorded by Darek Mudge at The Shed Recording Studio …"; the editions Vinyl LP ("REPRESSING 250 WORLDWIDE <<<< AVAILABLE SOON
+    >>>>", "USA - Sky Lantern Records SOLD OUT" …), T-Shirt/Apparel, Compact Disc ("Sam Giles Gatefold Handmade CD sleeve …").
+    A) Tracks (S507): George Bennett and Unicorn Planet on 10–11, Darek Mudge (also as the about text says it) and The Shed on 1–9.
+    B) Art (S508, S509, S513): Riandy Karuniawan an illustration credited "oil on canvas"; Zac Anderson the layout and an artwork "photo collage"; Sam
+       Giles the design credited "sleeve".
+    C) Instruments (S514, S515): Tara Wardrop drums and percussion; Fergus Smith's Shahi Baaja the bulbul tarang.
+    D) Made in and © (S511, S512): Brisbane manufactured in (or produced in), credited "made in", 2016; © Dreamtime.
+    E) Left out (S517, S518): the edition's lines as edition and shop, the T-shirt's as merchandise; nothing not recognized.
+    F) A digital release: Brisbane produced in, on the recordings."""
+    D = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'dt3223.json'), encoding='utf-8'))
+    results = []
+    with sync_playwright() as p:
+        H.attr(9591, 'bulbul tarang', 14, 14)
+        H.attr(9592, 'theremin', 14, 14)
+        H.attr(9593, 'illustration', 14, 14)
+        o = bc3222(p, D['url'], D['credits'], D['about'], titles=D['titles'], packages=D['packages'], media_format='CD')
+        rr = lambda n: sorted((r[1], r[4]) for r in _rows(o, n))
+        all11 = ','.join(str(i) for i in range(1, 12))
+        print('A)', rr('George Bennett'), rr('Darek Mudge'), rr('Unicorn Planet'), rr('The Shed Recording Studio'))
+        results.append(rr('George Bennett') == [('Mixed By', '10,11'), ('Recorded By', '10,11')] and rr('Darek Mudge') == [('Mixed By', '1,2,3,4,5,6,7,8,9'), ('Recorded By', '1,2,3,4,5,6,7,8,9')]
+                       and all(t == '10,11' for _, t in rr('Unicorn Planet')) and all(t == '1,2,3,4,5,6,7,8,9' for _, t in rr('The Shed Recording Studio')))
+        art = sorted((r[0], r[2].split('/')[0], r[6]) for r in o['rows'] if r[0] in ('Riandy Karuniawan', 'Zac Anderson', 'Sam Giles') and r[3] == 'release')
+        print('B)', art)
+        results.append(('Riandy Karuniawan', 'illustration', 'oil on canvas') in art and ('Zac Anderson', 'artwork', 'photo collage') in art
+                       and any(n == 'Zac Anderson' and t == 'design' for n, t, _ in art) and any(n == 'Sam Giles' and c == 'sleeve' for n, _, c in art))
+        tw = sorted(r[5] for r in _rows(o, 'Tara Wardrop') if r[5])
+        fs = [r for r in _rows(o, 'Fergus Smith') if 'Shahi' in r[1]]
+        print('C)', tw, fs, [t for t, w in o['ign'] if 'Shahi' in t])
+        results.append(tw == ['drums (drum set)', 'percussion'] and len(fs) == 1 and fs[0][5] == 'bulbul tarang')
+        bri = _rows(o, 'Brisbane')
+        dre = _rows(o, 'Dreamtime')
+        dates = o and None
+        print('D)', bri, dre)
+        results.append(len(bri) == 1 and bri[0][2] == 'manufactured in/produced in' and bri[0][3] == 'release' and bri[0][6] == 'made in' and [r[1] for r in dre] == ['Copyright (c)'])
+        whys = [w for t, w in o['ign'] if t.startswith(('Vinyl LP:', 'T-Shirt/Apparel:', 'Compact Disc (CD):'))]
+        print('E)', whys, o['unrec'])
+        results.append(whys.count('merch') == 4 and whys.count('edition') == 1 and whys.count('shop') >= 5 and not o['unrec'] and not o['errs'])
+        o2 = bc3222(p, D['url'], D['credits'], D['about'], titles=D['titles'], packages=D['packages'], media_format='Digital Media')
+        bri2 = _rows(o2, 'Brisbane')
+        print('F)', bri2)
+        results.append(len(bri2) == 1 and bri2[0][2] == 'produced in' and bri2[0][3] == 'recording' and not o2['errs'])
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())

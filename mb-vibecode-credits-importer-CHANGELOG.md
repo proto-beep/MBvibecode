@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-25 | 3.218.0 – 3.222.0 | 1.24.0 |
+| 2026-11-25 | 3.218.0 – 3.223.0 | 1.24.0 |
 | 2026-11-24 | 3.213.0 – 3.217.0 | – |
 | 2026-11-23 | 3.210.0 – 3.212.0 | – |
 | 2026-11-22 | 3.197.0 – 3.209.0 | – |
@@ -139,6 +139,18 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.223.0
+
+**Works of the same title in an artist's repertoire, split releases, credits in capitals, tracks named before a credit, "Made in", one table of the lines left out.**
+
+- **Works of the same title** (rules S496 – S498): an artist with two works of a title in MusicBrainz ("Spirits", "Saints"): "✨ Answer all" takes the one written by an artist of the release or a writer of the track, then the one their recordings use most; a disambiguation naming a version ("second variation") is not the work of the plain title. A work one letter apart ("Angel" beside "Angels") no longer ties with the right one. What "✨" leaves open is listed below its answers, with why ("“Children”: 2 works of this title, none decides").
+- **Split releases** (rule S499): two bands, each its name above its lineup and its tracks ("CENTRALSTÖDET" / "ULRIK LINDBLOM: electric guitar" / "01 I E (10:07)" …, "THE MYRRORS" … "01 KHALIVERA") – each lineup and the credits below its tracks on those tracks only.
+- **Covers written their own way** (rules S500 – S506): the surnames of the lineup below a track ("LINDBLOM/JOHANSSON/HUTTUNEN/FRIDLUND ©2016 CENTRALSTÖDET") are its composers, the band too; "MUSIC COMPOSED BY NIK RAYNE ©2016 SKY LANTERN MUSIC" – the composer and the publisher of its work; capitals are never a sign of advertising – "BOTH SIDES MASTERED BY CHRIS HARDMAN IN MANCHESTER" is read (mastered in Manchester); a sentence broken over two lines is one; "by Nik Rayne August 2016 at …" – no person "August"; a footnote mark without a credit dropped; "… CO-PRODUCTION" about the labels, left out.
+- **Tracks before a credit** (rule S507): "Gamma Globulin and Serpent's Tongue Recorded and Mixed by George Bennett at Unicorn Planet." – on those tracks; "Recorded and Mixed by Darek Mudge …" on the others (also in one line, and not widened by the about text).
+- **Art and packages** (rules S508 – S510, S513): "Original Oil on Canvas Cover Artwork by X" – an illustration credited "oil on canvas"; "Layout and Photo Collage by X" – layout and an artwork "photo collage"; "ZAc Anderson" as the lineup or Discogs writes him; "Sam Giles Gatefold Handmade CD sleeve …" – Sam Giles the design, credited "sleeve".
+- **Made in, ©, instruments** (rules S511, S512, S514 – S516): "Made in Brisbane, Australia 2016" – manufactured in (produced in to choose) on a physical release, produced in on a digital one, credited "made in", 2016 its date (no date of the recordings); "Copyright Dreamtime (Band) 2016" – © Dreamtime; "Drums Percussion" – two instruments; "Shahi Baaja" – bulbul tarang; "by Indonesian artist Riandy Karuniawan" – the name.
+- **The lines left out as one table of the mapping** (rules S517 – S521): edition, package, shop, download, merchandise, description, labels, contact, headings – each with its reason; new: "REPRESSING 250 WORLDWIDE", "USA - Sky Lantern Records SOLD OUT", "ALSO AVAILABLE THROUGH …", "ships out within", "… also has Cd's", "… are thrilled to present"; a Bandcamp edition of merchandise (T-shirt …) gives no credits; a line about the package of a physical release says when MusicBrainz has no packaging yet; the Discogs notes' lines left out and those for tracks the release does not have are listed (no longer gone silently).
 
 ### Import 3.222.0
 

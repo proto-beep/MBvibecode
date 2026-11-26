@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.222.0",
+  "version": "3.223.0",
   "about": "MB x Vibecode: Credits Importer – the data of its mapping register (role rules, company roles, questions, tables and word lists, the quick switches). Loaded by the script (@resource mapping); the rules with code stay in the script. Regular expressions are {\"$re\": source, \"$flags\": flags}, sets {\"$set\": [...]}, maps {\"$map\": [[key, value], ...]}.",
   "DEFAULT_OFF_RULES": {"$set":["D023","S452","S046","D026","S114","S155","S160","S297","S339","S343"]},
   "CHECKBOX_DETAILS": [
@@ -109,6 +109,7 @@
     [{"$re":"^engineered in","$flags":""},{"id":"C043","area":["engineered in"],"level":"recording"}],
     [{"$re":"^composed in","$flags":""},{"id":"C045","area":["composed in"],"level":"work"}],
     [{"$re":"^printed in","$flags":""},{"id":"C058","area":["printed in"],"level":"release"}],
+    [{"$re":"^made in","$flags":""},{"id":"C069","area":["manufactured in","produced in"],"level":"release"}],
     [{"$re":"^(manufactured|made|pressed) in","$flags":""},{"id":"C059","area":["manufactured in"],"level":"release"}],
     [{"$re":"^(lacquer cut|lacquers cut|cut) in","$flags":""},{"id":"C060","area":["lacquer cut in"],"level":"release"}],
     [{"$re":"^programmed in","$flags":""},{"id":"C061","area":["programmed in"],"level":"recording"}],
@@ -313,6 +314,8 @@
     "wurlitzer": ["wurlitzer electric piano","electric piano"],
     "wurlitzer electric piano": ["wurlitzer electric piano","electric piano"],
     "wurly": ["wurlitzer electric piano","electric piano"],
+    "shahi baaja": ["bulbul tarang"],
+    "shahi baja": ["bulbul tarang"],
     "hammond organ": ["hammond organ","organ"],
     "congas": ["conga","congas"],
     "bongos": ["bongos","bongo"],
@@ -697,7 +700,7 @@
     ["Illustration","illustration@en,sv,da; illustrations@en; illustrasjon@no; illustrasjoner@no; illustrationer@sv,da"],
     ["Layout","layout@en,no,sv,da"]
   ],
-  "INSTRUMENT_MODIFIER": {"$re":"^(sopranino|soprano|alto|tenor|baritone|bari|contrabass|acoustic|electric|classical|slide|fretless|upright|prepared|toy|grand|12-string|twelve-string|nylon-string|steel-string|four|five|six|seven|eight|nine|ten|twelve|4|5|6|7|8|9|10|12)$","$flags":"i"},
+  "INSTRUMENT_MODIFIER": {"$re":"^(sopranino|soprano|alto|tenor|baritone|bari|contrabass|acoustic|electric|classical|slide|fretless|upright|prepared|toy|grand|amplified|12-string|twelve-string|nylon-string|steel-string|four|five|six|seven|eight|nine|ten|twelve|4|5|6|7|8|9|10|12)$","$flags":"i"},
   "INSTRUMENT_MODIFIER_AFTER": {"$re":"^(sopranino|soprano|alto|tenor|ténor|barítono|baritono|baryton|bajo|basse|eléctrica|electrica|eléctrico|electrico|électrique|electrique|acústica|acustica|acústico|acustico|acoustique|clásica|clasica|classique)$","$flags":"i"},
   "PRIVATE_PLACE": {"$re":"^(?:home\\b|(?:my|his|her|their|our)\\s+(?:own\\s+)?(?:home|house|flat|apartment|bedroom|living\\s?room|kitchen|garage|basement|attic|cellar|place|studio)\\b)","$flags":"i"},
   "NOT_A_PLACE": {"$re":"^(?:(?:the\\s+)?same\\s+time\\b|the\\s+time\\b|(?:that|this|the)\\s+(?:point|stage|moment)\\b|(?:the\\s+)?(?:end|beginning|start)(?:$|\\s+of\\b)|(?:once|night|dawn|dusk|midnight|noon|least|all|times|first|last)$|(?:first|last)\\s+(?:week|weekend|days?|nights?|time|month|year|sessions?|takes?)\\b)","$flags":"i"},
@@ -814,6 +817,24 @@
     "(?:[\\w'’.&-]+\\s+){0,3}version(?:\\s*\\d+)?",
     "instrumental|acoustic|unplugged|a\\s*cappella|rehearsal|outtake|early\\s+take|session\\s+take|breakdown|incomplete|fragment",
     "remaster(?:ed)?(?:\\s+\\d{4})?|\\d{4}\\s+remaster(?:ed)?"
+  ],
+  "LEFTOUT_TABLE": {
+    "_note": "Lines left out on purpose, by group: why = the reason shown; lines = read since 3.222.0 (S485), more = added in 3.223.0 (S517). A line with \"<role> by <Name>\" is a credit in any group (it stays for the reader). Bandcamp editions of merchandise (MERCH_PACKAGE_TYPES) give no credits at all (S518).",
+    "edition": {"why":"edition","lines":[{"$re":"^\\d{2,3}\\s*g(?:ram)?\\s+(?:\\d{1,2}[\"”]?\\s*(?:inch|in\\.?|\")\\s+)?(?:\\d\\s*x\\s*)?(?:lp|vinyl|record)s?\\b","$flags":"i"},{"$re":"^\\d{1,2}\\s*(?:inch|\")\\s+\\d\\s*x\\s*lp\\b","$flags":"i"},{"$re":"^(?:(?:stand(?:ard)?\\.?|limited(?:\\s+edition)?|ltd\\.?|special|deluxe)\\s+)?[\\p{L}\\s/&-]{0,40}\\b(?:variant|colou?r(?:ed)?\\s+vinyl|splatter|marbled?|translucent)\\b\\.?$","$flags":"iu"}],"more":[{"$re":"^re-?press(?:ing|ed)?\\b","$flags":"i"},{"$re":"^(?:ltd\\.?|limited)\\s+(?:edition\\s+)?(?:to\\s+)?\\d+\\s+(?:copies|units|pieces)\\b","$flags":"i"},{"$re":"^(?:an?\\s+)?edition\\s+of\\s+\\d+\\b","$flags":"i"},{"$re":"^\\d+\\s+remaining\\.?$","$flags":"i"},{"$re":"^(?:signed|autographed|numbered|hand-?numbered)\\s+(?:copies|edition|lp|cd|vinyl)\\b|^test\\s*press(?:ings?)?\\b","$flags":"i"}]},
+    "package": {"why":"package","lines":[{"$re":"^(?:printed\\s+)?(?:inner|outer)\\s+sleeves?\\b|^(?:cd\\s+)?digi(?:pak|pack|sleeve|file)\\b|^\\d{1,2}[-\\s]panel\\b|^includes?\\s+(?:an?\\s+)?(?:booklet|insert|poster|download)\\b","$flags":"i"},{"$re":"^(?:the\\s+)?(?:triple|double|single|\\d)[-\\s]?(?:cd|lp|vinyl|cassette|disc)s?\\s+(?:comes?|is\\s+housed|is\\s+packaged|arrives?)\\s+in\\b","$flags":"i"},{"$re":"^(?:jackets?|sleeves?|covers?|inserts?|booklets?|discs?|cds?|records?)\\s+(?:made|printed|pressed|manufactured)\\s+in\\s+\\p{Lu}","$flags":"iu"}]},
+    "shop": {"why":"shop","lines":[{"$re":"^merch(?:andise)?\\b.*\\b(?:available|store|shop)\\b|^(?:bundles?|merch)\\s*(?:\\+|and|&)\\s*(?:bundles?|merch)\\b","$flags":"i"}],"more":[{"$re":"^(?:\\p{L}{2,4}(?:/\\p{L}{2,4})?|[\\p{L}\\s]{3,20})\\s+[-–]\\s+[^-–]{2,60}\\bsold\\s+out\\b","$flags":"iu"},{"$re":"\\bsold\\s+out\\.?$","$flags":"i"},{"$re":"^(?:also\\s+)?available\\s+(?:soon|now|through|via|from|at)\\b|<{2,}[^<>]*>{2,}","$flags":"i"},{"$re":"\\bships?\\s+(?:out\\s+)?within\\b|^(?:free\\s+)?shipping\\b|\\bcustoms\\s+(?:fees?|charges?)\\b","$flags":"i"},{"$re":"\\balso\\s+has\\s+(?:cds?|cd[\\'’]s|vinyls?|lps?|tapes?|cassettes?)\\b","$flags":"i"},{"$re":"^pre-?orders?\\b|^(?:out\\s+(?:now|on)|release\\s+date)\\b","$flags":"i"},{"$re":"^bundles?\\b|\\bbundle\\s+(?:includes|contains)\\b","$flags":"i"}]},
+    "download": {"why":"shop","lines":[{"$re":"^(?:the\\s+)?(?:digital\\s+)?(?:download|album|digital\\s+album|files?)\\b.{0,40}\\bavailable\\s+in\\s+\\d{2}[-\\s]?bit\\b|^download\\s+available\\s+in\\b","$flags":"i"}],"more":[{"$re":"^includes\\s+unlimited\\s+streaming\\b|\\bhigh-?quality\\s+download\\s+in\\b","$flags":"i"},{"$re":"^\\d{2}-bit/\\d{2,3}(?:\\.\\d)?\\s*khz\\b","$flags":"i"}]},
+    "merch": {"why":"merch","more":[{"$re":"\\bt-?shirts?\\b|\\bhoodies?\\b|\\bsweat(?:er|shirt)s?\\b|\\btote\\s+bags?\\b|\\bgildan\\b|\\bsoftstyle\\b|^sizing\\b|^sizes?\\s*[:(]","$flags":"i"}]},
+    "promo": {"why":"promo","lines":[{"$re":"^covering\\s+(?:almost|nearly|over|about|more\\s+than)?\\s*\\d+\\s+(?:hours?|minutes?)\\s+of\\s+music\\b|^(?:high[-\\s]quality\\s+)?recordings?\\s+(?:were\\s+)?(?:tapped|taken)\\s+(?:directly\\s+)?from\\b","$flags":"i"}]},
+    "labels": {"why":"labelInfo","more":[{"$re":"\\bco-?\\s?production\\.?$","$flags":"i"},{"$re":"\\b(?:are|is)\\s+(?:thrilled|proud|happy|pleased|excited|delighted|honou?red)\\s+to\\s+(?:present|announce|release|bring|share)\\b","$flags":"i"}]},
+    "web": {"why":"web","lines":[{"$re":"^(?:inquiries|enquiries)\\s*:\\s*\\S+@\\S+$","$flags":"i"}]},
+    "heading": {"why":"heading","lines":[{"$re":"^(?:album|release|all)\\s+credits\\s*:?$|^all\\s+(?:songs|tracks|music)\\s*:$","$flags":"i"}]}
+  },
+  "MERCH_PACKAGE_TYPES": {"$re":"^(?:t-?shirt|apparel|sweater|hoodie|hat|cap|bag|tote|poster|print|button|pin|badge|sticker|patch|mug|other merch)","$flags":"i"},
+  "AW_VERSION_DISAMB": [
+    "(?:(?:first|second|third|fourth|fifth|\\d+(?:st|nd|rd|th))\\s+)?variation(?:\\s*(?:#|no\\.?)?\\s*\\d+)?",
+    "(?:alternate|alt\\.?|early|later?|second|new|revised|original)\\s+version",
+    "(?:instrumental|vocal|live|demo|reprise|theme|edit)(?:\\s+version)?"
   ],
   "SUITE_SKIP_HEADINGS": [
     "Side",

@@ -3043,4 +3043,87 @@ def case_awstop3218():
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_awdup3223():
+    """Credits Importer 3.223.0 (collected items Z-AWDUP, Z-AWNEAR, Z-AWSKIPHINT; rules S496 – S498): "Albert Ayler with Don Cherry", 21 tracks on two
+    CDs – "Spirits" four times, "Saints" twice, "Ghosts" three times, "Angels", "C.A.C." (Don Cherry's) …; Ayler's works in MusicBrainz: "Spirits" twice
+    (one recorded five times by him, one once), "Saints" twice (2 and 3 recordings), "Ghosts" and "Ghosts" (disambiguation "second variation"), "Angels"
+    and "Angel"; "Children" twice, with nothing to decide.
+    A) "✨ Answer all" (balanced): Spirits – the one recorded most (S496); Saints – the one recorded most; Ghosts – the one without a version in its
+       disambiguation; Angels linked (S497: "Angel" no tie).
+    B) Not answered, listed with why (S498): "Children" – 2 works of this title, none decides.
+    C) Off (as 3.222.0): Spirits, Saints, Ghosts and Angels not answered, no list."""
+    T = ['Spirits', 'Vibrations', 'Saints', 'Mothers', 'Children', 'Spirits', 'Vibrations', 'Saints', 'Spirits', 'Ghosts', 'Children',
+         'Holy Spirit', 'Ghosts', 'Vibrations', 'Mothers', 'Angels', 'C.A.C.', 'Ghosts', 'Infant Happiness', 'Spirits', 'No Name']
+    rec0, titles0, media0, ac0, dg0, ws0 = list(H.REC), list(H.TITLES), H.MEDIA, list(H.RELEASE_AC), H.discogs_release, H.ws_release
+    H.TITLES[:] = T
+    H.REC[:] = [H.uid('bbbbbbbb', i) for i in range(1, 22)]
+    H.MEDIA = [11, 10]
+    AY, DC = H.uid('dddddddd', 3870), H.uid('dddddddd', 3871)
+    H.RELEASE_AC[:] = [(AY, 'Albert Ayler', 'Albert Ayler', ' with '), (DC, 'Don Cherry', 'Don Cherry', '')]
+    W = lambda k: H.uid('7a7a7a7a', k)
+    works = {'Spirits': 1, 'Vibrations': 2, 'Saints': 3, 'Mothers': 4, 'Children': 5, 'Ghosts': 6, 'Holy Spirit': 7, 'Angels': 8, 'Infant Happiness': 9}
+    ayw = [{'id': W(k), 'title': t, 'type': 'Song', 'aliases': []} for t, k in works.items()]
+    ayw += [{'id': W(11), 'title': 'Spirits', 'type': 'Song', 'aliases': []}, {'id': W(13), 'title': 'Saints', 'type': '', 'aliases': []},
+            {'id': W(16), 'title': 'Ghosts', 'type': 'Song', 'aliases': [], 'disambiguation': 'second variation'}, {'id': W(15), 'title': 'Children', 'type': 'Song', 'aliases': []},
+            {'id': W(22), 'title': 'Angel', 'type': 'Song', 'aliases': []}]
+    rw = lambda k, t: {'title': t, 'work': {'id': W(k), 'title': t}}
+    H.ARTIST_WORKS.update({AY: ayw, DC: [{'id': W(30), 'title': 'C.A.C.', 'type': 'Song', 'aliases': []}]})
+    H.ARTIST_RECORDINGS[AY] = [rw(1, 'Spirits')] * 5 + [rw(11, 'Spirits')] + [rw(3, 'Saints')] * 2 + [rw(13, 'Saints')] * 3
+
+    def dg():
+        d = dg0()
+        d['artists'] = [{'name': 'Albert Ayler', 'id': 2999, 'anv': '', 'role': '', 'join': 'with'}]
+        for t in d['tracklist']:
+            t['extraartists'] = []
+        return d
+
+    def ws(full=False):
+        d = ws0(full)
+        for m in d.get('media', []):
+            for t in m.get('tracks', []):
+                r = t.get('recording', {})
+                r['relations'] = [x for x in r.get('relations', []) if x.get('target-type') != 'work']
+        return d
+    H.discogs_release, H.ws_release = dg, ws
+    results = []
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        ctx.add_init_script("localStorage.setItem('dci-aw-ask', '0'); localStorage.setItem('dci-magic-level', JSON.stringify('balanced'));")
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Works of the artists compared/.test(li.textContent))", 120)
+        pg.wait_for_timeout(2500)
+        pg.locator('[data-el=works] [data-act=magic-open]').first.evaluate('b => b.click()')
+        pg.wait_for_timeout(1000)
+        items = pg.evaluate("[...document.querySelectorAll('[data-el=magic-item]')].map(x => x.textContent.replace(/\\s+/g, ' ').trim())")
+        skip = pg.evaluate("[...document.querySelectorAll('[data-el=magic-skip]')].map(x => [x.dataset.why, x.textContent.replace(/\\s+/g, ' ').trim()])")
+        b.close()
+        return items, skip, errs
+    try:
+        with sync_playwright() as p:
+            items, skip, errs = run(p)
+            has = lambda xs, a, b: any(a in x and b in x for x in xs)
+            print('A)', items)
+            results.append(has(items, '“Spirits”', 'recorded most') and has(items, '“Saints”', 'recorded most') and has(items, '“Ghosts”', 'without a version')
+                           and has(items, '2.5', 'Angels'))
+            print('B)', skip)
+            results.append(len(skip) == 1 and skip[0][0] == 'several' and 'Children' in skip[0][1] and '2 works' in skip[0][1] and not errs)
+            items2, skip2, errs2 = run(p, off=['S496', 'S497', 'S498'])
+            print('C)', items2, skip2)
+            results.append(not any(('“Spirits”' in x or '“Saints”' in x or '“Ghosts”' in x or 'Angels' in x) for x in items2) and not skip2 and not errs2)
+    finally:
+        H.REC[:], H.TITLES[:], H.MEDIA, H.RELEASE_AC[:] = rec0, titles0, media0, ac0
+        H.discogs_release, H.ws_release = dg0, ws0
+        H.ARTIST_WORKS.pop(AY, None)
+        H.ARTIST_WORKS.pop(DC, None)
+        H.ARTIST_RECORDINGS.pop(AY, None)
+        H.RULES_OFF = []
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 run_cases(globals())
