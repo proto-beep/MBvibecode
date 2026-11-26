@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-26 | 3.224.0 – 3.229.0 | 1.25.0 |
+| 2026-11-26 | 3.224.0 – 3.230.0 | 1.25.0 |
 | 2026-11-25 | 3.218.0 – 3.223.0 | 1.24.0 |
 | 2026-11-24 | 3.213.0 – 3.217.0 | – |
 | 2026-11-23 | 3.210.0 – 3.212.0 | – |
@@ -140,6 +140,13 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.230.0
+
+**The times of an import in the log; the compact view recommended.**
+
+- **Times** (rule S557): once nothing runs any more after an import, the log says when the dashboard was ready and what took longest – for MusicBrainz (one request a second), its other pages, Discogs, other sites (Bandcamp) and the text from images: the steps with their requests and time ("works on the artists' pages 61 · 1 min 12 s"). To find what a quick mode should leave out.
+- **Compact view** (rule S558): the hint at "Compact | Full" says the compact view is recommended – in the full view too, until it is closed or the view switched.
 
 ### Import 3.229.0
 
