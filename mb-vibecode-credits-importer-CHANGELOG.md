@@ -13,6 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
+| 2026-11-26 | 3.224.0 | 1.24.0 |
 | 2026-11-25 | 3.218.0 – 3.223.0 | 1.24.0 |
 | 2026-11-24 | 3.213.0 – 3.217.0 | – |
 | 2026-11-23 | 3.210.0 – 3.212.0 | – |
@@ -139,6 +140,15 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-08
+
+### Import 3.224.0
+
+**Reading texts: dates with a day's full stop, credits with their own tracks in one sentence, "Text" as liner notes.**
+
+- **Sentences** (rules S522 – S526): "Recorded 4. February 2023 by …" is one sentence; "by RouteStock production – live at The Hot Tin, Faversham UK" – the name ends before "– live at", a production company is a label "recorded by"; "Recording engineer: Henry Dagg, mixed and mastered by Ferran Conangla at FCM Studio, Barcelona." – two credits, FCM Studio mixed at and mastered at (no recorded at); "(PRS/MCPS/PPL)" no composer "PPL)"; "Tracks 1, 2, 5 composed by …, Track 3 composed by …, Track 4 composed by …" – each part on its tracks, the sentences after it on the release.
+- **Roles** (rules S527, S528): "Text" / "Texts" alone – liner notes at once, lyricist one click away (Q005); "director" as the conductor credited "director", not "music director".
+- **Art and editions** (rules S529 – S531): an illustration ("Oil on Canvas … Artwork by") without role credit; "Limited Sam Giles edition of 75 handmade mini-LP CDR" – Sam Giles the design, credited "sleeve"; the artwork in an edition's description ("… artwork by Indonesian artist Riandy Karuniawan") taken, unless another line names someone else.
+- **Instruments** (rule S532): "tape loops" – tape, credited "tape loops".
 
 ### Import 3.223.0
 
