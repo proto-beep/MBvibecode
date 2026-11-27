@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.235.0
+// @version      3.236.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.235.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.235.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.236.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.236.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.235.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.236.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1911,6 +1911,8 @@
       "cl.mediumOne": "medium {n}",
       "livecom.sameArea": "Places in the same area: {list} – the area in the comment",
       "ignored.why.engStudio": "the studio of the engineer – the release names the places it was recorded at; the studio keeps mixed at / mastered at",
+      "ignored.why.society": "a rights society – no holder of the ℗ (⚙ quick switch “Take rights societies”: as a rights society of the release)",
+      "log.coverLayout": "The layout of the text (the back of a box): {n} credits on their tracks – {media} media headings, groups: {groups}",
       "note.engStudio": "Left out: the studio of the engineer (“Recorded By”) – the release names the places it was recorded at, and MusicBrainz has no “recorded by” of a place.",
       "typeAsk.askRealization": "“{role}”: the graphic realization (graphic design), the production or miscellaneous support? – please choose:",
       "log.langAsked": "Language chosen after the installation: {lang}",
@@ -6191,6 +6193,7 @@
     { id: 'S578', where: 'applyTrackArtistTracks (openCreditTrack, groupMemberTrack, dTrackIdx), memberGroups, titleLineup (titleGroups), TRACK_AC_OPEN', note: 'Track artists (3.235.0; collected item Z-TWOSOURCES, T4; S078, Z-BANDTRACKS): a track whose artist credit is open – "Barry Guy and Friends", "& Guests", "and his Orchestra" (mapping TRACK_AC_OPEN) – excludes nobody (who plays there the credits say: an "and Friends" album often changes its lineup); a group of a track\'s artist credit counts its members (the lineup of a title "Aurora Trio: Fernández p // Guy, db // López …", the members a text lists below the group\'s name); the tracks the source itself names for the person stay. Switched off: such tracks are left out (as until 3.234.0)' },
     { id: 'S579', where: 'loadSupplement (addNotesCompanies, autoPlaceFoundDates), foundDateText', note: 'Two sources (3.235.0; collected item Z-TWOSOURCES, T5; S459, S441, D022): an added Discogs release is read as at the import – its places on the tracks its notes give them ("Recorded: October 11-12, 2018 at the Alchemia Club, Kraków (CD#1 … CD#4)" – Alchemia on 1.1–4.5, Radio Kraków on 5.1; until 3.234.0 every place on every track), the studio of its engineer no place recorded at (S571), its dates in the date pool and the matrix as suggestions (D022, D035 as always). Switched off: as until 3.234.0' },
     { id: 'S580', where: 'applyImprovComposers', note: 'Works (3.235.0; collected item Z-TWOSOURCES, T8; S222): a composer (or writer) of a list without tracks ("Barry Guy – bass, director, composer") is not the composer of the tracks whose titles say they are improvisations ("Improv 1") – the improvisations of the groups are no works of his; nothing is assumed for them (a work only where a text says who improvised – "All music improvised by …"). The row says so; its other tracks stay. Switched off: on every track' },
+    { id: 'S581', where: 'coverMedia, coverLayout (loadSupplement, startImport: a text), notesForDates, RIGHTS_SOCIETIES (BIEM with them, as in SOCIETY_LINE)', note: 'Texts (3.236.0; collected item Z-COVERLAYOUT, T10): the layout of the back of a box, read from its image or pasted – medium headings with a place ("CD#1 Alchemia Club") and below them the lines of their tracks with lineups and lengths ("Lopez // Mazur // Pursglove 28:52"): each name a performer of that track (a surname given the full name the text or the dashboard has); a group\'s name alone ("Aurora Trio:") with its members below ("AGUSTÍ FERNÁNDEZ piano") – its members with their instruments on the tracks that name the group (no entry of the group\'s name; until 3.235.0 "Aurora Trio" with the role "Agustí Fernández – piano"); the lineup of "this composition" ("Line-up for the first performance of this composition in Kraków:") on the track whose line says "(composed by …)"; the place of a medium heading on that medium\'s tracks, and a date "at" that place ("Recorded: October 11–12, 2018 at the Alchemia Club" and "October 13, 2018 at Radio Kraków" below it) on those tracks; the catalogue number of the release no date ("MW1031-2" was 1031-02); rights societies after ℗/© ("ZAIKS/BIEM 2022") no holder of the ℗; the studio of the engineer in brackets ("… by Rafał DREWNIANY (DTS STUDIO)") no place recorded at where others are (S571). The lines read so are no longer "not recognized". Switched off: as until 3.235.0' },
     { id: 'S469', where: 'dgLineupApply, sendDiscogsStatus', note: 'Lineup and track credits (3.220.0; collected item Z-LOPEZ; S217): a row the answer leaves out (a lineup row on no track any more, a track credit taken into the lineup row) keeps its line at the source – its places go to the person\'s row still there, so the companion marks the line ("Ramón López – percussion" where the titles give him drums on all of his tracks)' },
     { id: 'S410', where: 'freshForget, repeatImport, loadRelease', note: '"↻ Repeat import" (3.209.0; collected item Z-FRESHALL): "Start afresh" forgets everything the dashboard holds of the release – not only the changes of the rows and the choices of the works matrix (Z-RI, 3.40.16), also the date pool, the track pool and the date matrix, the choices of the box "Dedications & tributes", "✕ No suite", texts and parts of sources switched off, "skip the works", entries joined by hand, the ticks of suggestions, what is remembered of the release ("Remember changes"; nothing of the import before is stored on the way). Kept: what was created in MusicBrainz through the dashboard (the lists of created works and suites), the source and the media chosen, the log' },
     { id: 'S409', where: 'mergeEntries, joinEntry, applyEntryMerges, dmTargetOf (entry-merge), groupHtml (grip)', note: 'Entries (3.208.0; collected item Z-ENTITYMERGE): two entries of the same kind that are one – from different sources, written otherwise – are joined by hand: the grip ⠿ before the kind of an entry dropped onto another entry. The entry dropped onto stays (its link to MusicBrainz counts; without one it takes the other\'s), the rows of the other come to it – the same role once, each row credited as its source writes it, the other\'s name one of its names. Two different entries of MusicBrainz, or entries of different kinds: not joined, a message says why. Remembered for the release (joined again at the next import); ↶ in the message undoes it' },
@@ -31000,6 +31003,8 @@
         setBusy('busy.supp', { source: source.name });
       }
       const rel = await source.release(id, { ...sourceContext(), input });
+      // [Z-COVERLAYOUT] (3.236.0, S581) the back of a box: track lines, groups, the lineup of a composition, the places of the media
+      if (source === TEXT) coverLayout(rel, (input && input.text) || String(rel.notes || ''));
       if (token !== S.suppSeq || seq !== importSeq || (quiet && S.supp)) {
         if (!quiet) setBusy('');
         return;
@@ -34241,6 +34246,7 @@
       clearMessages();
       setBusy(source === DISCOGS ? 'busy.discogs' : 'busy.source', { id, source: source.name });
       const rel = await source.release(id, sourceContext());
+      if (source === TEXT) coverLayout(rel, (S.textInput && S.textInput.text) || String(rel.notes || '')); // [Z-COVERLAYOUT] (3.236.0, S581)
       // [146] (3.36.0) what is remembered of the import before is stored first – (3.43.2, review) with the media choice and the works
       // choices that import had (until 3.43.1 after `applyMediaChoice`: the old rows were stored under the new choice and "fitted" the new import)
       // ([Z-FRESHALL] 3.209.0, S410) not before "Start afresh": what is dropped is not remembered for the import after it
@@ -41059,6 +41065,30 @@
   function notesForDates(text0) {
     // [Z-DT-MADEIN] (3.223.0, S511) "Made in Brisbane, Australia 2016": the year of the making (on its row), no date of the recordings
     let text = ruleOn('S511') ? String(text0 || '').split('\n').map((l) => (MADE_IN_YEAR.test(l.trim()) ? '' : l)).join('\n') : String(text0 || '');
+    // [Z-COVERLAYOUT] (3.236.0, S581) the catalogue number of the release is no date ("MW1031-2": not 1031-02); a date "at" the place of a medium
+    // heading ("CD#1 Alchemia Club" … "Recorded: October 11–12, 2018 at the Alchemia Club, Kraków") is that place's tracks'
+    if (ruleOn('S581')) {
+      for (const c of S.releaseCatnos || []) if (String(c).length >= 4) text = text.replace(new RegExp(`(^|[^\\p{L}\\p{N}])${escRe(c)}(?![\\p{L}\\p{N}])`, 'giu'), '$1');
+      const C = /^\s*(?:CD|Disc|Disk|DVD|LP)\s*#?\s*\d/im.test(text) ? coverMedia(text) : null;
+      const places = C ? [...C.media].filter(([, m]) => m.place && /\p{L}{3}/u.test(m.place)) : [];
+      if (places.length) {
+        let verb = '';
+        text = text.split('\n').map((l) => {
+          const v = (l.match(/^\s*((?:recorded|performed|live)(?:\s+live)?)\b/i) || [])[1];
+          const prev = verb;
+          verb = v || (/^\s*$/.test(l) ? '' : verb);
+          if (!/\b(?:19|20)\d{2}\b/.test(l) || /^\s*tracks?\s+\d/i.test(l) || /\((?:CD|Disc)\s*#?\s*\d/i.test(l)) return l;
+          const at = l.match(/\bat\s+(?:the\s+)?([^,;.()]+)/i);
+          if (!at) return l;
+          const media = places.filter(([, m]) => samePlaceName({ name: at[1] }, m.place) || samePlaceName({ name: m.place }, at[1])).map(([md]) => md);
+          if (!media.length) return l;
+          const idxs = (S.mbTracks || []).filter((t) => media.includes(t.medium)).map((t) => t.idx + 1);
+          // (a line that goes on from "Recorded: …" with its date first – "October 13, 2018 at Radio Kraków" – is recorded too)
+          const own = !v && prev && /^\s*(?:\p{L}+\s+)?\d/u.test(l) ? `${prev[0].toUpperCase()}${prev.slice(1)} ` : '';
+          return idxs.length ? `Tracks ${idxs.join(', ')}: ${own}${l.trim()}` : l;
+        }).join('\n');
+      }
+    }
     // [Z-OCRDATES] (3.225.0, S534) a date in a section of a cover with its own tracks (S499, S533 – "Recorded and produced by Nik Rayne August
     // 2016 at Eastland Studios" below the tracks 4 and 5): for those tracks ("Tracks 4, 5: …", as the date finder reads it)
     if (ruleOn('S534') && (S.mbTracks || []).length > 1) {
@@ -50883,6 +50913,174 @@
    */
   // ([Z-PLACEDUP] 3.188.0: "club", "klub", "estudi", "studi" too – "Alchemia Club" is Discogs's "Alchemia", "Rosazul Estudi" its "Rosazul")
   const PLACE_FILLER = /\b(?:the|at|studios?|recording|recordings|sound|sounds|tonstudio|tonstudios|studio[ns]?|estudios?|estudis?|studi|clubs?|klub|music|records)\b/giu;
+  /**
+   * [Z-COVERLAYOUT] (3.236.0, S581) The layout of the back of a box: medium headings with a place ("CD#1 Alchemia Club"), below them the lines of
+   * their tracks with their lineups and lengths ("Lopez // Mazur // Pursglove 28:52"), a group's name alone with its members below ("Aurora Trio:" –
+   * "AGUSTÍ FERNÁNDEZ piano"), the lineup of a composition ("Line-up for the first performance of this composition in Kraków:"). → { media: n →
+   * { place }, tracks: [{ idx, body, composed, line }], groups: key → { name, members: [{ name, line }] }, comp: [{ lines }] }
+   */
+  const COVER_MEDIUM = /^\s*(?:CD|Disc|Disk|DVD|LP)\s*#?\s*(\d{1,2})\b\s*[:.\-–]?\s*(.*)$/i;
+  const COVER_TRACK = /^(.+?)\s+(\d{1,2}:\d{2}(?::\d{2})?)\s*$/;
+  const COVER_MEMBER = /^((?:\p{Lu}[\p{L}'’.-]*\s+){1,3}\p{Lu}[\p{L}'’.-]+)\s+(\p{Ll}.*)$/u;
+  function coverMedia(text) {
+    const out = { media: new Map(), tracks: [], groups: new Map(), comp: [], used: new Set() };
+    let md = 0;
+    let k = 0;
+    let grp = null;
+    let comp = null;
+    for (const raw of String(text || '').split('\n')) {
+      const l = raw.trim();
+      if (!l) {
+        grp = null;
+        comp = null;
+        continue;
+      }
+      const mh = l.match(COVER_MEDIUM);
+      if (mh && !COVER_TRACK.test(l)) {
+        md = Number(mh[1]);
+        k = 0;
+        out.media.set(md, { place: mh[2].replace(/[:.]+$/, '').trim() });
+        out.used.add(l);
+        grp = null;
+        comp = null;
+        continue;
+      }
+      const tl = md ? l.match(COVER_TRACK) : null;
+      if (tl) {
+        k++;
+        const t = (S.mbTracks || []).filter((x) => x.medium === md)[k - 1];
+        if (t) {
+          out.tracks.push({ idx: t.idx, body: tl[1].replace(/\s*\([^()]*\)\s*$/, '').trim(), composed: /\(\s*(?:composed|written)\s+by\s+[^)]+\)/i.test(tl[1]), line: l });
+          out.used.add(l);
+        }
+        continue;
+      }
+      const gh = l.match(/^(\p{Lu}[^:]{1,80}):\s*$/u);
+      if (gh) {
+        md = 0;
+        if (/\b(?:line-?up|personnel|musicians|performers)\b/i.test(gh[1])) {
+          grp = null;
+          comp = /\b(?:this|the)\s+(?:composition|piece|work)\b/i.test(gh[1]) ? { lines: [] } : null;
+          if (comp) out.comp.push(comp);
+        } else if (gh[1].split(/\s+/).length <= 4) {
+          comp = null;
+          grp = { name: gh[1].trim(), members: [], line: l };
+          out.groups.set(norm(grp.name), grp);
+        }
+        continue;
+      }
+      const mem = l.match(COVER_MEMBER);
+      if (grp && mem) grp.members.push({ name: mem[1], roles: mem[2], line: l });
+      else if (comp && mem) comp.lines.push(l);
+      else {
+        grp = null;
+        comp = null;
+      }
+    }
+    return out;
+  }
+  /**
+   * [Z-COVERLAYOUT] (3.236.0, S581) A text with such a layout (the back of a box, read from its image or pasted): the lineups of the track lines
+   * are performers of their tracks (a surname given the full name the text or the dashboard has; a group its members); the members of a group
+   * with their instruments on the tracks that name the group (the group's name no entry); the lineup of "this composition" on the track whose
+   * line says "(composed by …)"; the place of a medium heading on that medium's tracks; rights societies after ℗/© ("ZAIKS/BIEM") no holder of
+   * the ℗; the studio of the engineer in brackets ("… by Rafał DREWNIANY (DTS STUDIO)") no place recorded at where others are (S571).
+   */
+  function coverLayout(rel, text) {
+    if (!ruleOn('S581') || !rel || !text) return 0;
+    const C = coverMedia(text);
+    if (!C.tracks.length && !C.groups.size) return 0;
+    rel.credits = rel.credits || [];
+    rel.companies = rel.companies || [];
+    const cased = (n) => personCaseOf(n).name || n;
+    for (const g of C.groups.values()) g.members.forEach((m) => { m.name = cased(m.name); });
+    const known = uniq([...rel.credits.map((c) => c.who && c.who.name), ...[...C.groups.values()].flatMap((g) => g.members.map((m) => m.name)),
+      ...[...S.artists.values()].filter((a) => !a.company).flatMap((a) => [a.name, a.mbName]), ...(S.releaseCredit || []).flatMap((p) => [p.name, p.artistName])].filter(Boolean));
+    const bySurname = (n) => {
+      const k = looseName(n);
+      const hits = uniq(known.filter((x) => looseName(x) === k || looseName(String(x).split(/\s+/).pop()) === k).map((x) => cased(x)));
+      const keyed = uniq(hits.map(looseName));
+      return keyed.length === 1 ? hits[0] : '';
+    };
+    let n = 0;
+    const comp = new Set();
+    for (const t of C.tracks) {
+      if (t.composed) comp.add(t.idx);
+      const parts = t.body.split(/\s*\/\/\s*|\s+&\s+/).map((x) => x.trim()).filter(Boolean);
+      if (parts.length < 2 && !C.groups.has(norm(parts[0] || ''))) continue;
+      for (const part of parts) {
+        const g = C.groups.get(norm(part));
+        if (g) {
+          g.tracks = uniq([...(g.tracks || []), t.idx]);
+          continue;
+        }
+        const name = bySurname(part) || part;
+        rel.credits.push({ who: { id: 0, name, rawName: name, links: [] }, role: 'Performer', base: 'Performer', details: [], credited: looseName(name) === looseName(part) ? '' : part,
+          tracks: { indexes: [t.idx] }, line: t.line, fromCover: true });
+        n++;
+      }
+    }
+    // the members of a group: on its tracks; the group's heading is no entry (read with its first member's line it gave "Aurora Trio – Agustí Fernández piano")
+    for (const g of C.groups.values()) {
+      if (!g.members.length) continue;
+      if (!S.titleGroups) S.titleGroups = new Map();
+      S.titleGroups.set(g.name, new Set(g.members.map((m) => m.name)));
+      rel.credits = rel.credits.filter((c) => !(c.who && norm(c.who.name) === norm(g.name)));
+      for (const m of g.members) {
+        const mine = rel.credits.filter((c) => String(c.line || '').trim() === m.line);
+        if (!mine.length) {
+          for (const role of m.roles.split(/\s*(?:,|\/|\band\b|&)\s*/).map((x) => x.trim()).filter(Boolean)) {
+            rel.credits.push({ who: { id: 0, name: m.name, rawName: m.name, links: [] }, role, base: role, details: [], credited: '', tracks: g.tracks ? { indexes: [...g.tracks] } : { all: true }, line: m.line, fromCover: true });
+          }
+        } else if (g.tracks) mine.forEach((c) => { c.tracks = { indexes: [...g.tracks] }; });
+        C.used.add(m.line);
+        n++;
+      }
+      C.used.add(g.line);
+    }
+    // the lineup of "this composition": on the composition's track(s)
+    if (comp.size) {
+      for (const block of C.comp) {
+        const ls = new Set(block.lines);
+        rel.credits.filter((c) => ls.has(String(c.line || '').trim())).forEach((c) => { c.tracks = { indexes: [...comp] }; n++; });
+      }
+    }
+    // the place of a medium heading on that medium's tracks
+    for (const [md, m] of C.media) {
+      if (!m.place || !/\p{L}{3}/u.test(m.place)) continue;
+      const idxs = (S.mbTracks || []).filter((t) => t.medium === md).map((t) => t.idx);
+      for (const co of rel.companies) {
+        if (!/^recorded at$/i.test(String(co.role || '').trim()) || !(samePlaceName(co.who, m.place) || samePlaceName({ name: m.place }, co.who.name))) continue;
+        const had = co.tracks && !co.tracks.all ? co.tracks.indexes || [] : (co.coverMedia ? co.tracks.indexes || [] : []);
+        co.tracks = { indexes: uniq([...had, ...idxs]).sort((x, y) => x - y) };
+        co.coverMedia = true;
+        n++;
+      }
+    }
+    // rights societies after ℗ / © ("ZAIKS/BIEM 2022"): no holder of the ℗ – BIEM, the bureau of the mechanical rights societies, counted
+    // with them as in a line of societies (SOCIETY_LINE), never an entry of its own
+    const society = (x) => /^BIEM$/i.test(String(x).trim()) || RIGHTS_SOCIETIES.some(([k]) => norm(k) === norm(x));
+    rel.companies = rel.companies.filter((co) => {
+      const parts = String((co.who && co.who.name) || '').split(/\s*\/\s*/).filter(Boolean);
+      if (!parts.length || !parts.every(society)) return true;
+      (rel.ignored = rel.ignored || []).push({ text: `${co.role} – ${co.who.name}`, why: 'society' });
+      return false;
+    });
+    // the studio of the engineer in brackets where other places are "recorded at" (S571)
+    if (ruleOn('S571')) {
+      rel.companies = rel.companies.filter((co) => {
+        if (!/^recorded at$/i.test(String(co.role || '').trim()) || !engStudioLine({ line: co.line, who: co.who })
+          || !rel.companies.some((d) => d !== co && /^recorded at$/i.test(String(d.role || '').trim()) && !sameCompanyName(d.who.name, co.who.name))) return true;
+        (rel.ignored = rel.ignored || []).push({ text: `${co.role} – ${co.who.name}`, why: 'engStudio' });
+        return false;
+      });
+    }
+    // the lines read so: no longer "not recognized"
+    rel.unrecognized = (rel.unrecognized || []).filter((l) => !C.used.has(String((l && l.line) || l || '').trim()));
+    if (n) log('info', 'coverLayout', { n, media: C.media.size, groups: [...C.groups.values()].filter((g) => g.members.length).map((g) => g.name).join(', ') || '–' });
+    return n;
+  }
+
   function samePlaceName(who, name) {
     const words = (x) => String(x || '').split(',')[0].normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
       .replace(PLACE_FILLER, ' ').replace(/[^\p{L}\p{N}]+/gu, ' ').trim().split(/\s+/).filter(Boolean);

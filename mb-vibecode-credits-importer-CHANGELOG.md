@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-27 | 3.231.0 – 3.235.0 | 1.26.0 |
+| 2026-11-27 | 3.231.0 – 3.236.0 | 1.26.0 |
 | 2026-11-26 | 3.224.0 – 3.230.0 | 1.25.0 |
 | 2026-11-25 | 3.218.0 – 3.223.0 | 1.24.0 |
 | 2026-11-24 | 3.213.0 – 3.217.0 | – |
@@ -166,6 +166,13 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-27
+
+### Import 3.236.0
+
+**The back of a box read as its layout: the tracks' lineups, a group and its members, the lineup of a composition, places and dates of the media.**
+
+- **The back of a box** (rule S581): medium headings with a place and the lines of their tracks ("Lopez // Mazur // Pursglove 28:52") – the performers of each track; "Aurora Trio:" with its members – their instruments on the group's tracks (no entry "Aurora Trio" with a member's line); "Line-up for the first performance of this composition" on the composed track only; the media's places and the dates "at" them on their tracks; the catalogue number no date; "ZAIKS/BIEM" after ℗ / © no ℗ holder (BIEM, the bureau of the societies, counted with them as in "BIEM/GEMA" – still no entry of its own); the engineer's studio in brackets no place recorded at. 24 lines not recognized became 1.
+- **Tests:** case cover3236 (smoke/t_twosources.py): Bandcamp + the back of the box – 65 of 65 with instruments and dates.
 
 ### Import 3.235.0
 
