@@ -3733,7 +3733,9 @@ def case_suppgroups3225():
 def case_timing3230():
     """Credits Importer 3.230.0 (collected item Z-TIMING; rule S557): once nothing runs any more after an import, the log says its
     times – "⏱ Times of this import: dashboard ready after …, all done after … — MusicBrainz (n requests, t): the release …, entries …"
-    and Discogs; once only while nothing more runs. Off: no such line."""
+    and Discogs; once only while nothing more runs. Off: no such line.
+    (3.231.0) Discogs's step named ("the release", no "?" – its caller was lost after the wait for Discogs's pace)."""
+    import re
     LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
 
     def run(p, off=()):
@@ -3756,7 +3758,7 @@ def case_timing3230():
             print('A)', lines, errs)
             t = lines[-1] if lines else ''
             results.append(len(lines) >= 1 and 'dashboard ready after' in t and 'MusicBrainz (' in t and 'requests' in t and 'missing links' in t
-                           and 'Discogs (1 request, ' in t and not errs)
+                           and 'Discogs (1 request, ' in t and re.search(r'Discogs \(1 request, [^)]*\): the release 1 · ', t) and '?' not in t and not errs)
             lines2, errs2 = run(p, off=['S557'])
             print('B)', lines2)
             results.append(not lines2 and not errs2)

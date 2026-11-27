@@ -725,7 +725,8 @@ def case_foot():
         pg.click('.dci-foot-optlist [data-f=fill-credits]'); pg.wait_for_timeout(200)
         note1 = pg.locator('[data-f=fill-credits]').is_checked()
         still = pg.evaluate(LIST)
-        pg.click('.dci-foot [data-el=sum] strong'); pg.wait_for_timeout(200)
+        # ((3.231.0, S562) the count is a button now: a click on the summary beside it)
+        pg.click('.dci-foot [data-el=sum]', position={'x': 2, 'y': 2}); pg.wait_for_timeout(200)
         shut1 = pg.evaluate(LIST)
         pg.click('[data-act=foot-opts]'); pg.wait_for_timeout(200)
         pg.keyboard.press('Escape'); pg.wait_for_timeout(200)
@@ -844,7 +845,7 @@ def case_entryskip():
         right: b ? Math.round(head.right - b.getBoundingClientRect().right) : null,
         levels: [...g.querySelectorAll('tr.dci-row')].map(tr => (tr.querySelector('[data-act=level][aria-pressed=true]') || { dataset: {} }).dataset.level),
         op: b ? getComputedStyle(g.querySelector('.dci-gname')).opacity : null }; }"""
-    SUM = "(document.querySelector('.dci-foot [data-el=sum] strong') || {textContent: ''}).textContent.trim()"
+    SUM = "(document.querySelector('.dci-foot [data-el=sum] .dci-sum-new') || {textContent: ''}).textContent.trim()"
     results = []
     with sync_playwright() as p:
         b = p.chromium.launch(args=H.LAUNCH_ARGS)
@@ -1564,6 +1565,155 @@ def case_contrast3162():
             results.append(not errs)
             ctx.close()
         b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_ui3231():
+    """Credits Importer 3.231.0 (the surface).
+    A) (Z-NEWNAV, S562) "N new relationships" in the summary is a button: a click goes to the first row with a new relationship (in the
+       order on screen; it lights up), "1/k" beside it; again: "2/k"; Shift+click: "1/k" again.
+    B) (Z-ONLYNEW, S563) "Only new relationships": a skipped row (and the rows all in MusicBrainz) hidden, with their line of tracks; the
+       rows with something new stay; unticked: all back.
+    C) (Z-ENTRYBTNS, S559) "Skip ∼" of an entry stands in the line of its name, at its right – also in a narrower window (700 px), where
+       the matching wraps in itself between them.
+    D) (Z-SYMALIGN, S560) ⚙ Settings → Appearance: "Words | Symbols" over "Text | Emojis" – the same widths, one below the other.
+    E) (Z-SCOPECOLOR, S561) "Works:" – the chosen button in the colour of the level "work" (coloured levels on).
+    F) The five rules off: a count, no box, "Skip ∼" below the matching in the narrower window, "Emojis | Text", the scope in the colours
+       of the other buttons."""
+    import re
+    NEWROWS = """[...document.querySelectorAll('#dci-overlay tr.dci-row')].filter(t => { const s = t.querySelector('[data-status]');
+      return s && !s.classList.contains('dci-bad') && /(^|, )\\d+ new\\b/.test(s.textContent); }).map(t => t.dataset.row)"""
+    POS = "(document.querySelector('[data-el=new-pos]') || {}).textContent || ''"
+    FLASH = "[...document.querySelectorAll('#dci-overlay tr.dci-row.dci-flash')].map(t => t.dataset.row)"
+    VIS = "[...document.querySelectorAll('#dci-overlay tr.dci-row')].filter(t => t.offsetParent !== null).map(t => t.dataset.row)"
+    HEAD = """(() => { const g = [...document.querySelectorAll('#dci-overlay .dci-group')].find(x => x.querySelector('.dci-ghead .dci-gskip') && x.querySelector('.dci-gmatch'));
+      if (!g) return null; const n = g.querySelector('.dci-gname').getBoundingClientRect(); const k = g.querySelector('.dci-gskip').getBoundingClientRect();
+      const m = g.querySelector('.dci-gmatch').getBoundingClientRect();
+      return { sameLine: k.top < n.bottom && k.bottom > n.top, right: k.left > Math.max(n.right, m.left),
+        w: [g.querySelector('.dci-gname').textContent.trim().slice(0, 30), Math.round(g.querySelector('.dci-ghead').getBoundingClientRect().width), Math.round(n.width), Math.round(m.width), Math.round(k.width)] }; })()"""
+    SEGS = """(() => { const f = (el) => [...document.querySelectorAll(`[data-el=${el}] button`)].map(b => { const r = b.getBoundingClientRect(); return [b.textContent.trim(), Math.round(r.left), Math.round(r.width)]; });
+      return [f('chrome-mode'), f('emoji-mode')]; })()"""
+    SCOPE = """(() => { const o = document.getElementById('dci-overlay'); const b = o.querySelector('.dci-scope button[aria-pressed=true]');
+      const probe = document.createElement('span'); probe.style.background = 'var(--dci-lvl-work)'; o.appendChild(probe);
+      const want = getComputedStyle(probe).backgroundColor; probe.remove();
+      return { lvlc: o.classList.contains('dci-lvlc'), bg: getComputedStyle(b).backgroundColor, want }; })()"""
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        for off in (False, True):
+            H.RULES_OFF = ['S559', 'S560', 'S561', 'S562', 'S563'] if off else []
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(600)
+            btn = pg.locator('[data-el=sum] [data-act=new-next]')
+            box = pg.locator('[data-f=filter-new]')
+            head = pg.evaluate(HEAD)
+            if off:
+                segs = None
+                H.open_settings(pg, 'appearance')
+                segs = pg.evaluate(SEGS)
+                pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()'); pg.wait_for_timeout(300)
+                scope = pg.evaluate(SCOPE)
+                print('F) aus:', btn.count(), box.count(), head, [[x[0] for x in s] for s in segs], scope)
+                results.append(btn.count() == 0 and box.count() == 0 and [x[0] for x in segs[1]] == ['Emojis', 'Text'] and scope['bg'] != scope['want'])
+            else:
+                # A) to the new rows
+                want = pg.evaluate(NEWROWS)
+                txt = btn.inner_text() if btn.count() else ''
+                a = []
+                for shift in (False, False, True):
+                    # (the log may lie over the summary: the click as the page gets it)
+                    btn.evaluate(f"b => b.dispatchEvent(new MouseEvent('click', {{ bubbles: true, shiftKey: {'true' if shift else 'false'} }}))")
+                    pg.wait_for_timeout(250)
+                    a.append([pg.evaluate(POS), pg.evaluate(FLASH)])
+                k = len(want)
+                print('A)', txt, '| neue Zeilen:', k, '|', a)
+                results.append(bool(re.match(r'^\d+ new relationships?$', txt)) and k >= 2 and a[0] == [f'1/{k}', [want[0]]]
+                               and a[1][0] == f'2/{k}' and want[1] in a[1][1] and a[2][0] == f'1/{k}')
+                # B) only new
+                rid = want[-1]
+                pg.click(f'tr[data-row="{rid}"] [data-act=level][data-level=skip]')
+                pg.wait_for_timeout(400)
+                all0 = pg.evaluate(VIS)
+                box.check()
+                pg.wait_for_timeout(300)
+                vis = pg.evaluate(VIS)
+                nonew = pg.evaluate("[...document.querySelectorAll('#dci-overlay tr.dci-row.dci-nonew')].map(t => t.dataset.row)")
+                tracks = pg.evaluate(f"(() => {{ const t = document.querySelector('tr[data-tracksrow=\"{rid}\"]'); return t ? t.offsetParent === null : true; }})()")
+                box.uncheck()
+                pg.wait_for_timeout(300)
+                back = pg.evaluate(VIS)
+                print('B) sichtbar:', len(all0), '→', len(vis), '| ohne Neues:', nonew, '| Spuren weg:', tracks, '| wieder:', len(back))
+                results.append(rid in nonew and rid in all0 and rid not in vis and all(r in vis for r in want[:-1]) and not set(vis) & set(nonew)
+                               and tracks and back == all0)
+                # C) the buttons of an entry in the line of its name
+                # D) the settings
+                H.open_settings(pg, 'appearance')
+                segs = pg.evaluate(SEGS)
+                pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()'); pg.wait_for_timeout(300)
+                print('D)', segs)
+                c, e = segs
+                results.append([x[0] for x in c] == ['Words', 'Symbols'] and [x[0] for x in e] == ['Text', 'Emojis']
+                               and all(abs(c[i][1] - e[i][1]) <= 1 and abs(c[i][2] - e[i][2]) <= 1 for i in range(2)))
+                # E) the scope
+                scope = pg.evaluate(SCOPE)
+                print('E)', scope)
+                results.append(scope['lvlc'] and scope['bg'] == scope['want'])
+            # C) narrower: the buttons stay in the line of the name (off: below the matching)
+            pg.set_viewport_size({'width': 700, 'height': pg.viewport_size['height']})
+            pg.wait_for_timeout(500)
+            narrow = pg.evaluate(HEAD)
+            print('C)', 'aus' if off else 'an', head, '| schmaler:', narrow)
+            results.append(bool(head) and head['sameLine'] and head['right'] and bool(narrow) and narrow['sameLine'] == (not off))
+            print('Fehler:', errs)
+            results.append(not errs)
+            ctx.close()
+        H.RULES_OFF = []
+        b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_newnav3231m():
+    """Credits Importer 3.231.0 (Z-NEWNAV, Z-ONLYNEW; S562, S563) with the entries as a matrix (the default), compact and full: "N new
+    relationships" steps through the places on screen – a chip of an entry compact as a matrix, a line of its full matrix (one stop each),
+    "1/k", "2/k"; "Only new relationships" hides the entries without a new row (and in the full view their lines)."""
+    POS = "(document.querySelector('[data-el=new-pos]') || {}).textContent || ''"
+    FLASH = "[...document.querySelectorAll('#dci-overlay .dci-flash')].map(e => e.matches('.dci-em-chip') ? 'chip' : e.matches('tr.dci-em-line') ? 'line' : e.matches('tr[data-row]') ? 'row' : e.tagName)"
+    results = []
+    ev0 = H.ENTRIES_VIEW
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            for view in ('compact', 'full'):
+                H.ENTRIES_VIEW = 'matrix'
+                ctx = H.new_context(b)
+                pg, errs = H.open_mb_edit(ctx, companion=False, view=view)
+                pg.wait_for_selector('#dci-open', timeout=20000)
+                H.open_dashboard(pg)
+                H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+                pg.wait_for_timeout(600)
+                btn = pg.locator('[data-el=sum] [data-act=new-next]')
+                steps = []
+                for _ in range(2):
+                    btn.evaluate("b => b.click()")
+                    pg.wait_for_timeout(300)
+                    steps.append([pg.evaluate(POS), pg.evaluate(FLASH)])
+                k = steps[0][0].split('/')[-1]
+                pg.evaluate("document.querySelector('[data-f=filter-new]').click()")
+                pg.wait_for_timeout(300)
+                hid = pg.evaluate("[...document.querySelectorAll('#dci-overlay .dci-group.dci-gnonew')].map(e => e.offsetParent === null)")
+                shown = pg.evaluate("[...document.querySelectorAll('#dci-overlay .dci-group')].filter(e => e.offsetParent !== null).length")
+                print(view, '| Schritte:', steps, '| ohne Neues verborgen:', hid, '| sichtbar:', shown)
+                kind = 'chip' if view == 'compact' else None
+                results.append(btn.count() == 1 and int(k) >= 2 and steps[0][0] == f'1/{k}' and steps[1][0] == f'2/{k}' and len(steps[1][1]) == 2
+                               and (kind is None or set(steps[1][1]) == {kind}) and hid and all(hid) and shown > 0 and not errs)
+                ctx.close()
+            b.close()
+    finally:
+        H.ENTRIES_VIEW = ev0
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

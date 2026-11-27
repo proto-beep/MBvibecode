@@ -13,6 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
+| 2026-11-27 | 3.231.0 | 1.26.0 |
 | 2026-11-26 | 3.224.0 – 3.230.0 | 1.25.0 |
 | 2026-11-25 | 3.218.0 – 3.223.0 | 1.24.0 |
 | 2026-11-24 | 3.213.0 – 3.217.0 | – |
@@ -69,6 +70,7 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 
 | Date | Version | Milestone |
 |---|---|---|
+| 2026-11-27 | Import 3.231.0 · Companion 1.26.0 | A click on “3 new relationships” goes to them one by one; the filter “Only new relationships”; the companion’s large image in MusicBrainz colours |
 | 2026-11-26 | Import 3.230.0 | The times of an import in the log: which steps took how long, per source |
 | 2026-11-26 | Import 3.227.0 · Companion 1.25.0 | The companion in the dashboard’s language, Bandcamp’s artwork in high resolution |
 | 2026-11-26 | Import 3.226.0 | “✨ Answer all”: a tie decided by the recordings in MusicBrainz, each work to open with ↗ |
@@ -159,6 +161,21 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-29 | Import 0.4.0 | Dashboard in English, German, Spanish and French |
 | 2026-09-29 | Import 0.3.0 | Works: linked works checked, existing works found, new works created |
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
+
+## 2026-11-27
+
+### Import 3.231.0 · COMPANION 1.26.0
+
+**To the new relationships and only them, the buttons of an entry in its name line, the settings aligned, the companion's large image framed.**
+
+- **"3 new relationships"** (rule S562): a click goes to the next place with a new relationship – a row, or in an entry's matrix its line or chip –, it lights up, in the order on screen, "2/9" beside it; Shift+click goes back.
+- **"Only new relationships"** (rule S563): a box next to "Only show artists without an MB match" hides the rows that are all in MusicBrainz already, skipped or have nothing ready, and the entries without such a row; incomplete rows stay.
+- **The buttons of an entry** (rule S559): "by event | by role" and "Skip ∼" stay in the line of the name – the matching between them wraps in itself instead of pushing the buttons into a line of their own; an entry without a match keeps its suggestions below, over the whole width.
+- **⚙ Settings → Appearance** (rule S560): "Words | Symbols" and "Text | Emojis" one below the other, the same widths – the words left, the pictures right.
+- **"Works: with | only | without"** (rule S561): in the colour of the level "work" (coloured levels on; the text light or dark as on the level buttons).
+- **What's new**: the update notice knows the milestones up to this version again (3.161.0 – 3.231.0); a release checks that the changelog and the README are up to date (`tools/docs_check.py`).
+- **The times in the log**: Discogs's requests named ("the release", not "?"), and the statistics' and areas' lookups in words.
+- **COMPANION 1.26.0**: the large image on Discogs and Bandcamp has the frame of the miniature – 4 px from MusicBrainz purple to orange. Install the companion anew for it.
 
 ## 2026-11-26
 

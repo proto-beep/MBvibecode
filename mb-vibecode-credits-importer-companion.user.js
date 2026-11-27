@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer Companion
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      1.25.0
+// @version      1.26.0
 // @date         2026-11-03
 // @description  Companion for "MB x Vibecode: Credits Importer": connects the import dashboard with a Discogs, Bandcamp or YouTube tab (e.g. the other half of a split view), loads the release there and highlights where each credit comes from.
 // @description:de Ergänzung zu „MB x Vibecode: Credits Importer“: verbindet das Import-Dashboard mit einem Discogs-, Bandcamp- oder YouTube-Tab (z. B. der anderen Hälfte einer geteilten Ansicht), lädt dort das Release und markiert, woher jeder Credit stammt.
@@ -50,7 +50,7 @@
   // The main script never needs special permissions; only this companion does.
 
   // [1.10.0] sent with each status (the dashboard names an older companion: several imports at once need 1.10.0)
-  const COMPANION_VERSION = '1.25.0';
+  const COMPANION_VERSION = '1.26.0';
   const HEARTBEAT_MS = 2000;
   const STALE_MS = 7000;
   // [1.8.2] how long the status of an edit or release page in a background tab counts as alive without a new beat;
@@ -638,6 +638,10 @@
       /* [1.18.0] (Z-COCR) the frames for the text recognition */
       #dci-art-big .dci-big-wrap { position: relative; width: 100%; margin: auto 0; }
       #dci-art-big .dci-big-wrap .dci-big-img { margin: 0; }
+      /* [1.26.0] (Credits Importer 3.231.0, Z-BIGFRAME) the large view in the frame of the small one: MB purple to MB orange
+        (the frames of the text recognition lie inside it, over the image) */
+      #dci-art-big .dci-big-wrap { box-sizing: border-box; border: 4px solid transparent; border-radius: 4px;
+        background: linear-gradient(#fff, #fff) padding-box, linear-gradient(135deg, #ba478f, #eb743b) border-box; }
       #dci-art-big .dci-cocr-layer { position: absolute; inset: 0; cursor: crosshair; touch-action: none; }
       #dci-art-big .dci-cocr-frame { position: absolute; border: 2px solid #f2c94c; background: rgba(242, 201, 76, .12); cursor: move; box-sizing: border-box; }
       #dci-art-big .dci-cocr-n { position: absolute; left: 0; top: 0; background: #f2c94c; color: #222; font: 12px/1.4 sans-serif; padding: 0 5px; }

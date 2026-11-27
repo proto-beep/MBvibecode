@@ -729,7 +729,7 @@ def case_artworkbox():
     """Credits Importer 3.72.0 (collected item Z-TST): the former smoke/t_artwork.py (until 3.71.0 compared with an old log), with its
     checks: the cover miniature on Discogs – none before the connection; connected: fixed, the cover's image, a frame of 3 px in
     MusicBrainz's colours, still at the top after scrolling (72 px); a click opens Discogs's image view ([Z-CPVA4] 1.17.0: the image
-    large in the page, Esc closes it); dragged 300 px left and 200 px down it moves without opening it, after reloading it is at the same place; folded: no image, the button "🖼"; the switch
+    large in the page, Esc closes it; [Z-BIGFRAME] (companion 1.26.0, with 3.231.0) in a frame of 4 px in the same colours); dragged 300 px left and 200 px down it moves without opening it, after reloading it is at the same place; folded: no image, the button "🖼"; the switch
     "Artwork" off: gone, on: there again; the MusicBrainz page closed: gone."""
     results = []
     with sync_playwright() as p:
@@ -756,10 +756,13 @@ def case_artworkbox():
         # ([Z-CPVA4] 1.17.0) the click shows the image large in the page – Discogs's image view no longer opens; Esc closes it
         clicked = dg.evaluate("window.__clicked")
         big = dg.evaluate("(() => { const b = document.getElementById('dci-art-big'); return b ? b.querySelector('.dci-big-img').getAttribute('src') : null; })()")
+        frame = dg.evaluate("""(() => { const w = document.querySelector('#dci-art-big .dci-big-wrap'); if (!w) return null; const cs = getComputedStyle(w);
+          const i = document.querySelector('#dci-art-big .dci-big-img').getBoundingClientRect(); const r = w.getBoundingClientRect();
+          return [cs.borderTopWidth, /linear-gradient\(135deg, rgb\(186, 71, 143\).*rgb\(235, 116, 59\)/.test(cs.backgroundImage), Math.round(i.left - r.left)]; })()""")
         dg.keyboard.press('Escape'); dg.wait_for_timeout(200)
         closed = dg.evaluate("!document.getElementById('dci-art-big')")
-        print('B) Klick: groß im Tab, Discogs-Bildansicht, Esc schließt:', big, clicked, closed)
-        results.append(big == 'https://i.discogs.com/cover-1234.png' and clicked == [] and closed)
+        print('B) Klick: groß im Tab, Discogs-Bildansicht, Esc schließt:', big, clicked, closed, '| Rahmen:', frame)
+        results.append(big == 'https://i.discogs.com/cover-1234.png' and clicked == [] and closed and frame == ['4px', True, 4])
         # drag the box 300 px to the left and 200 px down: it moves, the cover view does not open, the place is kept
         r0 = dg.evaluate("(() => { const r = document.getElementById('dci-artwork').getBoundingClientRect(); return [r.left, r.top]; })()")
         dg.evaluate("window.__clicked = []")

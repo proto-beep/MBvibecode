@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.230.0
+// @version      3.231.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.230.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.230.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.231.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.231.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.230.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.231.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -587,6 +587,8 @@
       "sync.found.no-tab": "no Discogs tab",
       "toolbar.levelAll": "Level for all rows:",
       "toolbar.onlyMissing": "Only show artists without an MB match",
+      "toolbar.onlyNew": "Only new relationships",
+      "toolbar.onlyNewTitle": "Hides the rows that are all in MusicBrainz already or skipped, and the entries without a new row (incomplete rows stay)",
       "toolbar.roleCredits": "Role credits:",
       "toolbar.artistCredits": "Artist credits:",
       "toolbar.asOnDiscogs": "as on {src}",
@@ -796,6 +798,7 @@
       "sum.incomplete.one": "{n} row incomplete",
       "sum.incomplete.other": "{n} rows incomplete",
       "sum.incTitle": "Rows that cannot be staged yet. Click: next one, Shift+click: the one before",
+      "sum.newTitle": "Click: the next place with a new relationship, Shift+click: the one before",
       "sum.existing.one": "{n} already on MB",
       "sum.existing.other": "{n} already on MB",
       "footer.preview": "Preview all relationships",
@@ -2970,6 +2973,28 @@
       "notice.reset": "With this update all settings and stored data of the script were reset once – a fresh start: language, switches, own mapping rules, date and track pools, the chosen sources and the list of created works.",
       "notice.changelog": "Changelog",
       "ms.3.157.0": "Missing links of the entries, with a link to the edit page; Bandcamp editions read with the credits",
+      "ms.3.231.0": "A click on “3 new relationships” goes to them one by one; the filter “Only new relationships”; the companion’s large image in MusicBrainz colours",
+      "ms.3.230.0": "The times of an import in the log: which steps took how long, per source",
+      "ms.3.227.0": "The companion in the dashboard’s language, Bandcamp’s artwork in high resolution",
+      "ms.3.226.0": "“✨ Answer all”: a tie decided by the recordings in MusicBrainz, each work to open with ↗",
+      "ms.3.223.0": "The lines left out on purpose in one table, in the mapping file",
+      "ms.3.220.0": "“✨ Answer all” grouped by its reasons, covers of a tribute; ←/→ in the companion’s artwork",
+      "ms.3.219.0": "Bandcamp’s track pages read; every line shows where it is from",
+      "ms.3.214.0": "Every source named in the edit note; the sources of the release’s other editions",
+      "ms.3.210.0": "Joining entries: asked first, undone at the entry, all names kept",
+      "ms.3.206.0": "Tribute albums: the works of the honoured artist",
+      "ms.3.202.0": "Japanese, Chinese and Korean releases keep their spellings",
+      "ms.3.196.0": "Suites of parts created; the works the dashboard created kept for the release",
+      "ms.3.195.0": "Records in the statistics",
+      "ms.3.192.0": "One work for the versions of a song; suites from the notes",
+      "ms.3.190.0": "Recordings with an event",
+      "ms.3.184.0": "The source opened in a background tab; “Apply & fold”",
+      "ms.3.179.0": "Relationships to an area",
+      "ms.3.177.0": "Classical track lists: composers as headings, works as suites, soloists in a track’s line",
+      "ms.3.176.0": "Booklets are read: lineups without a sign between name and role, tracks by medium",
+      "ms.3.168.0": "The works matrix rebuilt: a slim head, rows by their state, keys, one answer for all",
+      "ms.3.164.0": "Video credits and DJ mixes",
+      "ms.3.161.0": "Bandcamp’s editions; a search in the settings",
       "ms.3.155.0": "“✨ Answer all” at the works matrix: its open questions answered by a level, with a preview and undo",
       "ms.3.150.0": "“Fill empty recordings”: the tracks without relationships get the credits the other tracks share",
       "ms.3.149.0": "Wikipedia’s infobox as a source: recorded, studio, venue, producer – also in the background",
@@ -3019,6 +3044,12 @@
       "timing.f.findFestivals": "festivals",
       "timing.f.findConcertEvents": "concerts",
       "timing.f.ocrRun": "text from images",
+      "timing.f.statArtistsLookup": "artists for the statistics",
+      "timing.f.areaParent": "areas they are part of",
+      "timing.f.discogsRelease": "the release",
+      "timing.f.discogsPerson": "members and groups",
+      "timing.f.discogsAliases": "aliases",
+      "timing.f.discogsImages": "images of the release",
       "timing.kind.mb": "MusicBrainz",
       "timing.kind.mbjs": "MusicBrainz (other pages)",
       "timing.kind.discogs": "Discogs",
@@ -6090,6 +6121,11 @@
     { id: 'S556', where: 'mapping INSTRUMENT_ALIASES', note: 'Instruments (3.229.0; collected item Z-DUNUN; fixed – the mapping): "dundun" (and "dunduns") is the dunun of MusicBrainz. ("congo bells", "thai bells": bell credited as written, by the last word – S035; both of one person one relationship, the credits joined – S325)' },
     { id: 'S557', where: 'TIMING (timingCaller, timingAdd, timed), mbWs, mbFetch, httpGet, ocrRun, loadRelease, timingLog (renderRun)', note: 'Log (3.230.0; collected item Z-TIMING): the times of an import – once nothing runs any more the log says when the dashboard was ready and, for MusicBrainz (its queue of one request a second), its other pages, Discogs, other sites (Bandcamp) and the text from images, the steps that took longest (requests · time, by the function that asked; the main ones in words) – to see on real releases what a quick mode should leave out. Again when more ran later (the whole import\'s times). Switched off: no such line' },
     { id: 'S558', where: 'compactHintOn, renderCompactHint', note: 'Layout (3.230.0; collected item Z-COMPACTHINT): the hint at "Compact | Full" says the compact view is the recommended one – in the compact view "Compact view (recommended) – this symbol shows every role with all its fields at once", in the full view "The compact view is recommended – this symbol switches back to it"; until the view is switched or ✕. Switched off: "Try the full view …", in the compact view only (as until 3.229.0)' },
+    { id: 'S559', where: 'groupHtml (.dci-ghead-top), CSS', note: 'Layout (3.231.0; collected item Z-ENTRYBTNS): the buttons of an entry ("by event | by role", "Skip ∼") stay in the line of its name, at its right end – the matching between them takes the room left (at least about 18 characters) and wraps in itself; only a very narrow window puts the buttons below; an entry without a match: the matching with its suggestions below the name line, over the whole width. Switched off: the buttons below the matching as soon as the line is too short for both (as until 3.230.0)' },
+    { id: 'S560', where: 'seg (segCls), the settings "Head and footer" and "Symbols"', note: 'Layout (3.231.0; collected item Z-SYMALIGN): ⚙ Settings → Symbols and boxes – the two switches in two columns of the same width, the words left ("Words", "Text"), the pictures right ("Symbols", "Emojis"). Switched off: "Emojis | Text" (as until 3.230.0)' },
+    { id: 'S561', where: 'the toolbar (.dci-scope-work), CSS', note: 'Layout (3.231.0; collected item Z-SCOPECOLOR): "Works: with | only | without" in the colour of the level "work" (⚙ Appearance, coloured levels on) – the chosen one filled (its text light or dark, as on the level buttons), the others underlined in it. Switched off: the colours of the other buttons' },
+    { id: 'S562', where: 'refresh (S.newIds, data-act new-next), gotoNew', note: 'Navigation (3.231.0; collected item Z-NEWNAV): "N new relationships" in the summary is a button – a click goes to the next place with a new relationship (in the order on screen: a row, in an entry\'s matrix the line holding it or its chip – one stop each; it lights up, the source of a row shown in the companion as on the incomplete rows), Shift+click to the one before, "i/k" beside it says which. Switched off: only the count (the levels in its tooltip)' },
+    { id: 'S563', where: 'toolbar (data-f filter-new), refresh (.dci-nonew, .dci-gnonew), CSS', note: 'Filter (3.231.0; collected item Z-ONLYNEW): "Only new relationships" next to "Only show artists without an MB match" – hides the rows that are all in MusicBrainz already, skipped or have nothing ready (with their line of tracks; in an entry\'s matrix such lines and chips), and the entries (and groups of the order) without such a row; incomplete rows stay. Not kept (as the other filters). Switched off: no such box' },
     { id: 'S469', where: 'dgLineupApply, sendDiscogsStatus', note: 'Lineup and track credits (3.220.0; collected item Z-LOPEZ; S217): a row the answer leaves out (a lineup row on no track any more, a track credit taken into the lineup row) keeps its line at the source – its places go to the person\'s row still there, so the companion marks the line ("Ramón López – percussion" where the titles give him drums on all of his tracks)' },
     { id: 'S410', where: 'freshForget, repeatImport, loadRelease', note: '"↻ Repeat import" (3.209.0; collected item Z-FRESHALL): "Start afresh" forgets everything the dashboard holds of the release – not only the changes of the rows and the choices of the works matrix (Z-RI, 3.40.16), also the date pool, the track pool and the date matrix, the choices of the box "Dedications & tributes", "✕ No suite", texts and parts of sources switched off, "skip the works", entries joined by hand, the ticks of suggestions, what is remembered of the release ("Remember changes"; nothing of the import before is stored on the way). Kept: what was created in MusicBrainz through the dashboard (the lists of created works and suites), the source and the media chosen, the log' },
     { id: 'S409', where: 'mergeEntries, joinEntry, applyEntryMerges, dmTargetOf (entry-merge), groupHtml (grip)', note: 'Entries (3.208.0; collected item Z-ENTITYMERGE): two entries of the same kind that are one – from different sources, written otherwise – are joined by hand: the grip ⠿ before the kind of an entry dropped onto another entry. The entry dropped onto stays (its link to MusicBrainz counts; without one it takes the other\'s), the rows of the other come to it – the same role once, each row credited as its source writes it, the other\'s name one of its names. Two different entries of MusicBrainz, or entries of different kinds: not joined, a message says why. Remembered for the release (joined again at the next import); ↶ in the message undoes it' },
@@ -9489,9 +9525,11 @@
       paceChain = p.catch(() => {});
       return p;
     }
-    async function getJson(path, { missingId = null } = {}) {
+    async function getJson(path, { missingId = null, as = '' } = {}) {
+      // ([Z-TIMING] 3.231.0) the step named here, before the wait for the pace (after it the browser no longer knows who asked: "?")
+      const caller = as || timingCaller();
       await pace();
-      const res = await timed('discogs', fetch(`${API}/${path}`)); // ([Z-TIMING] 3.230.0, S557)
+      const res = await timed('discogs', fetch(`${API}/${path}`), caller); // ([Z-TIMING] 3.230.0, S557)
       if (res.status === 429) throw Object.assign(new Error(tr('err.discogsLimit')), { status: 429 });
       if (res.status === 404 && missingId != null) throw new Error(tr('err.discogsMissing', { id: missingId }));
       if (!res.ok) throw new Error(tr('err.discogsHttp', { status: res.status }));
@@ -9802,7 +9840,7 @@
         return m ? m[1] : '';
       },
       async release(id, ctx) {
-        const d = await getJson(`releases/${id}`, { missingId: id });
+        const d = await getJson(`releases/${id}`, { missingId: id, as: 'discogsRelease' });
         const r = toRelease(d, id);
         // [Z-SUB] (3.41.12) MusicBrainz has more tracks: the sub-tracks of an index may be tracks of their own there
         const mb = (ctx && ctx.tracks) || [];
@@ -9819,7 +9857,7 @@
        * group) or groups (of a person) as "related" ({ id, name, links, isGroup: the new artist is the group }).
        */
       async person(id) {
-        const x = await getJson(`artists/${id}`);
+        const x = await getJson(`artists/${id}`, { as: 'discogsPerson' });
         const related = [
           ...((x.members || []).map((m) => ({ ...m, isGroup: true }))),
           ...((x.groups || []).map((g) => ({ ...g, isGroup: false }))),
@@ -9833,7 +9871,7 @@
       /** Other names Discogs keeps as artists of their own ("Aliases"), as "who". */
       async aliases(id) {
         // (3.43.1, review) paced like the other requests; an error (429 …) is thrown, not read as "no aliases"
-        const data = await getJson(`artists/${id}`);
+        const data = await getJson(`artists/${id}`, { as: 'discogsAliases' });
         return ((data && data.aliases) || []).filter((x) => x && x.id).map((x) => ({ id: x.id, name: x.name, links: [artistUrl(x.id)] }));
       },
       // [3.34.7] Discogs images for the text from cover art, only on request: the API gives their addresses only to a
@@ -9845,7 +9883,7 @@
         // [Z-DGIMAGES] (3.131.0) all images of the release from Discogs's API, in its order and at their full size (as the companion 1.17.0
         // takes them) – the page holds only some of them, small; the page as before when the API gives none
         try {
-          const data = await getJson(`releases/${id}`); // ((review) at the pace of the other requests to Discogs
+          const data = await getJson(`releases/${id}`, { as: 'discogsImages' }); // ((review) at the pace of the other requests to Discogs
           const list = ((data && data.images) || []).map((im) => String((im && (im.uri || im.resource_url)) || '')).filter((u) => /^https:\/\/i\.discogs\.com\//.test(u));
           if (list.length) return uniq(list);
         } catch (e) {
@@ -22016,6 +22054,7 @@
     busy: null,
     launchStatus: null,
     onlyMissing: false,
+    onlyNew: false, // [Z-ONLYNEW] (3.231.0, S563)
     onlyOcr: false, // [Z-SUPPNAV] (3.116.0)
     log: [],
     logEl: null,
@@ -26410,6 +26449,47 @@
       setTimeout(() => el.classList.remove('dci-flash'), 2500);
     });
     navShowSource(tr1, row); // [Z-YELLJUMP] (3.142.0)
+  }
+
+  /** [Z-ONLYNEW] (3.231.0, S563) A row that adds nothing: skipped, all in MusicBrainz already or nothing ready (an incomplete row adds). */
+  function noNewIn(r, rowInfo) {
+    const inf = rowInfo.get(r.id);
+    return r.level === 'skip' || !inf || (!inf.ready && !inf.issues.length);
+  }
+
+  /**
+   * [Z-NEWNAV] (3.231.0, S562) Where a row is on screen: its own line, else the line of its entry's matrix that holds it, else its chip
+   * (an entry compact as a matrix) – by row id.
+   */
+  function rowHolders() {
+    const m = new Map();
+    if (!S.overlay) return m;
+    S.overlay.querySelectorAll('tr[data-row]').forEach((t) => { if (!m.has(t.dataset.row)) m.set(t.dataset.row, t); });
+    for (const sel of ['tr.dci-em-line[data-rows]', '.dci-em-chip[data-rows]']) {
+      S.overlay.querySelectorAll(sel).forEach((e) => e.dataset.rows.split(',').forEach((id) => { if (id && !m.has(id)) m.set(id, e); }));
+    }
+    return m;
+  }
+
+  /** [Z-NEWNAV] (3.231.0, S562) To the next (step 1) or previous (step -1) place with a new relationship; it lights up. */
+  function gotoNew(step) {
+    const ids = S.newIds || [];
+    if (!ids.length) return;
+    S.newIdx = ((S.newIdx == null || S.newIdx < 0 ? (step > 0 ? -1 : 0) : S.newIdx) + step + ids.length) % ids.length;
+    const row = S.rows.find((r) => r.id === ids[S.newIdx]);
+    if (!row) return;
+    const idx = S.newIdx;
+    let el = rowHolders().get(row.id);
+    // (an entry folded: opened to its matrix, as for the incomplete rows)
+    if (!el) revealRow(row);
+    refresh();
+    S.newIdx = idx;
+    el = (el && el.isConnected ? el : null) || rowHolders().get(row.id) || S.overlay.querySelector(`[data-group="${window.CSS && CSS.escape ? CSS.escape(row.artistKey) : row.artistKey}"]`);
+    if (!el) return;
+    el.scrollIntoView({ block: 'center' });
+    el.classList.add('dci-flash');
+    setTimeout(() => el.classList.remove('dci-flash'), 2500);
+    if (el.matches('tr[data-row]')) navShowSource(el, row);
   }
 
   /** Jumps to a rule in the rules window (own rules or the register) and highlights it until another one is chosen. */
@@ -39816,7 +39896,7 @@
         title="${esc(tr('link.webTitle'))}">${esc(webShort(u))}</a>`).join(' ');
     return `
       <section class="dci-group dci-st-${a.status} dci-kind-${groupKindOf(a).kind}${hidden}${groupFolded(a.key) ? ' dci-gcompact' : ''}${mxEntry(a) ? ' dci-em-entry' : mxCompact(a) ? ' dci-em-centry' : ''}${entrySkipped(a) ? ' dci-gskipped' : ''}" data-group="${a.key}">
-        <div class="dci-ghead">
+        <div class="dci-ghead${ruleOn('S559') ? ' dci-ghead-top' : ''}">
           ${S.view === 'full' && !a.company ? groupFoldHtml(a) : ''}<div class="dci-gname">${mxOn(a) && rows.length && (S.view === 'compact' || S.emWide.has(a.key)) ? emWideHtml(a) : S.view === 'compact' && rows.length ? openAllHtml(a, rows) : ''}${ruleOn('S409') && rows.length ? `<span class="dci-entry-grip" data-drag="entry" data-id="${esc(a.key)}" draggable="true" role="img" title="${esc(tr('merge.gripTitle'))}" aria-label="${esc(tr('merge.gripTitle'))}"></span>` : ''}${kindTagHtml(a)}${entryNameHtml(a)}${ruleOn('S201') ? entryOriginsHtml(a) : ''}${improvMarkHtml(S.rows.filter((r) => r.artistKey === a.key && r.level === 'work'))}${a.area ? ` <span class="dci-sub">(${esc(a.area)})</span>` : ''}${renamedHtml(a)} ${sourceLink} ${creditChipHtml(a)}${membersNoteHtml(a)}${siteNoteHtml(a)}${memberOfHtml(a)}</div>
           <div class="dci-gmatch" data-match="${a.key}">${matchHtml(a)}${ruleOn('S201') ? identityLinkHtml(a) : ''}</div>
           ${worksLink}<div class="dci-ghead-r">${compact ? emBySegHtml(a) : ''}${joinUndoHtml(a)}${entrySkipHtml(a, allRows)}</div>
@@ -44330,6 +44410,8 @@
       const rowEl = el.closest('tr');
       if (rowEl) {
         if (rowEl.classList.contains('dci-row')) rowEl.classList.toggle('dci-arhl', arhlOn(row)); // [Z-ARHL] (3.103.0)
+        // [Z-ONLYNEW] (3.231.0, S563) nothing new in it: all in MusicBrainz already, skipped, or nothing ready (an incomplete row stays)
+        if (rowEl.classList.contains('dci-row')) rowEl.classList.toggle('dci-nonew', noNewIn(row, rowInfo));
         const allThere = row.existingAll || (info.existing > 0 && !info.ready && !info.noWork && !info.issues.length);
         rowEl.classList.toggle('dci-exists', allThere);
         rowEl.classList.toggle('dci-exists-some', !allThere && (info.existing > 0 || info.loose > 0) && info.ready > 0);
@@ -44411,6 +44493,25 @@
     }
     // [169] (3.38.4) in one line: the levels in the tooltip
     const sum = [`<strong class="dci-sum-new"${kinds.length ? ` title="${esc(kinds.join(', '))}" tabindex="0"` : ''}>${esc(tr('sum.new', { n: items.length }))}</strong>`];
+    // [Z-NEWNAV] (3.231.0, S562) "N new relationships" goes to them: a click to the next place with a new one (it lights up),
+    // Shift+click to the one before; counted in relationships, stepped through by the places on screen – a row, in an entry's matrix
+    // its line (or chip): one stop each, in the order on screen (an entry folded: after the others, in the order of its rows)
+    const holders = rowHolders();
+    const allEls = [...S.overlay.querySelectorAll('tr[data-row], [data-rows]')];
+    const at = new Map(allEls.map((e, i) => [e, i]));
+    const gAt = new Map([...S.overlay.querySelectorAll('[data-group]')].map((e, i) => [e.dataset.group, i]));
+    const rAt = new Map(S.rows.map((r, i) => [r.id, i]));
+    const place = (r) => (holders.has(r.id) ? at.get(holders.get(r.id)) : 1e7 + (gAt.has(r.artistKey) ? gAt.get(r.artistKey) : 1e4) * 1e3 + rAt.get(r.id));
+    const seenEl = new Set();
+    const newIds = S.rows.filter((r) => !noNewIn(r, rowInfo) && rowInfo.get(r.id).ready > 0).sort((a, b) => place(a) - place(b))
+      .filter((r) => { const el = holders.get(r.id); if (!el) return true; if (seenEl.has(el)) return false; seenEl.add(el); return true; }).map((r) => r.id);
+    S.newIds = newIds;
+    if (S.newIdx >= newIds.length) S.newIdx = newIds.length - 1;
+    if (ruleOn('S562') && newIds.length) {
+      const pos = S.newIdx >= 0 ? `${S.newIdx + 1}/${newIds.length}` : '';
+      const title = [kinds.join(', '), tr('sum.newTitle')].filter(Boolean).join(' – '); // ((F-TOOLTIPLEN) each part one short sentence)
+      sum[0] = `<span class="dci-sum-newnav"><button type="button" class="dci-textbtn dci-sum-new" data-act="new-next" title="${esc(title)}">${esc(tr('sum.new', { n: items.length }))}</button>${pos ? ` <span class="dci-sub" data-el="new-pos">${esc(pos)}</span>` : ''}</span>`;
+    }
     // [E4] (3.35.0) joined: how many a relationship per instrument would be
     const apart = items.reduce((n, it) => n + (it.joinedItems ? it.joinedItems.length : 1), 0);
     if (apart > items.length) sum.push(`<span class="dci-sub" data-el="sum-joined">${esc(tr('sum.joined', { n: apart }))}</span>`);
@@ -44424,9 +44525,16 @@
     }
     if (existing) sum.push(`<span class="dci-muted">${esc(tr('sum.existing', { n: existing }))}</span>`);
     $('sum').innerHTML = sum.join('<span class="dci-sum-sep" aria-hidden="true"> · </span>');
+    // [Z-ONLYNEW] (3.231.0, S563) in an entry's matrix: a line (or a chip) whose rows add nothing
+    S.overlay.querySelectorAll('tr.dci-em-line[data-rows], .dci-em-chip[data-rows]').forEach((el) => {
+      const ids = el.dataset.rows.split(',').filter(Boolean);
+      el.classList.toggle('dci-nonew', ids.length > 0 && ids.every((id) => { const r = S.rows.find((x) => x.id === id); return !r || noNewIn(r, rowInfo); }));
+    });
     S.overlay.querySelectorAll('[data-group]').forEach((section) => {
       const rows = S.rows.filter((r) => r.artistKey === section.dataset.group);
       section.classList.toggle('dci-all-skip', rows.length > 0 && rows.every((r) => r.level === 'skip'));
+      // [Z-ONLYNEW] (3.231.0, S563) an entry without a row that adds something (or still needs something)
+      section.classList.toggle('dci-gnonew', rows.length > 0 && rows.every((r) => noNewIn(r, rowInfo)));
       // [3.28.0] the credit at the head follows the rows
       const chip = section.querySelector('.dci-gcredit');
       const a = S.artists.get(section.dataset.group);
@@ -58888,6 +58996,9 @@
       case 'inc-next':
         gotoIncomplete(e.shiftKey ? -1 : 1);
         break;
+      case 'new-next': // [Z-NEWNAV] (3.231.0, S562)
+        gotoNew(e.shiftKey ? -1 : 1);
+        break;
       // [Z-YELL] (3.110.0) the open items: to the next one, ✓ / ✕ / ↺ of a suggestion
       // [Z-SUPPNAV] (3.116.0)
       case 'ocr-next':
@@ -60944,6 +61055,11 @@
         S.onlyMissing = el.checked;
         S.overlay.classList.toggle('dci-only-missing', el.checked);
         break;
+      // [Z-ONLYNEW] (3.231.0, S563) only the rows with new relationships (and the incomplete ones)
+      case 'filter-new':
+        S.onlyNew = el.checked;
+        S.overlay.classList.toggle('dci-only-new', el.checked);
+        break;
       // [Z-SUPPNAV] (3.116.0) only the entries with lines from the cover art
       case 'filter-ocr':
         S.onlyOcr = el.checked;
@@ -61763,12 +61879,13 @@
             <!-- [Z-SCOPE] (3.112.0) the works as a filter (it changes no row; back on "with": as before) – it takes the place of "only works" and
               of the line "Stage:"; [Z-SORT] (3.112.0) the order of the entries -->
             <span class="dci-sub dci-scope-label">${esc(tr('scope.label'))}</span>
-            <div class="dci-seg dci-scope" role="group" aria-label="${esc(tr('scope.label'))}" title="${esc(tr('scope.title'))}">
+            <div class="dci-seg dci-scope${ruleOn('S561') ? ' dci-scope-work' : ''}" role="group" aria-label="${esc(tr('scope.label'))}" title="${esc(tr('scope.title'))}">
               ${['all', 'work', 'nonwork'].map((m) => `<button type="button" data-act="scope" data-scope="${m}" aria-pressed="${(S.scope || 'all') === m}">${esc(tr(`scope.${m}`))}</button>`).join('')}
             </div>
             <span data-el="sort-box"></span>
             <span data-el="medium-filter"></span>
             <label class="dci-check"><input type="checkbox" data-f="filter-missing" ${S.onlyMissing ? 'checked' : ''}> ${esc(tr('toolbar.onlyMissing'))}</label>
+            ${ruleOn('S563') ? `<label class="dci-check" title="${esc(tr('toolbar.onlyNewTitle'))}"><input type="checkbox" data-f="filter-new" ${S.onlyNew ? 'checked' : ''}> ${esc(tr('toolbar.onlyNew'))}</label>` : ''}
             <span data-el="ocr-filter"></span>
             <label class="dci-check dci-unmapped-filter" hidden><input type="checkbox" data-f="filter-unmapped"> <span data-el="unmapped-count"></span></label>
             <span class="dci-legend"><span class="dci-swatch dci-swatch-exists" aria-hidden="true"></span>${esc(tr('legend.exists'))}
@@ -61840,6 +61957,7 @@
       <div class="dci-subdlg dci-ask-dlg" data-el="ask" hidden></div>`;
     document.body.appendChild(overlay);
     overlay.classList.toggle('dci-only-missing', S.onlyMissing);
+    overlay.classList.toggle('dci-only-new', !!S.onlyNew && ruleOn('S563'));
     overlay.classList.toggle('dci-only-ocr', !!S.onlyOcr);
     overlay.addEventListener('click', onClick);
     overlay.addEventListener('change', onChange);
@@ -64618,7 +64736,7 @@
       return ` <span class="dci-info dci-set-more" tabindex="0" role="note" title="${esc(all)}" aria-label="${esc(all)}">ⓘ</span>`;
     };
     // a choice of a few: its buttons (pressed: the value); the default named by its text
-    const seg = (act, attr, values, cur, text, o = {}) => `<span class="dci-seg dci-seg-small" role="group" data-lbg${o.segEl ? ` data-el="${o.segEl}"` : ''}>${values.map((v) => `<button type="button"
+    const seg = (act, attr, values, cur, text, o = {}) => `<span class="dci-seg dci-seg-small${o.segCls ? ` ${o.segCls}` : ''}" role="group" data-lbg${o.segEl ? ` data-el="${o.segEl}"` : ''}>${values.map((v) => `<button type="button"
       data-act="${act}"${o.btn || ''} data-${attr}="${v}" aria-pressed="${cur === v}"${o.titles ? ` title="${esc(o.titles(v))}"` : ''}>${esc(text(v))}</button>`).join('')}</span>${segMore(values, text, o)}`;
     const segField = (label, act, attr, values, cur, def, text, o = {}) => field(label, seg(act, attr, values, cur, text, o), { ...o, dflt: [cur !== def, text(def)] });
     const numField = (label, attr, val, def, o = {}) => field(label, `<input type="number" data-lb ${attr} value="${val}"${o.off ? ' disabled' : ''}>${o.after ? ` ${esc(o.after)}` : ''}`,
@@ -64709,8 +64827,9 @@
         cb('data-set="skip-hide"', S.skipHide, tr('settings.skipHide'), tr('settings.skipHideTitle'), { def: false }),
         sh('symbols'),
         // [Z-SRCTAG] (3.127.0) emojis or words (the sources' badges, 🖼️, 📄, 💡, 🏷, ⌚; ⚠ and ⚙ stay)
-segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.chrome, 'words', (v) => tr(`settings.chrome.${v}`), { title: tr('settings.chromeTitle'), segEl: 'chrome-mode' }),
-                segField(tr('settings.emoji'), 'emoji-mode', 'mode', ['emoji', 'text'], S.emojiText ? 'text' : 'emoji', 'emoji', (v) => tr(`settings.emoji.${v}`), { title: tr('settings.emojiTitle'), segEl: 'emoji-mode' }),
+segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.chrome, 'words', (v) => tr(`settings.chrome.${v}`), { title: tr('settings.chromeTitle'), segEl: 'chrome-mode', ...(ruleOn('S560') ? { segCls: 'dci-seg-cols' } : {}) }),
+                // [Z-SYMALIGN] (3.231.0, S560) two columns: the words ("Words", "Text") left, the pictures ("Symbols", "Emojis") right, as wide
+                segField(tr('settings.emoji'), 'emoji-mode', 'mode', ruleOn('S560') ? ['text', 'emoji'] : ['emoji', 'text'], S.emojiText ? 'text' : 'emoji', 'emoji', (v) => tr(`settings.emoji.${v}`), { title: tr('settings.emojiTitle'), segEl: 'emoji-mode', ...(ruleOn('S560') ? { segCls: 'dci-seg-cols' } : {}) }),
         // [Z-DEDQ] (3.74.0, S109) the box "Dedications & tributes" (on by default)
         cb('data-set="ded-box"', S.dedBox, tr('settings.dedBox'), tr('settings.dedBoxTitle'), { def: true }),
         sh('rules'),
@@ -66598,6 +66717,29 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
     // [Z-MILESTONES] (3.158.0) a milestone is a new ability you notice without the docs – a source, a view, a workflow, a
     // file, a changed default –, one line each (at most 120 characters); not a rule of the text recognition, a fix or a test.
     // 3.0.0 and 3.12.0 (rebuilt inside, nothing changed for the user) are none any more.
+    { v: '3.231.0', label: 'Credits Importer 3.231.0 · Companion 1.26.0' },
+    { v: '3.230.0', label: 'Credits Importer 3.230.0' },
+    { v: '3.227.0', label: 'Credits Importer 3.227.0 · Companion 1.25.0' },
+    { v: '3.226.0', label: 'Credits Importer 3.226.0' },
+    { v: '3.223.0', label: 'Credits Importer 3.223.0' },
+    { v: '3.220.0', label: 'Credits Importer 3.220.0 · Companion 1.24.0' },
+    { v: '3.219.0', label: 'Credits Importer 3.219.0' },
+    { v: '3.214.0', label: 'Credits Importer 3.214.0' },
+    { v: '3.210.0', label: 'Credits Importer 3.210.0' },
+    { v: '3.206.0', label: 'Credits Importer 3.206.0' },
+    { v: '3.202.0', label: 'Credits Importer 3.202.0' },
+    { v: '3.196.0', label: 'Credits Importer 3.196.0' },
+    { v: '3.195.0', label: 'Credits Importer 3.195.0' },
+    { v: '3.192.0', label: 'Credits Importer 3.192.0' },
+    { v: '3.190.0', label: 'Credits Importer 3.190.0' },
+    { v: '3.184.0', label: 'Credits Importer 3.184.0' },
+    { v: '3.179.0', label: 'Credits Importer 3.179.0' },
+    { v: '3.177.0', label: 'Credits Importer 3.177.0' },
+    { v: '3.176.0', label: 'Credits Importer 3.176.0' },
+    { v: '3.168.0', label: 'Credits Importer 3.168.0' },
+    { v: '3.164.0', label: 'Credits Importer 3.164.0' },
+    { v: '3.161.0', label: 'Credits Importer 3.161.0' },
+    // ([Z-MILESTONES-SCRIPT] 3.231.0) the milestones 3.161.0 – 3.231.0 above, as in the changelog's table
     { v: '3.157.0', label: 'Credits Importer 3.157.0' },
     { v: '3.155.0', label: 'Credits Importer 3.155.0' },
     { v: '3.150.0', label: 'Credits Importer 3.150.0' },
@@ -68518,6 +68660,10 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       /* [Z-SUPPNAV] (3.116.0) only the entries with lines from the cover art; 🖼️ at their lines in the matrix and compact view */
       #dci-overlay.dci-only-ocr .dci-group:not(.dci-has-ocr) { display: none; }
       #dci-overlay.dci-only-ocr .dci-sortblock:not(:has(.dci-group.dci-has-ocr)) { display: none; }
+      /* [Z-ONLYNEW] (3.231.0, S563) only new relationships: rows (with their tracks line) and entries without one hidden */
+      #dci-overlay.dci-only-new tr.dci-row.dci-nonew, #dci-overlay.dci-only-new tr.dci-row.dci-nonew + tr.dci-tracksrow,
+      #dci-overlay.dci-only-new .dci-group.dci-gnonew, #dci-overlay.dci-only-new tr.dci-em-line.dci-nonew, #dci-overlay.dci-only-new .dci-em-chip.dci-nonew { display: none; }
+      #dci-overlay.dci-only-new .dci-sortblock:not(:has(.dci-group:not(.dci-gnonew))) { display: none; }
       #dci-overlay tr.dci-em-line.dci-ocr-line .dci-em-c-role::after, #dci-overlay .dci-em-chip.dci-ocr-line::after,
       #dci-overlay .dci-em-cl.dci-ocr-line::after { content: ' 🖼️'; font-size: 0.85em; }
       #dci-overlay.dci-emtext tr.dci-em-line.dci-ocr-line .dci-em-c-role::after, #dci-overlay.dci-emtext .dci-em-chip.dci-ocr-line::after,
@@ -69818,6 +69964,13 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       .dci-em-foot { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 8); }
       /* [Z-KH] (3.40.10) a compact entry: the toggle at the right of its head, the notes and the button beside its lines */
       .dci-ghead-r { margin-left: auto; align-self: center; display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 10); }
+      /* [Z-ENTRYBTNS] (3.231.0, S559) "by event | by role" and "Skip ∼" stay in the line of the name: the match between them takes the room left and wraps in itself (wide: one line as before) */
+      .dci-ghead.dci-ghead-top > .dci-gmatch { flex: 1 1 0; min-width: min(100%, 18em); }
+      .dci-ghead.dci-ghead-top > .dci-ghead-r { align-self: flex-start; }
+      /* ((review) an entry without a match: its suggestions want the whole width – the buttons in the line of the name, the match below it) */
+      .dci-ghead.dci-ghead-top > .dci-gmatch:has(.dci-sugg-stack) { order: 2; flex-basis: 100%; }
+      .dci-ghead.dci-ghead-top:has(> .dci-gmatch .dci-sugg-stack) > .dci-ghead-r { order: 1; }
+      .dci-ghead.dci-ghead-top:has(> .dci-gmatch .dci-sugg-stack) > .dci-works-goto { order: 3; }
       /* [Z-SK] (3.40.15) "⊘ Skip" and "↺ Take again" in the head of an entry; a skipped entry grey */
       /* [Z-RI] (3.40.16) */
       .dci-repeat-btn span[aria-hidden] { margin-right: calc(var(--u, 1px) * 4); }
@@ -69871,6 +70024,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       .dci-em-tail .dci-addrole-btn { margin-top: 0; }
       .dci-em-inlines .dci-work-note { margin: 0; }
       .dci-works-goto { color: var(--muted); font-size: calc(var(--u, 1px) * 12); white-space: nowrap; }
+      .dci-seg.dci-seg-cols > button { min-width: 6.5em; text-align: center; justify-content: center; } /* [Z-SYMALIGN] (3.231.0, S560) */
       .dci-cl-x { margin-left: auto; color: var(--muted); }
       #dci-overlay.dci-compact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cline { color: var(--muted); }
       #dci-overlay.dci-compact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cl-role, #dci-overlay.dci-compact .dci-rows tr.dci-row.dci-lv-skip:not(.dci-open) .dci-cl-type { color: var(--muted); font-weight: 400; }
@@ -69915,6 +70069,9 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       /* [3.30.1] "only works" in the colour of works (item 92) */
       #dci-overlay.dci-lvlc [data-level="only-works"] { --lvl: var(--dci-lvl-work); --lvl-ink: var(--dci-lvl-work-ink); }
       #dci-overlay.dci-lvlc .dci-seg button[aria-pressed="true"][data-level] { background: var(--lvl); color: var(--lvl-ink); }
+      /* [Z-SCOPECOLOR] (3.231.0, S561) "Works: with | only | without" in the colour of works (as "only works" from 3.30.1 was), readable by its ink */
+      #dci-overlay.dci-lvlc .dci-scope.dci-scope-work button[aria-pressed="true"] { background: var(--dci-lvl-work); color: var(--dci-lvl-work-ink); }
+      #dci-overlay.dci-lvlc .dci-scope.dci-scope-work button:not([aria-pressed="true"]):not(:disabled) { box-shadow: inset 0 calc(var(--u, 1px) * -3) 0 var(--dci-lvl-work); }
       #dci-overlay.dci-lvlc .dci-seg button[data-level]:not([aria-pressed="true"]):not(:disabled) { box-shadow: inset 0 calc(var(--u, 1px) * -3) 0 var(--lvl); }
       #dci-overlay.dci-lvlc .dci-cl-level[data-level] { background: var(--lvl); color: var(--lvl-ink); }
       button.dci-cl-level { border: 0; cursor: pointer; }
@@ -70013,6 +70170,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       .dci-foot-bar { display: flex; align-items: center; flex-wrap: wrap; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 14); }
       .dci-sum { min-width: 0; }
       .dci-sum-new[title] { text-decoration: underline dotted; text-underline-offset: 3px; cursor: help; }
+      button.dci-sum-new[data-act="new-next"] { font-weight: 700; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
       .dci-sum-sep { color: var(--muted); }
       .dci-sum .dci-incomplete { white-space: nowrap; }
       .dci-foot-chips { display: inline-flex; flex-wrap: wrap; gap: calc(var(--u, 1px) * 4); }
