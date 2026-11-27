@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-27 | 3.231.0 – 3.233.0 | 1.26.0 |
+| 2026-11-27 | 3.231.0 – 3.234.0 | 1.26.0 |
 | 2026-11-26 | 3.224.0 – 3.230.0 | 1.25.0 |
 | 2026-11-25 | 3.218.0 – 3.223.0 | 1.24.0 |
 | 2026-11-24 | 3.213.0 – 3.217.0 | – |
@@ -70,6 +70,7 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 
 | Date | Version | Milestone |
 |---|---|---|
+| 2026-11-27 | Import 3.234.0 | “⚡ Fast”: an import without the lookups in the background – the artists’ works on a click |
 | 2026-11-27 | Import 3.232.0 | More room for the entries: the head in one line, “＋ Entry” and the pools beside it, a slim head while scrolling |
 | 2026-11-27 | Import 3.231.0 · Companion 1.26.0 | A click on “3 new relationships” goes to them one by one; the filter “Only new relationships”; the companion’s large image in MusicBrainz colours |
 | 2026-11-26 | Import 3.230.0 | The times of an import in the log: which steps took how long, per source |
@@ -164,6 +165,14 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-27
+
+### Import 3.234.0
+
+**"⚡ Fast": an import without the lookups in the background – the artists' works on a click; every step of the times named.**
+
+- **⚡ Fast** (rule S573): in "More" of the head and in ⚙ Settings → General (off; stays on until switched off). It leaves out the works on the artists' pages (their repertoire – "Read them now" in the works matrix reads them, "Stop" and "Continue" as always), the missing links of the entries, the sources of the other releases of the group and the lookups of the statistics; the works of each track's writers are still searched. The log says what was left out; the times end "⚡ fast".
+- **Every step of the times named** (rule S574): no "?" any more – a request after a wait by what it asks ("MusicBrainz: area"), "areas of the live comments", "dedications and tributes".
+- **Tests:** case fast3234 (smoke/t_twosources.py).
 
 ### Import 3.233.0
 

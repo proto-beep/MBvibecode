@@ -114,10 +114,12 @@ def dm_apply(pg):
     return on
 
 
-def open_import(p, direction, view='full'):
-    """The release opened, the dashboard imported, the date matrix applied: (browser, page, errors)."""
+def open_import(p, direction, view='full', init=''):
+    """The release opened, the dashboard imported, the date matrix applied: (browser, page, errors). init: a script run before the page's own."""
     b = p.chromium.launch(args=H.LAUNCH_ARGS)
     ctx = H.new_context(b)
+    if init:
+        ctx.add_init_script(init)
     pg, errs = H.open_mb_edit(ctx, companion=False, gm_xhr=True, view=view)
     pg.on('dialog', lambda d: d.accept())
     pg.wait_for_selector('#dci-open', timeout=20000)
