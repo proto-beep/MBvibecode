@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.229.0
+// @version      3.230.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.229.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.229.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.230.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.230.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.229.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.230.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -62,6 +62,43 @@
    * requests wait in a queue of their own, that many ms apart – no burst of lookups when relationships are staged.
    */
   const MB_FETCH_MS = 30000;
+  /**
+   * [Z-TIMING] (3.230.0, S557) How long the import's requests and readings take, by the function that asked – summed from the start of
+   * an import; the log says it once nothing runs any more (renderRun). kind: mb (MusicBrainz's /ws/2, one queue), mbjs (its other
+   * pages), discogs (Discogs's API), web (other sites: Bandcamp …), ocr (text from images, in the browser).
+   */
+  const TIMING = { at: 0, ready: 0, by: new Map(), n: 0, logged: 0 };
+  const TIMING_SKIP = /^(?:timingCaller|timingAdd|timed|mbWs|mbWsIdle|mbFetch|httpGet|getJson|run|Promise|new|then|next|step|async|fetch|sleep|anonymous|eval|Generator|process)$/;
+  function timingCaller() {
+    const lines = String(new Error().stack || '').split('\n');
+    for (const l of lines) {
+      const m = l.match(/^\s*at (?:async )?(?:Object\.)?([\w$.]+) [(]/) || l.match(/^(?:async\*)?([\w$.]+)@/);
+      const f = m ? m[1].split('.').pop() : '';
+      if (f && !TIMING_SKIP.test(f)) return f;
+    }
+    return '?';
+  }
+  function timingAdd(kind, caller, ms) {
+    if (!TIMING.at) return;
+    try {
+      if (!ruleOn('S557')) return;
+    } catch {
+      return;
+    }
+    const k = `${kind}|${caller}`;
+    const x = TIMING.by.get(k) || { kind, caller, n: 0, ms: 0 };
+    x.n++;
+    x.ms += Math.max(0, ms);
+    TIMING.by.set(k, x);
+    TIMING.n++;
+  }
+  /** [Z-TIMING] A promise timed for `kind` (its caller found now, before any wait). */
+  function timed(kind, p, caller = timingCaller()) {
+    const t0 = Date.now();
+    const end = () => timingAdd(kind, caller, Date.now() - t0);
+    Promise.resolve(p).then(end, end);
+    return p;
+  }
   let mbJsAt = 0;
   let mbJsQueue = Promise.resolve();
   function mbFetch(url, init = {}, { pace = 0 } = {}) {
@@ -81,8 +118,9 @@
         }
       }
     };
-    if (!pace) return run();
-    const p = mbJsQueue.then(run, run);
+    const caller = timingCaller(); // ([Z-TIMING] 3.230.0, S557)
+    if (!pace) return timed('mbjs', run(), caller);
+    const p = mbJsQueue.then(() => timed('mbjs', run(), caller), () => timed('mbjs', run(), caller));
     mbJsQueue = p.catch(() => {});
     return p;
   }
@@ -2965,6 +3003,30 @@
       "scope.title": "A filter of the works: all relationships (with), only those of works (only) or all but those (without)",
       "log.scope": "Stage: {mode}",
       "log.importDone": "Import complete: {rows} roles of {entries} entries in the dashboard, {existing} already in MusicBrainz",
+      "timing.f.init": "the release",
+      "timing.f.lookupUrls": "entries by their links",
+      "timing.f.suggestByName": "entries searched by name",
+      "timing.f.loadArtistWorks": "works on the artists’ pages",
+      "timing.f.searchWorks": "works of the writers",
+      "timing.f.findWorkRels": "relationships of the works",
+      "timing.f.awCountLoad": "recordings of works counted",
+      "timing.f.missLinksRun": "missing links",
+      "timing.f.siteHintRun": "own sites",
+      "timing.f.runDedications": "dedications",
+      "timing.f.rgSourcesLoad": "other releases of the group",
+      "timing.f.computePublisherEvidence": "publishers",
+      "timing.f.checkGroupOf": "members of groups",
+      "timing.f.findFestivals": "festivals",
+      "timing.f.findConcertEvents": "concerts",
+      "timing.f.ocrRun": "text from images",
+      "timing.kind.mb": "MusicBrainz",
+      "timing.kind.mbjs": "MusicBrainz (other pages)",
+      "timing.kind.discogs": "Discogs",
+      "timing.kind.web": "other sites",
+      "timing.kind.ocr": "text recognition",
+      "timing.sum": "({n} requests, {time})",
+      "timing.sum1": "(1 request, {time})",
+      "log.timing": "⏱ Times of this import: dashboard ready after {ready}, all done after {all} — {text}",
       "log.stackAmbig": "Names and instruments one above the other, their order not clear ({list}): read with the name above its instruments – “⇅ Instruments above the names” at the entry reads them the other way round",
       "log.stackAmbigUp": "Names and instruments one above the other, their order not clear ({list}): read with the instruments above the name – “⇅ Names above the instruments” at the entry reads them as before",
       "log.stackFlipUp": "Names and instruments one above the other: the lines whose order was not clear now with the instruments above the names",
@@ -3961,6 +4023,8 @@
       "settings.ocrAuto": "Auto-select the images with credits",
       "settings.ocrAutoTitle": "Back covers, booklets, liners, trays and PDF pages with credits are ticked when the window opens",
       "hint.full": "Try the full view: every role with all its fields at once – this symbol switches",
+      "hint.compactRec": "Compact view (recommended) – this symbol shows every role with all its fields at once",
+      "hint.compactBack": "The compact view is recommended – this symbol switches back to it",
       "hint.close": "Hide this hint",
       "settings.ocrFront": "Keep “Text from cover art” in front of the dashboard",
       "settings.ocrFrontTitle": "Text from cover art: while its window is open it stays in front of the dashboard, the log and “Mapping rules”",
@@ -6024,6 +6088,8 @@
     { id: 'S554', where: 'mapping R097, addCreditRows', note: 'Roles (3.229.0; collected item Z-DIRECTION; R097, Q003): "direction" alone ("STEED COWART: direction") is "Directed By" – asked (conductor, chorus master, creative direction, miscellaneous) – credited "direction" (the mapping R097 knows the word; the credit is this rule\'s)' },
     { id: 'S555', where: 'coverLines3223 (vocal kinds), addCreditRows (spoken word)', note: 'Voices (3.229.0; collected items Z-VOCALKIND, Z-SPOKENWORD): "vocal (soprano)", "vocals (bass)" – soprano vocals, bass vocals (alto, tenor, baritone, mezzo-soprano, contralto, countertenor, bass-baritone, treble the same); "spoken word" – spoken vocals credited "spoken word". Switched off: "vocal (bass)" not recognized, spoken word without role credit' },
     { id: 'S556', where: 'mapping INSTRUMENT_ALIASES', note: 'Instruments (3.229.0; collected item Z-DUNUN; fixed – the mapping): "dundun" (and "dunduns") is the dunun of MusicBrainz. ("congo bells", "thai bells": bell credited as written, by the last word – S035; both of one person one relationship, the credits joined – S325)' },
+    { id: 'S557', where: 'TIMING (timingCaller, timingAdd, timed), mbWs, mbFetch, httpGet, ocrRun, loadRelease, timingLog (renderRun)', note: 'Log (3.230.0; collected item Z-TIMING): the times of an import – once nothing runs any more the log says when the dashboard was ready and, for MusicBrainz (its queue of one request a second), its other pages, Discogs, other sites (Bandcamp) and the text from images, the steps that took longest (requests · time, by the function that asked; the main ones in words) – to see on real releases what a quick mode should leave out. Again when more ran later (the whole import\'s times). Switched off: no such line' },
+    { id: 'S558', where: 'compactHintOn, renderCompactHint', note: 'Layout (3.230.0; collected item Z-COMPACTHINT): the hint at "Compact | Full" says the compact view is the recommended one – in the compact view "Compact view (recommended) – this symbol shows every role with all its fields at once", in the full view "The compact view is recommended – this symbol switches back to it"; until the view is switched or ✕. Switched off: "Try the full view …", in the compact view only (as until 3.229.0)' },
     { id: 'S469', where: 'dgLineupApply, sendDiscogsStatus', note: 'Lineup and track credits (3.220.0; collected item Z-LOPEZ; S217): a row the answer leaves out (a lineup row on no track any more, a track credit taken into the lineup row) keeps its line at the source – its places go to the person\'s row still there, so the companion marks the line ("Ramón López – percussion" where the titles give him drums on all of his tracks)' },
     { id: 'S410', where: 'freshForget, repeatImport, loadRelease', note: '"↻ Repeat import" (3.209.0; collected item Z-FRESHALL): "Start afresh" forgets everything the dashboard holds of the release – not only the changes of the rows and the choices of the works matrix (Z-RI, 3.40.16), also the date pool, the track pool and the date matrix, the choices of the box "Dedications & tributes", "✕ No suite", texts and parts of sources switched off, "skip the works", entries joined by hand, the ticks of suggestions, what is remembered of the release ("Remember changes"; nothing of the import before is stored on the way). Kept: what was created in MusicBrainz through the dashboard (the lists of created works and suites), the source and the media chosen, the log' },
     { id: 'S409', where: 'mergeEntries, joinEntry, applyEntryMerges, dmTargetOf (entry-merge), groupHtml (grip)', note: 'Entries (3.208.0; collected item Z-ENTITYMERGE): two entries of the same kind that are one – from different sources, written otherwise – are joined by hand: the grip ⠿ before the kind of an entry dropped onto another entry. The entry dropped onto stays (its link to MusicBrainz counts; without one it takes the other\'s), the rows of the other come to it – the same role once, each row credited as its source writes it, the other\'s name one of its names. Two different entries of MusicBrainz, or entries of different kinds: not joined, a message says why. Remembered for the release (joined again at the next import); ↶ in the message undoes it' },
@@ -9425,7 +9491,7 @@
     }
     async function getJson(path, { missingId = null } = {}) {
       await pace();
-      const res = await fetch(`${API}/${path}`);
+      const res = await timed('discogs', fetch(`${API}/${path}`)); // ([Z-TIMING] 3.230.0, S557)
       if (res.status === 429) throw Object.assign(new Error(tr('err.discogsLimit')), { status: 429 });
       if (res.status === 404 && missingId != null) throw new Error(tr('err.discogsMissing', { id: missingId }));
       if (!res.ok) throw new Error(tr('err.discogsHttp', { status: res.status }));
@@ -21219,12 +21285,17 @@
   // the dashboard (its searches slowed everything down – at most five minutes)
   let mbPrio = 0;
   function mbWs(path, { background = false, prio = false } = {}) {
-    const run = async () => {
+    const caller = timingCaller(); // ([Z-TIMING] 3.230.0, S557) who asked
+    const run0 = async () => {
       if (!prio && ruleOn('S356')) {
         const until = Date.now() + 300000;
         const formOpen = () => { try { return !!S.subDialog; } catch { return false; } };
         while ((mbPrio > 0 || formOpen()) && Date.now() < until) await sleep(250);
       }
+      // ([Z-TIMING] 3.230.0, S557) its time in the queue: the pause of one a second and the answer
+      return timed('mb', run1(), caller);
+    };
+    const run1 = async () => {
       for (let attempt = 0; attempt < 4; attempt++) {
         const wait = lastMbRequest + 1100 - Date.now();
         if (wait > 0) await sleep(wait);
@@ -21253,6 +21324,7 @@
       }
       throw new Error(tr('err.mbBusy'));
     };
+    const run = run0;
     let p;
     if (prio && ruleOn('S356')) {
       mbPrio++;
@@ -24006,6 +24078,32 @@
    * as the requests known so far are done, and a thin line along the top of the footer as long; when all is done (after a moment
    * without work) the chip is green – "All imports and checks done" – and stays, the line goes.
    */
+  /**
+   * [Z-TIMING] (3.230.0, S557) Once nothing runs any more: the times of this import in the log – when the dashboard was ready, then
+   * per kind (MusicBrainz, Discogs, other sites, text from images) the steps that took longest (requests · time). Again only when more
+   * ran since (the times of the whole import each time).
+   */
+  function timingLog() {
+    if (!TIMING.at || !ruleOn('S557') || TIMING.n === TIMING.logged || !TIMING.ready) return;
+    TIMING.logged = TIMING.n;
+    const dur = (ms) => (ms >= 60000 ? `${Math.floor(ms / 60000)} min ${Math.round((ms % 60000) / 1000)} s` : `${Math.max(1, Math.round(ms / 1000))} s`);
+    const all = [...TIMING.by.values()];
+    const parts = ['mb', 'mbjs', 'discogs', 'web', 'ocr'].map((kind) => {
+      const xs = all.filter((x) => x.kind === kind).sort((a, b) => b.ms - a.ms);
+      if (!xs.length) return '';
+      const n = xs.reduce((a, x) => a + x.n, 0);
+      const ms = xs.reduce((a, x) => a + x.ms, 0);
+      const top = xs.slice(0, 8).map((x) => `${timingName(x.caller)} ${x.n} · ${dur(x.ms)}`).join('; ');
+      return `${tr(`timing.kind.${kind}`)} ${tr(n === 1 ? 'timing.sum1' : 'timing.sum', { n, time: dur(ms) })}: ${top}${xs.length > 8 ? '; …' : ''}`;
+    }).filter(Boolean);
+    log('info', 'timing', { ready: dur(TIMING.ready - TIMING.at), all: dur(Date.now() - TIMING.at), text: parts.join(' — ') });
+  }
+  /** [Z-TIMING] The step a function stands for, in words where the log knows it (else its name). */
+  function timingName(f) {
+    const k = `timing.f.${f}`;
+    const t = tr(k);
+    return t && t !== k ? t : f;
+  }
   function scheduleRun() {
     // (a step logged before the requests' counter exists: nothing to show yet)
     try {
@@ -24033,6 +24131,7 @@
         if (runBusy()) return;
         Object.assign(RUN, { active: false, finished: true, started: 0, done: 0 });
         drawRun();
+        timingLog(); // ([Z-TIMING] 3.230.0, S557)
       }, RUN.idleMs);
     }
     drawRun();
@@ -27872,6 +27971,9 @@
   }
 
   async function ocrRun() {
+    return timed('ocr', ocrRun0(), 'ocrRun'); // ([Z-TIMING] 3.230.0, S557) text from images: its time in the browser
+  }
+  async function ocrRun0() {
     const o = S.ocr;
     const run = ++o.run;
     o.suppNote = ''; // ([Z-SUPPMSG] 3.116.0, review) said of the texts before
@@ -32101,6 +32203,9 @@
    * (@connect); without it (other managers) the browser's fetch is tried, which most sites do not allow.
    */
   function httpGet(url, headers = null) {
+    return timed('web', httpGet0(url, headers)); // ([Z-TIMING] 3.230.0, S557)
+  }
+  function httpGet0(url, headers = null) {
     if (typeof GM_xmlhttpRequest === 'function') {
       return new Promise((resolve, reject) => {
         GM_xmlhttpRequest({
@@ -33785,6 +33890,8 @@
       renderSource();
       return;
     }
+    // [Z-TIMING] (3.230.0, S557) the times of this import from here
+    Object.assign(TIMING, { at: Date.now(), ready: 0, by: new Map(), n: 0, logged: 0 });
     // [S058] (3.38.7) "⇅" holds for the text (or release) it was chosen for
     // [S058] (3.38.12) another release: the names above – or the reading "⇅" took when it was remembered
     if (!S.release || S.source !== source || String(S.release.id) !== String(id)) S.stackUp = rememberedStackUp(`${source.id}:${id}`);
@@ -34085,6 +34192,7 @@
         if (recDisambSuggest()) renderDates(); // [Z-RECDISAMB] (3.213.0, S431)
         bonusCheck(S.release, ''); // [Z-BONUSLINE] (3.216.0, S447)
         log('ok', 'importDone', { rows: S.rows.length, entries: S.artists.size, existing: S.rows.filter((r) => r.existingAll).length });
+        if (TIMING.at && !TIMING.ready) TIMING.ready = Date.now(); // ([Z-TIMING] 3.230.0, S557) the dashboard ready
         renderSync(); // [Z-NOTABSRC] (3.157.0) the status names the source of this import
         wikiBackground(seq); // [Z-WIKIBG] (3.149.0)
         rgSourcesLoad(seq).catch((e) => console.warn('[Credits-Importer] release group sources', e)); // [Z-RGSOURCES] (3.214.0)
@@ -43574,13 +43682,14 @@
    * below it (only ✕ is a button). [Z-CPV] (3.73.0) The other way round: in the compact view (the default) it points to the full one;
    * not in the full view.
    */
-  const compactHintOn = () => S.view === 'compact' && readJson('localStorage', HINT_COMPACT_KEY, false) !== true;
+  // [Z-COMPACTHINT] (3.230.0, S558) it says the compact view is the recommended one – in the full view too (there: back to it)
+  const compactHintOn = () => (S.view === 'compact' || ruleOn('S558')) && readJson('localStorage', HINT_COMPACT_KEY, false) !== true;
   function renderCompactHint() {
     if (!S.overlay) return;
     S.overlay.querySelectorAll('.dci-hint-compact').forEach((x) => x.remove());
     const btn = S.overlay.querySelector('.dci-head [data-act="view-toggle"]');
     if (!btn || !compactHintOn()) return;
-    btn.insertAdjacentHTML('afterend', `<span class="dci-hint-compact" role="note"><span class="dci-hint-bubble"><span class="dci-hint-text">${esc(tr('hint.full'))}</span>
+    btn.insertAdjacentHTML('afterend', `<span class="dci-hint-compact" role="note"><span class="dci-hint-bubble"><span class="dci-hint-text">${esc(tr(!ruleOn('S558') ? 'hint.full' : S.view === 'compact' ? 'hint.compactRec' : 'hint.compactBack'))}</span>
       <button type="button" class="dci-textbtn dci-hint-x" data-act="hint-compact-close" title="${esc(tr('hint.close'))}" aria-label="${esc(tr('hint.close'))}">✕</button></span></span>`);
   }
   function compactHintDone() {

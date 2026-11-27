@@ -3730,6 +3730,41 @@ def case_suppgroups3225():
 
 
 
+def case_timing3230():
+    """Credits Importer 3.230.0 (collected item Z-TIMING; rule S557): once nothing runs any more after an import, the log says its
+    times – "⏱ Times of this import: dashboard ready after …, all done after … — MusicBrainz (n requests, t): the release …, entries …"
+    and Discogs; once only while nothing more runs. Off: no such line."""
+    LOGS = "[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9))"
+
+    def run(p, off=()):
+        H.RULES_OFF = list(off)
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        ctx = H.new_context(b)
+        pg, errs = H.open_mb_edit(ctx, companion=False)
+        pg.on('dialog', lambda d: d.accept())
+        pg.wait_for_selector('#dci-open', timeout=20000)
+        H.open_dashboard(pg)
+        H.wait_for(pg, f"{LOGS}.some(x => /Import complete/.test(x))", 60)
+        pg.wait_for_timeout(6000)
+        lines = [x for x in pg.evaluate(LOGS) if 'Times of this import' in x]
+        b.close()
+        return lines, errs
+    results = []
+    try:
+        with sync_playwright() as p:
+            lines, errs = run(p)
+            print('A)', lines, errs)
+            t = lines[-1] if lines else ''
+            results.append(len(lines) >= 1 and 'dashboard ready after' in t and 'MusicBrainz (' in t and 'requests' in t and 'missing links' in t
+                           and 'Discogs (1 request, ' in t and not errs)
+            lines2, errs2 = run(p, off=['S557'])
+            print('B)', lines2)
+            results.append(not lines2 and not errs2)
+    finally:
+        H.RULES_OFF = []
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
 def case_ui3227():
     """Credits Importer 3.227.0 (collected items Z-CMPGROUP, Z-UNRECPENDING, Z-STICKYOVERLAP, Z-BCHIRES; rules S542 – S545): the release from
     Discogs; a text added as "+ Source" (typed): "Guitar Guy: vocals, organ, bells, flute" (four new roles of one line), and "Some odd words here".

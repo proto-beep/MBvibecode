@@ -27,30 +27,33 @@ The footer counts what is still open: **must** (orange) before staging, **may** 
 
 ## What it does
 
-- **Sources:** Discogs, Bandcamp (also the texts of its editions), YouTube descriptions, Wikipedia's infobox, any pasted text, text from cover art. A second source can be added; contradictions are shown.
+- **Sources:** Discogs, Bandcamp (also its track pages and the texts of its editions), YouTube descriptions, Wikipedia's infobox, any pasted text, text from cover art (booklets, back covers). More sources can be added; contradictions are shown, the sources of the release's other editions offered.
 - **Entries as a matrix:** each person, label or place with its roles and the events (date, tracks, level).
 - **Works matrix:** works found, linked or created, with their writers and publishers; **✨ Answer all** for the open questions.
 - **Dates and tracks:** dates from every text, by drag & drop onto roles and works.
 - **Compared with MusicBrainz:** what is there already is skipped; dates are supplemented, conflicts shown.
 - **Fill empty recordings:** tracks without relationships get the credits the other tracks share.
 - **Mapping rules:** every rule can be switched; quick switches for the common ones; profiles.
+- **The log:** what was read, what was left out on purpose and why, and how long each step of an import took.
 - In English, German, Spanish and French; light or dark.
 
 ## What's new
 
 | Version | |
 |---|---|
-| 3.177 | Classical track lists: composers as headings, works as suites, soloists and authors in a track’s line |
-| 3.176 | Booklets are read: lineups without a sign between name and role, tracks by medium, German role words, parts of an opera |
-| 3.157 | Missing links of the entries, with a link to the edit page; Bandcamp editions read with the credits |
-| 3.155 | “✨ Answer all” at the works matrix: its open questions answered by a level, with a preview and undo |
-| 3.150 | “Fill empty recordings”: the tracks without relationships get the credits the other tracks share |
+| 3.230 | The times of an import in the log: which steps took how long, per source |
+| 3.227 | The companion in the dashboard’s language, Bandcamp’s artwork in high resolution (companion 1.25) |
+| 3.226 | “✨ Answer all”: a tie decided by the recordings in MusicBrainz, each work to open with ↗ |
+| 3.223 | The lines left out on purpose in one table, in the mapping file |
+| 3.220 | “✨ Answer all” grouped by its reasons, covers of a tribute; ←/→ in the companion’s artwork |
+| 3.219 | Bandcamp’s track pages read; every line shows where it is from |
+| 3.214 | Every source named in the edit note; the sources of the release’s other editions |
 
 All milestones and every version: [changelog](mb-vibecode-credits-importer-CHANGELOG.md).
 
 ## More
 
-- [Full reference](mb-vibecode-credits-importer-v3.229.0-README.md) – every feature and setting in detail; long, written to be searched (and for AI assistants working on the code).
+- [Full reference](mb-vibecode-credits-importer-v3.230.0-README.md) – every feature and setting in detail; long, written to be searched (and for AI assistants working on the code).
 - [Companion](mb-vibecode-credits-importer-companion-v1.25.0-README.md)
 - [Changelog](mb-vibecode-credits-importer-CHANGELOG.md) · [Code changes](mb-vibecode-credits-importer-CODE-CHANGES.md)
 - Problems and ideas: [issues](https://github.com/proto-beep/MBvibecode/issues)

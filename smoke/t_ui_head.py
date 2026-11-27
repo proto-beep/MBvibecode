@@ -727,7 +727,9 @@ def case_compacthint():
     C) ⚙ Settings → "Reset all settings": the compact view and the arrow are back; ✕ closes it for good (stored), ↺ of Appearance
        brings it back.
     D) (3.73.0) Who used the script before (its storage generation set) and never chose a view: the full view kept, no arrow; a
-       browser that never ran the script: the compact view with the arrow; a view chosen before: no arrow."""
+       browser that never ran the script: the compact view with the arrow; a view chosen before: no arrow.
+    (3.230.0, Z-COMPACTHINT, S558) The hint says the compact view is recommended ("Compact view (recommended) – …"); in the full view of
+    who used the script before and never chose a view: "The compact view is recommended – …" (with S558 off: as before)."""
     results = []
     HINT = """(() => { const h = document.querySelector('.dci-head .dci-hint-compact'); const b = document.querySelector('.dci-head [data-act=view-toggle]');
       if (!h) return null; const r = h.querySelector('.dci-hint-bubble').getBoundingClientRect(); const br = b.getBoundingClientRect();
@@ -746,7 +748,7 @@ def case_compacthint():
         pg.wait_for_timeout(800)
         a = pg.evaluate(HINT)
         print('A) Pfeil:', a)
-        results.append(bool(a) and a['text'].startswith('Try the full view') and a['below'] and a['near'] and a['through'] and a['tip'])
+        results.append(bool(a) and a['text'].startswith('Compact view (recommended)') and a['below'] and a['near'] and a['through'] and a['tip'])
         # B) switched
         pg.click('.dci-head [data-act=view-toggle]')
         pg.wait_for_timeout(300)
@@ -799,7 +801,10 @@ def case_compacthint():
             pg.wait_for_selector('#dci-open', timeout=20000)
             H.open_dashboard(pg)
             pg.wait_for_timeout(800)
-            d.append([pg.evaluate(VIEW), bool(pg.evaluate(HINT)), not e3])
+            hv = pg.evaluate(HINT)
+            d.append([pg.evaluate(VIEW), bool(hv), not e3])
+            if hv and d[-1][0] == 'full':
+                d[-1].append(hv['text'].startswith('The compact view is recommended'))
             # ((review) a second start: the same – the fresh browser stays compact)
             pg.reload()
             pg.add_script_tag(content=H.MAIN)
@@ -809,7 +814,7 @@ def case_compacthint():
             d[-1].append(pg.evaluate(VIEW))
             c.close()
         print('D) vorher benutzt, neu, gewählt:', d)
-        results.append(d == [['full', False, True, 'full'], ['compact', True, True, 'compact'], ['compact', False, True, 'compact']])
+        results.append(d == [['full', True, True, True, 'full'], ['compact', True, True, 'compact'], ['compact', False, True, 'compact']])
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
