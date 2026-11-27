@@ -15,9 +15,10 @@ OVERLAPS = r"""(sel) => {
   if (!root) return [['(no ' + sel + ')', '', '']];
   const shown = (el) => { if (el.closest('details:not([open]) > :not(summary)')) return false; for (let e = el; e && e !== document.documentElement; e = e.parentElement) {
     const st = getComputedStyle(e); if (st.display === 'none' || st.visibility === 'hidden' || +st.opacity === 0 || e.hidden) return false; } return true; };
-  // a rect cut to what its scrolling or clipping ancestors show
+  // a rect cut to what its scrolling or clipping ancestors show – ((3.232.0) the text's own element too: a name cut short with "…"
+  // (overflow hidden, as the release's name in the one line of the head) shows only what fits in its box)
   const clip = (el, r) => { let { left, top, right, bottom } = r;
-    for (let e = el.parentElement; e && e !== document.documentElement; e = e.parentElement) {
+    for (let e = el; e && e !== document.documentElement; e = e.parentElement) {
       const st = getComputedStyle(e);
       if (/(auto|scroll|hidden|clip)/.test(st.overflowX + st.overflowY)) { const b = e.getBoundingClientRect();
         left = Math.max(left, b.left); top = Math.max(top, b.top); right = Math.min(right, b.right); bottom = Math.min(bottom, b.bottom); } }

@@ -1079,6 +1079,7 @@ def case_assistants():
                            and any('edit note only: “assistant arranger”' in x for x in prev))
             ph = one('Photo As')
             # (3.39.6, review) a row added by hand: "Assistant Engineer", then typed as "engineer" – no "assistant" any more
+            H.manual_open(pg)
             pg.fill('[data-f=manual-artist]', f'https://musicbrainz.org/artist/{MANUAL}')
             pg.fill('[data-f=manual-role]', 'Assistant Engineer')
             pg.locator('[data-act=add-manual]').evaluate('b => b.click()')

@@ -87,6 +87,11 @@
         "D035"
       ]
     },
+    "t_ui_head.py": {
+      "poolbar": [
+        "S565"
+      ]
+    },
     "t_works_more.py": {
       "suiteask": [
         "S338"

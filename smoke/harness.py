@@ -247,6 +247,10 @@ MX_HEADS_PRESET = "(v) => { if (localStorage.getItem('dci-mx-heads') === null) l
 # written before; a test of the default (words) sets CHROME = None
 CHROME = 'full'
 CHROME_PRESET = "(v) => { if (localStorage.getItem('dci-chrome') === null) localStorage.setItem('dci-chrome', JSON.stringify(v)); }"
+# [3.232.0] (Z-HEADSHRINK, S567) the head stays whole when the entries are scrolled (the tests written before click its buttons after
+# scrolling); a test of the slim head sets HEAD_SHRINK = None (the default: on)
+HEAD_SHRINK = False
+HEAD_SHRINK_PRESET = "(v) => { if (localStorage.getItem('dci-head-shrink') === null) localStorage.setItem('dci-head-shrink', JSON.stringify(v)); }"
 
 
 def ws_release(full=False):
@@ -807,7 +811,7 @@ def open_mb_any(ctx, url, gm_xhr=True, all_tabs=False):
     # [3.19.2] GM_openInTab: the tabs the script opens are recorded in window.__gmTabs ([url, options])
     tabs = "window.__gmTabs = []; window.GM_openInTab = (url, opts) => { window.__gmTabs.push([url, opts || null]); return null; };"
     view = "if (/^musicbrainz\\.org$/.test(location.hostname)) { (%s)('full'); (%s)(%s); (%s)(%s); (%s)(%s); %s }" % (VIEW_PRESET, ENTRIES_PRESET, json.dumps(ENTRIES_VIEW), REMEMBER_PRESET, json.dumps(REMEMBER), DM_FOLD_PRESET, json.dumps(DM_FOLD),
-                                                                                                               ('(%s)(%s);' % (IGN_ORDER_PRESET, json.dumps(IGN_ORDER)) if IGN_ORDER else '') + ('(%s)(%s);' % (MX_HEADS_PRESET, json.dumps(MX_HEADS)) if MX_HEADS else '') + ('(%s)(%s);' % (CHROME_PRESET, json.dumps(CHROME)) if CHROME else ''))
+                                                                                                               ('(%s)(%s);' % (IGN_ORDER_PRESET, json.dumps(IGN_ORDER)) if IGN_ORDER else '') + ('(%s)(%s);' % (MX_HEADS_PRESET, json.dumps(MX_HEADS)) if MX_HEADS else '') + ('(%s)(%s);' % (CHROME_PRESET, json.dumps(CHROME)) if CHROME else '') + ('(%s)(%s);' % (HEAD_SHRINK_PRESET, json.dumps(HEAD_SHRINK)) if HEAD_SHRINK is not None else ''))
     codes = ([GM_XHR_SHIM] if gm_xhr else []) + [tabs, view, MAIN]
     (ctx if all_tabs else pg).add_init_script(script="if (window.top === window && /^(musicbrainz\\.org|harmony\\.pulsewidth\\.org\\.uk)$/.test(location.hostname)) window.addEventListener('DOMContentLoaded', () => {"
                        " for (const code of %s) { const s = document.createElement('script'); s.textContent = code; document.documentElement.appendChild(s); } });"
@@ -1378,6 +1382,8 @@ def open_mb_edit(ctx, companion=True, gm_xhr=False, view='full'):
         pg.evaluate(MX_HEADS_PRESET, MX_HEADS)
     if CHROME:
         pg.evaluate(CHROME_PRESET, CHROME)
+    if HEAD_SHRINK is not None:
+        pg.evaluate(HEAD_SHRINK_PRESET, HEAD_SHRINK)
     if IGN_ORDER:
         pg.evaluate(IGN_ORDER_PRESET, IGN_ORDER)
     if RULES_OFF:
@@ -1569,6 +1575,12 @@ def toggle_place(pg):
     """[3.26.0] Window ⇄ in the page with the switch of the page bar (the head of the dashboard has none any more)."""
     pg.locator('#dci-launcher [data-place][aria-pressed=false]').evaluate('b => b.click()')
     pg.wait_for_timeout(300)
+
+
+def manual_open(pg):
+    """[3.232.0] (Z-ADDENTRYFOLD, S566) "Add entry manually" is folded to "＋ Entry": its fields opened (nothing when they are open or the
+    rule is off)."""
+    pg.evaluate("(() => { const b = document.querySelector('#dci-overlay [data-act=manual-open]'); if (b && b.getAttribute('aria-expanded') !== 'true') b.click(); })()")
 
 
 def open_settings(pg, tab=None):

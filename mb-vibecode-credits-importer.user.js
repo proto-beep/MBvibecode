@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.231.0
+// @version      3.232.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.231.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.231.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.232.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.232.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.231.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.232.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -575,6 +575,7 @@
       "sync.or": "{a} or {b}",
       "sync.noTabTitle": "The tab the import expects: the source of this import or the sources linked to the release",
       "sync.openTab": "open in background",
+      "sync.badge": "Companion",
       "sync.connected": "Script Companion: connected ({where})",
       "sync.visible": "visible tab",
       "sync.background": "background tab",
@@ -1515,6 +1516,8 @@
       "head.more": "More",
       "rules.word": "Rules",
       "head.moreTitle": "View, text size, window, log, keyboard shortcuts",
+      "head.unshrink": "Show the whole head (until the entries are at the top again)",
+      "head.shrinkWord": "Slim head",
       "help.word": "Help",
       "help.title": "While on, a line above the footer explains in full what the pointer is on",
       "help.start": "Help is on: point at a button, a field or a mark – its full explanation appears here. Escape ends it.",
@@ -1702,6 +1705,8 @@
       "srcbadge.identityCo": "{src} entry",
       "settings.skipHide": "Remove skipped entries from the dashboard",
       "settings.skipHideTitle": "Entries skipped with “Skip ⤼” are not shown; a line at the bottom lists them",
+      "settings.headShrink": "Slim head while scrolling",
+      "settings.headShrinkTitle": "While the entries are scrolled down, the head is one slim line – the title, the release, ▾ and ✕; ▾ or the pointer resting on it shows all of it, and it is back at the top",
       "settings.entries.matrix": "Matrix",
       "settings.entries.legacy": "Legacy",
       "settings.entries.matrixTitle": "The roles of an entry as a matrix: instruments and voices together, the events as columns",
@@ -1956,6 +1961,8 @@
       "log.existingSkipped.one": "{n} row is already on MusicBrainz and was set to Skip: {list}",
       "log.existingSkipped.other": "{n} rows are already on MusicBrainz and were set to Skip: {list}",
       "manual.hint": "Add any MusicBrainz entry that can be related to this release, its recordings or works",
+      "manual.entry": "Entry",
+      "manual.openTitle": "Add entry manually: any MusicBrainz entry by its URL or MBID, with a role – the fields open here and stay while something is in them",
       "manual.entityPlaceholder": "URL or MBID of any MusicBrainz entry",
       "manual.search": "Search MB:",
       "manual.searchTitle": "Search MusicBrainz for an entry (links in a new tab)",
@@ -2974,6 +2981,7 @@
       "notice.changelog": "Changelog",
       "ms.3.157.0": "Missing links of the entries, with a link to the edit page; Bandcamp editions read with the credits",
       "ms.3.231.0": "A click on “3 new relationships” goes to them one by one; the filter “Only new relationships”; the companion’s large image in MusicBrainz colours",
+      "ms.3.232.0": "More room for the entries: the head in one line, “＋ Entry” and the pools beside it, a slim head while scrolling",
       "ms.3.230.0": "The times of an import in the log: which steps took how long, per source",
       "ms.3.227.0": "The companion in the dashboard’s language, Bandcamp’s artwork in high resolution",
       "ms.3.226.0": "“✨ Answer all”: a tie decided by the recordings in MusicBrainz, each work to open with ↗",
@@ -6126,6 +6134,10 @@
     { id: 'S561', where: 'the toolbar (.dci-scope-work), CSS', note: 'Layout (3.231.0; collected item Z-SCOPECOLOR): "Works: with | only | without" in the colour of the level "work" (⚙ Appearance, coloured levels on) – the chosen one filled (its text light or dark, as on the level buttons), the others underlined in it. Switched off: the colours of the other buttons' },
     { id: 'S562', where: 'refresh (S.newIds, data-act new-next), gotoNew', note: 'Navigation (3.231.0; collected item Z-NEWNAV): "N new relationships" in the summary is a button – a click goes to the next place with a new relationship (in the order on screen: a row, in an entry\'s matrix the line holding it or its chip – one stop each; it lights up, the source of a row shown in the companion as on the incomplete rows), Shift+click to the one before, "i/k" beside it says which. Switched off: only the count (the levels in its tooltip)' },
     { id: 'S563', where: 'toolbar (data-f filter-new), refresh (.dci-nonew, .dci-gnonew), CSS', note: 'Filter (3.231.0; collected item Z-ONLYNEW): "Only new relationships" next to "Only show artists without an MB match" – hides the rows that are all in MusicBrainz already, skipped or have nothing ready (with their line of tracks; in an entry\'s matrix such lines and chips), and the entries (and groups of the order) without such a row; incomplete rows stay. Not kept (as the other filters). Switched off: no such box' },
+    { id: 'S564', where: 'buildOverlay (.dci-head-one, h2), renderSource (title), syncStatusHtml (syncBadge), CSS', note: 'Layout (3.232.0; collected item Z-HEADONE): the head of the dashboard in one line – "CI" for the title (its name in the tooltip and for screen readers), the release\'s name cut short first (whole in its tooltip), "↻" without its word, the companion as a badge (a dot: green connected, grey no tab, orange another page; the status in its tooltip) with "open in background" / "Load the release there" / ↻ beside it, the link to the source page left out (the release\'s name links it); the tools without their words below about 1100 px. Only a very narrow window wraps it. Switched off: the head as until 3.231.0' },
+    { id: 'S565', where: 'renderDates (.dci-tray), CSS', note: 'Layout (3.232.0; collected item Z-TRAY): "Dates & tracks" folded – the pools kept in the bar and its line ("▼ Dates & tracks 3 dates · …", "not applied yet") in one line, beside "＋ Entry" (S566); "▼ show" is the title\'s button there. Open: as before. Switched off: the pools one below the other and the bar of "Dates & tracks" below them' },
+    { id: 'S566', where: 'buildOverlay (.dci-manual-folded), manualFold, manualLeft', note: 'Layout (3.232.0; collected item Z-ADDENTRYFOLD): "Add entry manually" folded to a button "＋ Entry" at the left of the pools\' line – a click opens its fields (the first one focused), another click folds them; they fold by themselves when the focus leaves them empty (nothing typed, no question, error or search links below them). Switched off: the line always open' },
+    { id: 'S567', where: 'headShrinkCheck, headPeek, settings (data-set head-shrink)', note: 'Layout (3.232.0; collected item Z-HEADSHRINK): while the entries are scrolled down (more than 160 px) the head is one slim line – the title, the release\'s name, ▾ and ✕ –, "＋ Entry" hidden; the pools stay below it. ▾ shows the whole head until the entries are at the top again, the pointer resting on the head (or the keyboard\'s focus in it) while it is there; at the top it is whole again. ⚙ Settings → Appearance → "Slim head while scrolling" (on) and "Slim head" in "More" of the head switch it off; not in the page. Switched off: the head always whole' },
     { id: 'S469', where: 'dgLineupApply, sendDiscogsStatus', note: 'Lineup and track credits (3.220.0; collected item Z-LOPEZ; S217): a row the answer leaves out (a lineup row on no track any more, a track credit taken into the lineup row) keeps its line at the source – its places go to the person\'s row still there, so the companion marks the line ("Ramón López – percussion" where the titles give him drums on all of his tracks)' },
     { id: 'S410', where: 'freshForget, repeatImport, loadRelease', note: '"↻ Repeat import" (3.209.0; collected item Z-FRESHALL): "Start afresh" forgets everything the dashboard holds of the release – not only the changes of the rows and the choices of the works matrix (Z-RI, 3.40.16), also the date pool, the track pool and the date matrix, the choices of the box "Dedications & tributes", "✕ No suite", texts and parts of sources switched off, "skip the works", entries joined by hand, the ticks of suggestions, what is remembered of the release ("Remember changes"; nothing of the import before is stored on the way). Kept: what was created in MusicBrainz through the dashboard (the lists of created works and suites), the source and the media chosen, the log' },
     { id: 'S409', where: 'mergeEntries, joinEntry, applyEntryMerges, dmTargetOf (entry-merge), groupHtml (grip)', note: 'Entries (3.208.0; collected item Z-ENTITYMERGE): two entries of the same kind that are one – from different sources, written otherwise – are joined by hand: the grip ⠿ before the kind of an entry dropped onto another entry. The entry dropped onto stays (its link to MusicBrainz counts; without one it takes the other\'s), the rows of the other come to it – the same role once, each row credited as its source writes it, the other\'s name one of its names. Two different entries of MusicBrainz, or entries of different kinds: not joined, a message says why. Remembered for the release (joined again at the next import); ↶ in the message undoes it' },
@@ -35546,6 +35558,84 @@
     refresh();
   }
 
+  /**
+   * [Z-HEADSHRINK] (3.232.0, S567) While the entries are scrolled down (more than 160 px; back below 24 px) the head is one slim line:
+   * the title, the release's name, ▾ and ✕ – the companion, the source's buttons, the tools and the folded "＋ Entry" hidden; the pools
+   * stay below it to drag from. ▾ shows the whole head until the entries are at the top again; the pointer resting on the head (a
+   * third of a second) or the keyboard's focus coming into it shows it while it is there. Not while a menu or a box of the head is open;
+   * not in the page (it scrolls, not the dashboard). ⚙ Settings → Appearance switches it off.
+   */
+  let shrinkFrame = 0;
+  function headShrinkSoon() {
+    if (shrinkFrame) return;
+    shrinkFrame = requestAnimationFrame(() => {
+      shrinkFrame = 0;
+      headShrinkCheck();
+    });
+  }
+  function headShrinkCheck() {
+    const o = S.overlay;
+    if (!o) return;
+    const body = $('body');
+    const head = o.querySelector('.dci-head');
+    const top = body ? body.scrollTop : 0;
+    o.querySelectorAll('[data-act="head-shrink"]').forEach((b) => b.setAttribute('aria-pressed', String(!!S.headShrink)));
+    if (top < 24) S.shrinkHold = false;
+    let shrunk = o.classList.contains('dci-shrunk');
+    if (!ruleOn('S567') || !S.headShrink || S.shrinkHold || top < 24 || o.classList.contains('dci-inline')) shrunk = false;
+    else if (top > 160 && !S.srcMenuOpen && !S.headMoreOpen && !(head && head.querySelector('[aria-expanded="true"]'))) shrunk = true;
+    if (shrunk !== o.classList.contains('dci-shrunk')) {
+      o.classList.toggle('dci-shrunk', shrunk);
+      if (!shrunk) o.classList.remove('dci-shrink-peek');
+    }
+  }
+  /** [Z-HEADSHRINK] (3.232.0, S567) On or off – from ⚙ Settings → Appearance or "More" of the head; both show it. */
+  function setHeadShrink(on) {
+    S.headShrink = !!on;
+    writeJson('localStorage', HEAD_SHRINK_KEY, on ? null : false);
+    log('info', 'settingValue', { what: tr('settings.headShrink'), value: tr(on ? 'common.on' : 'common.off') });
+    if (S.overlay) {
+      S.overlay.querySelectorAll('[data-act="head-shrink"]').forEach((b) => b.setAttribute('aria-pressed', String(!!on)));
+      S.overlay.querySelectorAll('[data-set="head-shrink"]').forEach((b) => { b.checked = !!on; });
+    }
+    headShrinkCheck();
+  }
+  function headPeek(on) {
+    clearTimeout(S.peekTimer);
+    S.peekTimer = setTimeout(() => {
+      if (S.overlay) S.overlay.classList.toggle('dci-shrink-peek', on && S.overlay.classList.contains('dci-shrunk'));
+    }, on ? 350 : 300);
+  }
+
+  /**
+   * [Z-ADDENTRYFOLD] (3.232.0, S566) "Add entry manually" folded to a button "＋ Entry" in the line of the pools: a click opens the
+   * fields (the first one focused); it folds again with another click, or when the focus leaves it with both fields empty (nothing typed,
+   * no question or error below it – it stays open as long as something is in it).
+   */
+  function manualFold(fold) {
+    const m = S.overlay && $('manual');
+    if (!m || !ruleOn('S566')) return;
+    if (fold && !manualEmpty(m)) return;
+    m.classList.toggle('dci-manual-folded', fold);
+    const b = m.querySelector('[data-act="manual-open"]');
+    if (b) b.setAttribute('aria-expanded', String(!fold));
+    if (!fold) {
+      const f = m.querySelector('[data-f="manual-artist"]');
+      if (f) f.focus();
+    }
+  }
+  function manualEmpty(m) {
+    const v = (f) => String((m.querySelector(`[data-f="${f}"]`) || {}).value || '').trim();
+    const evq = m.querySelector('[data-el="manual-evq"]');
+    const search = m.querySelector('[data-el="manual-search"]');
+    return !v('manual-artist') && !v('manual-role') && !(evq && !evq.hidden) && !String(($('manual-err') || {}).textContent || '').trim() && !(search && !search.hidden);
+  }
+  function manualLeft() {
+    const m = S.overlay && $('manual');
+    if (!m || m.classList.contains('dci-manual-folded') || !ruleOn('S566')) return;
+    setTimeout(() => { if (!m.contains(document.activeElement) && manualEmpty(m)) manualFold(true); }, 0);
+  }
+
   async function addManualEntry() {
     const entityInput = S.overlay.querySelector('[data-f="manual-artist"]');
     const roleInput = S.overlay.querySelector('[data-f="manual-role"]');
@@ -36706,8 +36796,9 @@
     const text = rel && rel.source === 'text';
     const label = !rel ? '' : text ? tr('source.currentText', { title: rel.title || tr('source.textNoTitle') })
       : S.source === DISCOGS ? tr('source.current', { title: rel.title || S.source.name, id: rel.id }) : tr('source.currentLink', { title: rel.title || S.source.name });
+    // ([Z-HEADONE] 3.232.0) cut short in the one line of the head: the whole name in its tooltip
     const current = !rel ? `<span>${esc(tr('source.none'))}</span>`
-      : rel.url ? `<a href="${esc(rel.url)}" target="_blank" rel="noopener">${esc(label)}</a>` : `<span>${esc(label)}</span>`;
+      : rel.url ? `<a href="${esc(rel.url)}" target="_blank" rel="noopener" title="${esc(label)}">${esc(label)}</a>` : `<span title="${esc(label)}">${esc(label)}</span>`;
     // [E1] Lines of a text that gave no credit, to add by hand
     const unrec = (rel && rel.unrecognized) || [];
     // [3.37.4] a line of the cover art: its place in the image while the mouse rests on it (item 154)
@@ -41938,8 +42029,13 @@
     S.poolsForce = null;
     log('info', 'poolsFolded');
     renderDates();
-    const again = focus && S.overlay && S.overlay.querySelector('.dci-pools-fold');
+    const again = focus && poolsFoldBtn();
     if (again) again.focus({ preventScroll: true });
+  }
+  /** "▼ show" / "▲ fold" of "Dates & tracks" – folded in the tray ([Z-TRAY] 3.232.0, S565) the title's button, "show" is not there. */
+  function poolsFoldBtn() {
+    const b = S.overlay && S.overlay.querySelector('.dci-pools-fold');
+    return b && b.offsetParent !== null ? b : (S.overlay && S.overlay.querySelector('.dci-pools-toggle')) || b;
   }
 
   /**
@@ -42641,6 +42737,8 @@
           <button type="button" class="dci-textbtn" data-act="pool-clear" data-what="tracks" ${S.trackPool.length ? '' : 'disabled'}>${esc(tr('pools.clearTracks'))}</button>
         </span>` : ''}${mentionChipHtml(mentioned)}</span>
       </div>`;
+    // [Z-TRAY] (3.232.0, S565) folded: the pools kept and "Dates & tracks" in one line (next to "＋ Entry")
+    el.classList.toggle('dci-tray', !open && ruleOn('S565'));
     // [Z-TP] (3.42.1) the date pool and the track pool side by side, one below the other only when they do not fit in one line
     el.innerHTML = `${open ? `<div class="dci-pools-body">
         <div class="dci-pools-pair" data-el="pools-pair">
@@ -46138,6 +46236,7 @@
 
   // --- [Z-DEDQ] (3.74.0, S109) the box "Dedications & tributes" above the works matrix ------------------------------------------
   const DED_BOX_KEY = 'dci-ded-box';
+  const HEAD_SHRINK_KEY = 'dci-head-shrink'; // [Z-HEADSHRINK] (3.232.0, S567) only "off" stored
   /** A suggestion of the box: a dedication found but not sure (several entries of the name, none, no track) – once per key. */
   /** [Z-DEDPLACE] (3.129.0, S214) Whether a dedication names a place entry of this release. */
   const dedPlaceOf = (d) => [...S.artists.values()].some((a) => a.company && entryKind(a) === 'place' && [a.name, a.mbName].some((n) => n && norm(n) === norm(d.name)));
@@ -56005,7 +56104,29 @@
 
   // [3.17.4] withDetails: the dashboard's head (with the last jump's result); the buttons and the link to the source are
   // in the navigation bar too
+  /**
+   * [Z-HEADONE] (3.232.0, S564) In the one line of the head the status is a badge: a dot in the colour of the state and "Companion", the
+   * whole text in its tooltip (and for screen readers, first, so the status still reads "Script Companion: …"); the link to the source
+   * page left out (the release's name links it), the buttons ("open in background", "Load the release there", ↻) as they were.
+   */
+  function syncBadge(state, text, rest, el = '', more = '') {
+    return `<span class="dci-sync-badge" data-state="${state}" title="${esc(more ? `${text} – ${more}` : text)}"><span class="dci-vh"${el ? ` data-el="${el}"` : ''}>${esc(text)}</span><span class="dci-sync-dot" aria-hidden="true"></span><span aria-hidden="true">${esc(tr('sync.badge'))}</span></span>${rest}`;
+  }
+
   function syncStatusHtml(withDetails) {
+    if (withDetails && ruleOn('S564')) {
+      if (!S.sync.installed) return syncBadge('off', trView('sync.off'), '', '', tr('sync.offTitle'));
+      const st1 = syncSite();
+      if (st1.old) return syncBadge('old', st1.need ? tr('sync.oldSiteV', { site: VIEW_NAMES[viewSite()], version: st1.need }) : tr('sync.oldSite', { site: VIEW_NAMES[viewSite()] }), '');
+      const open1 = `<button type="button" data-act="sync-open">${esc(tr('sync.openTab'))}</button>`;
+      if (!st1.tabs) return syncBadge('none', noTabText(), companionReleaseId() ? ` ${open1}` : '', 'sync-notab', tr('sync.noTabTitle'));
+      if (companionReleaseId() && !(st1.releases || []).includes(String(companionReleaseId()))) {
+        return syncBadge('other', trView('sync.otherPage'), ` <button type="button" data-act="sync-load" title="${esc(trView('sync.loadTitle'))}">${esc(tr('sync.load'))}</button> ${open1}`);
+      }
+      const last1 = S.sync.last;
+      const text1 = [trView('sync.connected', { where: tr(st1.target && st1.target.visible ? 'sync.visible' : 'sync.background') }), last1 ? syncLastText(last1) : ''].filter(Boolean).join(' – ');
+      return syncBadge('on', text1, ` <button type="button" class="dci-iconbtn" data-sync-reload title="${esc(trView('sync.reloadTitle'))}" aria-label="${esc(trView('sync.reloadTitle'))}">↻</button>`);
+    }
     if (!S.sync.installed) return `<span class="dci-muted" title="${esc(tr('sync.offTitle'))}">${esc(trView('sync.off'))}</span>${srcLinkHtml()}`;
     // [3.17.0] The tabs of the loaded source's site (Discogs or Bandcamp)
     const st = syncSite();
@@ -59469,7 +59590,7 @@
         renderDates();
         {
           // [178] (3.38.13) the line moved (it is at the bottom of the block): the focus on the same button again, in view
-          const again = S.overlay.querySelector(btn.classList.contains('dci-pools-toggle') ? '.dci-pools-toggle' : '.dci-pools-fold');
+          const again = btn.classList.contains('dci-pools-toggle') ? S.overlay.querySelector('.dci-pools-toggle') : poolsFoldBtn();
           if (again) {
             again.focus({ preventScroll: true });
             again.scrollIntoView({ block: 'nearest' });
@@ -59652,7 +59773,7 @@
           Object.assign(S, { poolForm: null, trackForm: null, poolClear: null });
           log('info', 'poolsFolded');
           renderDates();
-          const again = S.overlay && S.overlay.querySelector('.dci-pools-fold');
+          const again = poolsFoldBtn();
           if (again) again.focus({ preventScroll: true });
         }
         break;
@@ -60100,6 +60221,16 @@
         break;
       case 'add-manual':
         addManualEntry();
+        break;
+      case 'head-shrink': // [Z-HEADSHRINK] (3.232.0, S567) "Slim head" in "More" of the head: as the setting in ⚙ Settings → Appearance
+        setHeadShrink(!S.headShrink);
+        break;
+      case 'head-unshrink': // [Z-HEADSHRINK] (3.232.0, S567) the whole head again until the entries are back at the top
+        S.shrinkHold = true;
+        headShrinkCheck();
+        break;
+      case 'manual-open': // [Z-ADDENTRYFOLD] (3.232.0, S566)
+        manualFold(btn.getAttribute('aria-expanded') === 'true');
         break;
       case 'manual-search': {
         // [3.18.0] the search links of "Add entry manually" behind its "?"
@@ -61794,6 +61925,7 @@
     more: '<path d="M3 8h.01M8 8h.01M13 8h.01" stroke-width="2.6"/>',
     help: '<circle cx="8" cy="8" r="6.2"/><path d="M8 7.3v4M8 4.8h.01"/>',
     compact: '<path d="M2 3.5h12M2 8h12M2 12.5h12"/>',
+    slim: '<path d="M2 3h12M2 13h12M8 4.5v2.2M6.6 5.3L8 6.7l1.4-1.4M8 11.5V9.3M6.6 10.7L8 9.3l1.4 1.4"/>', // [Z-HEADSHRINK] (3.232.0)
     plus: '<path d="M8 3v10M3 8h10"/>',
     // [189] (3.39.3) the statistics: a small bar chart
     stats: '<path d="M2.5 13.5h11M4.5 11V8M8 11V4M11.5 11V6.5"/>',
@@ -61816,10 +61948,13 @@
     const levelBtn = (level) => `<button type="button" data-act="bulk-level" data-level="${level}">${esc(tr(`level.${level}`))}</button>`;
     overlay.innerHTML = `
       <div class="dci-panel" role="dialog" aria-labelledby="dci-title">
-        <header class="dci-head">
-          <h2 id="dci-title">${esc(tr('title'))}</h2>
+        <header class="dci-head${ruleOn('S564') ? ' dci-head-one' : ''}">
+          ${'' /* [Z-HEADONE] (3.232.0, S564) in the one line "CI", the name for screen readers and in the tooltip */}
+          <h2 id="dci-title" title="${esc(tr('title'))}"><span class="dci-title-full">${esc(tr('title'))}</span><span class="dci-title-short" aria-hidden="true">CI</span></h2>
           <div class="dci-source" data-el="source"></div>
           <div class="dci-sync" data-el="sync" aria-live="polite"></div>
+          ${'' /* [Z-HEADSHRINK] (3.232.0, S567) ▾ in the slim head only (beside ✕) */}
+          ${ruleOn('S567') ? `<button type="button" class="dci-headbtn dci-ibtn dci-unshrink" data-act="head-unshrink" title="${esc(tr('head.unshrink'))}" aria-label="${esc(tr('head.unshrink'))}">▾</button>` : ''}
           <div class="dci-head-tools">
             ${'' /* [F-HEADCOUNT] (3.170.0) what is used all the time in the open, each with its word (or as a symbol: ⚙ Settings →
                       Appearance); the view, the text size, the window, the log and the keyboard shortcuts under "More" */}
@@ -61831,6 +61966,7 @@
               ${headBtn('head-more', 'more', tr('head.more'), tr('head.moreTitle'), 'aria-expanded="false" aria-controls="dci-head-morelist"')}
               <span class="dci-head-morelist" id="dci-head-morelist">
                 ${headBtn('view-toggle', 'compact', tr('view.compact'), tr(S.view === 'compact' ? 'view.toFull' : 'view.toCompact'), `aria-pressed="${S.view === 'compact'}"`)}
+                ${ruleOn('S567') ? headBtn('head-shrink', 'slim', tr('head.shrinkWord'), tr('settings.headShrinkTitle'), `aria-pressed="${!!S.headShrink}"`) : '' /* [Z-HEADSHRINK] (3.232.0, S567) also here */}
                 <span class="dci-zoom" role="group" aria-label="${esc(tr('zoom.label'))}">
                   <button type="button" class="dci-headbtn" data-act="zoom-out" title="${esc(tr('zoom.smaller'))}" aria-label="${esc(tr('zoom.smaller'))}">A−</button>
                   <span data-el="zoom" aria-live="polite">${Math.round(S.scale * 100)} %</span>
@@ -61855,8 +61991,9 @@
           <div class="dci-srcpanels" data-el="srcpanels"></div>
           <div class="dci-busy" data-el="busy" role="status" hidden></div>
           <div class="dci-msgs" data-el="msgs" aria-live="polite"></div>
-          <div class="dci-stick${ruleOn('S543') ? ' dci-stick-gap' : ''}" data-el="stick">
-            <div class="dci-manual" data-el="manual" role="group" aria-label="${esc(tr('manual.title'))}" hidden>
+          <div class="dci-stick${ruleOn('S543') ? ' dci-stick-gap' : ''}${ruleOn('S565') || ruleOn('S566') ? ' dci-stick-row' : ''}" data-el="stick">
+            <div class="dci-manual${ruleOn('S566') ? ' dci-manual-folded' : ''}" data-el="manual" role="group" aria-label="${esc(tr('manual.title'))}" hidden>
+              ${ruleOn('S566') ? `<button type="button" class="dci-manual-open" data-act="manual-open" aria-expanded="false" title="${esc(tr('manual.openTitle'))}"><span aria-hidden="true">＋</span> ${esc(tr('manual.entry'))}</button>` : ''}
               <strong class="dci-manual-title" title="${esc(tr('manual.hint'))}">${esc(tr('manual.title'))}</strong>
               <input type="text" data-f="manual-artist" placeholder="${esc(tr('manual.entityPlaceholder'))}" aria-label="${esc(tr('manual.artistAria'))}" title="${esc(tr('manual.hint'))}">
               <input type="text" data-f="manual-role" list="dci-dl-roles-artist" placeholder="${esc(tr('manual.rolePlaceholder'))}" aria-label="${esc(tr('role.aria'))}">
@@ -62028,6 +62165,17 @@
     watchBarRoom(overlay);
     overlay.addEventListener('focusin', onFocusSource);
     overlay.addEventListener('click', onFocusSource);
+    // [Z-ADDENTRYFOLD] (3.232.0, S566) the fields of "Add entry manually" fold when they are left empty
+    overlay.querySelector('[data-el="manual"]').addEventListener('focusout', manualLeft);
+    // [Z-HEADSHRINK] (3.232.0, S567) the head slim while the entries are scrolled down
+    body.addEventListener('scroll', headShrinkSoon, { passive: true });
+    overlay.querySelector('.dci-head').addEventListener('mouseenter', () => headPeek(true));
+    overlay.querySelector('.dci-head').addEventListener('mouseleave', () => headPeek(false));
+    // ((review) the keyboard's focus only: a click focuses its button too, and the whole head would take ▾ away under the pointer)
+    overlay.querySelector('.dci-head').addEventListener('focusin', (e) => {
+      if (overlay.classList.contains('dci-shrunk') && e.target.matches(':focus-visible')) overlay.classList.add('dci-shrink-peek');
+    });
+    overlay.querySelector('.dci-head').addEventListener('focusout', (e) => { if (!overlay.querySelector('.dci-head').contains(e.relatedTarget)) headPeek(false); });
     overlay.addEventListener('mouseover', onHover);
     // [F-TOOLTIPLEN] (3.170.0) "Help": in the dashboard and in the windows of the script (rules, log, text from cover art)
     if (!docHelpOn) {
@@ -62286,7 +62434,7 @@
   const TOPIC_KEYS = {
     general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h', 'dci-log-note-w', LOG_LINES_KEY, DEV_KEY], // ([Z-SETTABS2] 3.137.0) developer mode here again
     profiles: [], // [Z-QSP] (3.75.0) no "↺ Defaults of this topic" – "Standard" is the profile of the defaults
-    appearance: ['dci-insts-common', MX_HEADS_KEY, CHROME_KEY, 'dci-sort-on', 'dci-sort', 'dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, WORKROW_COLORS_KEY, WORKROW_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY, DED_BOX_KEY, EMOJI_TEXT_KEY,
+    appearance: ['dci-insts-common', MX_HEADS_KEY, CHROME_KEY, 'dci-sort-on', 'dci-sort', 'dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, WORKROW_COLORS_KEY, WORKROW_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY, DED_BOX_KEY, EMOJI_TEXT_KEY, HEAD_SHRINK_KEY,
       'dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark', 'dci-kind-palette-dark',
       // [Z-SETTABS] (3.136.0) the matrix of an entry (from "Staging")
       EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY, EM_ATTR_KEY, 'dci-inst-links', 'dci-smart-quotes'],
@@ -62333,6 +62481,7 @@
   S.logLines = readJson('localStorage', LOG_LINES_KEY, false) === true; // [Z-LOGMORE] (3.128.0)
   S.skipHide = readJson('localStorage', SKIP_HIDE_KEY, false) === true;
   S.dedBox = readJson('localStorage', DED_BOX_KEY, true) !== false; // [Z-DEDQ] (3.74.0) the box of the dedications: on unless switched off
+  S.headShrink = readJson('localStorage', HEAD_SHRINK_KEY, true) !== false; // [Z-HEADSHRINK] (3.232.0, S567) on unless switched off
   S.suiteNaming = ['comma', 'part'].includes(readJson('localStorage', SUITE_NAMING_KEY, 'colon')) ? readJson('localStorage', SUITE_NAMING_KEY, 'colon') : 'colon';
   S.editNoteMode = ['simple', 'none'].includes(readJson('localStorage', EDIT_NOTE_KEY, 'full')) ? 'simple' : 'full';
   // [Z-SNW] (3.83.0) the edit note names works of the same title when new ones are created anyway (on)
@@ -64825,6 +64974,8 @@
         cb('data-f="sort-on"', sortOn(), tr('settings.sortOn'), tr('settings.sortOnTitle'), { def: true, hint: tr('settings.sortOnHint', { order: plain(tr('sort.label')), line: plain(tr('toolbar.levelAll')) }) }),
         // [Z-SK] (3.40.15) entries skipped with "⊘ Skip" out of the dashboard
         cb('data-set="skip-hide"', S.skipHide, tr('settings.skipHide'), tr('settings.skipHideTitle'), { def: false }),
+        // [Z-HEADSHRINK] (3.232.0, S567) the head slim while the entries are scrolled down
+        ...(ruleOn('S567') ? [cb('data-set="head-shrink"', S.headShrink, tr('settings.headShrink'), tr('settings.headShrinkTitle'), { def: true })] : []),
         sh('symbols'),
         // [Z-SRCTAG] (3.127.0) emojis or words (the sources' badges, 🖼️, 📄, 💡, 🏷, ⌚; ⚠ and ⚙ stay)
 segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.chrome, 'words', (v) => tr(`settings.chrome.${v}`), { title: tr('settings.chromeTitle'), segEl: 'chrome-mode', ...(ruleOn('S560') ? { segCls: 'dci-seg-cols' } : {}) }),
@@ -65650,6 +65801,9 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       writeJson('localStorage', DED_BOX_KEY, el.checked ? null : false);
       log('info', 'settingValue', { what: tr('settings.dedBox'), value: tr(el.checked ? 'common.on' : 'common.off') });
       renderDedBox();
+    } else if (k === 'head-shrink') {
+      // [Z-HEADSHRINK] (3.232.0, S567)
+      setHeadShrink(el.checked);
     } else if (k === 'skip-hide') {
       // [Z-SK] (3.40.15)
       S.skipHide = el.checked;
@@ -66047,7 +66201,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
     // [3.34.23] the arrow at "Compact | Full" comes back (143), the cover art window in front again (138b)
     HINT_COMPACT_KEY, OCR_FRONT_KEY,
     // [E4] (3.34.29) the entries as a matrix or legacy, joining; (3.34.30) shared events, lines of a block
-    ENTRIES_VIEW_KEY, EM_SIDE_KEY, EMOJI_TEXT_KEY, LOG_LINES_KEY, SKIP_HIDE_KEY, SUITE_NAMING_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY, EM_ATTR_KEY, DED_BOX_KEY,
+    ENTRIES_VIEW_KEY, EM_SIDE_KEY, EMOJI_TEXT_KEY, LOG_LINES_KEY, SKIP_HIDE_KEY, SUITE_NAMING_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY, EM_ATTR_KEY, DED_BOX_KEY, HEAD_SHRINK_KEY,
     // [145b] (3.35.6) the works of the source as track groups; [146] (3.36.0) remembered per release
     WORK_GROUPS_KEY, REMEMBER_ON_KEY, REMEMBER_MAX_KEY,
     // [3.36.2] the diagnosis in the log – [171] (3.38.5) "Developer mode"
@@ -66189,6 +66343,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
     if (S.overlay) S.overlay.classList.toggle('dci-emtext', S.emojiText);
     S.skipHide = readJson('localStorage', SKIP_HIDE_KEY, false) === true;
     S.dedBox = readJson('localStorage', DED_BOX_KEY, true) !== false;
+    S.headShrink = readJson('localStorage', HEAD_SHRINK_KEY, true) !== false;
     S.suiteNaming = ['comma', 'part'].includes(readJson('localStorage', SUITE_NAMING_KEY, 'colon')) ? readJson('localStorage', SUITE_NAMING_KEY, 'colon') : 'colon';
     S.editNoteMode = ['simple', 'none'].includes(readJson('localStorage', EDIT_NOTE_KEY, 'full')) ? 'simple' : 'full';
     S.noteDupWorks = readJson('localStorage', 'dci-note-dup', true) !== false;
@@ -66535,7 +66690,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       kindColors: true, kindPalette: { ...KIND_PALETTE_DEFAULT }, workRowColors: true, workRowPalette: { ...WORKROW_PALETTE_DEFAULT }, liveCom: false, ocrOn: true, ocrPreload: false, ocrAuto: false, ocrFront: true,
       workGroupsOn: true, rememberOn: false, rememberMax: 50, devMode: false, emSide: 'beside',
       // (3.40.17, review) skipped entries in their place again; a fold after "Apply" undone
-      skipHide: false, poolsFoldApply: false, suiteNaming: 'colon', editNoteMode: 'full', dedBox: true,
+      skipHide: false, poolsFoldApply: false, suiteNaming: 'colon', editNoteMode: 'full', dedBox: true, headShrink: true,
       // (3.43.4, review) the entries as a matrix, joining, shared events, lines of a block, by event – were left out (the storage was
       // cleared, the running dashboard kept them until the next reload)
       entriesView: 'matrix', joinAuto: true, evShared: 3, emShow: 8, emByDefault: 'event', emAttr: 'joint',
@@ -66717,6 +66872,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
     // [Z-MILESTONES] (3.158.0) a milestone is a new ability you notice without the docs – a source, a view, a workflow, a
     // file, a changed default –, one line each (at most 120 characters); not a rule of the text recognition, a fix or a test.
     // 3.0.0 and 3.12.0 (rebuilt inside, nothing changed for the user) are none any more.
+    { v: '3.232.0', label: 'Credits Importer 3.232.0' },
     { v: '3.231.0', label: 'Credits Importer 3.231.0 · Companion 1.26.0' },
     { v: '3.230.0', label: 'Credits Importer 3.230.0' },
     { v: '3.227.0', label: 'Credits Importer 3.227.0 · Companion 1.25.0' },
@@ -68461,6 +68617,53 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       .dci-head h2 { margin: 0; font-size: calc(var(--u, 1px) * 17); font-weight: 600; color: var(--purple-d); white-space: nowrap; }
       .dci-source { flex: 0 1 auto; min-width: 0; display: flex; align-items: center; gap: calc(var(--u, 1px) * 6) calc(var(--u, 1px) * 10); flex-wrap: wrap; color: var(--muted); }
       .dci-source > a, .dci-source > span:first-child { min-width: 0; max-width: 46ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .dci-title-short { display: none; }
+      /* [Z-HEADONE] (3.232.0, S564) the head in one line: "CI", the release's name cut short (its place goes first: it shrinks before
+         anything wraps), "↻" without its word, the companion as a badge; the words of the tools only where the line has room for them */
+      .dci-head.dci-head-one { column-gap: calc(var(--u, 1px) * 8); padding-top: calc(var(--u, 1px) * 6); padding-bottom: calc(var(--u, 1px) * 6); }
+      .dci-head.dci-head-one h2 .dci-title-full { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+      .dci-head.dci-head-one h2 .dci-title-short { display: inline-block; padding: 0 calc(var(--u, 1px) * 5); border-radius: 4px; background: #574b96; color: #fff; /* (light and dark: 7 : 1) */
+        font-size: calc(var(--u, 1px) * 13); font-weight: 700; letter-spacing: 0.04em; cursor: default; }
+      .dci-head.dci-head-one > .dci-source { display: contents; }
+      .dci-head.dci-head-one > .dci-source > a:first-child, .dci-head.dci-head-one > .dci-source > span:first-child { flex: 1 1 0; min-width: 3em; max-width: max-content; }
+      .dci-head.dci-head-one .dci-repeat-btn > span:last-child { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+      .dci-head.dci-head-one > .dci-head-tools { margin-left: auto; }
+      @container (max-width: 1099px) { #dci-overlay .dci-head.dci-head-one .dci-head-tools > .dci-ibtn .dci-hlabel, #dci-overlay .dci-head.dci-head-one .dci-head-more > .dci-ibtn .dci-hlabel { display: none; } }
+      .dci-sync-badge { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 5); font-weight: 600; color: var(--purple-d); cursor: help; white-space: nowrap; }
+      .dci-sync-dot { width: calc(var(--u, 1px) * 9); height: calc(var(--u, 1px) * 9); border-radius: 50%; background: #9a97a8; flex: none; }
+      .dci-sync-badge[data-state="on"] .dci-sync-dot { background: #2e8b57; }
+      .dci-sync-badge[data-state="other"] .dci-sync-dot { background: #eb743b; }
+      .dci-sync-badge[data-state="old"] .dci-sync-dot { background: #c0392b; }
+      .dci-sync-badge[data-state="off"] { color: var(--muted); font-weight: normal; }
+      .dci-sync-badge[data-state="off"] .dci-sync-dot { background: transparent; box-shadow: inset 0 0 0 1px #9a97a8; }
+      /* [Z-HEADSHRINK] (3.232.0, S567) the slim head while the entries are scrolled down; ▾ only then */
+      #dci-overlay .dci-head .dci-unshrink { display: none; }
+      #dci-overlay.dci-shrunk:not(.dci-shrink-peek) .dci-head .dci-unshrink { display: inline-flex; margin-left: auto; }
+      #dci-overlay.dci-shrunk:not(.dci-shrink-peek) .dci-head > .dci-head-tools { margin-left: 0; }
+      #dci-overlay.dci-shrunk:not(.dci-shrink-peek) .dci-head > .dci-sync,
+      #dci-overlay.dci-shrunk:not(.dci-shrink-peek) .dci-head > .dci-source > :not(a:first-child):not(span:first-child),
+      #dci-overlay.dci-shrunk:not(.dci-shrink-peek) .dci-head-tools > :not(.dci-close):not(.dci-head-sep),
+      #dci-overlay.dci-shrunk:not(.dci-shrink-peek) .dci-manual.dci-manual-folded { display: none; }
+      #dci-overlay.dci-shrunk:not(.dci-shrink-peek) .dci-head { flex-wrap: nowrap; padding-top: calc(var(--u, 1px) * 3); padding-bottom: calc(var(--u, 1px) * 3); }
+      #dci-overlay.dci-shrunk:not(.dci-shrink-peek) .dci-head .dci-ibtn { padding-top: calc(var(--u, 1px) * 2); padding-bottom: calc(var(--u, 1px) * 2); }
+      /* [Z-ADDENTRYFOLD] (3.232.0, S566) "＋ Entry"; [Z-TRAY] (3.232.0, S565) the pools and "Dates & tracks" folded in one line beside it */
+      .dci-stick.dci-stick-row { display: flex; flex-wrap: wrap; align-items: center; }
+      .dci-stick.dci-stick-row > .dci-manual, .dci-stick.dci-stick-row > .dci-dates { flex: 1 1 100%; min-width: 0; box-sizing: border-box; }
+      .dci-stick.dci-stick-row > .dci-manual.dci-manual-folded { flex: 0 0 auto; padding-right: 0; }
+      .dci-stick.dci-stick-row > .dci-manual.dci-manual-folded + .dci-dates.dci-tray { flex: 1 1 0; min-width: min(100%, 24em); padding-left: calc(var(--u, 1px) * 14); }
+      .dci-manual.dci-manual-folded > :not(.dci-manual-open) { display: none; }
+      .dci-manual-open { border: 1px solid var(--purple); border-radius: 14px; background: #fff; color: var(--purple-d); font-weight: 600; padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 12);
+        cursor: pointer; white-space: nowrap; }
+      .dci-manual-open:hover, .dci-manual-open[aria-expanded="true"] { background: #ecebf6; }
+      .dci-dates.dci-tray { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 4) calc(var(--u, 1px) * 18); padding-top: calc(var(--u, 1px) * 6); padding-bottom: calc(var(--u, 1px) * 6); }
+      .dci-dates.dci-tray > .dci-pools-kept { display: contents; }
+      .dci-dates.dci-tray .dci-pools-col { flex: 0 1 auto; }
+      .dci-dates.dci-tray .dci-drag-hint { display: none; }
+      .dci-dates.dci-tray > :not(.dci-pools-kept):not(.dci-pools-head) { flex: 1 1 100%; }
+      .dci-dates.dci-tray > .dci-pools-head { display: flex; flex-wrap: wrap; flex: 0 1 auto; margin: 0 0 0 auto; padding: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 12) calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 4);
+        border-left-width: 1px; border-radius: 16px; box-shadow: none; gap: calc(var(--u, 1px) * 2) calc(var(--u, 1px) * 10); }
+      .dci-dates.dci-tray > .dci-pools-head .dci-pools-c { display: none; }
+      .dci-dates.dci-tray .dci-pools-toggle { font-size: calc(var(--u, 1px) * 13); }
       .dci-other { display: inline-flex; gap: calc(var(--u, 1px) * 6); }
       .dci-other input { width: calc(var(--u, 1px) * 330); }
       .dci-ibtn { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 5); white-space: nowrap; }

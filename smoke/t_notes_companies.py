@@ -1483,6 +1483,7 @@ def case_evl388():
         b, pg, errs = open_page(p)
         for role in ('launch event', ''):
             pg.evaluate("document.querySelector('[data-el=manual]').hidden = false")
+            H.manual_open(pg)
             pg.fill('[data-f=manual-artist]', f'https://musicbrainz.org/event/{E1}')
             pg.fill('[data-f=manual-role]', role)
             pg.click('[data-act=add-manual]')
@@ -1562,6 +1563,7 @@ def case_camd388():
             H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
             H.wait_still(pg, "document.body.innerHTML", 10, 300)
             pg.evaluate("document.querySelector('[data-el=manual]').hidden = false")
+            H.manual_open(pg)
             pg.fill('[data-f=manual-artist]', f'https://musicbrainz.org/event/{E1}')
             pg.click('[data-act=add-manual]')
             H.wait_for(pg, "[...document.querySelectorAll('section.dci-group')].some(x => /du Maurier/.test(x.querySelector('.dci-gname').textContent))", 20)
