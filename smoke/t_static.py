@@ -837,6 +837,23 @@ console.log(JSON.stringify(JSON.parse(process.argv[2]).map(run)));
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
+def case_docs3231():
+    """Credits Importer 3.231.0 (Z-DOCSCHECK): README and changelog are up to date for the script's version – `tools/docs_check.py`
+    finds nothing: the version's section under its date, the overview reaching it, README.md linking its full reference, "What's new"
+    and the script's MILESTONES not behind the changelog's milestones. A version without a section is found."""
+    import os
+    import subprocess
+    import sys
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    tool = os.path.join(root, 'tools', 'docs_check.py')
+    a = subprocess.run([sys.executable, tool, root], capture_output=True, text=True)
+    print('A)', a.returncode, a.stdout.strip().splitlines()[-1] if a.stdout.strip() else '')
+    b = subprocess.run([sys.executable, tool, root, '9.9.9'], capture_output=True, text=True)
+    print('B)', b.returncode, [x for x in b.stdout.splitlines() if 'ERROR' in x][:2])
+    ok = a.returncode == 0 and b.returncode == 1 and 'no "### Import 9.9.9"' in b.stdout
+    print('Ergebnis:', 'OK' if ok else 'FEHLER', [a.returncode == 0, b.returncode == 1])
+
+
 def case_storagedoc3171():
     """Credits Importer 3.171.0 (F-STORAGEDOC): the README's table of the storage keys is the one written from the code.
     A) `tools/storage_keys.py --check` finds no difference.

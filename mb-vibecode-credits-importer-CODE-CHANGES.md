@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.230.0, Companion 1.6.0 – 1.25.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.231.0, Companion 1.6.0 – 1.26.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,19 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.231.0 · Companion 1.26.0 · 2026-11-27
+
+- S559: `groupHtml` – `.dci-ghead-top` on the head of an entry; CSS: `.dci-gmatch` `flex: 1 1 0; min-width: min(100%, 18em)`, `.dci-ghead-r` `align-self: flex-start`.
+- S560: `seg` takes `o.segCls`; the settings "Head and footer" and "Symbols" with `dci-seg-cols` (equal widths), "Symbols" in the order text | emoji.
+- S561: the toolbar's scope `.dci-scope-work`; CSS with `--dci-lvl-work` / `--dci-lvl-work-ink` under `#dci-overlay.dci-lvlc`.
+- S562: `refresh` collects `newIds` (rows with `ready`, no issue, not skipped – `noNewIn`; sorted by their place on screen, one per holder of `rowHolders`: the row's `tr[data-row]`, else the matrix line `tr.dci-em-line[data-rows]`, else the chip `.dci-em-chip[data-rows]`) → `S.newIds`, `S.newIdx`; the summary's count a button `data-act="new-next"` with `[data-el=new-pos]`; `gotoNew(step)` (beside `gotoIncomplete`); click case `new-next`. Text `sum.newTitle`.
+- S563: `noNewIn(row, rowInfo)`; state `onlyNew`; toolbar box `data-f="filter-new"` (handler beside `filter-missing`), overlay class `dci-only-new`; `refresh` marks `tr.dci-row.dci-nonew`, matrix lines and chips (`.dci-nonew`) and `.dci-group.dci-gnonew`; CSS hides them (with `+ tr.dci-tracksrow`) and empty `.dci-sortblock`s. Texts `toolbar.onlyNew`, `toolbar.onlyNewTitle`.
+- [Z-MILESTONES-SCRIPT] `MILESTONES`: 3.161.0 – 3.231.0 added (21 entries), texts `ms.<version>`.
+- [Z-TIMING] Discogs's `getJson` takes `as` (its step) and finds its caller before the wait for the pace; `release`, `person`, `aliases` and the images pass `discogsRelease`, `discogsPerson`, `discogsAliases`, `discogsImages`. Texts `timing.f.statArtistsLookup`, `timing.f.areaParent`, `timing.f.discogs*`.
+- Companion 1.26.0 ([Z-BIGFRAME]): CSS – `#dci-art-big .dci-big-wrap` with a 4 px border, the gradient of `#dci-artwork`; its README renamed to v1.26.0.
+- `tools/docs_check.py` (new): the changelog's section under the version's date, its overview row, README.md's link to the full reference and its "What's new" against the newest milestone, the script's `MILESTONES` – exit 1 when one is behind; run before each release.
+- Tests: `case_ui3231`, `case_newnav3231m` (the matrix, compact and full; t_ui_view); `case_docs3231` (t_static); `case_artworkbox` (t_companion_discogs) checks the large image's frame; `case_timing3230` expects Discogs's step named; `case_notice` (t_ui_settings) expects 3.231.0, 3.230.0, 3.227.0 as the newest milestones.
 
 ## Import 3.230.0 · 2026-11-26
 
