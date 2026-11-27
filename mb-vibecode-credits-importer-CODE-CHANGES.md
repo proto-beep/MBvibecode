@@ -13,7 +13,7 @@ How far back the entries go:
 
 | Versions | Source | Detail |
 |---|---|---|
-| Import 3.0.0 – 3.234.0, Companion 1.6.0 – 1.26.0 | the working sessions | written by hand, per version |
+| Import 3.0.0 – 3.235.0, Companion 1.6.0 – 1.26.0 | the working sessions | written by hand, per version |
 | Import 2.17.0 – 2.19.1 | the working session, and a comparison of the code of 2.16.0 and 2.19.1 | short notes for 2.19.x, otherwise the comparison |
 | Import 0.9.2 – 2.16.0, Companion 0.2.2 – 1.5.0 | the versions uploaded to this repository (19 of the main script, 14 of the companion) | reconstructed: a comparison of the code from one upload to the next; versions in between are named, the changelog says what they do |
 | Import 0.1.0 – 0.9.1, Companion 0.1.0 – 0.2.1 | none: the code of these versions was not kept | only the changelog |
@@ -21,6 +21,19 @@ How far back the entries go:
 **Texts (from 3.27.1):** a new text is added in English only (`tools/i18n_add.py` with `{"en": {…}}`); German, Spanish and French follow in a translation round every few versions – until then `tr()` shows the English text. `smoke/t_i18n.py` fails on a key the code names without an English text, on a left-over translation, on a placeholder English does not have and on a French plain space before ":", ";", "?", "!" (or inside « »), and reports what each language still lacks (`LIST=1` lists the keys). **From 3.34.0** German, Spanish and French are in `mb-vibecode-credits-importer-languages.json`; the tools write there.
 
 The comparisons were made with a small script: functions and constants of the main level of the script are compared by their text (a "changed" function may have changed only in a comment), texts by their English keys, storage keys where the code reads, writes or lists them, rule ids where the register defines them.
+
+## Import 3.235.0 · 2026-11-27
+
+- S575: `compareSupplement` – `lineupAt` (track → the entries the import names there by its own track credits), `unionOf`, `onAll`; `compare` first: the words of the probe (base, raw, details) against `suppRowWords` – no tracks: confirmed; a row on all tracks: `differ` with `narrow`; other tracks: `differ` with `union` (more tracks join the item of the row), `contra` tracks (a lineup there without the person) not ticked; `named` – a role of a list and of titles counts with the titles' tracks; the probe and `suppRow` read "director" by `musicalDirector` (S460). `renderSupp` – `whyRow` says `supp.why.*` (`data-why`); `suppSummary` and the table – a narrowed row its own kind "fewer tracks" (`narrow`).
+- S576: `loadSupplement` – `titleLineup(rel, source, { supp: true, known: the dashboard's names })`; `titleLineup` – `known`/`supp` options (no message, no "only said" warning for an added source; the source's own spelling of two); `compare` – an instrument on tracks of a "performer" row: `role` with `perfFrom`; union items carry `perfFrom` too; `dropPerformerTracks` (new) in `applySupplement` (Skip and the note `perfInst` when none is left).
+- S577: the loop of `compareSupplement` – a "Performer" with tracks confirmed where the person has an instrument or voice (only the other tracks stay); `titleSaidInfos` (new) – a new entry of a performer gets the instruments `rel.titleSaid` keeps (`titleLineup` records names only said with their roles and track).
+- S578: mapping `TRACK_AC_OPEN` (+ `const TRACK_AC_OPEN = MAP.TRACK_AC_OPEN`); `S.mbTracks[].trackArtistJoins`; `openCreditTrack`, `memberGroups`, `groupMemberTrack` (new); `applyTrackArtistTracks` – open tracks, the tracks of a group the person is a member of, `dTrackIdx`; `titleLineup` – `S.titleGroups` and `groupDef` (a group's members as its title names them), a title with the group alone brings its members with their instruments (`ofGroup`).
+- S579: `loadSupplement` – `addNotesCompanies(rel)` for an added Discogs; `autoPlaceFoundDates` for it; `foundDateText` – its notes too.
+- S580: `applyImprovComposers` (new, after `applyTrackArtistTracks` in `loadRelease`; note `improvNoComposer`, log `improvNoComposer`).
+- S571 (3.233.0) for an added source: `compareSupplement` – "Recorded By" of a studio among other places "Recorded At" left out.
+- MILESTONES: 3.235.0.
+- Texts: `supp.kind.narrow`, `supp.msg.narrow`, `supp.why.narrow`, `supp.why.union`, `supp.why.contra`, `supp.why.perfInst`, `note.perfInst`, `note.improvNoComposer`, `log.improvNoComposer`, `ms.3.235.0`.
+- Tests: `smoke/krakow.py` – `add_source.why`, alternatives in the target ("double bass|bass"); `smoke/data/krakow2018.json` – Guy on 5.1 "double bass|bass"; `smoke/t_twosources.py` case `twosources3235`.
 
 ## Import 3.234.0 · 2026-11-27
 

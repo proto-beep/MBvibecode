@@ -2949,7 +2949,9 @@ def case_pcyear3220():
        no entry "Blue Note Records".
     B) The rule off (as 3.219.0): not so.
     C) The way it was seen: the release imported without that line, Discogs release 39123408 typed as "+ Source" with the line in its notes:
-       its ℗/© year 2026 is offered in the date pool ("℗/© year in the notes of Discogs 2026"; S478 off); off: not.
+       its ℗/© year 2026 is offered in the date pool ("℗/© year in the notes of Discogs 2026"; S478 off, and S579 off); off: not.
+       (3.235.0, S579) S478 off, S579 on: the added Discogs's notes read as at the import – the year 2026 comes into the date pool from them
+       (no suggestion of it left to offer).
     D) (3.221.0, S478) the same way with S478: the year 2026 placed in the column ℗/© of the date matrix."""
     orig = H.discogs_release
     NOTES = 'Blue Note Records, ℗ © 2026 Creative Control Corp. under exclusive license to UMG Recordings, Inc.\n'
@@ -2985,10 +2987,11 @@ def case_pcyear3220():
         H.wait_still(pg, "document.body.innerHTML", 10, 400)
         sugg = pg.evaluate("[...document.querySelectorAll('[data-act=pool-suggest]')].map(b => b.textContent.trim())")
         sugg += pg.evaluate("[...document.querySelectorAll('#dci-log li')].map(li => li.textContent.slice(9)).filter(x => /column ℗\\/©/.test(x))")
+        pool = pg.evaluate("window.__S.datePool.map(d => d.begin.year)")
         b.close()
         H.DG_API.pop('/releases/39123408', None)
         H.discogs_release = rel
-        return before, sugg, errs
+        return before, sugg, errs, pool
 
     def run(p, off=()):
         H.RULES_OFF = list(off)
@@ -3019,13 +3022,16 @@ def case_pcyear3220():
             names2 = sorted({r[0] for r in rows2})
             print('B)', names2, ign2.count('copyrightYear'))
             results.append(not any(r[0].startswith('UMG Recordings, Inc') for r in rows2) and 'Creative Control Corp' not in names2 and not errs2)
-            before, sugg, errs3 = supp(p)
-            before4, sugg4, _ = supp(p, off=['S470', 'S478'])
-            before5, sugg5, errs5 = supp(p, off=())
+            before, sugg, errs3, _ = supp(p, off=['S478', 'S579'])
+            before4, sugg4, _, _ = supp(p, off=['S470', 'S478', 'S579'])
+            before5, sugg5, errs5, _ = supp(p, off=())
+            before6, sugg6, errs6, pool6 = supp(p)
             print('D)', before5, sugg5)
             results.append(any('2026' in x and 'column ℗/©' in x for x in sugg5) and not errs5)
             print('C)', before, sugg, errs3, '| aus:', sugg4)
             results.append(2026 not in before and any('notes of Discogs' in x and '2026' in x for x in sugg) and not any('2026' in x for x in sugg4) and not errs3)
+            print('C) S579 on:', before6, pool6, sugg6)
+            results.append(2026 not in before6 and 2026 in pool6 and not any('notes of Discogs' in x for x in sugg6) and not errs6)
     finally:
         H.discogs_release = orig
         H.MAIN = main0

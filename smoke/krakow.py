@@ -144,6 +144,8 @@ def add_source(pg, supp):
     log_has(pg, 'Added source: ', 120)
     H.wait_still(pg, "document.body.innerHTML", 15, 500)
     items = pg.evaluate(ITEMS)
+    # (the reasons the table of the added source gives, before it is taken)
+    add_source.why = pg.evaluate("[...document.querySelectorAll('[data-why]')].map(x => [x.dataset.why, x.textContent.trim()])")
     took = pg.evaluate("(() => { const b = document.querySelector('[data-act=supp-apply]'); if (!b || b.disabled) return false; b.click(); return true; })()")
     if took:
         H.wait_still(pg, "document.body.innerHTML", 20, 600)
@@ -186,7 +188,8 @@ def compare(rows):
             if not got:
                 res['missing'].append((t, who, '/'.join(insts)))
                 continue
-            miss = [i for i in insts if i not in got]
+            # (an alternative: "double bass|bass" – Discogs names only "Bass" there)
+            miss = [i for i in insts if not any(x in got for x in i.split('|'))]
             (res['less'].append((t, who, '/'.join(miss), '/'.join(sorted(got)))) if miss else res['ok'].append((t, who)))
             for inst, ds in got.items():
                 res['date'] += [(t, who, inst, d or '–') for d in ds if d not in dates[t]]

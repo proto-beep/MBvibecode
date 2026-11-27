@@ -99,6 +99,11 @@
       "suiteparts": [
         "S338"
       ]
+    },
+    "t_sources.py": {
+      "supptable3148": [
+        "S575"
+      ]
     }
   }
 }

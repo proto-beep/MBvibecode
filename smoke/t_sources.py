@@ -285,8 +285,8 @@ console.log(JSON.stringify({ rel: ser(rel), groups: ser(groups), companies: ser(
             print('D) Update von 2.19.1 – Speicher vorher:', before, '| nachher:', after)
             print('   Nachricht:', n[:220])
             # ([Z-QSP] 3.75.0) the profiles (made at the first start above) are kept too; ([Z-MILESTONES-SCRIPT] 3.231.0) the newest five milestones
-            ok_d = after == ['dci-notice-version', 'dci-profile', 'dci-profiles', 'dci-store-epoch', 'dci-updated-from', 'dci-view-kept'] and pg.locator('#dci-notice li').count() == 5 and 'Credits Importer 3.234.0' in n and 'Credits Importer 3.227.0' in n \
-                and 'Credits Importer 3.226.0' not in n and re.search(r'and \d+ more milestones', n) \
+            ok_d = after == ['dci-notice-version', 'dci-profile', 'dci-profiles', 'dci-store-epoch', 'dci-updated-from', 'dci-view-kept'] and pg.locator('#dci-notice li').count() == 5 and 'Credits Importer 3.235.0' in n and 'Credits Importer 3.230.0' in n \
+                and 'Credits Importer 3.227.0' not in n and re.search(r'and \d+ more milestones', n) \
                 and 'Import 2.19.0' not in n and 'reset once' in n and pg.evaluate("localStorage.getItem('dci-store-epoch')") == '4'
             # within generation 4 (as if 3.5.0 ran before): nothing is reset
             pg.evaluate("""() => { const set = (k, v) => localStorage.setItem(k, JSON.stringify(v)); localStorage.removeItem('dci-updated-from');
@@ -644,7 +644,9 @@ def case_supptable3148():
     D) Taken over: Guitar Guy plays the twelve-string guitar, Keys Guy tracks 1 and 3, the entry is called James Olski; staged, the
        edit note says so ("took Bandcamp (more precise)", "(full name)").
     E) The names of a supplement: initials ("J. Olski" – "James Olski", "J. S. Bach") and slips of reading an image ("Drurn" – "Drum",
-       "0" – "o", "l" – "I" – "1") in the script's own functions (Node)."""
+       "0" – "o", "l" – "I" – "1") in the script's own functions (Node).
+    (3.235.0) Run with S575 off (rules_off_cases.json): with it, "tracks 1, 3" against "track 2" are no contradiction – the tracks of
+    both (smoke/t_twosources.py)."""
     import json
     import re
     import subprocess
@@ -795,7 +797,8 @@ def case_wiki3149():
     producers Q910 (Bob Producer) and Q911 (Wiki Prod, linked to MusicBrainz).
     A) In the background after the import (Discogs): "Wikipedia read in the background: …Q900", added as "Wikipedia (all languages)".
        The table: Bob Producer and Abbey Road Studios differ (tracks 1–3 – only the main track list – against all), Wikipedia chosen
-       over Discogs by the trust; Wiki Prod a new entry found through its Wikidata link. Below its head: read en · de, the main track
+       over Discogs by the trust; Wiki Prod a new entry found through its Wikidata link. (3.235.0, S575) Bob Producer "fewer tracks": Discogs
+       names no tracks for him – the tracks Wikipedia names (narrowed, preselected; the trust only for the studio, a company). Below its head: read en · de, the main track
        list, fi as not read; the label Sony as a hint.
     B) The date of the more precise language (de) is in the dates of the notes.
     C) Source ▾ "Wikipedia in the background" switched off: stored, logged.
@@ -857,10 +860,11 @@ def case_wiki3149():
         print('A)', bg[:1], on, '\n  ', rows, '\n   Grund:', why, '\n   Sprachen:', langs, '| Hinweis:', hint.strip()[:90])
         by = {(k, n): (sel, a, m) for k, n, sel, a, m in rows}
         results.append(bool(bg) and 'Q900' in bg[0] and any('Wikipedia (all languages) ✓ added' in x for x in on)
-                       and by.get(('differs', 'Bob Producer'), (None,))[0] is True and by.get(('differs', 'Bob Producer'), (0, ''))[1].endswith('(tracks 1, 2, 3)')
+                       and by.get(('fewer tracks', 'Bob Producer'), (None,))[0] is True and by.get(('fewer tracks', 'Bob Producer'), (0, ''))[1].endswith('(tracks 1, 2, 3)')
                        and by.get(('differs', 'Abbey Road Studios'), (None,))[0] is True
                        and by.get(('new entry', 'Wiki Prod'), (None,))[0] is True and 'Wiki Prod' in by.get(('new entry', 'Wiki Prod'), (0, '', ''))[2]
-                       and why and all(w.startswith('⚖ Wikipedia chosen over Discogs') for w in why)
+                       and why and why.count('Discogs names no tracks for it – the tracks Wikipedia names') == 1
+                       and all(w.startswith('⚖ Wikipedia chosen over Discogs') for w in why if not w.startswith('Discogs names no tracks'))
                        and langs and langs[0].startswith('Read from Wikipedia: en · de · for the 3 tracks of the main track list') and any('not read by the script: fi' in x for x in langs)
                        and 'Sony' in hint)
         # B) the date of the more precise language among the dates of the notes
@@ -1203,7 +1207,7 @@ console.log(JSON.stringify([st, w, w2, w3]));"""
 def case_fable3151():
     """Credits Importer 3.151.0 (Fable review: integrity of the data).
     A) The edit note names only what can be staged: Keys Guy has no MusicBrainz entry, his tracks are taken from Bandcamp – he is not
-       in "Sources differ" (until 3.150.0: "Keys Guy … took Bandcamp").
+       in "Sources differ" (until 3.150.0: "Keys Guy … took Bandcamp"). (3.235.0, S575) both sources name tracks: "more tracks", those of both.
     B) "Reset all settings" also forgets how the statistics are shown (folded cards, with or without creating, lengths of)."""
     ALBUM = 'https://testband.bandcamp.com/album/testalbum'
     BAND = 'https://testband.bandcamp.com/'
@@ -1245,7 +1249,7 @@ def case_fable3151():
         pg.evaluate("document.querySelectorAll('.dci-subdlg button').forEach(b => { if (/^no$|nein|not now/i.test(b.textContent.trim())) b.click(); })")
         note = pg.evaluate("document.getElementById('edit-note-text').value")
         print('A) Tabelle:', rows, '| Notiz:', [l for l in note.splitlines() if 'Bandcamp' in l or 'differ' in l])
-        results.append(any(r[0] == 'differs' and r[1].startswith('Keys Guy') and r[2] for r in rows) and 'Keys Guy' not in note and '1 credit also in Bandcamp' in note)
+        results.append(any(r[0] == 'more tracks' and r[1].startswith('Keys Guy') and r[2] for r in rows) and 'Keys Guy' not in note and '1 credit also in Bandcamp' in note)
         # B) reset all settings
         before = pg.evaluate("['dci-stats-dur', 'dci-stats-len-of', 'dci-stats-fold'].map(k => localStorage.getItem(k) !== null)")
         H.open_reset(pg)
