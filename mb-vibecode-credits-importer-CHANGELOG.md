@@ -69,6 +69,27 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 
 | Date | Version | Milestone |
 |---|---|---|
+| 2026-11-26 | Import 3.230.0 | The times of an import in the log: which steps took how long, per source |
+| 2026-11-26 | Import 3.227.0 · Companion 1.25.0 | The companion in the dashboard’s language, Bandcamp’s artwork in high resolution |
+| 2026-11-26 | Import 3.226.0 | “✨ Answer all”: a tie decided by the recordings in MusicBrainz, each work to open with ↗ |
+| 2026-11-25 | Import 3.223.0 | The lines left out on purpose in one table, in the mapping file |
+| 2026-11-25 | Import 3.220.0 · Companion 1.24.0 | “✨ Answer all” grouped by its reasons, covers of a tribute; ←/→ in the companion’s artwork |
+| 2026-11-25 | Import 3.219.0 | Bandcamp’s track pages read; every line shows where it is from |
+| 2026-11-24 | Import 3.214.0 | Every source named in the edit note; the sources of the release’s other editions |
+| 2026-11-23 | Import 3.210.0 | Joining entries: asked first, undone at the entry, all names kept (by hand from 3.208) |
+| 2026-11-22 | Import 3.206.0 | Tribute albums: the works of the honoured artist |
+| 2026-11-22 | Import 3.202.0 | Japanese, Chinese and Korean releases keep their spellings |
+| 2026-11-21 | Import 3.196.0 | Suites of parts created; the works the dashboard created kept for the release |
+| 2026-11-21 | Import 3.195.0 | Records in the statistics |
+| 2026-11-20 | Import 3.192.0 | One work for the versions of a song; suites from the notes |
+| 2026-11-20 | Import 3.190.0 | Recordings with an event |
+| 2026-11-19 | Import 3.184.0 | The source opened in a background tab; “Apply & fold” |
+| 2026-11-19 | Import 3.179.0 | Relationships to an area |
+| 2026-11-19 | Import 3.177.0 | Classical track lists: composers as headings, works as suites, soloists and authors in a track’s line |
+| 2026-11-19 | Import 3.176.0 | Booklets are read: lineups without a sign between name and role, tracks by medium, German role words |
+| 2026-11-18 | Import 3.168.0 | The works matrix rebuilt: a slim head, rows by their state, keys, one answer for all |
+| 2026-11-18 | Import 3.164.0 | Video credits and DJ mixes |
+| 2026-11-18 | Import 3.161.0 | Bandcamp’s editions; a search in the settings |
 | 2026-11-17 | Import 3.157.0 | Missing links of the entries, with a link to the edit page; Bandcamp editions read with the credits |
 | 2026-11-17 | Import 3.155.0 | “✨ Answer all” at the works matrix: its open questions answered by a level, with a preview and undo |
 | 2026-11-16 | Import 3.150.0 | “Fill empty recordings”: the tracks without relationships get the credits the other tracks share |
@@ -139,7 +160,7 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-29 | Import 0.3.0 | Works: linked works checked, existing works found, new works created |
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
-## 2026-11-08
+## 2026-11-26
 
 ### Import 3.230.0
 
@@ -203,6 +224,8 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 - **Roles** (rules S527, S528): "Text" / "Texts" alone – liner notes at once, lyricist one click away (Q005); "director" as the conductor credited "director", not "music director".
 - **Art and editions** (rules S529 – S531): an illustration ("Oil on Canvas … Artwork by") without role credit; "Limited Sam Giles edition of 75 handmade mini-LP CDR" – Sam Giles the design, credited "sleeve"; the artwork in an edition's description ("… artwork by Indonesian artist Riandy Karuniawan") taken, unless another line names someone else.
 - **Instruments** (rule S532): "tape loops" – tape, credited "tape loops".
+
+## 2026-11-25
 
 ### Import 3.223.0
 
@@ -274,6 +297,8 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 - **Places by the notes' tracks** (rule S459): Discogs lists where it was recorded for the whole release ("Jazzhus Montmartre", "Hilversum, Holland"), the notes say for which tracks – each place gets those tracks (a word of its name in common, or its town); the notes' place of another name ("Club Montmartre") is its own entry on the same tracks, both marked "perhaps the same place (renamed)" (joined when MusicBrainz has them as one place); an area no place covers then stays the area of its tracks ("in Copenhagen"). "recorded September 14, 1964 in Copenhagen" is read as "recorded in Copenhagen, September 14, 1964" in every text.
 - **Quick switches tidied**: the ticks of a switch in one column, each box at the left of its text; the ticks of the switch itself tinted apart from "permanent"; the headings of the groups with a space at their left.
 
+## 2026-11-24
+
 ### Import 3.217.0
 
 **Quoted works, one switch for track titles, the lines left out grouped.**
@@ -324,6 +349,8 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 - **Places and areas on videos** (rule S430): on a release with videos (MusicBrainz's video flag, or the title) "recorded at/in" stays on the audio tracks, the videos get "video shot at/in"; "filmed at" only on the videos.
 - **The disambiguation of a recording** (rule S431): "live, 2008-05-21: Schaffhauser Jazzfestival 2008, Schaffhausen, Switzerland" – what MusicBrainz has not at the recording (date, place or event, "live") is suggested: the date in the pool, the rest in a message.
 
+## 2026-11-23
+
 ### Import 3.212.0
 
 **Kind Of Shadow read right; publishers of the release's label, their year; "member of" filled in when creating a player.**
@@ -359,6 +386,8 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 - **Start afresh forgets the source and the media chosen** (rule S413): "Start afresh" also forgets which source and which media were chosen for the release – the import repeated reads the source open now, the media are asked again with all chosen; at the next opening the source is the first of the release's links in the order of the settings. Until 3.209.0 both were kept.
 - **Field recordings dated** (rule D039): field recordings ("Alio Die: Drones and loops, zither, …, field recordings") belong to the column Performance of the date matrix and get the date of the recording ("composed and recorded by Stefano Musso in Spring 2023"). Until 3.209.0 they got no date.
 
+
+## 2026-11-22
 
 ### Import 3.209.0
 
@@ -488,6 +517,8 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 - **Credits for part of the album** (S361): "The majority of the album …", "Most of the songs were mixed by …", "on some of the tracks", "teilweise" – such a credit without tracks is a suggestion on the works or held on Skip ("Take", then its tracks chosen), not taken for every track.
 - **A commission only in the prose** (S346): the sentence "… was commissioned by Roadburn Festival for the 2024 outing …" alone was left out as the same as itself – it is read now (a suggestion, as above).
 
+## 2026-11-21
+
 ### Import 3.196.0
 
 **Suites of parts, suite names changed in place, the works the dashboard created kept for the release.**
@@ -523,6 +554,8 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 
 - F-PARSESTAGES, step 2: the longest functions of the text reader are split into parts with names of their own – the last stage (`stageFinish`: marks, players, lines left out, places and names, tracks), the preparing of lines (`tidyLines`: joins, track lists, paragraphs, names), the prefilter of free text (`freeTextPre`: lines left out, lines rewritten, a track after "on"), the booklet shapes (`bookletLines`: no credits, media, roles above names, lines of names) and the start of a reading (`parse`: its state and its patterns). The longest function now has 174 lines (before: 457).
 - What the reader makes of a text is unchanged: the 183 texts of the golden test read the same.
+
+## 2026-11-20
 
 ### Import 3.192.0
 
@@ -639,6 +672,8 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 - **The cause of the tests that stood still** ("ytview" of the Script Companion on Bandcamp, "cpremoved3131" on Discogs – about one run in five, the full run then waited for its time limit): the test replaces the storage of the userscript manager by synchronous requests to a small server of its own. A page that was just being left for another one (the YouTube tab going to the other video) could send such a request in the moment the test still had to answer the navigation; neither came back, and every later call to that tab waited for ever. In a real browser the storage of the userscript manager is no request, so this cannot happen there.
 - **The correction** (`smoke/harness.py`): a page that is being left asks the test storage nothing more.
 - Checked: 8 of 37 runs of "ytview" stood still before, 0 of 100 after; "cpremoved3131" was not reproduced on its own – it uses the same test storage.
+
+## 2026-11-19
 
 ### Import 3.184.0
 
@@ -800,6 +835,8 @@ The surface tidied (F-HEADCOUNT, F-TERMS, F-TOOLTIPLEN):
 - The window "Mapping rules" opens below the head also where the head takes two lines.
 - Gone: ▲ ▼ in the footer.
 
+## 2026-11-18
+
 ### Import 3.169.0
 
 Three smaller things (rules S298, S299; Z-VIDEOTRACKS, Z-HYPHENTRACKS, Z-BCSHOPBLOCK):
@@ -917,6 +954,8 @@ Editions on Bandcamp, searching the settings, the head of the works matrix:
 - Checked, nothing to correct: no relationship type the mapping uses is deprecated or missing for its level; the source adapters and the text recognition use neither the dashboard's state nor the page; the text recognition has no branch per source; no two company rules match the same role.
 - Noted, not changed (the owner decides): what of a free text the Discogs notes do not take over (series, ensembles, live heads, covers and quotes); camera work is always entered while the other video credits follow their quick switch; the level of video credits differs (recording or release); "Text By" is liner notes while "Text" asks; "Mixed By [DJ Mix]" is the mix engineer; "Tenor", "Baritone", "Soprano" alone are not asked like "Alto"; "bugle" (French: flugelhorn) and "laúd" (Spanish: lute) against MusicBrainz's own bugle and laúd; "Tape:" as a format against tapes as an instrument; the text recognition as one function of 4,100 lines.
 
+## 2026-11-17
+
 ### Import 3.158.0
 
 The documentation and the milestones (Z-MILESTONES):
@@ -998,6 +1037,8 @@ The proposals of the first review run (F-…), brought forward (2026-11-17):
 - **MusicBrainz's own lookups** (F-WSJS): the requests of the relationship editor's kind (`/ws/js`: entries when staging, a medium's tracks, the checks after "Enter edit") and the request of the release page's line end after 30 seconds and are made once more after a network error; lookups of entries when staging wait 0.2 seconds for each other.
 - **Very large releases** (F-WALK): the editor's state is read once per change instead of once per lookup, and all of it (until 3.151.0 at most 400,000 steps – some 600 tracks with 40 relationships each –, so that a relationship beyond counted as taken out).
 
+## 2026-11-16
+
 ### Import 3.151.0
 
 - **Review run 1** (collected item Z-REVIEW-FABLE; 2026-11-16, the areas "data integrity" and "code" of the review checklist, done by Claude Fable 5.2). Corrected:
@@ -1053,6 +1094,8 @@ Free texts – every source that is read as a text (a pasted text, Bandcamp, You
 - **Logo and kinds of the artwork** (Z-LOGOOF, Z-ARTDETAIL; S260, S261): "omertà logo by …" – logo; "artwork by A (watercolors, drawings) and B (infographic)" – illustration and design, credited with the words in brackets.
 - **A company in brackets after a name** (Z-AFFIL; S262): "Saki Ichijo (WWW)", "Soushi Mizuno (StudioMASS)" – a note at the entry, no part of the name; after mastering, mix or recording also the place of that role.
 
+## 2026-11-14
+
 ### Import 3.145.0
 
 - **New or supplemented – per level** (collected item Z-SUPPREL): the release group, the release and each recording the import adds to count as **new** (MusicBrainz had no relationship of it, URLs aside) or **supplemented** (it had) – at every import, only what is staged and submitted with "Enter edit". The edit note says it ("Supplemented: the release group, 5 of 8 recordings. New: the release, 3 recordings."), the statistics have three tiles for it (a submission of before: its release as it was, the rest "not noted"), "Global" reads it from the edit notes.
@@ -1071,6 +1114,8 @@ Free texts – every source that is read as a text (a pasted text, Bandcamp, You
 
 - **"＋ Source" instead of "＋ Supplement"** (collected item Z-SUPPNAME): the second source is called **added source** everywhere – "＋ Source" in the head, the bar "Add a source:" with "Add" for an address, the list "From the added source: …", "＋ Add as a source" in the window of the text from cover art, the messages and the log ("Added source: Bandcamp – …"), "with an added source" in the statistics. "Supplemented" now only means what MusicBrainz had and the import added to. English first, German "＋ Quelle" / "zusätzliche Quelle", Spanish and French alike.
 - **The kind of the entry in its texts** (Z-MBSKIND): looking up, linking and changing an entry name what it is – "Looking up MB label …", "change MB place", "several MB labels have this Discogs link", "No MBID recognized. Paste the URL of an MB label page …" (until now always "MB artist"); the progress "Looking up MB entries via their … links".
+
+## 2026-11-13
 
 ### Import 3.142.0
 
@@ -1117,6 +1162,8 @@ Free texts – every source that is read as a text (a pasted text, Bandcamp, You
 - **Developer mode** is back in General; the tab "Developer" is only there while it is on, as the last tab after "Beta". Sources has a heading **Discogs & Bandcamp** (the track pages of Bandcamp, the aliases of Discogs). Source pages: the switches of the companion as switches, one below the other.
 - **Search in the dashboard** (Z-SEARCH): 🔍 in the head or **/** opens a small field at the top right. It searches as you type – names of the entries (artists, labels, places …), instruments and roles, dates, tracks and works, not tooltips or notes – and goes to the hit and lights it up; ↓ / Enter and ↑ / Shift+Enter to the next and previous hit, the counter "2 / 7". Nothing is unfolded: a hit behind "▸ n more" or not shown in this view lights up the nearest place you can see ("hidden"). Esc closes it.
 
+## 2026-11-12
+
 ### Import 3.136.0
 
 - **Settings in order** (collected item Z-SETTABS): every tab has subheadings (they do not fold) and its settings in an order of priority – General: Language, Log; Appearance: Window, Colours, Entries, Symbols and boxes, Mapping rules; Sources: Order of the sources, Release editor and release page, MusicBrainz search, Text from cover art; Works: Lookups of works, Works matrix, Suites; Staging: Staging and its limits, Edit note, Live comments, Open items; Cache: Remember, Statistics.
@@ -1146,6 +1193,8 @@ Free texts – every source that is read as a text (a pasted text, Bandcamp, You
 - **Concerts at a place** (Z-CONCERTHINT; S221): "Concert at Jazzclub Unterfahrt, Munich", "the gig at the Village Vanguard", "Konzert im Jazzhaus Freiburg", "concierto en la Sala …", "concert au Théâtre …" give the place as "recorded at" – a yellow suggestion with ✓ / ✕ and its sentence – and "live" on the links to the works.
 - **Relative dates** (Z-RELDATE; D034, a quick switch, on): "last September", "earlier this year", "the following spring", "that summer", "two years ago", "letzten September", "im Frühjahr darauf", "el pasado septiembre", "en septembre dernier" – reckoned from a date of the text itself (a dateline "Berlin, June 2019" or a date of the same paragraph), never from the date of the release; with two possible dates or none, nothing. Seasons are periods (spring March–May …).
 - **"Mentioned dates (n) ▾"** (S220): what a sentence only mentions – a story ("after the two first met at a concert in July 2019"), a relative date not about the recording, a date in a long sentence without a word of the recording, a festival or a concert of such a sentence – is suggested nowhere. The chip at the right of "Dates & tracks" lists it with its sentence (and the date a relative one is reckoned from); "→ Date pool" takes a date in by hand.
+
+## 2026-11-08
 
 ### Import 3.131.0, Companion 1.21.0
 

@@ -148,7 +148,7 @@ The language, window or page and the switches of the navigation are no longer in
 
 From 3.27.0 the entries (artists, labels, places, other entries) can be **compact** – the symbol **☰** in the head switches it on and off (3.27.2; in 3.27.0 – 3.27.1 compact was the default and "Compact | Full" stood above the entries): each card keeps its head (kind, name, MusicBrainz status), and each of its roles is one line:
 
-**An arrow at ☰** (3.34.23; collected item 143): until the view is switched for the first time – with ☰ or in ⚙ Settings → General – a small note below the symbol points at it ("Try the compact view: one line per role …"); ✕ closes it for good. Whoever chose the compact view before does not see it. "Reset all settings" and ↺ of ⚙ Settings → Appearance show it again (`dci-hint-compact`). What lies below it can still be clicked.
+**An arrow at ☰** (3.34.23; collected item 143): until the view is switched for the first time – with ☰ or in ⚙ Settings → General – a small note below the symbol points at it ("Try the compact view: one line per role …"); ✕ closes it for good. Whoever chose the compact view before does not see it. "Reset all settings" and ↺ of ⚙ Settings → Appearance show it again (`dci-hint-compact`). What lies below it can still be clicked. **From 3.230.0** (Z-COMPACTHINT, rule S558) it recommends the compact view: in the compact view "Compact view (recommended) – this symbol shows every role with all its fields at once", in the full view (also for who used the script before and never chose a view) "The compact view is recommended – this symbol switches back to it".
 
 - **▸ the relationship as MusicBrainz names it** (3.38.10: "bass", "recording engineer", "guest saxophone"; the role as the source wrote it in the tooltip; until 3.38.9 "Bass → instrument · bass"; "→ no type" when there is none), the role credit in quotation marks, the **level**, the **tracks** in short ("all 12 tracks", "tracks 1–3, 5", "whole release") and the **date** (a chip, or "no date").
 - **What is open, in colour:** red – what is missing ("choose a relationship type", no MusicBrainz type, no tracks, an invalid date …), yellow – a question or a suggestion ("Bass: which instrument?", "type to choose", "date suggested").
@@ -893,6 +893,8 @@ The **Dashboard** button in the log window opens the dashboard, or brings it bac
 
 
 Three entries mark the milestones: **Import complete** when all Discogs credits are in the dashboard and matched, **Checks complete** when the background search for same-named works has finished, and **Staging complete** after every "Stage", with how many relationships were added, updated, changed in the editor itself and are to be removed by hand.
+
+**Times of an import** (3.230.0; collected item Z-TIMING, rule S557): once nothing runs any more after an import, one entry says when the dashboard was ready and how long all took, then per kind – MusicBrainz (its queue of one request a second), its other pages, Discogs, other sites (Bandcamp …), the text recognition – the steps that took longest, each with its requests and time ("works on the artists’ pages 61 · 1 min 12 s"; a step the log has no words for by the name of its function). Again, with the times of the whole import, when more ran later. Meant to see on real releases what a quick mode should leave out.
 
 ## Window or page
 
