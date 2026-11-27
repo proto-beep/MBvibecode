@@ -1,0 +1,1728 @@
+{
+ "people": {
+  "7001": [
+   "Barry Guy",
+   "3f076b39-8267-4bf0-ac3e-e405d9feda21",
+   "Barry Guy"
+  ],
+  "7002": [
+   "Ramón López",
+   "2713605f-40ce-457a-9243-e0ec1aac92dd",
+   "Ramón López"
+  ],
+  "7003": [
+   "Rafal Mazur",
+   "3b5bb5de-7b4e-4ab2-a0c6-8d7e725fd8d1",
+   "Rafał Mazur"
+  ],
+  "7004": [
+   "Percy Pursglove",
+   "dc8c3ca5-525b-439e-bd24-50bee95bd0f7",
+   "Percy Pursglove"
+  ],
+  "7005": [
+   "Agustí Fernandez",
+   "7a0a737c-32cf-492e-abe8-783a952d2eb5",
+   "Agustí Fernández"
+  ],
+  "7006": [
+   "Mette Rasmussen",
+   "46b060cd-49f9-4659-b73f-1e9d4e08c9b7",
+   "Mette Rasmussen"
+  ],
+  "7007": [
+   "Ken Vandermark",
+   "e5a4107f-5bb3-4f24-b9b7-927bb23840b5",
+   "Ken Vandermark"
+  ],
+  "7008": [
+   "Paul Lytton",
+   "e0e156bf-0a61-4418-a106-375817ab0bad",
+   "Paul Lytton"
+  ],
+  "7009": [
+   "Torben Snekkestad",
+   "56db81d8-8568-430b-b3a7-2dbaa7d326eb",
+   "Torben Snekkestad"
+  ],
+  "7010": [
+   "Aurora Trio",
+   "8c67e11c-e630-41fe-b6bc-12edbd86aab6",
+   "Aurora Trio"
+  ],
+  "7011": [
+   "Maya Homburger",
+   null,
+   "Maya Homburger"
+  ],
+  "7012": [
+   "Mats Gustafsson",
+   null,
+   "Mats Gustafsson"
+  ],
+  "7013": [
+   "Liudas Mockūnas",
+   null,
+   "Liudas Mockūnas"
+  ],
+  "7014": [
+   "György Kurtág",
+   null,
+   "György Kurtág"
+  ],
+  "7015": [
+   "Małgorzata Lipińska",
+   null,
+   "Malgorzata Lipińska"
+  ],
+  "7016": [
+   "Rafal Drewniany",
+   null,
+   "Rafał Drewniany"
+  ]
+ },
+ "companies": {
+  "8001": [
+   "label",
+   null,
+   "Not Two Records",
+   ""
+  ],
+  "8002": [
+   "place",
+   null,
+   "DTS Studio",
+   "Kraków"
+  ],
+  "8003": [
+   "place",
+   null,
+   "Alchemia",
+   "Kraków"
+  ],
+  "8004": [
+   "place",
+   null,
+   "Radio Kraków SA.",
+   "Kraków"
+  ]
+ },
+ "discogs": {
+  "id": 25163152,
+  "title": "Kraków 2018",
+  "country": "Poland",
+  "year": 2022,
+  "released": "2022-11",
+  "notes": "György Kurtág's miniatures as they appear within \"For To End Yet Again\":\r\n\"Elegie\", \"Calmo Sognando\", \"Hommage à J.S.B.\", \"Doloroso\", \"In Memoriam László Mensáros\", \"... Féerie D'Automne\", \"Hommage à John Cage\", \"Perpetuum Mobile\".\r\n\r\nRecorded: October 11-12, 2018 at the Alchemia Club, Kraków (CD#1, CD#2, CD#3, CD#4)\r\nOctober 13, 2018 at Radio Kraków (CD#5)\r\n\r\nRecorded, mixed and mastered by [...] (DTS Studio)\r\n\r\n© ℗ 2022",
+  "artists": [
+   {
+    "name": "Barry Guy",
+    "anv": "Barry Guy And Friends",
+    "id": 7001,
+    "join": "",
+    "role": ""
+   }
+  ],
+  "labels": [
+   {
+    "name": "Not Two Records",
+    "id": 8001,
+    "catno": "MW1031-2",
+    "entity_type_name": "Label"
+   }
+  ],
+  "formats": [
+   {
+    "name": "CD",
+    "qty": "5",
+    "descriptions": [
+     "Box Set",
+     "Album"
+    ]
+   }
+  ],
+  "companies": [
+   {
+    "name": "DTS Studio, Kraków",
+    "entity_type_name": "Recorded By",
+    "id": 8002,
+    "catno": "",
+    "resource_url": "https://api.discogs.com/labels/8002"
+   },
+   {
+    "name": "Alchemia (2)",
+    "entity_type_name": "Recorded At",
+    "id": 8003,
+    "catno": "",
+    "resource_url": "https://api.discogs.com/labels/8003"
+   },
+   {
+    "name": "Radio Kraków",
+    "entity_type_name": "Recorded At",
+    "id": 8004,
+    "catno": "",
+    "resource_url": "https://api.discogs.com/labels/8004"
+   },
+   {
+    "name": "DTS Studio, Kraków",
+    "entity_type_name": "Mixed At",
+    "id": 8002,
+    "catno": "",
+    "resource_url": "https://api.discogs.com/labels/8002"
+   },
+   {
+    "name": "DTS Studio, Kraków",
+    "entity_type_name": "Mastered At",
+    "id": 8002,
+    "catno": "",
+    "resource_url": "https://api.discogs.com/labels/8002"
+   }
+  ],
+  "extraartists": [
+   {
+    "name": "Małgorzata Lipińska",
+    "anv": "",
+    "join": "",
+    "role": "Design",
+    "tracks": "",
+    "id": 7015,
+    "resource_url": "https://api.discogs.com/artists/7015"
+   },
+   {
+    "name": "Barry Guy",
+    "anv": "",
+    "join": "",
+    "role": "Liner Notes [English]",
+    "tracks": "",
+    "id": 7001,
+    "resource_url": "https://api.discogs.com/artists/7001"
+   },
+   {
+    "name": "Rafal Drewniany",
+    "anv": "Rafał Drewniany",
+    "join": "",
+    "role": "Recorded By, Mixed By, Mastered By",
+    "tracks": "",
+    "id": 7016,
+    "resource_url": "https://api.discogs.com/artists/7016"
+   }
+  ],
+  "tracklist": [
+   {
+    "position": "",
+    "type_": "heading",
+    "title": "Alchemia Club",
+    "duration": ""
+   },
+   {
+    "position": "1-1",
+    "type_": "track",
+    "title": "Lopez // Mazur // Pursglove",
+    "duration": "28:52",
+    "extraartists": [
+     {
+      "name": "Percy Pursglove",
+      "anv": "Pursglove",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7004,
+      "resource_url": "https://api.discogs.com/artists/7004"
+     },
+     {
+      "name": "Rafal Mazur",
+      "anv": "Mazur",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7003,
+      "resource_url": "https://api.discogs.com/artists/7003"
+     },
+     {
+      "name": "Ramón López",
+      "anv": "Lopez",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7002,
+      "resource_url": "https://api.discogs.com/artists/7002"
+     }
+    ]
+   },
+   {
+    "position": "1-2",
+    "type_": "track",
+    "title": "Lopez // Mazur // Pursglove",
+    "duration": "7:01",
+    "extraartists": [
+     {
+      "name": "Percy Pursglove",
+      "anv": "Pursglove",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7004,
+      "resource_url": "https://api.discogs.com/artists/7004"
+     },
+     {
+      "name": "Rafal Mazur",
+      "anv": "Mazur",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7003,
+      "resource_url": "https://api.discogs.com/artists/7003"
+     },
+     {
+      "name": "Ramón López",
+      "anv": "Lopez",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7002,
+      "resource_url": "https://api.discogs.com/artists/7002"
+     }
+    ]
+   },
+   {
+    "position": "1-3",
+    "type_": "track",
+    "title": "Aurora Trio",
+    "duration": "7:52",
+    "extraartists": [
+     {
+      "name": "Barry Guy",
+      "anv": "",
+      "join": "",
+      "role": "Double Bass",
+      "tracks": "",
+      "id": 7001,
+      "resource_url": "https://api.discogs.com/artists/7001"
+     },
+     {
+      "name": "Ramón López",
+      "anv": "",
+      "join": "",
+      "role": "Drums, Cymbal [Cymbals], Percussion",
+      "tracks": "",
+      "id": 7002,
+      "resource_url": "https://api.discogs.com/artists/7002"
+     },
+     {
+      "name": "Aurora Trio",
+      "anv": "",
+      "join": "",
+      "role": "Ensemble",
+      "tracks": "",
+      "id": 7010,
+      "resource_url": "https://api.discogs.com/artists/7010"
+     },
+     {
+      "name": "Agustí Fernandez",
+      "anv": "Agustí Fernández",
+      "join": "",
+      "role": "Piano",
+      "tracks": "",
+      "id": 7005,
+      "resource_url": "https://api.discogs.com/artists/7005"
+     }
+    ]
+   },
+   {
+    "position": "1-4",
+    "type_": "track",
+    "title": "Aurora Trio & Rasmussen",
+    "duration": "10:18",
+    "extraartists": [
+     {
+      "name": "Barry Guy",
+      "anv": "",
+      "join": "",
+      "role": "Double Bass",
+      "tracks": "",
+      "id": 7001,
+      "resource_url": "https://api.discogs.com/artists/7001"
+     },
+     {
+      "name": "Ramón López",
+      "anv": "",
+      "join": "",
+      "role": "Drums, Cymbal [Cymbals], Percussion",
+      "tracks": "",
+      "id": 7002,
+      "resource_url": "https://api.discogs.com/artists/7002"
+     },
+     {
+      "name": "Aurora Trio",
+      "anv": "",
+      "join": "",
+      "role": "Ensemble",
+      "tracks": "",
+      "id": 7010,
+      "resource_url": "https://api.discogs.com/artists/7010"
+     },
+     {
+      "name": "Mette Rasmussen",
+      "anv": "Rasmussen",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7006,
+      "resource_url": "https://api.discogs.com/artists/7006"
+     },
+     {
+      "name": "Agustí Fernandez",
+      "anv": "Agustí Fernández",
+      "join": "",
+      "role": "Piano",
+      "tracks": "",
+      "id": 7005,
+      "resource_url": "https://api.discogs.com/artists/7005"
+     }
+    ]
+   },
+   {
+    "position": "",
+    "type_": "heading",
+    "title": "Alchemia Club",
+    "duration": ""
+   },
+   {
+    "position": "2-1",
+    "type_": "track",
+    "title": "Vandermark // Guy",
+    "duration": "5:00",
+    "extraartists": [
+     {
+      "name": "Barry Guy",
+      "anv": "Guy",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7001,
+      "resource_url": "https://api.discogs.com/artists/7001"
+     },
+     {
+      "name": "Ken Vandermark",
+      "anv": "Vandermark",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7007,
+      "resource_url": "https://api.discogs.com/artists/7007"
+     }
+    ]
+   },
+   {
+    "position": "2-2",
+    "type_": "track",
+    "title": "Vandermark // Guy",
+    "duration": "4:01",
+    "extraartists": [
+     {
+      "name": "Barry Guy",
+      "anv": "Guy",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7001,
+      "resource_url": "https://api.discogs.com/artists/7001"
+     },
+     {
+      "name": "Ken Vandermark",
+      "anv": "Vandermark",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7007,
+      "resource_url": "https://api.discogs.com/artists/7007"
+     }
+    ]
+   },
+   {
+    "position": "2-3",
+    "type_": "track",
+    "title": "Pursglove // Vandermark // Guy // Lytton",
+    "duration": "22:39",
+    "extraartists": [
+     {
+      "name": "Barry Guy",
+      "anv": "Guy",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7001,
+      "resource_url": "https://api.discogs.com/artists/7001"
+     },
+     {
+      "name": "Ken Vandermark",
+      "anv": "Vandermark",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7007,
+      "resource_url": "https://api.discogs.com/artists/7007"
+     },
+     {
+      "name": "Paul Lytton",
+      "anv": "Lytton",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7008,
+      "resource_url": "https://api.discogs.com/artists/7008"
+     },
+     {
+      "name": "Percy Pursglove",
+      "anv": "Pursglove",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7004,
+      "resource_url": "https://api.discogs.com/artists/7004"
+     }
+    ]
+   },
+   {
+    "position": "2-4",
+    "type_": "track",
+    "title": "Pursglove // Vandermark // Guy // Lytton",
+    "duration": "5:42",
+    "extraartists": [
+     {
+      "name": "Barry Guy",
+      "anv": "Guy",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7001,
+      "resource_url": "https://api.discogs.com/artists/7001"
+     },
+     {
+      "name": "Ken Vandermark",
+      "anv": "Vandermark",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7007,
+      "resource_url": "https://api.discogs.com/artists/7007"
+     },
+     {
+      "name": "Paul Lytton",
+      "anv": "Lytton",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7008,
+      "resource_url": "https://api.discogs.com/artists/7008"
+     },
+     {
+      "name": "Percy Pursglove",
+      "anv": "Pursglove",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7004,
+      "resource_url": "https://api.discogs.com/artists/7004"
+     }
+    ]
+   },
+   {
+    "position": "",
+    "type_": "heading",
+    "title": "Alchemia Club",
+    "duration": ""
+   },
+   {
+    "position": "3-1",
+    "type_": "track",
+    "title": "Snekkestad // Fernández // Guy",
+    "duration": "33:27",
+    "extraartists": [
+     {
+      "name": "Agustí Fernandez",
+      "anv": "Fernández",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7005,
+      "resource_url": "https://api.discogs.com/artists/7005"
+     },
+     {
+      "name": "Barry Guy",
+      "anv": "Guy",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7001,
+      "resource_url": "https://api.discogs.com/artists/7001"
+     },
+     {
+      "name": "Torben Snekkestad",
+      "anv": "Snekkestad",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7009,
+      "resource_url": "https://api.discogs.com/artists/7009"
+     }
+    ]
+   },
+   {
+    "position": "3-2",
+    "type_": "track",
+    "title": "Guy // López // Mazur",
+    "duration": "8:23",
+    "extraartists": [
+     {
+      "name": "Barry Guy",
+      "anv": "Guy",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7001,
+      "resource_url": "https://api.discogs.com/artists/7001"
+     },
+     {
+      "name": "Rafal Mazur",
+      "anv": "Mazur",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7003,
+      "resource_url": "https://api.discogs.com/artists/7003"
+     },
+     {
+      "name": "Ramón López",
+      "anv": "López",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7002,
+      "resource_url": "https://api.discogs.com/artists/7002"
+     }
+    ]
+   },
+   {
+    "position": "3-3",
+    "type_": "track",
+    "title": "Guy // López // Mazur",
+    "duration": "8:04",
+    "extraartists": [
+     {
+      "name": "Barry Guy",
+      "anv": "Guy",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7001,
+      "resource_url": "https://api.discogs.com/artists/7001"
+     },
+     {
+      "name": "Rafal Mazur",
+      "anv": "Mazur",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7003,
+      "resource_url": "https://api.discogs.com/artists/7003"
+     },
+     {
+      "name": "Ramón López",
+      "anv": "López",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7002,
+      "resource_url": "https://api.discogs.com/artists/7002"
+     }
+    ]
+   },
+   {
+    "position": "3-4",
+    "type_": "track",
+    "title": "Guy // López // Mazur",
+    "duration": "4:15",
+    "extraartists": [
+     {
+      "name": "Barry Guy",
+      "anv": "Guy",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7001,
+      "resource_url": "https://api.discogs.com/artists/7001"
+     },
+     {
+      "name": "Rafal Mazur",
+      "anv": "Mazur",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7003,
+      "resource_url": "https://api.discogs.com/artists/7003"
+     },
+     {
+      "name": "Ramón López",
+      "anv": "López",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7002,
+      "resource_url": "https://api.discogs.com/artists/7002"
+     }
+    ]
+   },
+   {
+    "position": "",
+    "type_": "heading",
+    "title": "Alchemia Club",
+    "duration": ""
+   },
+   {
+    "position": "4-1",
+    "type_": "track",
+    "title": "Vandermark // Rasmussen // Snekkestad",
+    "duration": "4:09",
+    "extraartists": [
+     {
+      "name": "Ken Vandermark",
+      "anv": "Vandermark",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7007,
+      "resource_url": "https://api.discogs.com/artists/7007"
+     },
+     {
+      "name": "Mette Rasmussen",
+      "anv": "Rasmussen",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7006,
+      "resource_url": "https://api.discogs.com/artists/7006"
+     },
+     {
+      "name": "Torben Snekkestad",
+      "anv": "Snekkestad",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7009,
+      "resource_url": "https://api.discogs.com/artists/7009"
+     }
+    ]
+   },
+   {
+    "position": "4-2",
+    "type_": "track",
+    "title": "Vandermark // Rasmussen // Snekkestad",
+    "duration": "6:14",
+    "extraartists": [
+     {
+      "name": "Ken Vandermark",
+      "anv": "Vandermark",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7007,
+      "resource_url": "https://api.discogs.com/artists/7007"
+     },
+     {
+      "name": "Mette Rasmussen",
+      "anv": "Rasmussen",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7006,
+      "resource_url": "https://api.discogs.com/artists/7006"
+     },
+     {
+      "name": "Torben Snekkestad",
+      "anv": "Snekkestad",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7009,
+      "resource_url": "https://api.discogs.com/artists/7009"
+     }
+    ]
+   },
+   {
+    "position": "4-3",
+    "type_": "track",
+    "title": "Vandermark // Rasmussen // Snekkestad",
+    "duration": "6:16",
+    "extraartists": [
+     {
+      "name": "Ken Vandermark",
+      "anv": "Vandermark",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7007,
+      "resource_url": "https://api.discogs.com/artists/7007"
+     },
+     {
+      "name": "Mette Rasmussen",
+      "anv": "Rasmussen",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7006,
+      "resource_url": "https://api.discogs.com/artists/7006"
+     },
+     {
+      "name": "Torben Snekkestad",
+      "anv": "Snekkestad",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7009,
+      "resource_url": "https://api.discogs.com/artists/7009"
+     }
+    ]
+   },
+   {
+    "position": "4-4",
+    "type_": "track",
+    "title": "Rasmussen // Guy // Lytton",
+    "duration": "24:31",
+    "extraartists": [
+     {
+      "name": "Barry Guy",
+      "anv": "Guy",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7001,
+      "resource_url": "https://api.discogs.com/artists/7001"
+     },
+     {
+      "name": "Mette Rasmussen",
+      "anv": "Rasmussen",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7006,
+      "resource_url": "https://api.discogs.com/artists/7006"
+     },
+     {
+      "name": "Paul Lytton",
+      "anv": "Lytton",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7008,
+      "resource_url": "https://api.discogs.com/artists/7008"
+     }
+    ]
+   },
+   {
+    "position": "4-5",
+    "type_": "track",
+    "title": "Rasmussen // Guy // Lytton // Fernández // Pursglove",
+    "duration": "16:06",
+    "extraartists": [
+     {
+      "name": "Agustí Fernandez",
+      "anv": "Fernández",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7005,
+      "resource_url": "https://api.discogs.com/artists/7005"
+     },
+     {
+      "name": "Barry Guy",
+      "anv": "Guy",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7001,
+      "resource_url": "https://api.discogs.com/artists/7001"
+     },
+     {
+      "name": "Mette Rasmussen",
+      "anv": "Rasmussen",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7006,
+      "resource_url": "https://api.discogs.com/artists/7006"
+     },
+     {
+      "name": "Paul Lytton",
+      "anv": "Lytton",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7008,
+      "resource_url": "https://api.discogs.com/artists/7008"
+     },
+     {
+      "name": "Percy Pursglove",
+      "anv": "Pursglove",
+      "join": "",
+      "role": "Performer",
+      "tracks": "",
+      "id": 7004,
+      "resource_url": "https://api.discogs.com/artists/7004"
+     }
+    ]
+   },
+   {
+    "position": "",
+    "type_": "heading",
+    "title": "Radio Kraków",
+    "duration": ""
+   },
+   {
+    "position": "5-1",
+    "type_": "track",
+    "title": "For To End Yet Again",
+    "duration": "57:32",
+    "extraartists": [
+     {
+      "name": "Barry Guy",
+      "anv": "",
+      "join": "",
+      "role": "Bass, Directed By [Director], Composed By [Composer]",
+      "tracks": "",
+      "id": 7001,
+      "resource_url": "https://api.discogs.com/artists/7001"
+     },
+     {
+      "name": "György Kurtág",
+      "anv": "",
+      "join": "",
+      "role": "Composed By [(...)'s Miniatures]",
+      "tracks": "",
+      "id": 7014,
+      "resource_url": "https://api.discogs.com/artists/7014"
+     },
+     {
+      "name": "Rafal Mazur",
+      "anv": "Rafał Mazur",
+      "join": "",
+      "role": "Electric Bass",
+      "tracks": "",
+      "id": 7003,
+      "resource_url": "https://api.discogs.com/artists/7003"
+     },
+     {
+      "name": "Paul Lytton",
+      "anv": "",
+      "join": "",
+      "role": "Percussion",
+      "tracks": "",
+      "id": 7008,
+      "resource_url": "https://api.discogs.com/artists/7008"
+     },
+     {
+      "name": "Ramón López",
+      "anv": "",
+      "join": "",
+      "role": "Percussion",
+      "tracks": "",
+      "id": 7002,
+      "resource_url": "https://api.discogs.com/artists/7002"
+     },
+     {
+      "name": "Agustí Fernandez",
+      "anv": "Agustí Fernández",
+      "join": "",
+      "role": "Piano",
+      "tracks": "",
+      "id": 7005,
+      "resource_url": "https://api.discogs.com/artists/7005"
+     },
+     {
+      "name": "Liudas Mockūnas",
+      "anv": "",
+      "join": "",
+      "role": "Saxophone",
+      "tracks": "",
+      "id": 7013,
+      "resource_url": "https://api.discogs.com/artists/7013"
+     },
+     {
+      "name": "Mats Gustafsson",
+      "anv": "",
+      "join": "",
+      "role": "Saxophone",
+      "tracks": "",
+      "id": 7012,
+      "resource_url": "https://api.discogs.com/artists/7012"
+     },
+     {
+      "name": "Mette Rasmussen",
+      "anv": "",
+      "join": "",
+      "role": "Saxophone",
+      "tracks": "",
+      "id": 7006,
+      "resource_url": "https://api.discogs.com/artists/7006"
+     },
+     {
+      "name": "Torben Snekkestad",
+      "anv": "",
+      "join": "",
+      "role": "Saxophone, Trumpet [Reed Trumpet]",
+      "tracks": "",
+      "id": 7009,
+      "resource_url": "https://api.discogs.com/artists/7009"
+     },
+     {
+      "name": "Percy Pursglove",
+      "anv": "",
+      "join": "",
+      "role": "Trumpet",
+      "tracks": "",
+      "id": 7004,
+      "resource_url": "https://api.discogs.com/artists/7004"
+     },
+     {
+      "name": "Maya Homburger",
+      "anv": "",
+      "join": "",
+      "role": "Violin [Baroque Violin]",
+      "tracks": "",
+      "id": 7011,
+      "resource_url": "https://api.discogs.com/artists/7011"
+     }
+    ]
+   }
+  ]
+ },
+ "bandcamp": {
+  "url": "https://nottworecords.bandcamp.com/album/barry-guy-and-friends-krak-w-2018-mw1031-2",
+  "title": "Barry Guy and Friends ‎– Kraków 2018 (MW1031-2)",
+  "credits": "Barry Guy – bass, director, composer\nMaya Homburger – baroque violin\nAgustí Fernández – piano\nPercy Pursglove – trumpet\nMette Rasmussen – saxophone\nTorben Snekkestad – saxophone and reed trumpet\nMats Gustafsson – saxophone\nLiudas Mockūnas – saxophone\nRafał Mazur – electric bass\nPaul Lytton – percussion\nRamón López – percussion",
+  "about": "A five-disc box set of three days in Kraków, October 2018, recorded at the Alchemia Club and at Radio Kraków. The first four discs: pianist Agustí Fernández, saxophonists Mette Rasmussen, Ken Vandermark and Torben Snekkestad, trumpeter Percy Pursglove, drummers Paul Lytton and Ramón López, and electric bassist Rafał Mazur. The closing disc: the eleven-piece ensemble, joined by baroque violinist Maya Homburger, with miniatures by György Kurtág.",
+  "tracks": [
+   [
+    "Album 1: Improv 1  (Lopez dr// Mazur, el-b // Pursglove, tp)",
+    1735
+   ],
+   [
+    "Album 1: Improv 2 (Lopez dr// Mazur, el-b // Pursglove, tp)",
+    423
+   ],
+   [
+    "Album 1: Improv 3  (Aurora Trio: Fernández p // Guy, db // López,perc, cym)",
+    473
+   ],
+   [
+    "Album 1: Improv 4  (Aurora Trio // Rasmussen sax)",
+    619
+   ],
+   [
+    "Albume 2: Improv 1 05:00 (Vandermark sax // Guy, db)",
+    302
+   ],
+   [
+    "Albume 2: Improv 2 (Vandermark sax // Guy, db)",
+    243
+   ],
+   [
+    "Albume 2: Improv 3 (Pursglove tp // Vandermark, sax // Guy, db // Lytton, perc, cym)",
+    1359
+   ],
+   [
+    "Albume 2: Improv 4 (Pursglove tp // Vandermark, sax // Guy, db // Lytton, perc, cym)",
+    342
+   ],
+   [
+    "Albume 3: Improv 1 (Snekkestad sax, tp // Fernández, p // Guy, db)",
+    2009
+   ],
+   [
+    "Albume 3: Improv 2 (Guy db // López, dr // Mazur, el-b)",
+    505
+   ],
+   [
+    "Albume 3: Improv 3 (Guy, db // López, dr // Mazur, el-b)",
+    486
+   ],
+   [
+    "Albume 3: Improv 4 (Guy, db // López, dr // Mazur, el-b)",
+    255
+   ],
+   [
+    "Albume 4: Improv 1  (Vandermark sax // Rasmussen, sax // Snekkestad, sax, tp)",
+    251
+   ],
+   [
+    "Albume 4: Improv 2 Vandermark sax // Rasmussen, sax // Snekkestad, sax, tp)",
+    376
+   ],
+   [
+    "Albume 4: Improv 3 Vandermark sax // Rasmussen, sax // Snekkestad, sax, tp)",
+    184
+   ],
+   [
+    "Albume 4: Improv 4 (Rasmussen sax// Guy, db // Lytton, perc cym)",
+    1473
+   ],
+   [
+    "Albume 4: Improv 5 (Rasmussen sax// Guy, db // Lytton, perc cym) // Fernández, p // Pursglove, tp)",
+    966
+   ],
+   [
+    "For To End Yet Again",
+    3450
+   ]
+  ]
+ },
+ "mb": {
+  "release_cd": "8b65e45a-7e17-4f93-9d43-0f3c0b4006d7",
+  "release_digital": "4a843c35-c6b2-4855-9851-d5fb7ff18b37",
+  "release_group": "3fffd3d6-f3d9-4c67-9f38-86639cb5ef0a",
+  "media": [
+   4,
+   4,
+   4,
+   5,
+   1
+  ],
+  "recordings": [
+   "7483868b-339d-4a41-91c9-e56a7d5493b7",
+   "db125894-3fa0-4880-afd5-36a83e7a5fe0",
+   "f1efaafe-b74d-4127-b9ff-fa2fa376e448",
+   "1c6146e3-44b5-4cd4-8f42-8d6c9b04f698",
+   "da782e74-a884-4171-8b78-29ae444c2856",
+   "2f97a194-e0ef-4a80-86c4-6a22532178b5",
+   "c43e68a1-07fc-4d05-924e-798d248e68d1",
+   "06738adf-d972-43e2-9246-aae51534aba7",
+   "51f69a6f-52cf-4f85-9811-8c4487373f9e",
+   "f27e6937-3ce4-4fbd-8a98-df2bfb6d1174",
+   "4ac35e29-9f65-4db5-95ab-eeaaace1f3cb",
+   "88564255-e5d5-4677-973a-e0431eb5087a",
+   "2eb5e955-084b-4811-9636-17fc012b7a44",
+   "44b0e1f1-a9d0-42f2-a600-cab5f2bcb8c0",
+   "d355976c-ae1c-4f81-a9f6-df891be6b224",
+   "585157a1-b410-4733-94cc-cf7887e1baed",
+   "dc0ff24e-5bcb-4e59-b797-43223bb12180",
+   "f1059c6d-84a7-404b-ba80-4e6f79db8786"
+  ],
+  "titles_cd": [
+   "[untitled]",
+   "[untitled]",
+   "[untitled]",
+   "[untitled]",
+   "[untitled]",
+   "[untitled]",
+   "[untitled]",
+   "[untitled]",
+   "[untitled]",
+   "[untitled]",
+   "[untitled]",
+   "[untitled]",
+   "[untitled]",
+   "[untitled]",
+   "[untitled]",
+   "[untitled]",
+   "[untitled]",
+   "For to End Yet Again"
+  ],
+  "titles_digital": [
+   "Improv 1",
+   "Improv 2",
+   "Improv 3",
+   "Improv 4",
+   "Improv 1",
+   "Improv 2",
+   "Improv 3",
+   "Improv 4",
+   "Improv 1",
+   "Improv 2",
+   "Improv 3",
+   "Improv 4",
+   "Improv 1",
+   "Improv 2",
+   "Improv 3",
+   "Improv 4",
+   "Improv 5",
+   "For to End Yet Again"
+  ],
+  "track_ac": [
+   [
+    [
+     "Ramón López",
+     "Rafał Mazur",
+     "Percy Pursglove"
+    ],
+    [
+     " // ",
+     " // ",
+     ""
+    ]
+   ],
+   [
+    [
+     "Ramón López",
+     "Rafał Mazur",
+     "Percy Pursglove"
+    ],
+    [
+     " // ",
+     " // ",
+     ""
+    ]
+   ],
+   [
+    [
+     "Aurora Trio"
+    ],
+    [
+     ""
+    ]
+   ],
+   [
+    [
+     "Aurora Trio",
+     "Mette Rasmussen"
+    ],
+    [
+     " & ",
+     ""
+    ]
+   ],
+   [
+    [
+     "Ken Vandermark",
+     "Barry Guy"
+    ],
+    [
+     " // ",
+     ""
+    ]
+   ],
+   [
+    [
+     "Ken Vandermark",
+     "Barry Guy"
+    ],
+    [
+     " // ",
+     ""
+    ]
+   ],
+   [
+    [
+     "Percy Pursglove",
+     "Ken Vandermark",
+     "Barry Guy",
+     "Paul Lytton"
+    ],
+    [
+     " // ",
+     " // ",
+     " // ",
+     ""
+    ]
+   ],
+   [
+    [
+     "Percy Pursglove",
+     "Ken Vandermark",
+     "Barry Guy",
+     "Paul Lytton"
+    ],
+    [
+     " // ",
+     " // ",
+     " // ",
+     ""
+    ]
+   ],
+   [
+    [
+     "Torben Snekkestad",
+     "Agustí Fernández",
+     "Barry Guy"
+    ],
+    [
+     " // ",
+     " // ",
+     ""
+    ]
+   ],
+   [
+    [
+     "Barry Guy",
+     "Ramón López",
+     "Rafał Mazur"
+    ],
+    [
+     " // ",
+     " // ",
+     ""
+    ]
+   ],
+   [
+    [
+     "Barry Guy",
+     "Ramón López",
+     "Rafał Mazur"
+    ],
+    [
+     " // ",
+     " // ",
+     ""
+    ]
+   ],
+   [
+    [
+     "Barry Guy",
+     "Ramón López",
+     "Rafał Mazur"
+    ],
+    [
+     " // ",
+     " // ",
+     ""
+    ]
+   ],
+   [
+    [
+     "Ken Vandermark",
+     "Mette Rasmussen",
+     "Torben Snekkestad"
+    ],
+    [
+     " // ",
+     " // ",
+     ""
+    ]
+   ],
+   [
+    [
+     "Ken Vandermark",
+     "Mette Rasmussen",
+     "Torben Snekkestad"
+    ],
+    [
+     " // ",
+     " // ",
+     ""
+    ]
+   ],
+   [
+    [
+     "Ken Vandermark",
+     "Mette Rasmussen",
+     "Torben Snekkestad"
+    ],
+    [
+     " // ",
+     " // ",
+     ""
+    ]
+   ],
+   [
+    [
+     "Mette Rasmussen",
+     "Barry Guy",
+     "Paul Lytton"
+    ],
+    [
+     " // ",
+     " // ",
+     ""
+    ]
+   ],
+   [
+    [
+     "Mette Rasmussen",
+     "Barry Guy",
+     "Paul Lytton",
+     "Agustí Fernández",
+     "Percy Pursglove"
+    ],
+    [
+     " // ",
+     " // ",
+     " // ",
+     " // ",
+     ""
+    ]
+   ],
+   [
+    [
+     "Barry Guy"
+    ],
+    [
+     " and Friends"
+    ]
+   ]
+  ],
+  "track_ac_note": "track 17 (4.5) as corrected by the edit sent on 2026-11-27 (MusicBrainz still had Vandermark // Rasmussen // Snekkestad // Fernández // Pursglove)",
+  "groups": {
+   "Aurora Trio": "8c67e11c-e630-41fe-b6bc-12edbd86aab6"
+  }
+ },
+ "target": {
+  "tracks": {
+   "1": {
+    "Ramón López": [
+     "drums"
+    ],
+    "Rafał Mazur": [
+     "electric bass"
+    ],
+    "Percy Pursglove": [
+     "trumpet"
+    ]
+   },
+   "2": {
+    "Ramón López": [
+     "drums"
+    ],
+    "Rafał Mazur": [
+     "electric bass"
+    ],
+    "Percy Pursglove": [
+     "trumpet"
+    ]
+   },
+   "3": {
+    "Agustí Fernández": [
+     "piano"
+    ],
+    "Barry Guy": [
+     "double bass"
+    ],
+    "Ramón López": [
+     "drums",
+     "cymbal",
+     "percussion"
+    ]
+   },
+   "4": {
+    "Agustí Fernández": [
+     "piano"
+    ],
+    "Barry Guy": [
+     "double bass"
+    ],
+    "Ramón López": [
+     "drums",
+     "cymbal",
+     "percussion"
+    ],
+    "Mette Rasmussen": [
+     "saxophone"
+    ]
+   },
+   "5": {
+    "Ken Vandermark": [
+     "saxophone"
+    ],
+    "Barry Guy": [
+     "double bass"
+    ]
+   },
+   "6": {
+    "Ken Vandermark": [
+     "saxophone"
+    ],
+    "Barry Guy": [
+     "double bass"
+    ]
+   },
+   "7": {
+    "Percy Pursglove": [
+     "trumpet"
+    ],
+    "Ken Vandermark": [
+     "saxophone"
+    ],
+    "Barry Guy": [
+     "double bass"
+    ],
+    "Paul Lytton": [
+     "percussion",
+     "cymbal"
+    ]
+   },
+   "8": {
+    "Percy Pursglove": [
+     "trumpet"
+    ],
+    "Ken Vandermark": [
+     "saxophone"
+    ],
+    "Barry Guy": [
+     "double bass"
+    ],
+    "Paul Lytton": [
+     "percussion",
+     "cymbal"
+    ]
+   },
+   "9": {
+    "Torben Snekkestad": [
+     "saxophone",
+     "reed trumpet"
+    ],
+    "Agustí Fernández": [
+     "piano"
+    ],
+    "Barry Guy": [
+     "double bass"
+    ]
+   },
+   "10": {
+    "Barry Guy": [
+     "double bass"
+    ],
+    "Ramón López": [
+     "drums"
+    ],
+    "Rafał Mazur": [
+     "electric bass"
+    ]
+   },
+   "11": {
+    "Barry Guy": [
+     "double bass"
+    ],
+    "Ramón López": [
+     "drums"
+    ],
+    "Rafał Mazur": [
+     "electric bass"
+    ]
+   },
+   "12": {
+    "Barry Guy": [
+     "double bass"
+    ],
+    "Ramón López": [
+     "drums"
+    ],
+    "Rafał Mazur": [
+     "electric bass"
+    ]
+   },
+   "13": {
+    "Ken Vandermark": [
+     "saxophone"
+    ],
+    "Mette Rasmussen": [
+     "saxophone"
+    ],
+    "Torben Snekkestad": [
+     "saxophone",
+     "reed trumpet"
+    ]
+   },
+   "14": {
+    "Ken Vandermark": [
+     "saxophone"
+    ],
+    "Mette Rasmussen": [
+     "saxophone"
+    ],
+    "Torben Snekkestad": [
+     "saxophone",
+     "reed trumpet"
+    ]
+   },
+   "15": {
+    "Ken Vandermark": [
+     "saxophone"
+    ],
+    "Mette Rasmussen": [
+     "saxophone"
+    ],
+    "Torben Snekkestad": [
+     "saxophone",
+     "reed trumpet"
+    ]
+   },
+   "16": {
+    "Mette Rasmussen": [
+     "saxophone"
+    ],
+    "Barry Guy": [
+     "double bass"
+    ],
+    "Paul Lytton": [
+     "percussion",
+     "cymbal"
+    ]
+   },
+   "17": {
+    "Mette Rasmussen": [
+     "saxophone"
+    ],
+    "Barry Guy": [
+     "double bass"
+    ],
+    "Paul Lytton": [
+     "percussion",
+     "cymbal"
+    ],
+    "Agustí Fernández": [
+     "piano"
+    ],
+    "Percy Pursglove": [
+     "trumpet"
+    ]
+   },
+   "18": {
+    "Barry Guy": [
+     "double bass"
+    ],
+    "Maya Homburger": [
+     "baroque violin"
+    ],
+    "Agustí Fernández": [
+     "piano"
+    ],
+    "Percy Pursglove": [
+     "trumpet"
+    ],
+    "Mette Rasmussen": [
+     "saxophone"
+    ],
+    "Torben Snekkestad": [
+     "saxophone",
+     "reed trumpet"
+    ],
+    "Mats Gustafsson": [
+     "saxophone"
+    ],
+    "Liudas Mockūnas": [
+     "saxophone"
+    ],
+    "Rafał Mazur": [
+     "electric bass"
+    ],
+    "Paul Lytton": [
+     "percussion"
+    ],
+    "Ramón López": [
+     "percussion"
+    ]
+   }
+  },
+  "dates": {
+   "1": [
+    "2018-10-11 – 2018-10-12",
+    "2018-10 – 2018-10"
+   ],
+   "2": [
+    "2018-10-11 – 2018-10-12",
+    "2018-10 – 2018-10"
+   ],
+   "3": [
+    "2018-10-11 – 2018-10-12",
+    "2018-10 – 2018-10"
+   ],
+   "4": [
+    "2018-10-11 – 2018-10-12",
+    "2018-10 – 2018-10"
+   ],
+   "5": [
+    "2018-10-11 – 2018-10-12",
+    "2018-10 – 2018-10"
+   ],
+   "6": [
+    "2018-10-11 – 2018-10-12",
+    "2018-10 – 2018-10"
+   ],
+   "7": [
+    "2018-10-11 – 2018-10-12",
+    "2018-10 – 2018-10"
+   ],
+   "8": [
+    "2018-10-11 – 2018-10-12",
+    "2018-10 – 2018-10"
+   ],
+   "9": [
+    "2018-10-11 – 2018-10-12",
+    "2018-10 – 2018-10"
+   ],
+   "10": [
+    "2018-10-11 – 2018-10-12",
+    "2018-10 – 2018-10"
+   ],
+   "11": [
+    "2018-10-11 – 2018-10-12",
+    "2018-10 – 2018-10"
+   ],
+   "12": [
+    "2018-10-11 – 2018-10-12",
+    "2018-10 – 2018-10"
+   ],
+   "13": [
+    "2018-10-11 – 2018-10-12",
+    "2018-10 – 2018-10"
+   ],
+   "14": [
+    "2018-10-11 – 2018-10-12",
+    "2018-10 – 2018-10"
+   ],
+   "15": [
+    "2018-10-11 – 2018-10-12",
+    "2018-10 – 2018-10"
+   ],
+   "16": [
+    "2018-10-11 – 2018-10-12",
+    "2018-10 – 2018-10"
+   ],
+   "17": [
+    "2018-10-11 – 2018-10-12",
+    "2018-10 – 2018-10"
+   ],
+   "18": [
+    "2018-10-13 – 2018-10-13",
+    "2018-10-13"
+   ]
+  },
+  "places": {
+   "Alchemia": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17
+   ],
+   "Radio Kraków": [
+    18
+   ]
+  },
+  "names": {
+   "Agustí Fernandez": "Agustí Fernández",
+   "Rafal Mazur": "Rafał Mazur"
+  },
+  "note": "the right performers on every track with the right instruments on the right date; instruments as precise as either source says them (Discogs 1-3/1-4: drums, cymbal, percussion for López; Bandcamp: dr, el-b, db, tp, sax, perc, cym; Snekkestad sax and reed trumpet)",
+  "dates_note": "tracks 1–17 follow the quick switch D022 \"Several days → month\": on the month 2018-10, off the period 2018-10-11 – 2018-10-12 (both checked 2026-11-27); track 18 2018-10-13",
+  "groups": {
+   "Aurora Trio": [
+    3,
+    4
+   ]
+  },
+  "groups_note": "the group performer row (\"Ensemble – Aurora Trio\") stays beside its members (owner 2026-11-27 14:51: information MusicBrainz can show, only as performer)"
+ },
+ "cover_text": "CD#1 Alchemia Club\nLopez // Mazur // Pursglove 28:52\nLopez // Mazur // Pursglove 07:01\nAurora Trio 07:52\nAurora Trio & Rasmussen 10:18\n\nCD#2 Alchemia Club\nVandermark // Guy 05:00\nVandermark // Guy 04:01\nPursglove // Vandermark // Guy // Lytton 22:39\nPursglove // Vandermark // Guy // Lytton 05:42\n\nCD#3 Alchemia Club\nSnekkestad // Fernández // Guy 33:27\nGuy // López // Mazur 08:23\nGuy // López // Mazur 08:04\nGuy // López // Mazur 04:15\n\nCD#4 Alchemia Club\nVandermark // Rasmussen // Snekkestad 04:09\nVandermark // Rasmussen // Snekkestad 06:14\nVandermark // Rasmussen // Snekkestad 06:16\nRasmussen // Guy // Lytton 24:31\nRasmussen // Guy // Lytton // Fernández // Pursglove 16:06\n\nCD#5 Radio Kraków\nFor To End Yet Again (composed by Barry Guy) 57:32\n\nAurora Trio:\nAGUSTÍ FERNÁNDEZ piano\nBARRY GUY double bass\nRAMÓN LÓPEZ drums, cymbals and percussion\n\nLine-up for the first performance of this composition in Kraków:\nBARRY GUY bass / director / composer\nMAYA HOMBURGER baroque violin\nAGUSTÍ FERNÁNDEZ piano\nPERCY PURSGLOVE trumpet\nMETTE RASMUSSEN saxophone\nTORBEN SNEKKESTAD saxophone and reed trumpet\nMATS GUSTAFSSON saxophone\nLIUDAS MOCKŪNAS saxophone\nRAFAŁ MAZUR electric bass\nPAUL LYTTON percussion\nRAMÓN LÓPEZ percussion\n\nRecorded: October 11–12, 2018 at the Alchemia Club, Kraków\nOctober 13, 2018 at Radio Kraków\nRecorded, mixed and mastered by Rafał DREWNIANY (DTS STUDIO)\nDesign by Małgorzata LIPIŃSKA\n\nBarry GUY plays exclusively on Thomastik Bass Strings.\n\n5 CD's BOX\nWWW.NOTTWO.COM\nMW1031-2 © ℗ 2022 ZAIKS/BIEM 2022",
+ "cover_text_note": "the back of the box as text (transcribed from the owner's scan, 2026-11-27), as \"Text from cover art\" or a pasted text would give it"
+}

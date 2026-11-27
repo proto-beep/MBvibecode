@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-27 | 3.231.0 – 3.232.0 | 1.26.0 |
+| 2026-11-27 | 3.231.0 – 3.233.0 | 1.26.0 |
 | 2026-11-26 | 3.224.0 – 3.230.0 | 1.25.0 |
 | 2026-11-25 | 3.218.0 – 3.223.0 | 1.24.0 |
 | 2026-11-24 | 3.213.0 – 3.217.0 | – |
@@ -164,6 +164,17 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-27
+
+### Import 3.233.0
+
+**The engineer's studio no recording place, tracks in short by media, live comments grouped with their notes and their area, "Concept By, Realization".**
+
+- **The engineer's studio** (rule S571): where Discogs lists the places it was recorded at, "Recorded, mixed and mastered by X (DTS Studio)" in the notes gives the studio no "recorded at" (listed as left out), and "Recorded By – <studio>" of a place is left out; the studio keeps "mixed at" / "mastered at".
+- **Tracks in short by media** (rule S568): "media 1–4", "medium 5", runs over the end of a medium ("1.3–2.2"), mixed "media 1–4, 5.1" – instead of "tracks 1.1–1.4, 2.1–2.4, 3.1–3.4, 4.1–4.5".
+- **Live comments grouped with their notes** (rule S569): the same comment, tick and notes are one line, the note said once; alone only another comment in MusicBrainz and an area still looked up.
+- **Places in the same area** (rule S570): two places of one area in the comment as the area ("live, 2018-10: Kraków, Poland"), said beside it, ticked. Only empty comments are written, as always.
+- **"Concept By, Realization"** (rule S572, R131, R132, question Q028): "Concept By" the creative direction (release group, "concept"); with "Realization" in the same credit one row, "concept, realization"; "Realization" alone asks – graphic design, producer or miscellaneous support.
+- **Tests:** the box "Kraków 2018" (Discogs, Bandcamp, the back of the box, MusicBrainz) as test data – smoke/data/krakow2018.json, smoke/krakow.py, smoke/t_twosources.py (case krakow3233).
 
 ### Import 3.232.0
 
