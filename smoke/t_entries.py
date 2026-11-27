@@ -4811,7 +4811,7 @@ def case_sort3112():
         off = [pg.evaluate("!!document.querySelector('[data-f=sort-mode]')"), pg.evaluate(NAMES), pg.evaluate(HEADS)]
         print('D)', off)
         results.append(off[0] is False and off[1] == src and off[2] == [])
-        sc = pg.evaluate("[!!document.querySelector('[data-act=bulk-level][data-level=only-works]'), [...document.querySelectorAll('[data-act=scope]')].map(b => b.textContent.trim()), (document.querySelector('.dci-scope-label') || {}).textContent]")
+        sc = pg.evaluate("[!!document.querySelector('[data-act=bulk-level][data-level=only-works]'), [...document.querySelectorAll('[data-act=scope]')].map(b => b.textContent.trim()), (document.querySelector('.dci-scope-label') || (document.querySelector('.dci-scope') || {}).previousElementSibling || {}).textContent]")
         pg.click('[data-act=scope][data-scope=work]')
         pg.wait_for_timeout(400)
         on = pg.evaluate("(document.querySelector('[data-act=scope][aria-pressed=true]') || {}).dataset?.scope")
@@ -4833,7 +4833,7 @@ def case_sort3112():
         back = pg.evaluate("MB.relationshipEditor ? [...document.querySelectorAll('tr.dci-row [data-act=level][aria-pressed=true]')].map(b => b.dataset.level).filter(l => l !== 'skip').length : -1")
         print('   Skip, nur, mit – Matrix-Spalten bei „nur“:', mid, '| danach nicht Skip:', back)
         results.append(mid > 0 and back == 0)
-        results.append(sc[0] is False and sc[1] == ['with', 'only', 'without'] and sc[2] == 'Works:' and on == 'work' and after == 'all')
+        results.append(sc[0] is False and sc[1] == ['with', 'only', 'without'] and sc[2] in ('Works:', 'Works') and on == 'work' and after == 'all')
         print('Fehler:', errs)
         results.append(not errs)
         b.close()

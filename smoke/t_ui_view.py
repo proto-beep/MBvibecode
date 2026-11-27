@@ -431,10 +431,10 @@ def case_ui301():
         # D)
         # ([Z-SCOPE] 3.112.0) no "only works" any more; "Works: with | only | without" in the line, its label beside it
         d1 = pg.evaluate("""(() => { const ow = document.querySelector('[data-act=bulk-level][data-level=only-works]');
-      const st = document.querySelector('.dci-scope-label'); const sb = document.querySelector('.dci-scope button'); const c = (e) => { const r = e.getBoundingClientRect(); return r.top + r.height / 2; };
+      const st = document.querySelector('.dci-scope-label') || document.querySelector('.dci-scope').previousElementSibling; const sb = document.querySelector('.dci-scope button'); const c = (e) => { const r = e.getBoundingClientRect(); return r.top + r.height / 2; };
       return [!!ow, Math.round(Math.abs(c(st) - c(sb))), [...document.querySelectorAll('.dci-scope button')].map(b => b.textContent.trim()), st.textContent.trim()]; })()""")
         print('D) only works da, „Works:“ Abweichung, Knöpfe:', d1)
-        results.append(not d1[0] and d1[1] <= 2 and d1[2] == ['with', 'only', 'without'] and d1[3] == 'Works:')
+        results.append(not d1[0] and d1[1] <= 2 and d1[2] == ['with', 'only', 'without'] and d1[3] in ('Works:', 'Works'))  # ((3.237.0, S582) "Works" in "Show")
         # E) in the page, inside a wide page
         pg.evaluate("document.getElementById('content').style.width = '2400px'")
         H.open_settings(pg, 'appearance')
@@ -1714,6 +1714,79 @@ def case_newnav3231m():
             b.close()
     finally:
         H.ENTRIES_VIEW = ev0
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_ui3237():
+    """Credits Importer 3.237.0 (the surface; collected items Z-TOOLBARTIDY, Z-DMHINT, Z-POOLFLASH; rules S582 – S584), two media of two tracks.
+    A) S582: the toolbar in two groups – "For all rows" (Level · Media · Role credits · Artist credits) and "Show" (Works · Order · Medium · the
+       filters · the legend); its controls the same height (28 px); labels without a colon; the credit actions a pair of buttons; the filters
+       switch chips (a click ticks the box, the chip shows ✓); "Media: all · release level ▾" one button.
+    B) S583: the help above the date matrix one line ("Drag dates into columns, track groups onto dates."), ⓘ shows the rest; the suggestions
+       of the notes not applied yet counted at "Apply" ("n suggestions not applied yet"), gone after "Apply".
+    C) S584: the date pool folded, a date comes into it: its number lights up.
+    D) The three rules off: the toolbar, the help and the status as until 3.236.0, no light."""
+    H.MEDIA = [2, 2]
+    TB = """(() => { const t = document.querySelector('#dci-overlay [data-el=toolbar]'); if (!t) return null;
+      const h = (sel) => [...t.querySelectorAll(sel)].filter(x => x.offsetParent !== null).map(x => Math.round(x.getBoundingClientRect().height));
+      return { rows: [...t.querySelectorAll('[data-tbrow]')].map(r => [r.dataset.tbrow, r.querySelector('.dci-tbhead').textContent.trim(),
+          [...r.querySelectorAll('.dci-tblab, .dci-sortsel, .dci-medium-filter')].map(x => x.firstChild.textContent.trim())]),
+        heights: [...new Set([...h('.dci-seg button'), ...h('.dci-tbbtn'), ...h('select'), ...h('.dci-tbchip')])],
+        pair: [...t.querySelectorAll('.dci-tbpair [data-act=bulk-credit]')].map(b => b.textContent.trim()),
+        media: (t.querySelector('[data-act=media-choose]') || {}).textContent || '', text: t.textContent.replace(/\s+/g, ' ').trim() }; })()"""
+    HELP = "[...document.querySelectorAll('#dci-overlay .dci-dm-help')].map(x => x.textContent.replace(/\\s+/g, ' ').trim())"
+    YELLOW = "[...document.querySelectorAll('#dci-overlay .dci-dm-pending')].map(x => x.textContent.trim())"
+    results = []
+    with sync_playwright() as p:
+        b = p.chromium.launch(args=H.LAUNCH_ARGS)
+        for off in (False, True):
+            H.RULES_OFF = ['S582', 'S583', 'S584'] if off else []
+            H.MAIN = H.MAIN.replace('  const S = {', '  window.__renderDates = () => renderDates();\n  const S = window.__S = {', 1)
+            ctx = H.new_context(b)
+            pg, errs = H.open_mb_edit(ctx, companion=False)
+            pg.wait_for_selector('#dci-open', timeout=20000)
+            H.open_dashboard(pg)
+            H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+            pg.wait_for_timeout(600)
+            tb = pg.evaluate(TB)
+            help0, yellow0 = pg.evaluate(HELP), pg.evaluate(YELLOW)
+            if not off:
+                print('A)', tb)
+                labels = [x for r in tb['rows'] for x in r[2]]
+                chip = pg.locator('#dci-overlay [data-el=toolbar] .dci-tbchip:has([data-f=filter-new])')
+                chip.click()
+                pg.wait_for_timeout(300)
+                on = pg.evaluate("document.querySelector('[data-f=filter-new]').checked")
+                tick = pg.evaluate("getComputedStyle(document.querySelector('#dci-overlay .dci-tbchip:has([data-f=filter-new])'), '::before').content")
+                chip.click()
+                pg.wait_for_timeout(300)
+                print('   chip:', on, tick)
+                results.append([r[:2] for r in tb['rows']] == [['all', 'For all rows'], ['show', 'Show']] and tb['rows'][0][2][:1] == ['Level']
+                               and not any(x.endswith(':') for x in labels) and all(27 <= hh <= 29 for hh in tb['heights']) and tb['pair'][:2] == ['as on Discogs', 'clear']
+                               and tb['media'].startswith('Media: all · release level') and on is True and '✓' in tick)
+                print('B)', help0, yellow0)
+                pg.click('#dci-overlay [data-act=dm-help-more]')
+                pg.wait_for_timeout(250)
+                help1 = pg.evaluate(HELP)
+                pg.evaluate("document.querySelector('#dci-overlay [data-act=dm-apply]').click()")
+                pg.wait_for_timeout(500)
+                yellow1 = pg.evaluate(YELLOW)
+                print('   ⓘ:', [x[:60] for x in help1], '| after Apply:', yellow1)
+                results.append(help0 == ['Drag dates into columns, track groups onto dates. ⓘ'] and len(help1) == 2 and help1[1].startswith('① Drag dates')
+                               and any(x.endswith('suggestions not applied yet') or x.endswith('suggestion not applied yet') for x in yellow0) and not any('suggestion' in x for x in yellow1))
+            else:
+                print('D) off:', tb['text'][:80], '| help:', [x[:40] for x in help0], '| status:', yellow0)
+                results.append(tb['text'].startswith('Level for all rows:') and not tb['rows'] and len(help0) == 1 and help0[0].startswith('① Drag dates')
+                               and not any('suggestion' in x for x in yellow0))
+            # C) a date comes into the folded date pool
+            pg.evaluate("document.querySelector('#dci-overlay [data-act=pool-fold][data-pool=dates]').click()")
+            pg.wait_for_timeout(300)
+            pg.evaluate("(() => { const S = window.__S; const d = S.datePool[0]; S.datePool.push(Object.assign({}, d, { id: d.id + 'x', found: '' })); window.__renderDates(); })()")
+            flash = pg.evaluate("[...document.querySelectorAll('#dci-overlay .dci-poolflash')].map(x => [x.dataset.flash, x.textContent.trim()])")
+            print('C)' if not off else 'D) flash:', flash)
+            results.append(bool(flash) and flash[0][0] == 'dates' if not off else not flash)
+            results.append(not errs)
+            ctx.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

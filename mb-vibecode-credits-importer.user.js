@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.236.0
+// @version      3.237.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.236.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.236.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.237.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.237.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.236.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.237.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -603,6 +603,24 @@
       "toolbar.artistCredits": "Artist credits:",
       "toolbar.asOnDiscogs": "as on {src}",
       "toolbar.clearAll": "clear all",
+      "tb.all": "For all rows",
+      "tb.show": "Show",
+      "tb.level": "Level",
+      "tb.works": "Works",
+      "tb.order": "Order",
+      "tb.medium": "Medium",
+      "tb.roleCredits": "Role credits",
+      "tb.artistCredits": "Artist credits",
+      "tb.clear": "clear",
+      "tb.media": "Media: {choice}",
+      "tb.relLevel": "release level",
+      "tb.onlyMissing": "Only without MB match",
+      "tb.onMb": "on MB",
+      "tb.partly": "partly",
+      "dm.hintShort": "Drag dates into columns, track groups onto dates.",
+      "dm.hintMore": "How the date matrix works: dragging, ⇧ Shift, ↶, the yellow suggestions",
+      "dm.yellow.one": "1 suggestion not applied yet",
+      "dm.yellow.other": "{n} suggestions not applied yet",
       "level.recording": "Recording",
       "level.release": "Release",
       "level.onlyHere": "MusicBrainz has this relationship only on this level ({level})",
@@ -3001,6 +3019,7 @@
       "ms.3.232.0": "More room for the entries: the head in one line, “＋ Entry” and the pools beside it, a slim head while scrolling",
       "ms.3.234.0": "“⚡ Fast”: an import without the lookups in the background – the artists’ works on a click",
       "ms.3.235.0": "Two sources complete each other: Discogs’s performers per track, Bandcamp’s instruments in its titles – both ways",
+      "ms.3.237.0": "A tidier toolbar: “For all rows” and “Show”; the date matrix’s help in one line",
       "ms.3.230.0": "The times of an import in the log: which steps took how long, per source",
       "ms.3.227.0": "The companion in the dashboard’s language, Bandcamp’s artwork in high resolution",
       "ms.3.226.0": "“✨ Answer all”: a tie decided by the recordings in MusicBrainz, each work to open with ↗",
@@ -6194,6 +6213,9 @@
     { id: 'S579', where: 'loadSupplement (addNotesCompanies, autoPlaceFoundDates), foundDateText', note: 'Two sources (3.235.0; collected item Z-TWOSOURCES, T5; S459, S441, D022): an added Discogs release is read as at the import – its places on the tracks its notes give them ("Recorded: October 11-12, 2018 at the Alchemia Club, Kraków (CD#1 … CD#4)" – Alchemia on 1.1–4.5, Radio Kraków on 5.1; until 3.234.0 every place on every track), the studio of its engineer no place recorded at (S571), its dates in the date pool and the matrix as suggestions (D022, D035 as always). Switched off: as until 3.234.0' },
     { id: 'S580', where: 'applyImprovComposers', note: 'Works (3.235.0; collected item Z-TWOSOURCES, T8; S222): a composer (or writer) of a list without tracks ("Barry Guy – bass, director, composer") is not the composer of the tracks whose titles say they are improvisations ("Improv 1") – the improvisations of the groups are no works of his; nothing is assumed for them (a work only where a text says who improvised – "All music improvised by …"). The row says so; its other tracks stay. Switched off: on every track' },
     { id: 'S581', where: 'coverMedia, coverLayout (loadSupplement, startImport: a text), notesForDates, RIGHTS_SOCIETIES (BIEM with them, as in SOCIETY_LINE)', note: 'Texts (3.236.0; collected item Z-COVERLAYOUT, T10): the layout of the back of a box, read from its image or pasted – medium headings with a place ("CD#1 Alchemia Club") and below them the lines of their tracks with lineups and lengths ("Lopez // Mazur // Pursglove 28:52"): each name a performer of that track (a surname given the full name the text or the dashboard has); a group\'s name alone ("Aurora Trio:") with its members below ("AGUSTÍ FERNÁNDEZ piano") – its members with their instruments on the tracks that name the group (no entry of the group\'s name; until 3.235.0 "Aurora Trio" with the role "Agustí Fernández – piano"); the lineup of "this composition" ("Line-up for the first performance of this composition in Kraków:") on the track whose line says "(composed by …)"; the place of a medium heading on that medium\'s tracks, and a date "at" that place ("Recorded: October 11–12, 2018 at the Alchemia Club" and "October 13, 2018 at Radio Kraków" below it) on those tracks; the catalogue number of the release no date ("MW1031-2" was 1031-02); rights societies after ℗/© ("ZAIKS/BIEM 2022") no holder of the ℗; the studio of the engineer in brackets ("… by Rafał DREWNIANY (DTS STUDIO)") no place recorded at where others are (S571). The lines read so are no longer "not recognized". Switched off: as until 3.235.0' },
+    { id: 'S582', where: 'toolbarTidyHtml (buildOverlay), renderMediumFilter (media-btn, mediaShort), renderSortBox, CSS (.dci-tb2)', note: 'Layout (3.237.0; collected item Z-TOOLBARTIDY): the toolbar above the entries in two groups with a heading column – "For all rows" (Level · Media · Role credits · Artist credits: what changes the rows) and "Show" (Works · Order · Medium · the filters · the legend small at the end: what only filters or orders); every control 28 px high, the labels grey without a colon, the credit actions a pair of buttons ("as on Discogs | clear"), the two filters switch chips (✓ and coloured when on), "Choose media …" with its text one button "Media: all · release level ▾". Switched off: the toolbar as until 3.236.0' },
+    { id: 'S583', where: 'matrixHtml (dm-help-more), dmPendingHtml, renderDates (the folded line)', note: 'Layout (3.237.0; collected item Z-DMHINT): the help above the date matrix one line – "Drag dates into columns, track groups onto dates." –, the rest (where a drop adds or replaces, ⇧ Shift, ↶, picking with ⠿) behind ⓘ; what the yellow, dashed dates mean says the status at "Apply" while there are any: "3 suggestions not applied yet" (gone once applied). Switched off: the help in four lines (as until 3.236.0)' },
+    { id: 'S584', where: 'renderDates (poolCountsWas, .dci-poolflash)', note: 'Layout (3.237.0; collected item Z-POOLFLASH): a date or a track group that comes into a folded pool (or the pools folded with "Dates & tracks") – its number lights up for a moment; folding stays possible at any time. Switched off: no light' },
     { id: 'S469', where: 'dgLineupApply, sendDiscogsStatus', note: 'Lineup and track credits (3.220.0; collected item Z-LOPEZ; S217): a row the answer leaves out (a lineup row on no track any more, a track credit taken into the lineup row) keeps its line at the source – its places go to the person\'s row still there, so the companion marks the line ("Ramón López – percussion" where the titles give him drums on all of his tracks)' },
     { id: 'S410', where: 'freshForget, repeatImport, loadRelease', note: '"↻ Repeat import" (3.209.0; collected item Z-FRESHALL): "Start afresh" forgets everything the dashboard holds of the release – not only the changes of the rows and the choices of the works matrix (Z-RI, 3.40.16), also the date pool, the track pool and the date matrix, the choices of the box "Dedications & tributes", "✕ No suite", texts and parts of sources switched off, "skip the works", entries joined by hand, the ticks of suggestions, what is remembered of the release ("Remember changes"; nothing of the import before is stored on the way). Kept: what was created in MusicBrainz through the dashboard (the lists of created works and suites), the source and the media chosen, the log' },
     { id: 'S409', where: 'mergeEntries, joinEntry, applyEntryMerges, dmTargetOf (entry-merge), groupHtml (grip)', note: 'Entries (3.208.0; collected item Z-ENTITYMERGE): two entries of the same kind that are one – from different sources, written otherwise – are joined by hand: the grip ⠿ before the kind of an entry dropped onto another entry. The entry dropped onto stays (its link to MusicBrainz counts; without one it takes the other\'s), the rows of the other come to it – the same role once, each row credited as its source writes it, the other\'s name one of its names. Two different entries of MusicBrainz, or entries of different kinds: not joined, a message says why. Remembered for the release (joined again at the next import); ↶ in the message undoes it' },
@@ -43066,7 +43088,7 @@
         <span class="dci-pools-l"><button type="button" class="dci-pools-toggle" data-act="pools-toggle" aria-expanded="${open}" title="${esc(tr('pools.toggleTitle'))}">
           <span class="dci-chev" aria-hidden="true">${open ? '▲' : '▼'}</span><span class="dci-pools-title">${esc(tr('pools.title'))}</span></button>
         <span class="dci-sub">${esc(summary)}</span>
-        ${m.dirty ? `<span class="dci-dm-pending">${esc(tr('dm.pending'))}</span>` : ''}
+        ${dmPendingHtml(m)}
         ${choose ? `<span class="dci-dm-pending">${esc(tr('dm.toChoose', { n: choose }))}</span>` : ''}</span>
         <span class="dci-pools-c">${open && !S.dmAuto && (m.cells.length || m.dirty) ? `<button type="button" class="dci-pools-applyfold" data-act="dm-apply-fold" title="${esc(tr('pools.applyFoldTitle'))}">✓ ${esc(tr('pools.applyFold'))}</button> ` : ''}<button type="button" class="dci-pools-fold" data-act="pools-toggle" aria-expanded="${open}" title="${esc(tr('pools.toggleTitle'))}">${open ? `▲ ${esc(tr('pools.fold'))}` : `▼ ${esc(tr('pools.show'))}`}</button>${open && !S.dmAuto && (m.cells.length || m.dirty) ? ` <button type="button" class="dci-pools-applyfold dci-pools-ghost" aria-hidden="true" tabindex="-1" disabled>✓ ${esc(tr('pools.applyFold'))}</button>` : ''}</span>
         <span class="dci-pools-r">${open ? `<span class="dci-pools-tools">
@@ -43093,6 +43115,20 @@
       ${S.poolClear ? poolClearHtml() : ''}
       ${head}${S.mentionOpen ? mentionPanelHtml(mentioned) : ''}`;
     refreshPoolSelects();
+    // [Z-POOLFLASH] (3.237.0, S584) a date or a track group come into a folded pool: its number lights up a moment
+    const now = { dates: S.datePool.length, tracks: S.trackPool.length };
+    const was = S.poolCountsWas || now;
+    S.poolCountsWas = now;
+    if (ruleOn('S584')) {
+      for (const pool of ['dates', 'tracks']) {
+        if (now[pool] <= was[pool] || (open && !poolFolded(pool))) continue;
+        const n = el.querySelector(`[data-act="pool-fold"][data-pool="${pool}"] .dci-pool-n`) || el.querySelector('.dci-pools-head .dci-sub');
+        if (!n) continue;
+        n.classList.add('dci-poolflash');
+        n.dataset.flash = pool;
+        setTimeout(() => n.classList.remove('dci-poolflash'), 1600);
+      }
+    }
   }
 
   /** Grip of a pool chip: drag it, or click it and then the place in the matrix (works with the keyboard). */
@@ -43229,14 +43265,15 @@
         </div></div>`;
     }).join('');
     return `<div class="dci-dm" data-el="dm">
-      <p class="dci-sub dci-dm-help">${esc(tr('drop.helpModes'))}</p>
+      ${ruleOn('S583') ? `<p class="dci-sub dci-dm-help dci-dm-help1">${esc(tr('dm.hintShort'))} <button type="button" class="dci-textbtn dci-dm-helpmore" data-act="dm-help-more" aria-expanded="${!!S.dmHelpMore}" title="${esc(tr('dm.hintMore'))}" aria-label="${esc(tr('dm.hintMore'))}">ⓘ</button></p>${S.dmHelpMore ? `<p class="dci-sub dci-dm-help" data-el="dm-help-full">${esc(tr('drop.helpModes'))}</p>` : ''}`
+        : `<p class="dci-sub dci-dm-help">${esc(tr('drop.helpModes'))}</p>` /* [Z-DMHINT] (3.237.0, S583) one line, the rest behind ⓘ */}
       ${pick ? `<p class="dci-dm-pickhint" role="status">${esc(tr(pick.kind === 'date' ? 'drop.pickingDateModes' : 'drop.pickingTracksModes', { name: pickName(pick) }))}</p>` : ''}
       <div class="dci-dm-grid" style="--dm-cols: ${shown.length}">${cols}</div>
       <div class="dci-dm-foot">
         <button type="button" class="dci-apply dci-small" data-act="dm-apply" ${m.cells.length || m.dirty ? '' : 'disabled'} title="${esc(tr('dm.applyTitle'))}">${esc(tr('dm.apply'))}</button>
         <label class="dci-check" title="${esc(tr('dm.autoTitle'))}"><input type="checkbox" data-f="dm-auto" ${S.dmAuto ? 'checked' : ''}> ${esc(tr('dm.auto'))}</label>
         <label class="dci-check" title="${esc(tr('dm.foldTitle'))}"><input type="checkbox" data-f="dm-fold" ${S.dmFold ? 'checked' : ''}> ${esc(tr('dm.fold'))}</label>
-        ${m.dirty ? `<span class="dci-dm-pending">${esc(tr('dm.pending'))}</span>` : ''}
+        ${dmPendingHtml(m)}
         ${m.cells.some((c) => c.alt) ? `<span class="dci-dm-pending">${esc(tr('dm.toChoose', { n: m.cells.filter((c) => c.alt).length }))}</span>` : ''}
       </div></div>`;
   }
@@ -43357,6 +43394,16 @@
         ${esc(tr('dm.lcdSingle', { n: days.length, list: days.map((d) => formatDateValue(d)).join(' · ') }))}</button>
       ${common ? `<button type="button" class="dci-dm-opt" data-act="dm-period" data-cell="${esc(c.id)}" data-pick="lcd" title="${esc(tr('dm.chooseLcdTitle'))}">${esc(tr(common.begin.month ? 'dm.chooseMonth' : 'dm.chooseYear', { date: formatDateValue(common) }))}</button>` : ''}
     </div>`;
+  }
+
+  /**
+   * [Z-DMHINT] (3.237.0, S583) "not applied yet" at "Apply": with the suggestions found that are not applied yet (dashed, yellow) counted – "3
+   * suggestions not applied yet" –, gone once they are applied. Off: "not applied yet" while the matrix is changed (as until 3.236.0).
+   */
+  function dmPendingHtml(m) {
+    const yellow = ruleOn('S583') ? m.cells.filter((c) => c.auto && !c.alt).length : 0;
+    if (yellow) return `<span class="dci-dm-pending" data-el="dm-yellow" title="${esc(tr('dm.autoCell'))}">${esc(tr(yellow === 1 ? 'dm.yellow.one' : 'dm.yellow.other', { n: yellow }))}</span>`;
+    return m.dirty ? `<span class="dci-dm-pending">${esc(tr('dm.pending'))}</span>` : '';
   }
 
   function matrixCellHtml(c) {
@@ -44331,7 +44378,7 @@
     const box = S.overlay && $('sort-box');
     if (!box) return;
     // ((review) drawn only when it changes: a choice made with the keys keeps its focus, an open list stays open)
-    const html = sortOn() ? `<label class="dci-sortsel">${esc(tr('sort.label'))} <select data-f="sort-mode" title="${esc(tr('sort.title'))}">
+    const html = sortOn() ? `<label class="dci-sortsel">${esc(tr(ruleOn('S582') ? 'tb.order' : 'sort.label'))} <select data-f="sort-mode" title="${esc(tr('sort.title'))}">
       ${SORT_MODES.map((m) => `<option value="${m}">${esc(tr(`sort.mode.${m}`))}</option>`).join('')}</select></label>` : '';
     if (box.dataset.html !== html) {
       box.innerHTML = html;
@@ -57096,12 +57143,21 @@
     return uniq(S.mbTracks.filter((t) => inMedium(t.idx) && t.recordingGid && !loaded.has(t.recordingGid)).map((t) => t.medium));
   }
 
+  /** [Z-TOOLBARTIDY] (3.237.0, S582) The media of this import in short: "all · release level", "1–2, 4 · release level", "all". */
+  function mediaShort() {
+    const ms = S.mediaSel;
+    const list = ms ? formatMediaList(ms.media) : tr('medium.all');
+    return !ms || ms.release ? `${list} · ${tr('tb.relLevel')}` : list;
+  }
+
   function renderMediumFilter() {
     const el = S.overlay && $('medium-filter');
     if (!el) return;
     const allMedia = uniq(S.mbTracks.map((t) => t.medium));
     if (allMedia.length < 2) {
       el.innerHTML = '';
+      const mb = ruleOn('S582') && S.overlay.querySelector('[data-el="media-btn"]');
+      if (mb) mb.innerHTML = '';
       return;
     }
     // Only the media chosen for this import (media choice)
@@ -57112,13 +57168,23 @@
     const sig = JSON.stringify([LANG, S.mediumFilter, unloaded, media, choice]);
     if (el.dataset.sig === sig) return;
     el.dataset.sig = sig;
-    const chooser = S.release ? `<span class="dci-media-now" title="${esc(trSrc('media.nowTitle'))}">${esc(choice)}</span>
+    // ([Z-TOOLBARTIDY] 3.237.0, S582) the choice of the media one button in "For all rows": "Media: all · release level ▾"
+    const tidy = ruleOn('S582') && el.closest('.dci-tb2');
+    const mb = tidy && S.overlay.querySelector('[data-el="media-btn"]');
+    if (mb) {
+      const h = S.release ? `<button type="button" class="dci-tbbtn dci-tbmedia" data-act="media-choose" title="${esc(`${trSrc('media.nowTitle')}\n${tr('media.chooseTitle')}`)}">${esc(tr('tb.media', { choice: mediaShort() }))} ▾</button>` : '';
+      if (mb.dataset.html !== h) {
+        mb.innerHTML = h;
+        mb.dataset.html = h;
+      }
+    }
+    const chooser = tidy ? '' : S.release ? `<span class="dci-media-now" title="${esc(trSrc('media.nowTitle'))}">${esc(choice)}</span>
       <button type="button" data-act="media-choose" title="${esc(tr('media.chooseTitle'))}">${esc(tr('media.choose'))}</button>` : '';
     if (media.length < 2) {
       el.innerHTML = chooser;
       return;
     }
-    el.innerHTML = `${chooser}<label class="dci-medium-filter">${esc(tr('medium.label'))}
+    el.innerHTML = `${chooser}<label class="dci-medium-filter">${esc(tr(tidy ? 'tb.medium' : 'medium.label'))}
         <select data-f="medium-filter"><option value="">${esc(tr('medium.all'))}</option>
           ${media.map((m) => {
             const info = (S.mediaInfo && S.mediaInfo.get(m)) || {};
@@ -60408,6 +60474,10 @@
           if (again) again.focus({ preventScroll: true });
         }
         break;
+      case 'dm-help-more': // [Z-DMHINT] (3.237.0, S583) the whole help of the date matrix below its line
+        S.dmHelpMore = !S.dmHelpMore;
+        renderDates();
+        break;
       case 'dm-apply':
         S.dmPick = null;
         applyMatrix();
@@ -62577,6 +62647,72 @@
   };
   const ico = (name) => `<svg class="dci-ico" viewBox="0 0 16 16" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]}</svg>`;
   /** A button of the head: its symbol, the word only in a wide dashboard (the tooltip and aria-label always). */
+  /** The toolbar above the entries as until 3.236.0 (S582 off). */
+  function toolbarOldHtml() {
+    const levelBtn = (level) => `<button type="button" data-act="bulk-level" data-level="${level}">${esc(tr(`level.${level}`))}</button>`;
+    return `<div class="dci-toolbar" data-el="toolbar" hidden>
+            <span>${esc(tr('toolbar.levelAll'))}</span>
+            <div class="dci-seg" role="group" aria-label="${esc(tr('toolbar.levelAll'))}">
+              ${levelBtn('recording')}${levelBtn('release')}${levelBtn('release_group').replace('<button ', `<button title="${esc(tr('toolbar.rgTitle'))}" `)}${levelBtn('skip')}
+            </div>
+            <!-- [Z-SCOPE] (3.112.0) the works as a filter (it changes no row; back on "with": as before) – it takes the place of "only works" and
+              of the line "Stage:"; [Z-SORT] (3.112.0) the order of the entries -->
+            <span class="dci-sub dci-scope-label">${esc(tr('scope.label'))}</span>
+            <div class="dci-seg dci-scope${ruleOn('S561') ? ' dci-scope-work' : ''}" role="group" aria-label="${esc(tr('scope.label'))}" title="${esc(tr('scope.title'))}">
+              ${['all', 'work', 'nonwork'].map((m) => `<button type="button" data-act="scope" data-scope="${m}" aria-pressed="${(S.scope || 'all') === m}">${esc(tr(`scope.${m}`))}</button>`).join('')}
+            </div>
+            <span data-el="sort-box"></span>
+            <span data-el="medium-filter"></span>
+            <label class="dci-check"><input type="checkbox" data-f="filter-missing" ${S.onlyMissing ? 'checked' : ''}> ${esc(tr('toolbar.onlyMissing'))}</label>
+            ${ruleOn('S563') ? `<label class="dci-check" title="${esc(tr('toolbar.onlyNewTitle'))}"><input type="checkbox" data-f="filter-new" ${S.onlyNew ? 'checked' : ''}> ${esc(tr('toolbar.onlyNew'))}</label>` : ''}
+            <span data-el="ocr-filter"></span>
+            <label class="dci-check dci-unmapped-filter" hidden><input type="checkbox" data-f="filter-unmapped"> <span data-el="unmapped-count"></span></label>
+            <span class="dci-legend"><span class="dci-swatch dci-swatch-exists" aria-hidden="true"></span>${esc(tr('legend.exists'))}
+              <span class="dci-swatch dci-swatch-some" aria-hidden="true"></span>${esc(tr('legend.existsSome'))}</span>
+            <span class="dci-bulk">${esc(tr('toolbar.roleCredits'))}
+              <button type="button" class="dci-textbtn" data-act="bulk-credit" data-kind="role" data-mode="discogs">${esc(tr('toolbar.asOnDiscogs'))}</button>
+              <button type="button" class="dci-textbtn" data-act="bulk-credit" data-kind="role" data-mode="clear">${esc(tr('toolbar.clearAll'))}</button>
+            </span>
+            <span class="dci-bulk">${esc(tr('toolbar.artistCredits'))}
+              <button type="button" class="dci-textbtn" data-act="bulk-credit" data-kind="artist" data-mode="discogs">${esc(tr('toolbar.asOnDiscogs'))}</button>
+              <button type="button" class="dci-textbtn" data-act="bulk-credit" data-kind="artist" data-mode="clear">${esc(tr('toolbar.clearAll'))}</button>
+            </span>
+          </div>`;
+  }
+  /**
+   * [Z-TOOLBARTIDY] (3.237.0, S582) The toolbar above the entries in two groups – "For all rows" (what changes the rows: the level, the media, the
+   * role and artist credits) and "Show" (what only filters or orders: the works, the order, the medium, the filters as switch chips, the legend
+   * small at the end) –, a heading column, the same height for every control (28 px), grey labels without a colon, the credit actions a pair
+   * of buttons, "Choose media …" with its text one button. The controls keep their data attributes (their handlers are the same).
+   */
+  function toolbarTidyHtml() {
+    const levelBtn = (level) => `<button type="button" data-act="bulk-level" data-level="${level}">${esc(tr(`level.${level}`))}</button>`;
+    const lab = (key) => `<span class="dci-tblab">${esc(tr(key))}</span>`;
+    const pair = (kind) => `<span class="dci-tbpair" role="group" aria-label="${esc(tr(kind === 'role' ? 'tb.roleCredits' : 'tb.artistCredits'))}">
+      <button type="button" class="dci-tbbtn" data-act="bulk-credit" data-kind="${kind}" data-mode="discogs">${esc(tr('toolbar.asOnDiscogs'))}</button><button type="button" class="dci-tbbtn" data-act="bulk-credit" data-kind="${kind}" data-mode="clear">${esc(tr('tb.clear'))}</button></span>`;
+    const chip = (f, on, key, title = '') => `<label class="dci-tbchip"${title ? ` title="${esc(title)}"` : ''}><input type="checkbox" data-f="${f}" ${on ? 'checked' : ''}><span>${esc(tr(key))}</span></label>`;
+    return `<div class="dci-toolbar dci-tb2" data-el="toolbar" hidden>
+      <div class="dci-tbrow" data-tbrow="all"><span class="dci-tbhead">${esc(tr('tb.all'))}</span><div class="dci-tbitems">
+        <span class="dci-tbitem">${lab('tb.level')}<span class="dci-seg" role="group" aria-label="${esc(tr('toolbar.levelAll'))}">
+          ${levelBtn('recording')}${levelBtn('release')}${levelBtn('release_group').replace('<button ', `<button title="${esc(tr('toolbar.rgTitle'))}" `)}${levelBtn('skip')}</span></span>
+        <span class="dci-tbitem" data-el="media-btn"></span>
+        <span class="dci-tbitem">${lab('tb.roleCredits')}${pair('role')}</span>
+        <span class="dci-tbitem">${lab('tb.artistCredits')}${pair('artist')}</span>
+      </div></div>
+      <div class="dci-tbrow" data-tbrow="show"><span class="dci-tbhead">${esc(tr('tb.show'))}</span><div class="dci-tbitems">
+        <span class="dci-tbitem">${lab('tb.works')}<span class="dci-seg dci-scope${ruleOn('S561') ? ' dci-scope-work' : ''}" role="group" aria-label="${esc(tr('scope.label'))}" title="${esc(tr('scope.title'))}">
+          ${['all', 'work', 'nonwork'].map((m) => `<button type="button" data-act="scope" data-scope="${m}" aria-pressed="${(S.scope || 'all') === m}">${esc(tr(`scope.${m}`))}</button>`).join('')}</span></span>
+        <span class="dci-tbitem" data-el="sort-box"></span>
+        <span class="dci-tbitem" data-el="medium-filter"></span>
+        ${ruleOn('S563') ? chip('filter-new', S.onlyNew, 'toolbar.onlyNew', tr('toolbar.onlyNewTitle')) : ''}
+        ${chip('filter-missing', S.onlyMissing, 'tb.onlyMissing', tr('toolbar.onlyMissing'))}
+        <span data-el="ocr-filter"></span>
+        <label class="dci-tbchip dci-unmapped-filter" hidden><input type="checkbox" data-f="filter-unmapped"> <span data-el="unmapped-count"></span></label>
+        <span class="dci-legend dci-tblegend"><span class="dci-swatch dci-swatch-exists" aria-hidden="true"></span>${esc(tr('tb.onMb'))}
+          <span class="dci-swatch dci-swatch-some" aria-hidden="true"></span>${esc(tr('tb.partly'))}</span>
+      </div></div>
+    </div>`;
+  }
   const headBtn = (act, icon, label, title, extra = '', cls = 'dci-headbtn') => `<button type="button" class="${cls} dci-ibtn" data-act="${act}" title="${esc(title)}" aria-label="${esc(label || title)}" ${extra}>${ico(icon)}${label ? `<span class="dci-hlabel">${esc(label)}</span>` : ''}</button>`;
 
   let docDropOn = false;
@@ -62652,34 +62788,7 @@
             <section class="dci-dates" data-el="dates" aria-label="${esc(tr('date.title'))}" hidden></section>
           </div>
           <section class="dci-supp" data-el="supp" aria-label="${esc(tr('supp.withAria'))}" hidden></section>
-          <div class="dci-toolbar" data-el="toolbar" hidden>
-            <span>${esc(tr('toolbar.levelAll'))}</span>
-            <div class="dci-seg" role="group" aria-label="${esc(tr('toolbar.levelAll'))}">
-              ${levelBtn('recording')}${levelBtn('release')}${levelBtn('release_group').replace('<button ', `<button title="${esc(tr('toolbar.rgTitle'))}" `)}${levelBtn('skip')}
-            </div>
-            <!-- [Z-SCOPE] (3.112.0) the works as a filter (it changes no row; back on "with": as before) – it takes the place of "only works" and
-              of the line "Stage:"; [Z-SORT] (3.112.0) the order of the entries -->
-            <span class="dci-sub dci-scope-label">${esc(tr('scope.label'))}</span>
-            <div class="dci-seg dci-scope${ruleOn('S561') ? ' dci-scope-work' : ''}" role="group" aria-label="${esc(tr('scope.label'))}" title="${esc(tr('scope.title'))}">
-              ${['all', 'work', 'nonwork'].map((m) => `<button type="button" data-act="scope" data-scope="${m}" aria-pressed="${(S.scope || 'all') === m}">${esc(tr(`scope.${m}`))}</button>`).join('')}
-            </div>
-            <span data-el="sort-box"></span>
-            <span data-el="medium-filter"></span>
-            <label class="dci-check"><input type="checkbox" data-f="filter-missing" ${S.onlyMissing ? 'checked' : ''}> ${esc(tr('toolbar.onlyMissing'))}</label>
-            ${ruleOn('S563') ? `<label class="dci-check" title="${esc(tr('toolbar.onlyNewTitle'))}"><input type="checkbox" data-f="filter-new" ${S.onlyNew ? 'checked' : ''}> ${esc(tr('toolbar.onlyNew'))}</label>` : ''}
-            <span data-el="ocr-filter"></span>
-            <label class="dci-check dci-unmapped-filter" hidden><input type="checkbox" data-f="filter-unmapped"> <span data-el="unmapped-count"></span></label>
-            <span class="dci-legend"><span class="dci-swatch dci-swatch-exists" aria-hidden="true"></span>${esc(tr('legend.exists'))}
-              <span class="dci-swatch dci-swatch-some" aria-hidden="true"></span>${esc(tr('legend.existsSome'))}</span>
-            <span class="dci-bulk">${esc(tr('toolbar.roleCredits'))}
-              <button type="button" class="dci-textbtn" data-act="bulk-credit" data-kind="role" data-mode="discogs">${esc(tr('toolbar.asOnDiscogs'))}</button>
-              <button type="button" class="dci-textbtn" data-act="bulk-credit" data-kind="role" data-mode="clear">${esc(tr('toolbar.clearAll'))}</button>
-            </span>
-            <span class="dci-bulk">${esc(tr('toolbar.artistCredits'))}
-              <button type="button" class="dci-textbtn" data-act="bulk-credit" data-kind="artist" data-mode="discogs">${esc(tr('toolbar.asOnDiscogs'))}</button>
-              <button type="button" class="dci-textbtn" data-act="bulk-credit" data-kind="artist" data-mode="clear">${esc(tr('toolbar.clearAll'))}</button>
-            </span>
-          </div>
+          ${ruleOn('S582') ? toolbarTidyHtml() : toolbarOldHtml()}
           <div class="dci-frame dci-frame-entries" data-el="entries-frame">
             <div data-el="groups"></div>
             <section class="dci-companies" data-el="companies" hidden></section>
@@ -67523,6 +67632,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
     // [Z-MILESTONES] (3.158.0) a milestone is a new ability you notice without the docs – a source, a view, a workflow, a
     // file, a changed default –, one line each (at most 120 characters); not a rule of the text recognition, a fix or a test.
     // 3.0.0 and 3.12.0 (rebuilt inside, nothing changed for the user) are none any more.
+    { v: '3.237.0', label: 'Credits Importer 3.237.0' },
     { v: '3.235.0', label: 'Credits Importer 3.235.0' },
     { v: '3.234.0', label: 'Credits Importer 3.234.0' },
     { v: '3.232.0', label: 'Credits Importer 3.232.0' },
@@ -69511,6 +69621,39 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
       .dci-inline-btn { margin-left: calc(var(--u, 1px) * 8); border: 1px solid var(--ok); background: #fff; color: var(--ok); border-radius: 3px; padding: 1px calc(var(--u, 1px) * 8); }
 
       .dci-toolbar { display: flex; align-items: center; gap: calc(var(--u, 1px) * 10) calc(var(--u, 1px) * 16); flex-wrap: wrap; margin: calc(var(--u, 1px) * 4) 0 calc(var(--u, 1px) * 16); }
+      /* [Z-TOOLBARTIDY] (3.237.0, S582) two groups with a heading column; every control 28 px high; grey labels; switch chips */
+      .dci-toolbar.dci-tb2 { display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: center; gap: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 14); }
+      .dci-toolbar.dci-tb2[hidden] { display: none; }
+      .dci-tbrow { display: contents; }
+      .dci-tbhead { font-weight: 600; color: var(--purple-d); font-size: calc(var(--u, 1px) * 12.5); white-space: nowrap; }
+      .dci-tbitems { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--u, 1px) * 8) calc(var(--u, 1px) * 18); min-width: 0; }
+      .dci-tbitem { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 6); }
+      .dci-tbitem:empty { display: none; }
+      .dci-tblab, .dci-tb2 .dci-sortsel, .dci-tb2 .dci-medium-filter { color: var(--muted); }
+      .dci-tb2 .dci-sortsel, .dci-tb2 .dci-medium-filter { display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 6); }
+      .dci-tb2 .dci-seg button, .dci-tbbtn, .dci-tb2 select, .dci-tbchip { min-height: calc(var(--u, 1px) * 28); box-sizing: border-box; }
+      .dci-tb2 .dci-seg { border-radius: 6px; }
+      .dci-tb2 select { border: 1px solid #c8c5d6; border-radius: 6px; background: #fff; color: var(--ink); padding: 0 calc(var(--u, 1px) * 6); font: inherit; }
+      .dci-tbbtn { border: 1px solid #c8c5d6; background: #fff; color: var(--ink); border-radius: 6px; padding: 0 calc(var(--u, 1px) * 10); font: inherit; cursor: pointer; }
+      .dci-tbbtn:hover { background: var(--soft); }
+      .dci-tbpair { display: inline-flex; }
+      .dci-tbpair .dci-tbbtn:first-child { border-radius: 6px 0 0 6px; }
+      .dci-tbpair .dci-tbbtn + .dci-tbbtn { border-left: 0; border-radius: 0 6px 6px 0; }
+      .dci-tbchip { position: relative; display: inline-flex; align-items: center; gap: calc(var(--u, 1px) * 4); padding: 0 calc(var(--u, 1px) * 12); border: 1px solid #c8c5d6; border-radius: 14px; background: #fff; color: var(--ink); cursor: pointer; }
+      .dci-tbchip[hidden] { display: none; }
+      .dci-tbchip input { position: absolute; opacity: 0; width: 1px; height: 1px; margin: 0; }
+      .dci-tbchip:has(input:checked) { background: #ece9f8; border-color: var(--purple); color: var(--purple-d); font-weight: 600; }
+      .dci-tbchip:has(input:checked)::before { content: '✓'; }
+      .dci-tbchip:has(input:focus-visible) { outline: 2px solid var(--purple); outline-offset: 2px; }
+      .dci-tblegend { margin-left: auto; font-size: calc(var(--u, 1px) * 11.5); color: var(--muted); }
+      @container (max-width: 640px) { .dci-toolbar.dci-tb2 { grid-template-columns: minmax(0, 1fr); } }
+      /* [Z-DMHINT] (3.237.0, S583) the help of the date matrix in one line, the rest behind ⓘ */
+      .dci-dm-help1 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .dci-dm-helpmore { border: 0; background: none; color: var(--purple-d); cursor: pointer; font: inherit; padding: 0 calc(var(--u, 1px) * 2); }
+      /* [Z-POOLFLASH] (3.237.0, S584) the number of a folded pool lights up when something comes into it */
+      .dci-poolflash { animation: dci-poolflash 1.5s ease-out; border-radius: 4px; }
+      @keyframes dci-poolflash { 0%, 35% { background: #eb743b; color: #fff; box-shadow: 0 0 0 3px #eb743b; } 100% { background: transparent; box-shadow: 0 0 0 0 transparent; } }
+      @media (prefers-reduced-motion: reduce) { .dci-poolflash { animation: none; outline: 2px solid #eb743b; } }
       .dci-only-missing .dci-group:not(.dci-st-missing):not(.dci-st-ambiguous),
       .dci-only-missing .dci-group.dci-all-skip { display: none; }
       /* [Z-SUPPNAV] (3.116.0) only the entries with lines from the cover art; 🖼️ at their lines in the matrix and compact view */

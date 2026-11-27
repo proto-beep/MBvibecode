@@ -1311,7 +1311,8 @@ def case_mediasel():
   const matrix = [...new Set([...document.querySelectorAll('.dci-matrix tr[data-work]')].map(tr => Number(tr.dataset.work)))];
   const cols = [...document.querySelectorAll('[data-colhead]')].map(h => h.dataset.colhead.startsWith('mb:') ? 'mb' : (h.querySelector('.dci-mx-name, strong') || h).textContent.trim().slice(0, 20));
   const filter = [...document.querySelectorAll('[data-f=medium-filter] option')].map(o => o.textContent.trim());
-  const now = (document.querySelector('.dci-media-now') || {}).textContent || '';
+  // ([Z-TOOLBARTIDY] 3.237.0, S582) the choice in the button "Media: … ▾" of the tidy toolbar
+  const now = (document.querySelector('.dci-media-now') || {}).textContent || ((document.querySelector('.dci-tbmedia') || {}).textContent || '').trim();
   return { groups, matrix, cols, filter, now };
 })()"""
     results = []
@@ -1363,7 +1364,7 @@ def case_mediasel():
         base = pg.evaluate(STATE)
         print('A2) alle Medien:', base)
         ok_a = ok_a and 'Drum Guy' in names(base) and 'Photo Guy' in names(base) and 'Sony' in names(base) and base['matrix'] == [0, 1, 2, 3] \
-            and base['now'] == 'all media with the release level' and base['filter'][0] == 'all' and len(base['filter']) == 4
+            and base['now'] in ('all media with the release level', 'Media: all · release level ▾') and base['filter'][0] == 'all' and len(base['filter']) == 4
         results.append(ok_a)
 
         # B) "Choose media …": media 2-3 without the release level
@@ -1385,7 +1386,7 @@ def case_mediasel():
         ok_b = ok_b and names(st) == ['Abbey Road Studios', 'Bass Man', 'Bob Producer', 'Ghost Pub', 'Guitar Guy', 'Keys Guy', 'Other Pub', 'Pub Co', 'Writer Z'] \
             and g['Bass Man'] == ['recording:2 of 2 tracks'] and g['Keys Guy'] == ['recording:1 of 2 tracks'] and g['Abbey Road Studios'] == ['recording:2 of 2 tracks'] \
             and st['matrix'] == [2, 3] and not any('Writer W' in c for c in st['cols']) and any('Writer Z' in c for c in st['cols']) \
-            and st['now'] == 'media 2-3 without the release level' and len(st['filter']) == 3 and not any(o.startswith('Medium 1 ') for o in st['filter']) \
+            and st['now'] in ('media 2-3 without the release level', 'Media: 2-3 ▾') and len(st['filter']) == 3 and not any(o.startswith('Medium 1 ') for o in st['filter']) \
             and any('Media chosen: media 2-3 without the release level' in x for x in logs)
         results.append(ok_b)
 
@@ -1404,7 +1405,7 @@ def case_mediasel():
         st = pg.evaluate(STATE)
         print('C2) Zeilen:', names(st), '| Matrix:', st['matrix'], '| Filter:', st['filter'], '| Auswahl:', st['now'])
         ok_c = ok_c and names(st) == ['Abbey Road Studios', 'Ann Rep', 'Bass Man', 'Bob Producer', 'Drum Guy', 'Ghost Pub', 'Guitar Guy', 'Other Pub', 'Photo Guy', 'Pub Co', 'Sony', 'Writer W'] \
-            and st['matrix'] == [0, 1] and st['filter'] == [] and st['now'] == 'media 1 with the release level'
+            and st['matrix'] == [0, 1] and st['filter'] == [] and st['now'] in ('media 1 with the release level', 'Media: 1 · release level ▾')
         stored = pg.evaluate(f"JSON.parse(localStorage.getItem('dci-media-sel'))['{H.REL}']")
         print('    gemerkt:', stored)
         ok_c = ok_c and stored['media'] == [1] and stored['release'] is True
