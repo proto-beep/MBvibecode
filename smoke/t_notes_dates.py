@@ -361,6 +361,7 @@ def case_artkinds():
                 out['keys2'] = pg.evaluate(ROW, 'Keys Guy')
                 # E) (review) a photography row added by hand: the date of its kind
                 pg.evaluate("document.querySelector('[data-el=manual]').hidden = false")
+                H.manual_open(pg)
                 pg.fill('[data-f=manual-artist]', f'https://musicbrainz.org/artist/{H.ARTISTS[3001][0]}')
                 pg.fill('[data-f=manual-role]', 'photography')
                 pg.click('[data-act=add-manual]')

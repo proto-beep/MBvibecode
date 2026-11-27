@@ -591,7 +591,7 @@ def case_reset():
         pg.click('[data-act=zoom-in]'); pg.click('[data-act=zoom-in]')
         pg.click('.dci-pools-toggle'); pg.wait_for_timeout(150)
         keys = lambda: pg.evaluate("Object.keys(localStorage).filter(k => k.startsWith('dci-') && !k.startsWith('dci-geom')).sort()")
-        print('Vorher:', keys(), '| Titel:', pg.locator('#dci-title').inner_text(), '| Zoom:', pg.locator('[data-el=zoom]').inner_text())
+        print('Vorher:', keys(), '| Titel:', pg.locator('#dci-title .dci-title-full').inner_text(), '| Zoom:', pg.locator('[data-el=zoom]').inner_text())
         # 1) settings and own rules, not the pools
         H.open_reset(pg); pg.wait_for_timeout(150)
         print('1) Dialog:', re.sub(r'\s+', ' ', pg.locator('[data-el=reset]').inner_text())[:260])
@@ -600,7 +600,7 @@ def case_reset():
         after = keys()
         art = dg.evaluate("[localStorage.getItem('dci-art-pos'), localStorage.getItem('dci-art-collapsed')]")
         print('   Nachher:', after)
-        print('   Titel:', pg.locator('#dci-title').inner_text(), '| Zoom:', pg.locator('[data-el=zoom]').inner_text(), '| Meldung:', [m for m in pg.locator('.dci-msg').all_inner_texts() if 'defaults' in m])
+        print('   Titel:', pg.locator('#dci-title .dci-title-full').inner_text(), '| Zoom:', pg.locator('[data-el=zoom]').inner_text(), '| Meldung:', [m for m in pg.locator('.dci-msg').all_inner_texts() if 'defaults' in m])
         print('   Cover auf Discogs (Position, eingeklappt):', art, '| Daten & Tracks offen:', pg.locator('.dci-pools-toggle').get_attribute('aria-expanded'),
               '| automatisch anwenden:', pg.locator('[data-f=dm-auto]').is_checked() if pg.locator('[data-f=dm-auto]').count() else '–')
         # [3.36.0] what is remembered for a release (its rows, the index of the releases) is no setting either
@@ -610,7 +610,7 @@ def case_reset():
         live = pg.evaluate("[!!document.querySelector('.dci-em-line, .dci-em-cl'), (document.querySelector('[data-f=join-auto]') || {}).checked, (document.querySelector('[data-act=edit-note-mode][aria-pressed=true]') || {}).dataset ? (document.querySelector('[data-act=edit-note-mode][aria-pressed=true]') || {}).dataset.mode : null]")
         print('   im Dashboard (Matrix, Join, Edit note):', live)
         ok1 = set(settings) <= {'dci-log-open'} and 'dci-date-pool:other' in after and 'dci-created-works:other' in after \
-            and pg.locator('#dci-title').inner_text() == 'Credits Importer' and pg.locator('[data-el=zoom]').inner_text() == '100 %' \
+            and pg.locator('#dci-title .dci-title-full').inner_text() == 'Credits Importer' and pg.locator('[data-el=zoom]').inner_text() == '100 %' \
             and art == [None, None] and live[0] is True and live[1] in (True, None) and live[2] in ('full', None)
         # 2) with the pools: the stored pools of all releases go, the created works stay
         H.open_reset(pg); pg.wait_for_timeout(150)
@@ -654,8 +654,8 @@ def case_notice():
         # [3.34.0] the three newest milestones: 3.34.0, 3.33.0, 3.32.0; [3.35.0] 3.35.0, 3.34.0, 3.33.0; [3.36.0] 3.36.0, 3.35.0, 3.34.0;
         # [3.37.0] 3.37.0, 3.36.0, 3.35.0
         # ([Z-MILESTONES] 3.158.0) the milestones anew: the latest three are 3.157.0, 3.155.0 and 3.150.0
-        # ([Z-MILESTONES-SCRIPT] 3.231.0) the milestones of 3.161.0 – 3.231.0 added: the latest three are 3.231.0, 3.230.0 and 3.227.0
-        ok2 = ok2 and 'what’s new' in n and 'Credits Importer 3.231.0' in n and 'Credits Importer 3.230.0' in n and 'Credits Importer 3.227.0' in n and 'Credits Importer 3.226.0' not in n and 'reset once' in n
+        # ([Z-MILESTONES-SCRIPT] 3.231.0) the milestones of 3.161.0 – 3.231.0 added; (3.232.0) the latest three are 3.232.0, 3.231.0 and 3.230.0
+        ok2 = ok2 and 'what’s new' in n and 'Credits Importer 3.232.0' in n and 'Credits Importer 3.231.0' in n and 'Credits Importer 3.230.0' in n and 'Credits Importer 3.227.0' not in n and 'reset once' in n
         # 3) closing is remembered
         pg.click('#dci-notice .dci-notice-x'); pg.wait_for_timeout(200)
         reload()
@@ -667,7 +667,7 @@ def case_notice():
         print('4) Update von 2.9.0 (Deutsch):', notice())
         n = notice() or ''
         # ([Z-MILESTONES] 3.158.0) the newest five of those since 2.9.0, the others counted ("und n weitere Meilensteine")
-        ok4 = 'das ist neu' in n and 'Credits Importer 3.231.0' in n and 'Credits Importer 3.223.0' in n and 'Credits Importer 3.220.0' not in n and 'weitere Meilensteine' in n and 'Daten des Skripts einmal zurückgesetzt' not in n
+        ok4 = 'das ist neu' in n and 'Credits Importer 3.232.0' in n and 'Credits Importer 3.226.0' in n and 'Credits Importer 3.223.0' not in n and 'weitere Meilensteine' in n and 'Daten des Skripts einmal zurückgesetzt' not in n
         # 4b) update from 2.12.0 (generation 2): reset once more, the milestone of 2.13.0 and the note about the reset
         pg.click('#dci-notice .dci-notice-x'); pg.wait_for_timeout(100)
         pg.evaluate("""() => { const set = (k, v) => localStorage.setItem(k, JSON.stringify(v));
@@ -675,7 +675,7 @@ def case_notice():
         reload()
         n = notice() or ''
         print('4b) Update von 2.12.0:', keys(), '|', n[:160])
-        ok4 = ok4 and 'Credits Importer 3.231.0' in n and 'more milestones' in n and 'Import 2.11.0' not in n and 'reset once' in n and 'dci-pools-keep' not in keys() \
+        ok4 = ok4 and 'Credits Importer 3.232.0' in n and 'more milestones' in n and 'Import 2.11.0' not in n and 'reset once' in n and 'dci-pools-keep' not in keys() \
             and pg.evaluate("localStorage.getItem('dci-store-epoch')") == '4'
         # 5) the companion: shared storage and the cover box settings on Discogs are cleared once
         dg, dg_errs = H.open_discogs(ctx)

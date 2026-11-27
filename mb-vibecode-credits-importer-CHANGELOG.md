@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-27 | 3.231.0 | 1.26.0 |
+| 2026-11-27 | 3.231.0 – 3.232.0 | 1.26.0 |
 | 2026-11-26 | 3.224.0 – 3.230.0 | 1.25.0 |
 | 2026-11-25 | 3.218.0 – 3.223.0 | 1.24.0 |
 | 2026-11-24 | 3.213.0 – 3.217.0 | – |
@@ -70,6 +70,7 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 
 | Date | Version | Milestone |
 |---|---|---|
+| 2026-11-27 | Import 3.232.0 | More room for the entries: the head in one line, “＋ Entry” and the pools beside it, a slim head while scrolling |
 | 2026-11-27 | Import 3.231.0 · Companion 1.26.0 | A click on “3 new relationships” goes to them one by one; the filter “Only new relationships”; the companion’s large image in MusicBrainz colours |
 | 2026-11-26 | Import 3.230.0 | The times of an import in the log: which steps took how long, per source |
 | 2026-11-26 | Import 3.227.0 · Companion 1.25.0 | The companion in the dashboard’s language, Bandcamp’s artwork in high resolution |
@@ -163,6 +164,15 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-27
+
+### Import 3.232.0
+
+**More room for the entries: the head in one line, "＋ Entry" and the pools beside it, a slim head while scrolling.**
+
+- **The head in one line** (rule S564): "CI" for the title, the release's name cut short (whole in its tooltip), "↻" without its word, the companion as a badge – a dot (green connected, grey no tab, orange another page), the status in its tooltip – with "open in background" beside it while no tab is open; the tools as symbols below about 1100 px.
+- **"＋ Entry"** (rule S566): "Add entry manually" folded to a button; a click opens its fields, they stay open while something is in them.
+- **The pools beside it** (rule S565): "Dates & tracks" folded – the pools kept in the bar and its line in one line, next to "＋ Entry". The bar below the head went from about 190 to 100 px at 900 px.
+- **A slim head while scrolling** (rule S567): scrolled down, the head is one line with the title, the release, ▾ and ✕; ▾ (or the pointer resting on it) shows it whole, at the top it is whole again. ⚙ Settings → Appearance → "Slim head while scrolling" (on), or "Slim head" in "More" of the head, switches it off.
 
 ### Import 3.231.0 · COMPANION 1.26.0
 

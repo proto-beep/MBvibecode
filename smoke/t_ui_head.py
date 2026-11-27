@@ -79,7 +79,8 @@ def case_head():
         # [F-HEADCOUNT] (3.170.0) what is used all the time first, the list of "More" after it (in the open for this test: H.CHROME), ✕ last;
         # the case chrome3170 has the default (words, the list folded)
         # (the head with words takes a second line where the source and its buttons are wide: no longer "one line")
-        results.append([x[0] for x in a1['btns']] == ['search-open', 'rules', 'stats-open', 'settings-open', 'head-more', 'view-toggle', 'window-reset', 'log', 'keys-open', 'help-mode', 'close']
+        # ((3.232.0, S567) "Slim head" in "More")
+        results.append([x[0] for x in a1['btns']] == ['search-open', 'rules', 'stats-open', 'settings-open', 'head-more', 'view-toggle', 'head-shrink', 'window-reset', 'log', 'keys-open', 'help-mode', 'close']
                        and a1['groups'] == [['search-open', 'rules', 'stats-open', 'settings-open', 'dci-head-more'], ['close']]
                        and all(x[1] and x[2] and x[3] for x in a1['btns']) and a1['btns'][3][2] == 'Settings' and a1['btns'][5][2] == 'Compact' and a1['zoom'] == '100 %'
                        and a1['lang'] == 0 and a1['place'] == 0 and a1['switches'] == 0 and a1['status'] and a1['label'] == 'none'
@@ -357,6 +358,7 @@ def case_evask():
         H.open_dashboard(pg)
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
         pg.evaluate("document.querySelector('[data-el=manual]').hidden = false")
+        H.manual_open(pg)
         pg.fill('[data-f=manual-artist]', f'https://musicbrainz.org/event/{EV}')
         pg.click('[data-act=add-manual]')
         H.wait_for(pg, "[...document.querySelectorAll('section.dci-group')].some(x => /Vancouver Jazz Festival/.test(x.textContent))", 20)
@@ -422,7 +424,8 @@ def case_manualtop():
         pg.wait_for_selector('#dci-open', timeout=20000)
         H.open_dashboard(pg)
         pg.wait_for_timeout(500)
-        # A)
+        # A) ([Z-ADDENTRYFOLD] 3.232.0, S566: opened with "＋ Entry" first)
+        H.manual_open(pg)
         a1 = pg.evaluate(LINE)
         pg.locator('[data-el=manual] [data-act=manual-search]').evaluate('b => b.click()')
         a2 = pg.evaluate(LINE)
@@ -432,7 +435,7 @@ def case_manualtop():
         print('   „?“:', a2['search'], a2['links'], exp)
         results.append(a1 is not None and a1['kids'] == ['manual', 'dates'] and not a1['hidden'] and a1['title'] == 'Add entry manually'
                        and a1['tip'].startswith('Add any MusicBrainz entry') and a1['fieldTip'] == a1['tip'] and not a1['paragraph']
-                       and a1['fields'] == ['manual-artist', 'manual-role', 'add-manual', 'manual-search'] and a1['search'] and a1['links'] == 11
+                       and a1['fields'] == ['manual-open', 'manual-artist', 'manual-role', 'add-manual', 'manual-search'] and a1['search'] and a1['links'] == 11
                        and a2['search'] is False and exp == 'true')
         # B) scrolled down
         pg.evaluate("document.querySelector('[data-el=works]').scrollIntoView({ block: 'start' })")
@@ -441,6 +444,7 @@ def case_manualtop():
         print('B) gescrollt:', b1)
         results.append(b1['scrolled'] > 300 and -2 <= b1['manual'] <= 2 and 0 <= b1['dates'] <= 2 and b1['pad'].endswith('px'))
         # C) add from there
+        H.manual_open(pg)
         pg.fill('[data-f=manual-artist]', f'https://musicbrainz.org/artist/{EXTRA}')
         pg.fill('[data-f=manual-role]', 'Mixed By')
         pg.locator('[data-act=add-manual]').evaluate('b => b.click()')
@@ -590,7 +594,7 @@ def case_bar():
         H.open_dashboard(pg)
         pg.wait_for_timeout(300)
         H.open_settings(pg, 'general')  # [3.26.0] the language is only in the settings
-        ok1 = ok1 and pg.locator('#dci-title').inner_text() == 'Credits Importer' and pg.locator('[data-f=lang]').input_value() == 'de'
+        ok1 = ok1 and pg.locator('#dci-title .dci-title-full').inner_text() == 'Credits Importer' and pg.locator('[data-f=lang]').input_value() == 'de'
         pg.select_option('[data-f=lang]', 'en'); pg.wait_for_timeout(300)
         ok1 = ok1 and 'Import credits' in lab()
         print('   Dashboard Deutsch, in den Einstellungen zurück auf Englisch → Seitenleiste:', lab()[:40], ok1)
@@ -1394,7 +1398,8 @@ def case_poolbar():
     A0) While suggestions of this import wait ("not applied yet"), the date pool folds at the first click (until 3.37.14 the
        first click did nothing visible, the second folded it).
     C) "Dates & tracks" folded with the pools kept in the bar: both pools there with "+ New date" / "+ New track group"; "+ New
-       date" opens "Dates & tracks" with the form, "Cancel" folds it again."""
+       date" opens "Dates & tracks" with the form, "Cancel" folds it again.
+    (3.232.0) With Z-TRAY (S565) off (rules_off_cases.json): the bar of "Dates & tracks" as it was – folded in one line with the pools is case_head3232."""
     HEAD = """(() => { const h = document.querySelector('.dci-pools-head .dci-pools-fold'); const t = document.querySelector('.dci-pools-toggle');
       const line = document.querySelector('.dci-pools-head'); const c = (e) => { const x = e.getBoundingClientRect(); return Math.round(x.left + x.width / 2); };
       return { head: h ? [h.textContent.trim(), h.getAttribute('aria-expanded'), Math.round(h.getBoundingClientRect().left)] : null,
@@ -1681,6 +1686,7 @@ def case_eva385():
             H.open_dashboard(pg)
             H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
             pg.evaluate("document.querySelector('[data-el=manual]').hidden = false")
+            H.manual_open(pg)
             pg.fill('[data-f=manual-artist]', f'https://musicbrainz.org/event/{EV}')
             pg.click('[data-act=add-manual]')
             H.wait_for(pg, "[...document.querySelectorAll('section.dci-group')].some(x => /Club Night 2020/.test(x.textContent))", 20)
@@ -1702,6 +1708,7 @@ def case_eva385():
             EV2 = H.uid('fefefefe', 13)
             H.COMPANIES[1034] = ('event', EV2, 'Club Night 2021')
             pg.evaluate("document.querySelector('[data-el=manual]').hidden = false")
+            H.manual_open(pg)
             pg.fill('[data-f=manual-artist]', f'https://musicbrainz.org/event/{EV2}')
             pg.click('[data-act=add-manual]')
             H.wait_for(pg, "!!document.querySelector('[data-el=manual-evq] [data-type=\"video shot at\"]')", 20)
@@ -1820,6 +1827,7 @@ def case_evnote392():
         H.open_dashboard(pg)
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
         pg.evaluate("document.querySelector('[data-el=manual]').hidden = false")
+        H.manual_open(pg)
         pg.fill('[data-f=manual-artist]', f'https://musicbrainz.org/event/{EV}')
         pg.click('[data-act=add-manual]')
         H.wait_for(pg, "[...document.querySelectorAll('section.dci-group')].some(x => /Club Night 2020/.test(x.textContent))", 20)
@@ -1828,6 +1836,7 @@ def case_evnote392():
         logs = [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if x[9:].startswith('Event “Club')]
         ask = pg.evaluate("!!document.querySelector('[data-el=manual-evq] [data-act=manual-evq]')")
         pg.evaluate("document.querySelector('[data-el=manual]').hidden = false")
+        H.manual_open(pg)
         pg.fill('[data-f=manual-artist]', f'https://musicbrainz.org/artist/{EXTRA}')
         pg.fill('[data-f=manual-role]', 'producer')
         pg.click('[data-act=add-manual]')
@@ -1847,6 +1856,7 @@ def case_evnote392():
         H.open_dashboard(pg)
         H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
         pg.evaluate("document.querySelector('[data-el=manual]').hidden = false")
+        H.manual_open(pg)
         pg.fill('[data-f=manual-artist]', f'https://musicbrainz.org/event/{EV}')
         pg.click('[data-act=add-manual]')
         H.wait_for(pg, "[...document.querySelectorAll('section.dci-group')].some(x => /Club Night 2020/.test(x.textContent))", 20)
@@ -2001,9 +2011,11 @@ def case_search3137():
         head = pg.evaluate("[...document.querySelectorAll('.dci-head [data-act]')].map(x => x.dataset.act)")
         order = head.index('search-open') < head.index('stats-open') if 'search-open' in head else False
         # "/" in a field of the dashboard is typed there
+        H.manual_open(pg)
         pg.click('[data-f=manual-artist]')
         pg.keyboard.press('/')
         typed = pg.evaluate("document.querySelector('[data-f=manual-artist]').value")
+        H.manual_open(pg)
         pg.fill('[data-f=manual-artist]', '')
         pg.locator('#dci-overlay .dci-body').click(position={'x': 3, 'y': 3})
         pg.keyboard.press('/')
@@ -2120,6 +2132,141 @@ def case_search3137r():
         print('Fehler:', errs)
         results.append(not errs)
         b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_head3232():
+    """Credits Importer 3.232.0 (more room for the entries), at 900 px with the words in the head (the default).
+    A) (Z-HEADONE, S564) The head in one line: "CI" (its name in the tooltip), the release's name with its tooltip, the companion as a
+       badge (no tab: grey) with "open in background" beside it – its status still read "Script Companion: no Discogs tab" –, the tools
+       as symbols (no words).
+    B) (Z-ADDENTRYFOLD, S566) "＋ Entry" alone; a click opens the fields (the first focused); something typed and the focus elsewhere:
+       open; emptied and left: folded again.
+    C) (Z-TRAY, S565) "Dates & tracks" folded: "＋ Entry", the pools and its line together – the bar below the head at most 110 px.
+    D) (Z-HEADSHRINK, S567) Scrolled down: the head slim (no companion, no tools, ▾ and ✕), ▾ shows it whole until the top; scrolled
+       down again: slim; "Slim head" in "More" of the head (pressed) off: whole, stored, on again; ⚙ Settings → Appearance "Slim head
+       while scrolling" off (stored): whole.
+    E) The four rules off: the title "Credits Importer", the companion's sentence, the line "Add entry manually", no tray, no slim head."""
+    LINE = """(() => { const h = document.querySelector('.dci-head'); const kids = [...h.querySelectorAll(':scope > h2, :scope > .dci-source > *, :scope > .dci-sync, :scope > .dci-head-tools')]
+      .filter(k => k.offsetParent !== null && k.getBoundingClientRect().width > 0);
+      const mids = kids.map(k => { const r = k.getBoundingClientRect(); return Math.round(r.top + r.height / 2); });
+      const t = h.querySelector('h2'); const link = h.querySelector('.dci-source > a'); const badge = h.querySelector('.dci-sync-badge');
+      const shown = (e) => [...e.querySelectorAll('span')].filter(x => getComputedStyle(x).display !== 'none' && !x.classList.contains('dci-vh') && !x.classList.contains('dci-title-full')
+        && x.getBoundingClientRect().width > 1).map(x => x.textContent.trim()).filter(Boolean).join(' ');
+      return { spread: Math.max(...mids) - Math.min(...mids), h: Math.round(h.getBoundingClientRect().height), title: [shown(t) || t.textContent.trim(), t.title],
+        link: link ? !!link.title : null, badge: badge ? [badge.dataset.state, shown(badge)] : null,
+        open: !!h.querySelector('.dci-syncstatus [data-act=sync-open]'), status: h.querySelector('.dci-syncstatus').textContent.trim().slice(0, 40),
+        words: [...h.querySelectorAll('.dci-head-tools > .dci-ibtn .dci-hlabel')].filter(x => x.offsetParent !== null).length }; })()"""
+    MAN = """(() => { const m = document.querySelector('[data-el=manual]'); const f = m.querySelector('[data-f=manual-artist]');
+      return { folded: m.classList.contains('dci-manual-folded'), btn: !!m.querySelector('[data-act=manual-open]') && m.querySelector('[data-act=manual-open]').offsetParent !== null,
+        field: f.offsetParent !== null, focus: document.activeElement === f }; })()"""
+    SHR = """(() => { const o = document.getElementById('dci-overlay'); const vis = (s) => { const e = o.querySelector(s); return !!e && e.offsetParent !== null; };
+      return { shrunk: o.classList.contains('dci-shrunk'), sync: vis('.dci-head .dci-sync'), search: vis('[data-act=search-open]'), un: vis('[data-act=head-unshrink]'),
+        close: vis('.dci-head .dci-close'), h: Math.round(o.querySelector('.dci-head').getBoundingClientRect().height) }; })()"""
+    SCROLL = "(y) => { document.querySelector('#dci-overlay [data-el=body]').scrollTop = y; }"
+    results = []
+    chrome0 = H.CHROME
+    H.HEAD_SHRINK = None
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(args=H.LAUNCH_ARGS)
+            for off in (False, True):
+                H.CHROME = 'words'
+                H.RULES_OFF = ['S564', 'S565', 'S566', 'S567'] if off else []
+                ctx = b.new_context(viewport={'width': 900, 'height': 1000})
+                H.install_routes(ctx)
+                H.add_mapping(ctx)
+                pg, errs = H.open_mb_edit(ctx)
+                pg.on('dialog', lambda d: d.accept())
+                pg.wait_for_selector('#dci-open', timeout=20000)
+                H.open_dashboard(pg)
+                H.wait_for(pg, "[...document.querySelectorAll('#dci-log li')].some(li => /Import complete/.test(li.textContent))", 60)
+                pg.wait_for_timeout(800)
+                a = pg.evaluate(LINE)
+                m0 = pg.evaluate(MAN)
+                if pg.locator('.dci-pools-toggle').get_attribute('aria-expanded') == 'true':
+                    pg.click('.dci-pools-toggle')
+                    pg.wait_for_timeout(300)
+                pg.evaluate("document.querySelectorAll('#dci-overlay .dci-msgs .dci-x, #dci-overlay .dci-msgs [data-act=msg-close]').forEach(b => b.click())")
+                pg.wait_for_timeout(200)
+                c = pg.evaluate("""(() => { const st = document.querySelector('[data-el=stick]'); const d = document.querySelector('[data-el=dates]');
+                  return { h: Math.round(st.getBoundingClientRect().height), tray: d.classList.contains('dci-tray') }; })()""")
+                pg.evaluate(SCROLL, 900)
+                pg.wait_for_timeout(400)
+                d1 = pg.evaluate(SHR)
+                if off:
+                    print('E) aus:', a, m0, c, d1)
+                    results.append(a['title'][0].startswith('Credits Importer') and not a['badge'] and a['status'].startswith('Script Companion: no Discogs tab')
+                                   and not m0['folded'] and m0['field'] and not c['tray'] and not d1['shrunk'] and d1['search'])
+                else:
+                    print('A)', a)
+                    results.append(a['spread'] <= 4 and a['title'] == ['CI', 'Credits Importer'] and a['link'] and a['badge'] == ['none', 'Companion'] and a['open']
+                                   and a['status'].startswith('Script Companion: no Discogs tab') and a['words'] == 0)
+                    pg.evaluate(SCROLL, 0)
+                    pg.wait_for_timeout(300)
+                    pg.click('[data-act=manual-open]')
+                    pg.wait_for_timeout(200)
+                    m1 = pg.evaluate(MAN)
+                    pg.keyboard.type('abc')
+                    pg.locator('#dci-overlay [data-el=toolbar]').click(position={'x': 2, 'y': 2})
+                    pg.wait_for_timeout(200)
+                    m2 = pg.evaluate(MAN)
+                    pg.fill('[data-f=manual-artist]', '')
+                    pg.locator('#dci-overlay [data-el=toolbar]').click(position={'x': 2, 'y': 2})
+                    pg.wait_for_timeout(200)
+                    m3 = pg.evaluate(MAN)
+                    pg.focus('[data-f=manual-artist]') if m3['field'] else None
+                    print('B)', m0, m1, m2, m3)
+                    results.append(m0 == {'folded': True, 'btn': True, 'field': False, 'focus': False} and m1['field'] and m1['focus'] and m2['field'] and not m2['folded']
+                                   and m3['folded'] and not m3['field'])
+                    print('C)', c)
+                    results.append(c['tray'] and c['h'] <= 110)
+                    pg.evaluate(SCROLL, 900)
+                    pg.wait_for_timeout(400)
+                    d1 = pg.evaluate(SHR)
+                    pg.click('[data-act=head-unshrink]')
+                    pg.wait_for_timeout(300)
+                    d2 = pg.evaluate(SHR)
+                    pg.evaluate(SCROLL, 950)
+                    pg.wait_for_timeout(300)
+                    d3 = pg.evaluate(SHR)
+                    pg.evaluate(SCROLL, 0)
+                    pg.wait_for_timeout(300)
+                    pg.evaluate(SCROLL, 900)
+                    pg.wait_for_timeout(400)
+                    d4 = pg.evaluate(SHR)
+                    # "Slim head" in "More": pressed; off and on again there
+                    more0 = pg.evaluate("document.querySelector('.dci-head [data-act=head-shrink]').getAttribute('aria-pressed')")
+                    pg.locator('.dci-head [data-act=head-shrink]').evaluate('b => b.click()')
+                    pg.wait_for_timeout(200)
+                    more1 = [pg.evaluate("document.querySelector('.dci-head [data-act=head-shrink]').getAttribute('aria-pressed')"), pg.evaluate("localStorage.getItem('dci-head-shrink')"),
+                             pg.evaluate("document.getElementById('dci-overlay').classList.contains('dci-shrunk')")]
+                    pg.locator('.dci-head [data-act=head-shrink]').evaluate('b => b.click()')
+                    pg.wait_for_timeout(200)
+                    more2 = [pg.evaluate("document.querySelector('.dci-head [data-act=head-shrink]').getAttribute('aria-pressed')"), pg.evaluate("localStorage.getItem('dci-head-shrink')")]
+                    print('D2) „Slim head“ in More:', more0, more1, more2)
+                    results.append(more0 == 'true' and more1 == ['false', 'false', False] and more2 == ['true', None])
+                    H.open_settings(pg, 'appearance')
+                    pg.uncheck('[data-el=settings] [data-set=head-shrink]')
+                    pg.wait_for_timeout(200)
+                    pg.locator('.dci-head [data-act=settings-open]').evaluate('b => b.click()')
+                    pg.wait_for_timeout(300)
+                    pg.evaluate(SCROLL, 0)
+                    pg.wait_for_timeout(200)
+                    pg.evaluate(SCROLL, 900)
+                    pg.wait_for_timeout(400)
+                    d5 = [pg.evaluate(SHR), pg.evaluate("localStorage.getItem('dci-head-shrink')")]
+                    print('D) schmal:', d1, '| ▾:', d2, d3, '| wieder:', d4, '| aus:', d5)
+                    results.append(d1['shrunk'] and not d1['sync'] and not d1['search'] and d1['un'] and d1['close'] and d1['h'] <= 40
+                                   and not d2['shrunk'] and d2['search'] and not d3['shrunk'] and d4['shrunk'] and not d5[0]['shrunk'] and d5[1] == 'false')
+                print('Fehler:', errs)
+                results.append(not errs)
+                ctx.close()
+            b.close()
+    finally:
+        H.CHROME = chrome0
+        H.HEAD_SHRINK = False
+        H.RULES_OFF = []
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

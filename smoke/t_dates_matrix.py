@@ -913,7 +913,8 @@ def case_foldapply():
         b0 = [pg.evaluate(OPEN), pg.evaluate("localStorage.getItem('dci-pools-open')"), pg.evaluate("document.activeElement && document.activeElement.className"),
               [x[9:] for x in pg.locator('#dci-log li').all_inner_texts() if 'folded after' in x]]
         print('B) nach „Apply“:', b0)
-        results.append(b0[0] == 'false' and b0[1] is None and 'dci-pools-fold' in (b0[2] or '') and b0[3] == ['“Dates & tracks” folded after “Apply”'])
+        # ((3.232.0, S565) folded in the tray "▼ show" is the title's button: the focus there)
+        results.append(b0[0] == 'false' and b0[1] is None and ('dci-pools-fold' in (b0[2] or '') or 'dci-pools-toggle' in (b0[2] or '')) and b0[3] == ['“Dates & tracks” folded after “Apply”'])
         # C) off
         pg.click('.dci-pools-toggle')
         pg.wait_for_timeout(300)
