@@ -2,7 +2,8 @@
 (Credits Importer 3.233.0 ff.; the data and its target in smoke/data/krakow2018.json, the harness of it in krakow.py).
 
 Cases: krakow3233 (3.233.0: the engineer's studio, tracks in short by media, live comments grouped and with their area, "Concept By,
-Realization"), fast3234 (3.234.0: "⚡ Fast", the steps of the times named); `python3 t_twosources.py <case> …` runs only those."""
+Realization"), fast3234 (3.234.0: "⚡ Fast", the steps of the times named), twosources3235 (3.235.0: Discogs and Bandcamp completing each other,
+both ways); `python3 t_twosources.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 H.NO_ANIM = True
 from caserun import run_cases, sync_playwright  # noqa: E402
@@ -165,6 +166,66 @@ def case_fast3234():
         print('E) browses:', len(H.BROWSES), [x for x in lg if 'Fast' in x])
         results.append(len(H.BROWSES) > 0 and not any('⚡ Fast: left out' in x for x in lg))
         b.close()
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def _two(p, direction, supp, off=()):
+    """An import with the added source (taken as preselected): the rows before and after, the items, the ignored lines, the log."""
+    K.setup(direction)
+    H.RULES_OFF = list(off)
+    b, pg, errs = K.open_import(p, direction)
+    before = pg.evaluate(K.ROWS)
+    items = K.add_source(pg, supp)
+    out = {'before': before, 'items': items, 'rows': pg.evaluate(K.ROWS), 'log': pg.evaluate(K.LOG), 'errs': errs, 'why': K.add_source.why}
+    b.close()
+    return out
+
+
+def case_twosources3235():
+    """Credits Importer 3.235.0 (collected item Z-TWOSOURCES; rules S575 – S580): "Kraków 2018" – Discogs has who plays on each track, Bandcamp the
+    instruments in its titles; the goal: the right performers on every track with the right instruments on the right date, from either side.
+    A) The CD with Discogs, "＋ Source" its Bandcamp album (taken as preselected): all 65 people of the tracks with their instruments and dates, none
+       on a track too many – the list without tracks only confirms (S575), the titles' instruments replace "performer" (S576; Ken Vandermark's
+       saxophone by his surname), the tracks of both join (Guy's double bass 1.3–3.4, 4.4, 4.5); no item puts anyone on every track.
+    B) The digital release with Bandcamp: already the trio's members on 1.3/1.4 (S578, "Aurora Trio: Fernández p // Guy, db // …") and the list's
+       people on 5.1 ("Barry Guy and Friends" excludes nobody); the composer of the list not on the improvisations (S580). "＋ Source" Discogs:
+       all 65 with their dates (its notes, S579), Alchemia on 1.1–4.5 and Radio Kraków on 5.1, DTS Studio no place recorded at, Discogs's
+       "Performer" confirmed where an instrument is there (S577), Vandermark with the saxophone of the titles, the conductor on 5.1 only.
+    C) The six rules off: A as until 3.234.0 – people on tracks too many."""
+    results = []
+    with sync_playwright() as p:
+        a = _two(p, 'A', 'bandcamp')
+        sa, ca = K.summary(a['rows'])
+        print('A) before:', K.summary(a['before'])[0], '| after:', sa)
+        print('   items:', [(x['kind'], x['name'], x['rel'], x['tracks'], x['sel'], x['why']) for x in a['items'] if x['kind'] != 'unrec'])
+        vand = [(r['raw'], r['level'], r['tracks']) for r in a['rows'] if r['mb'] == 'Ken Vandermark' or r['name'] == 'Ken Vandermark']
+        guy = [r['tracks'] for r in a['rows'] if r['name'] == 'Barry Guy' and r['primary'] == 'double bass' and r['level'] == 'recording']
+        print('   Vandermark:', vand, '| Guy double bass:', guy, '| why:', a['why'][:3])
+        results.append(len(ca['ok']) == 65 and not ca['extra'] and not ca['date'] and not any(x['all'] and x['sel'] and x['kind'] in ('differ', 'role') for x in a['items'])
+                       and ('Saxophone', 'recording', [5, 6, 7, 8, 13, 14, 15]) in vand and any(x[0] == 'Performer' and x[1] == 'skip' for x in vand)
+                       and [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 16, 17] in guy and any(w[0] == 'union' for w in a['why']) and not a['errs'])
+        b = _two(p, 'B', 'discogs')
+        sb0, cb0 = K.summary(b['before'])
+        sb, cbb = K.summary(b['rows'])
+        trio = sorted(t for (t, who) in cb0['ok'] if t in (3, 4) and who in ('Agustí Fernández', 'Barry Guy'))
+        friends = sorted(who for (t, who) in cb0['ok'] + [(t, w) for t, w, *_ in cb0['less']] if t == 18)
+        comp0 = [r['tracks'] for r in b['before'] if r['name'] == 'Barry Guy' and 'composer' in r['types'] and r['level'] != 'skip']
+        print('B) before:', sb0, '| trio:', trio, '| on 5.1:', friends, '| composer:', comp0)
+        results.append(trio == [3, 3, 4, 4] and {'Agustí Fernández', 'Percy Pursglove', 'Mette Rasmussen', 'Torben Snekkestad', 'Rafał Mazur', 'Paul Lytton', 'Ramón López'} <= set(friends)
+                       and comp0 == [[18]])
+        places = {r['mb'] or r['name']: r['tracks'] for r in b['rows'] if r['company'] and r['raw'] == 'Recorded At' and r['level'] != 'skip'}
+        dts = [(r['raw'], r['level']) for r in b['rows'] if r['company'] and 'DTS' in r['name'] and r['level'] != 'skip']
+        cond = [r['tracks'] for r in b['rows'] if r['name'] == 'Barry Guy' and 'conductor' in r['types'] and r['level'] != 'skip']
+        vand = [(r['raw'], r['tracks']) for r in b['rows'] if 'Vandermark' in r['name'] and r['level'] != 'skip']
+        perf = [r for r in b['rows'] if r['supp'] and 'performer' in r['types'] and r['name'] != 'Aurora Trio']
+        print('B) after:', sb, '| places:', places, '| DTS:', dts, '| conductor:', cond, '| Vandermark:', vand, '| new performer rows:', len(perf))
+        results.append(len(cbb['ok']) == 65 and not cbb['extra'] and not cbb['date'] and places.get('Alchemia') == list(range(1, 18)) and places.get('Radio Kraków SA.') == [18]
+                       and not any(x[0] in ('Recorded At', 'Recorded By') for x in dts) and cond == [[18]] and vand == [('Saxophone', [5, 6, 7, 8, 13, 14, 15])] and not perf
+                       and not b['errs'])
+        c = _two(p, 'A', 'bandcamp', off=['S575', 'S576', 'S577', 'S578', 'S579', 'S580'])
+        sc, cc = K.summary(c['rows'])
+        print('C) off:', sc)
+        results.append(len(cc['extra']) > 50)
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

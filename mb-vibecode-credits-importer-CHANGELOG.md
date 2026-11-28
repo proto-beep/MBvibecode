@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-27 | 3.231.0 – 3.234.0 | 1.26.0 |
+| 2026-11-27 | 3.231.0 – 3.235.0 | 1.26.0 |
 | 2026-11-26 | 3.224.0 – 3.230.0 | 1.25.0 |
 | 2026-11-25 | 3.218.0 – 3.223.0 | 1.24.0 |
 | 2026-11-24 | 3.213.0 – 3.217.0 | – |
@@ -70,6 +70,7 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 
 | Date | Version | Milestone |
 |---|---|---|
+| 2026-11-27 | Import 3.235.0 | Two sources complete each other: Discogs’s performers per track, Bandcamp’s instruments in its titles – both ways |
 | 2026-11-27 | Import 3.234.0 | “⚡ Fast”: an import without the lookups in the background – the artists’ works on a click |
 | 2026-11-27 | Import 3.232.0 | More room for the entries: the head in one line, “＋ Entry” and the pools beside it, a slim head while scrolling |
 | 2026-11-27 | Import 3.231.0 · Companion 1.26.0 | A click on “3 new relationships” goes to them one by one; the filter “Only new relationships”; the companion’s large image in MusicBrainz colours |
@@ -165,6 +166,18 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-27
+
+### Import 3.235.0
+
+**Two sources complete each other: Discogs's performers per track and Bandcamp's instruments in its titles – both ways, with places and dates.**
+
+- **The tracks decide** (rule S575): a credit of the added source without tracks confirms; named tracks against a row on all tracks – only those ("fewer tracks"); against a row with tracks – the tracks of both (a contradiction only where the other source names a track's whole lineup without the person). Until 3.234.0 a list without tracks put people on every track.
+- **The titles' instruments** (rule S576): an added Bandcamp page reads the lineups in its titles (with the dashboard's names); the instrument replaces "performer" on those tracks.
+- **"Performer" against an instrument** (rule S577): confirmed, no second row; a name only said in titles ("Vandermark sax") gets the titles' instruments when the added source knows the person.
+- **Open and group track artists** (rule S578, mapping TRACK_AC_OPEN): "… and Friends" excludes nobody; a group counts its members ("Aurora Trio: Fernández p // Guy, db // …"), also where another title names only the group.
+- **An added Discogs as at the import** (rule S579): places on the tracks of the notes, the engineer's studio no place recorded at, the dates of the notes.
+- **No composer of a list on improvisations** (rule S580): "Improv 1" … keep no composer of a list without tracks.
+- **Tests:** case twosources3235 (smoke/t_twosources.py): "Kraków 2018" both ways – 65 of 65 with instruments and dates.
 
 ### Import 3.234.0
 

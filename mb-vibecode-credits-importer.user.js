@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.234.0
+// @version      3.235.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.234.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.234.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.235.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.235.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.234.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.235.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -292,6 +292,8 @@
       "supp.msgBusy": "Adding the source …",
       "supp.msg.new": "{n} new",
       "supp.msg.more": "{n} with more tracks",
+      "supp.kind.narrow": "fewer tracks",
+      "supp.msg.narrow": "{n} with fewer tracks",
       "supp.msg.differ": "{n} with other tracks",
       "supp.msg.same": "{n} there already or very similar",
       "supp.msg.unrec": "{n} not recognized",
@@ -327,6 +329,13 @@
       "supp.empty": "Nothing left to use. Rows {name} confirms are marked {short}.",
       "supp.mismatch": "{name} has {n} tracks, MusicBrainz {m}: check the track numbers.",
       "supp.allTracks": "all",
+      "supp.why.narrow": "{main} names no tracks for it – the tracks {name} names",
+      "supp.why.union": "Both sources name tracks – the tracks of both",
+      "supp.why.contra": "Not on {tracks}: there {main} names the whole lineup without this person",
+      "supp.why.perfInst": "The instrument instead of “performer” on these tracks",
+      "note.perfInst": "Left out: the added source names the instrument on these tracks (rows of their own).",
+      "note.improvNoComposer": "Not on the improvisations (their titles say so): the composer of a list without tracks is not the composer of the improvisations.",
+      "log.improvNoComposer": "A composer of a list without tracks not on the improvisations: {list}",
       "supp.textLoad": "Read text and add",
       "supp.badgeConfirm": "{name} says the same",
       "supp.badgeAdded": "added from {name}",
@@ -2989,6 +2998,7 @@
       "ms.3.231.0": "A click on “3 new relationships” goes to them one by one; the filter “Only new relationships”; the companion’s large image in MusicBrainz colours",
       "ms.3.232.0": "More room for the entries: the head in one line, “＋ Entry” and the pools beside it, a slim head while scrolling",
       "ms.3.234.0": "“⚡ Fast”: an import without the lookups in the background – the artists’ works on a click",
+      "ms.3.235.0": "Two sources complete each other: Discogs’s performers per track, Bandcamp’s instruments in its titles – both ways",
       "ms.3.230.0": "The times of an import in the log: which steps took how long, per source",
       "ms.3.227.0": "The companion in the dashboard’s language, Bandcamp’s artwork in high resolution",
       "ms.3.226.0": "“✨ Answer all”: a tie decided by the recordings in MusicBrainz, each work to open with ↗",
@@ -6175,6 +6185,12 @@
     { id: 'S572', where: 'parseRoleNotation, R131, R132, Q028', note: 'Roles (3.233.0; collected item Z-CONCEPTREAL): "Concept By" is the creative direction (on the release group, credited "concept"; until 3.232.0 miscellaneous support with the task "concept", R095); "Concept By, Realization" in one credit is the concept and its realization – one row each person, credited "concept, realization" (until 3.232.0 also a graphic design "realization"); "Realization" alone is asked – graphic design, the producer or miscellaneous support (Q028; until 3.232.0 graphic design, R073). Switched off: as until 3.232.0' },
     { id: 'S573', where: 'fastOn, setFast, runArtistWorks, awLineHtml (mx-aw-fast), missLinksRun, rgSourcesLoad, autoSearchWorks (statArtistsLookup), head "More" (fast-mode), settings (data-set fast-mode)', note: 'Import (3.234.0; collected item Z-FASTMODE): "⚡ Fast" – an import without what is only looked up in the background to help: the works on the artists\' pages (their repertoire; "Read them now" in the works matrix reads them, with "Stop" and "Continue" as always), the missing links of the entries (S291), the sources of the other releases of the group (S433) and the lookups of the statistics; the works of each track\'s writers are still searched. In "More" of the head and in ⚙ Settings → General; stays on until switched off (off by default). The log says what was left out, its times "⚡ fast". Switched off: no such switch' },
     { id: 'S574', where: 'mbWs (as), timingName (ws:…), liveAreaText', note: 'Log (3.234.0; collected item Z-TIMINGNAMES2; S557): the times of an import name every step – a request whose function the stack no longer shows (after an await) by what it asks ("MusicBrainz: area"), the areas of the live comments and the dedications and tributes in words. Switched off: "?" as until 3.233.0' },
+    { id: 'S575', where: 'compareSupplement (compare: lineupAt, unionOf, onAll; named), whyRow (supp.why.*)', note: 'Two sources (3.235.0; collected item Z-TWOSOURCES, T1; S326): the tracks decide – a role of an added source that names no tracks (a list for the whole release, "Barry Guy – bass, director, composer") confirms the row of the same word with its tracks (until 3.234.0 it was "differing" and put the person on every track); one that names tracks against a row on all tracks because its source named none: only those (narrowed, preselected – "composer" of the list on 5.1 as Discogs has it); against a row with tracks: the tracks of both (preselected) – a contradiction only on a track whose whole lineup the source imported names without the person (not ticked, said why). A role of a list and of titles at once counts with the tracks the titles name. The words of a role\'s details count ("Directed By [Director]" – "director"); "director" of an added source is read as at the import (S460: the conductor without video). Switched off: as until 3.234.0' },
+    { id: 'S576', where: 'loadSupplement (titleLineup of the added source), titleLineup (known, supp), compareSupplement (perfInst, perfFrom), dropPerformerTracks', note: 'Two sources (3.235.0; collected item Z-TWOSOURCES, T2; S451): an added Bandcamp page brings the lineups of its titles ("Lopez dr// Mazur, el-b // Pursglove, tp") – with the names of the dashboard ("Vandermark sax" – Ken Vandermark of Discogs; a name both sources spell, the added source\'s spelling); an instrument on tracks where the source imported has the person as "performer" only is taken there (preselected) and the performer row gives those tracks up (none left: Skip, said). Switched off: the titles of an added source are not read' },
+    { id: 'S577', where: 'compareSupplement (Performer of the added source), titleSaidInfos, titleLineup (titleSaid)', note: 'Two sources (3.235.0; collected item Z-TWOSOURCES, T3; S474): "Performer" of an added source on tracks ("Performer – Guy, Vandermark" of a Discogs track) where the person has an instrument or a voice there already is what it says – confirmed (until 3.234.0 a second row "performer"); only the other tracks stay a performer. A name the import only said in its titles ("Vandermark sax", no entry made) gets, as a performer of the added source, the instruments of those titles on their tracks. Switched off: as until 3.234.0' },
+    { id: 'S578', where: 'applyTrackArtistTracks (openCreditTrack, groupMemberTrack, dTrackIdx), memberGroups, titleLineup (titleGroups), TRACK_AC_OPEN', note: 'Track artists (3.235.0; collected item Z-TWOSOURCES, T4; S078, Z-BANDTRACKS): a track whose artist credit is open – "Barry Guy and Friends", "& Guests", "and his Orchestra" (mapping TRACK_AC_OPEN) – excludes nobody (who plays there the credits say: an "and Friends" album often changes its lineup); a group of a track\'s artist credit counts its members (the lineup of a title "Aurora Trio: Fernández p // Guy, db // López …", the members a text lists below the group\'s name); the tracks the source itself names for the person stay. Switched off: such tracks are left out (as until 3.234.0)' },
+    { id: 'S579', where: 'loadSupplement (addNotesCompanies, autoPlaceFoundDates), foundDateText', note: 'Two sources (3.235.0; collected item Z-TWOSOURCES, T5; S459, S441, D022): an added Discogs release is read as at the import – its places on the tracks its notes give them ("Recorded: October 11-12, 2018 at the Alchemia Club, Kraków (CD#1 … CD#4)" – Alchemia on 1.1–4.5, Radio Kraków on 5.1; until 3.234.0 every place on every track), the studio of its engineer no place recorded at (S571), its dates in the date pool and the matrix as suggestions (D022, D035 as always). Switched off: as until 3.234.0' },
+    { id: 'S580', where: 'applyImprovComposers', note: 'Works (3.235.0; collected item Z-TWOSOURCES, T8; S222): a composer (or writer) of a list without tracks ("Barry Guy – bass, director, composer") is not the composer of the tracks whose titles say they are improvisations ("Improv 1") – the improvisations of the groups are no works of his; nothing is assumed for them (a work only where a text says who improvised – "All music improvised by …"). The row says so; its other tracks stay. Switched off: on every track' },
     { id: 'S469', where: 'dgLineupApply, sendDiscogsStatus', note: 'Lineup and track credits (3.220.0; collected item Z-LOPEZ; S217): a row the answer leaves out (a lineup row on no track any more, a track credit taken into the lineup row) keeps its line at the source – its places go to the person\'s row still there, so the companion marks the line ("Ramón López – percussion" where the titles give him drums on all of his tracks)' },
     { id: 'S410', where: 'freshForget, repeatImport, loadRelease', note: '"↻ Repeat import" (3.209.0; collected item Z-FRESHALL): "Start afresh" forgets everything the dashboard holds of the release – not only the changes of the rows and the choices of the works matrix (Z-RI, 3.40.16), also the date pool, the track pool and the date matrix, the choices of the box "Dedications & tributes", "✕ No suite", texts and parts of sources switched off, "skip the works", entries joined by hand, the ticks of suggestions, what is remembered of the release ("Remember changes"; nothing of the import before is stored on the way). Kept: what was created in MusicBrainz through the dashboard (the lists of created works and suites), the source and the media chosen, the log' },
     { id: 'S409', where: 'mergeEntries, joinEntry, applyEntryMerges, dmTargetOf (entry-merge), groupHtml (grip)', note: 'Entries (3.208.0; collected item Z-ENTITYMERGE): two entries of the same kind that are one – from different sources, written otherwise – are joined by hand: the grip ⠿ before the kind of an entry dropped onto another entry. The entry dropped onto stays (its link to MusicBrainz counts; without one it takes the other\'s), the rows of the other come to it – the same role once, each row credited as its source writes it, the other\'s name one of its names. Two different entries of MusicBrainz, or entries of different kinds: not joined, a message says why. Remembered for the release (joined again at the next import); ↶ in the message undoes it' },
@@ -8131,6 +8147,7 @@
 
   // [T017] (S021) Track titles that say "live": "(Live)", "(Live at …)", "[Live]", "– Live"
   const LIVE_TITLE = MAP.LIVE_TITLE;
+  const TRACK_AC_OPEN = MAP.TRACK_AC_OPEN; // [Z-TWOSOURCES] (3.235.0, S578) an open artist credit of a track: "… and Friends", "& Guests"
 
   // [T018] (S022) Roles named with a track list in the notes ("XYZ Publishing (1, 4, 6)", "Written by Y (2, 5)")
   const NOTE_ROLES = MAP.NOTE_ROLES;
@@ -30390,6 +30407,8 @@
           mbEvents: rels.filter((r) => r['target-type'] === 'event' && r.event).map((r) => ({ id: r.event.id, name: r.event.name || '', type: norm(r.type || '') })),
           // [S078] (3.50.0; Z-TAR) their names as credited and in MusicBrainz (an entry of the source is found by its name)
           trackArtistNames: uniq((track['artist-credit'] || []).flatMap((c) => [c.name, c.artist && c.artist.name]).filter(Boolean).map(nameKey)),
+          // [Z-TWOSOURCES] (3.235.0, S578) the join phrases of its artist credit ("Barry Guy and Friends": " and Friends")
+          trackArtistJoins: (track['artist-credit'] || []).map((c) => String(c.joinphrase || '')),
           // [Z-TARRECORDING] (3.200.0, S381) the recording's own artists – who plays, where the track is credited to the composer
           recArtists: ((track.recording && track.recording['artist-credit']) || []).map((c) => c.artist && c.artist.id).filter(Boolean),
           recArtistNames: uniq(((track.recording && track.recording['artist-credit']) || []).flatMap((c) => [c.name, c.artist && c.artist.name]).filter(Boolean).map(nameKey)),
@@ -31023,6 +31042,11 @@
       }
       // ([Z-SRCTAG] 3.127.0, review) a text: its words (the badge 📄 shows them); read from images: so marked (🖼️)
       bonusCheck(rel, source.name); // [Z-BONUSLINE] (3.216.0, S447)
+      // [Z-TWOSOURCES] (3.235.0, S576) the lineups in its titles ("Lopez dr// Mazur, el-b // Pursglove, tp") – with the names of the dashboard
+      if (ruleOn('S576')) titleLineup(rel, source, { supp: true, known: [...S.artists.values()].filter((a) => !a.company).flatMap((a) => [a.name, a.mbName]) });
+      // [Z-TWOSOURCES] (3.235.0, S579) Discogs's notes as at the import: the places on the tracks its notes give them (S459), the studio of the
+      // engineer no place (S571); its dates below (foundDateText)
+      if (ruleOn('S579') && source === DISCOGS) addNotesCompanies(rel);
       S.suppSources.set(source.short, { name: source.noteName, url: rel.noteSource || S.supp.url, ocr: !!S.supp.ocr, ...(input && input.text ? { text: input.text, origin: input.origin || '' } : {}) });
       await compareSupplement();
       // [Z-WIKIBG] (3.149.0) two languages of Wikipedia that contradict each other: said, both offered
@@ -31033,7 +31057,7 @@
       if (rel.wikiRead) S.suppSources.get(source.short).langs = rel.wikiRead.map((x) => x.lang); // [Z-WIKISTATS] (3.149.0)
       // ([Z-WIKI] 3.149.0, review) its dates: placed as the notes' are
       // ([Z-OCRDATES] 3.225.0, S535: so are those of a text from images, typed or pasted, or of a Bandcamp page)
-      if (source === WIKIPEDIA || (ruleOn('S535') && (S.supp.ocr || source === TEXT || source === BANDCAMP))) {
+      if (source === WIKIPEDIA || (ruleOn('S535') && (S.supp.ocr || source === TEXT || source === BANDCAMP)) || (ruleOn('S579') && source === DISCOGS)) {
         autoPlaceFoundDates({ force: true });
         renderDates();
       }
@@ -31114,11 +31138,13 @@
     const sp = S.supp;
     if (!sp) return;
     const n = (f) => sp.items.filter(f).length;
-    const c = { new: n((it) => it.kind === 'role' || it.kind === 'entry'), more: n((it) => it.kind === 'differ' && it.more),
+    // ([Z-TWOSOURCES] 3.235.0, S575) a row narrowed to the tracks the added source names counted as "fewer tracks"
+    const c = { new: n((it) => it.kind === 'role' || it.kind === 'entry'), more: n((it) => it.kind === 'differ' && it.more && !it.narrow),
+      narrow: n((it) => it.kind === 'differ' && it.narrow),
       precise: n((it) => it.kind === 'precise' || it.kind === 'name'), // [Z-SUPPTABLE] (3.148.0)
       differ: n((it) => it.kind === 'differ' && !it.more), spell: n((it) => it.kind === 'spell'), same: sp.confirmed || 0, unrec: n((it) => it.kind === 'unrec') };
-    const list = ['new', 'more', 'precise', 'differ', 'spell', 'same', 'unrec'].filter((k) => c[k]).map((k) => tr(`supp.msg.${k}`, { n: c[k] })).join(' · ');
-    const nothing = !c.new && !c.more && !c.differ && !c.precise && !c.spell;
+    const list = ['new', 'more', 'narrow', 'precise', 'differ', 'spell', 'same', 'unrec'].filter((k) => c[k]).map((k) => tr(`supp.msg.${k}`, { n: c[k] })).join(' · ');
+    const nothing = !c.new && !c.more && !c.narrow && !c.differ && !c.precise && !c.spell;
     const name = sp.ocr ? tr('supp.fromCover') : sourceLabel(sp.source);
     const text = tr(nothing ? 'supp.msgNothing' : 'supp.msgSome', { name, list: list || tr('supp.msg.none') });
     sp.summary = { ...c, text, nothing };
@@ -31144,6 +31170,28 @@
    */
   const suppPreselect = (res) => res.kind === 'role' || res.kind === 'precise' || (res.kind === 'differ' && (res.more || res.addWins));
 
+  /**
+   * [Z-TWOSOURCES] (3.235.0, S577) "Performer" of an added source for a name the import only said in its titles ("Vandermark sax" – no entry,
+   * Bandcamp's credits do not name him; Discogs: "Performer – Vandermark" on the same tracks): the instruments of the titles on their tracks,
+   * "performer" only where no title names one. → the infos of the rows, or null.
+   */
+  function titleSaidInfos(g, c, info) {
+    const said = ((S.release && S.release.titleSaid) || []);
+    if (!said.length) return null;
+    const keys = uniq([g.name, g.rawName, c.anv].filter(Boolean).flatMap((n) => [looseName(n), looseName(String(n).split(/\s+/).pop())]));
+    const mine = said.filter((x) => keys.includes(looseName(x.name)) && info.tracks.includes(x.i));
+    if (!mine.length) return null;
+    const byRole = new Map();
+    mine.forEach((x) => x.roles.forEach((role) => { if (!byRole.has(role)) byRole.set(role, new Set()); byRole.get(role).add(x.i); }));
+    const out = [...byRole].map(([role, set]) => {
+      const c2 = { ...c, role: { raw: role, base: role, mods: [] } };
+      const probe = makeRow('supp', { raw: role, base: role, mods: [], anv: c.anv });
+      return { ...info, c: c2, tracks: [...set].sort((x, y) => x - y), all: false, rel: rowRelText(probe), said: true };
+    });
+    const rest = info.tracks.filter((i) => !mine.some((x) => x.i === i));
+    return rest.length ? [...out, { ...info, tracks: rest }] : out;
+  }
+
   async function compareSupplement() {
     const sp = S.supp;
     const short = sp.source.short;
@@ -31165,7 +31213,78 @@
       }
     }
     const kin = new Set();
+    // [Z-TWOSOURCES] (3.235.0, S575) the people the source imported names on a track by its own credits of the track (not a list for all):
+    // track → the keys of their entries – a lineup of that track
+    const lineupAt = new Map();
+    for (const r of S.rows) {
+      if (r.company || r.supp || r.level !== 'recording' || !TAR_TYPES.includes(norm((r.types || [])[0] || ''))) continue;
+      for (const i of r.dAllTracks ? r.dTrackIdx || [] : r.tracks || []) {
+        if (!lineupAt.has(i)) lineupAt.set(i, new Set());
+        lineupAt.get(i).add(r.artistKey);
+      }
+    }
+    const unionOf = new Map(); // row id → its item (more tracks of the same row join it)
+    const allSel = selIdx();
+    // (a row on every track because its source named none – not narrowed by the track artists)
+    const onAll = (r) => !!r.dAllTracks && !r.s078 && allSel.every((i) => r.tracks.has(i));
     const compare = (a, probe, info) => {
+      // [Z-TWOSOURCES] (3.235.0, S575) the same word of a role (its details too: "Directed By [Director]" – "director") – the tracks decide:
+      // a source that names no tracks confirms (it says nothing against the tracks the other one names); named tracks against a row on all
+      // tracks because its source named none: only those (narrowed, preselected); against a row with tracks: those of both (preselected) –
+      // a contradiction only on a track whose whole lineup the source imported names without the person (not ticked, said why)
+      if (ruleOn('S575') && !info.company) {
+        const ws = new Set([probe.dBase || probe.base || probe.raw, probe.raw, ...(probe.mods || [])].map(suppWordKey).filter(Boolean));
+        const cands = S.rows.filter((r) => r.artistKey === a.key && !r.supp && r.level !== 'skip' && [...suppRowWords(r)].some((k) => ws.has(k)));
+        if (cands.length) {
+          const confirm = (r) => {
+            if (!r.confirmedBy) r.confirmedBy = new Set();
+            r.confirmedBy.add(short);
+            if (sp.ocr) r.ocrSeen = uniq([...(r.ocrSeen || []), info.line].filter(Boolean));
+            sp.confirmed++;
+            return null;
+          };
+          if (info.all) return confirm(cands.find((r) => !onAll(r)) || cands[0]);
+          const r = cands.find((x) => x.level === 'recording' && !onAll(x)) || cands.find((x) => x.level === 'recording') || cands[0];
+          const want = new Set(info.tracks);
+          if (sameTracks(new Set(r.tracks), want)) return confirm(r);
+          const firstTracks = trackSetText(r.tracks, r.dAllTracks);
+          const mainKey = rowTrustKey(r);
+          if (onAll(r)) {
+            kin.add(r);
+            r.differ = { short, tracks: info.tracks, all: false, name: sp.source.name };
+            return { kind: 'differ', rowId: r.id, firstTracks, firstAll: true, more: true, narrow: true, mainKey, why: 'narrow' };
+          }
+          const add = info.tracks.filter((i) => !r.tracks.has(i));
+          if (!add.length) return confirm(r);
+          const contra = add.filter((i) => lineupAt.has(i) && lineupAt.get(i).size >= 2 && !lineupAt.get(i).has(a.key));
+          const ok = add.filter((i) => !contra.includes(i));
+          const had = unionOf.get(r.id);
+          if (had) {
+            had.tracks = uniq([...had.tracks, ...ok]).sort((x, y) => x - y);
+            if (ruleOn('S576')) had.perfFrom = uniq([...(had.perfFrom || []), ...S.rows.filter((x) => x.artistKey === a.key && !x.supp && x.level === 'recording'
+              && norm((x.types || [])[0] || '') === 'performer' && !norm(x.primaryText || '') && ok.some((i) => x.tracks.has(i))).map((x) => x.id)]);
+            had.contra = uniq([...(had.contra || []), ...contra]);
+            had.line = uniq([had.line, info.line].filter(Boolean)).join(' · ');
+            return null;
+          }
+          kin.add(r);
+          r.differ = { short, tracks: [...r.tracks, ...ok], all: false, name: sp.source.name };
+          // ((S576) the person's "performer" rows on the added tracks give them up when it is taken)
+          const perfFrom = ruleOn('S576') && ['instrument', 'vocal'].includes(norm((r.types || [])[0] || '')) ? S.rows.filter((x) => x.artistKey === a.key && !x.supp && x.level === 'recording'
+            && norm((x.types || [])[0] || '') === 'performer' && !norm(x.primaryText || '') && ok.some((i) => x.tracks.has(i))).map((x) => x.id) : [];
+          const it = ok.length ? { kind: 'differ', rowId: r.id, firstTracks, firstAll: !!r.dAllTracks, more: true, union: true, mainKey, tracks: uniq([...r.tracks, ...ok]).sort((x, y) => x - y), contra, why: contra.length ? 'contra' : 'union', ...(perfFrom.length ? { perfFrom } : {}) }
+            : { kind: 'differ', rowId: r.id, firstTracks, firstAll: !!r.dAllTracks, conflict: true, addWins: false, mainKey, contra, why: 'contra', tracks: uniq([...r.tracks, ...add]).sort((x, y) => x - y) };
+          if (ok.length) unionOf.set(r.id, it);
+          return it;
+        }
+      }
+      // [Z-TWOSOURCES] (3.235.0, S576) an instrument or voice on tracks where the source imported has the person as "performer" without one:
+      // the instrument there (a new row, preselected) – the performer row gives those tracks up when it is taken
+      if (ruleOn('S576') && !info.company && !info.all && ['instrument', 'vocal'].includes(norm((probe.types || [])[0] || ''))) {
+        const perf = S.rows.filter((r) => r.artistKey === a.key && !r.supp && r.level === 'recording' && norm((r.types || [])[0] || '') === 'performer' && !norm(r.primaryText || '')
+          && info.tracks.some((i) => r.tracks.has(i)));
+        if (perf.length) return { kind: 'role', types: probe.types || [], perfFrom: perf.map((r) => r.id), why: 'perfInst' };
+      }
       // [Z-SUPPWORDS] (3.188.0, S326) first the word: the same person with the same word of the source – "cracklebox", "voice", "bass" –
       // is there already, whatever the rules make of the word in each source, whether its question is open and on which level the row
       // stands now (the tracks it had before "on the release" count)
@@ -31253,15 +31372,22 @@
       nameItem(a, g, suppEntryFor.how, suppEntryFor.fuller);
       const fresh = [];
       for (const c of g.roles.values()) {
-        const tracks = suppTracks(c);
+        // ([Z-TWOSOURCES] 3.235.0, S575) a role for all tracks (its list) and on tracks by name (its titles): the tracks named count
+        const named = ruleOn('S575') && c.allTracks && c.indexes.size ? [...c.indexes].filter((i) => i < S.mbTracks.length && inSelection(i)) : null;
+        const tracks = named && named.length ? named : suppTracks(c);
         if (S.mediaSel && !c.allTracks && c.indexes.size && !tracks.length) continue;
-        const probe = makeRow('supp', { raw: c.role.raw, base: c.role.base, mods: c.role.mods, anv: c.anv, artTask: !!c.role.artTask, artCredit: c.role.artCredit || '' });
+        // ([Z-TWOSOURCES] 3.235.0, S460) "director" read as at the import: the conductor where there is no video
+        const asCond = ruleOn('S575') && musicalDirector(c, sp.rel);
+        const probe = makeRow('supp', { raw: c.role.raw, base: asCond ? 'music director' : c.role.base, mods: c.role.mods, anv: c.anv, artTask: !!c.role.artTask, artCredit: c.role.artCredit || '' });
         // [S026] a credit for a medium the release does not have is no supplement either
         const pm = mediumOfRow(probe);
         if (pm && mediumMissing(pm.kind)) continue;
-        const info = { name: g.name, line: c.lines[0] || c.role.raw, rel: rowRelText(probe), tracks, all: !!c.allTracks, c };
+        const info = { name: g.name, line: c.lines[0] || c.role.raw, rel: rowRelText(probe), tracks, all: !!c.allTracks && !(named && named.length), c };
         if (!a) {
-          fresh.push(info);
+          // [Z-TWOSOURCES] (3.235.0, S577) a person the source imported only names in its titles ("Vandermark sax", no entry made): the
+          // performer of the added source gets the instruments of those titles on their tracks
+          const said = ruleOn('S577') && !c.allTracks && /^performer$/i.test(String(c.role.base || '')) ? titleSaidInfos(g, c, info) : null;
+          fresh.push(...(said || [info]));
           continue;
         }
         // [Z-NAMEONLY] (3.221.0, S474) a name alone of the added source (a performer of its lineup): the person's role on the release
@@ -31272,6 +31398,18 @@
             own.forEach((r) => { if (!r.confirmedBy) r.confirmedBy = new Set(); r.confirmedBy.add(short); });
             sp.confirmed++;
             continue;
+          }
+        }
+        // [Z-TWOSOURCES] (3.235.0, S577) "Performer" of the added source on tracks ("Performer – Guy, Vandermark" of a track of Discogs): where the
+        // person has an instrument or a voice there already, that is what it says – confirmed; only the other tracks stay a performer
+        if (ruleOn('S577') && !c.allTracks && tracks.length && /^performer$/i.test(String(c.role.base || ''))) {
+          const own = S.rows.filter((r) => r.artistKey === a.key && !r.supp && r.level === 'recording' && ['instrument', 'vocal'].includes(norm((r.types || [])[0] || '')));
+          const covered = tracks.filter((i) => own.some((r) => r.tracks.has(i)));
+          if (covered.length) {
+            own.filter((r) => covered.some((i) => r.tracks.has(i))).forEach((r) => { if (!r.confirmedBy) r.confirmedBy = new Set(); r.confirmedBy.add(short); });
+            sp.confirmed++;
+            if (covered.length === tracks.length) continue;
+            info.tracks = tracks.filter((i) => !covered.includes(i));
           }
         }
         const res = compare(a, probe, info);
@@ -31292,10 +31430,15 @@
         console.warn('[Credits-Importer] supplement company links', e);
       }
     }
+    // [Z-ENGSTUDIO] (3.233.0, S571; 3.235.0 for an added source) "Recorded By – DTS Studio, Kraków" of a studio (it has "Mixed At" …) where the
+    // added source names other places "Recorded At": no relationship of the place – left out
+    const recAtElse = (g) => companies.some((h) => h !== g && h.roles.some((x) => /^recorded at$/i.test(String(x.role || '').trim())));
     for (const g of companies) {
       const a = suppEntryFor(g.rawName || g.name, (linkedCo.get((g.links || [])[0]) || []).map((c) => c.mbid), true);
       const fresh = [];
+      const studio = ruleOn('S571') && ruleOn('S575') && g.roles.some((x) => /\sat$/i.test(String(x.role || '').trim())) && recAtElse(g);
       for (const r of g.roles) {
+        if (studio && /^recorded by$/i.test(String(r.role || '').trim())) continue;
         const some = r.tracks && !r.tracks.all && (r.tracks.indexes || []).length;
         const tracks = some ? r.tracks.indexes.filter((i) => i < S.mbTracks.length && inSelection(i)) : selIdx();
         if (some && !tracks.length) continue;
@@ -31665,8 +31808,11 @@
 
   /** A row of the second source, built as the import builds rows (tracks from it, its mark). */
   function suppRow(artistKey, info, company) {
+    // ([Z-TWOSOURCES] 3.235.0, S460) "director" as at the import: the conductor where there is no video, credited "director"
+    const asCond = !company && ruleOn('S575') && musicalDirector(info.c, (S.supp && S.supp.rel) || {});
     const row = company ? makeRow(artistKey, { raw: info.r.role, company })
-      : makeRow(artistKey, { raw: info.c.role.raw, base: info.c.role.base, mods: info.c.role.mods, anv: info.c.anv, artTask: !!info.c.role.artTask, artCredit: info.c.role.artCredit || '', guess: !!info.c.guess });
+      : makeRow(artistKey, { raw: info.c.role.raw, base: asCond ? 'music director' : info.c.role.base, mods: info.c.role.mods, anv: info.c.anv, artTask: !!info.c.role.artTask, artCredit: info.c.role.artCredit || '', guess: !!info.c.guess });
+    if (asCond) Object.assign(row, { notes: uniq([...(row.notes || []), 'directorConductor']), ...(ruleOn('S528') ? { roleCredit: String(info.c.role.base || 'director').trim().toLowerCase(), roleCreditTouched: true } : {}) });
     row.dAllTracks = !!info.all;
     if (!company) {
       if (info.c.anvFrom) row.anvFrom = info.c.anvFrom; // [S060] (3.38.12)
@@ -31708,6 +31854,19 @@
   const rowPrevName = (row) => (row.suppTook ? row.suppTook.name : row.supp ? row.suppName : S.source.noteName);
 
   /** Takes the selected suggestions of the list into the dashboard. */
+  /** [Z-TWOSOURCES] (3.235.0, S576) The instrument instead of "performer": the performer rows give those tracks up (none left: Skip, said). */
+  function dropPerformerTracks(it) {
+    if (!it.perfFrom) return;
+    for (const r of S.rows.filter((x) => it.perfFrom.includes(x.id))) {
+      (it.tracks || []).forEach((i) => { r.tracks.delete(i); if (r.suggested) r.suggested.delete(i); });
+      if (!r.tracks.size && r.level !== 'skip') {
+        r.levelBeforeSkip = r.level;
+        r.level = 'skip';
+        r.notes = uniq([...(r.notes || []), 'perfInst']);
+      }
+    }
+  }
+
   async function applySupplement() {
     const sp = S.supp;
     if (!sp) return;
@@ -31718,9 +31877,11 @@
         const a = S.artists.get(it.artistKey);
         const row = a && suppRow(a.key, it, it.company ? a : null);
         if (row) S.rows.push(row);
+        if (row) dropPerformerTracks(it); // [Z-TWOSOURCES] (3.235.0, S576)
       } else if (it.kind === 'differ') {
         const row = S.rows.find((r) => r.id === it.rowId);
         if (!row) continue;
+        dropPerformerTracks(it); // [Z-TWOSOURCES] (3.235.0, S576)
         row.tracks = new Set(it.tracks);
         row.suggested = new Set(it.tracks);
         row.dAllTracks = !!it.all;
@@ -31899,7 +32060,7 @@
     const selectable = sp.items.filter((it) => it.kind !== 'unrec' && it.kind !== 'spell');
     const nSel = selectable.filter((it) => it.sel).length;
     // ([Z-SUPPMSG] 3.116.0) "more tracks": a difference that only adds tracks
-    const chip = (kind) => `<span class="dci-supp-kind dci-supp-${kind === 'more' ? 'differ' : kind}">${esc(tr(`supp.kind.${kind}`))}</span>`;
+    const chip = (kind) => `<span class="dci-supp-kind dci-supp-${kind === 'more' || kind === 'narrow' ? 'differ' : kind}">${esc(tr(`supp.kind.${kind}`))}</span>`;
     const none = `<span class="dci-sub">${esc(tr('supp.notThere'))}</span>`;
     const words = (text, all) => `<span class="dci-sub">(${esc(all ? tr('supp.onAll') : tr('supp.onTracks', { tracks: text }))})</span>`;
     const tracksOf = (it) => ((it.tracks && it.tracks.length) || it.all ? ` ${words(trackSetText(it.tracks, it.all), it.all)}` : '');
@@ -31935,7 +32096,10 @@
     };
     // [Z-SRCTRUST] (3.148.0) why a contradiction is preselected as it is
     const whyRow = (it) => {
-      if (it.kind !== 'differ' || !it.conflict) return '';
+      // [Z-TWOSOURCES] (3.235.0, S575 – S577) why the tracks are as they are: one source names none, both name some, a lineup without the person
+      const tw = it.why && ruleOn('S575') ? `<tr class="dci-supp-why" data-why="${esc(it.why)}"><td></td><td colspan="6">${esc(tr(`supp.why.${it.why}`, { tracks: trackSetText(new Set(it.contra || []), false), name: sp.source.name, main: trustName(it.mainKey || mainTrustKey()) }))}</td></tr>` : '';
+      if (it.why === 'contra') return tw;
+      if (it.kind !== 'differ' || !it.conflict) return tw;
       const win = it.addWins ? sp.addKey : it.mainKey;
       const lose = it.addWins ? it.mainKey : sp.addKey;
       // ((review) chosen by hand against the trust: said so
@@ -31949,7 +32113,7 @@
         ? `<strong>${esc(a.name)}</strong>${it.name && it.kind !== 'name' && it.kind !== 'spell' && nameKey(it.name) !== nameKey(a.name) ? `<div class="dci-sub">${esc(tr('supp.written', { name: it.name }))}</div>` : ''}`
         : `<strong>${esc(it.name)}</strong><div class="dci-sub">${esc(tr('supp.onlyHere', { name }))}</div>`;
       const off = it.kind === 'unrec' || it.kind === 'spell';
-      const kind = it.more ? 'more' : it.kind;
+      const kind = it.more ? (it.narrow ? 'narrow' : 'more') : it.kind; // ((S575) narrowed: "fewer tracks")
       return `<tr class="dci-supp-row dci-supp-row-${it.kind}${it.conflict ? ' dci-supp-conflict' : ''}" data-supp="${it.id}">
         <td><input type="checkbox" data-f="supp-sel" data-id="${it.id}" ${it.sel ? 'checked' : ''} ${off ? 'disabled' : ''} aria-label="${esc(`${tr(`supp.kind.${kind}`)}: ${it.name || it.line}`)}"></td>
         <td>${chip(kind)}</td><td>${who}</td><td>${esc(it.kind === 'precise' ? it.mainSays : it.rel || '–')}</td>
@@ -34198,6 +34362,7 @@
       applyPerformerTracks();
       // [S078] (3.50.0; Z-TAR) a musician for the whole release on the tracks that name the musician as their artist
       applyTrackArtistTracks();
+      applyImprovComposers(); // [Z-TWOSOURCES] (3.235.0, S580)
       guestDupMerge(); // [Z-GUESTDUP] (3.200.0, S383)
       cjkCaseStart(rel); // [Z-CAPSJP] (3.202.0, S385)
       runoutDates(rel); // [Z-RUNOUTDATE] (3.205.0, S398)
@@ -41293,7 +41458,8 @@
   function foundDateText() {
     // ([Z-OCRDATES] 3.225.0, S535) also the text added from images, typed or pasted, and a Bandcamp page added ("Recorded and produced by Nik
     // Rayne August 2016 …" of a cover read as a supplement) – with its sections (S534)
-    const suppText = S.supp && S.supp.rel && (S.supp.source === WIKIPEDIA || (ruleOn('S535') && (S.supp.ocr || S.supp.source === TEXT || S.supp.source === BANDCAMP)));
+    const suppText = S.supp && S.supp.rel && (S.supp.source === WIKIPEDIA || (ruleOn('S535') && (S.supp.ocr || S.supp.source === TEXT || S.supp.source === BANDCAMP))
+      || (ruleOn('S579') && S.supp.source === DISCOGS)); // ([Z-TWOSOURCES] 3.235.0, S579) an added Discogs too
     const wiki = suppText ? (S.supp.source === WIKIPEDIA ? String(S.supp.rel.notes || '') : notesForDates(String(S.supp.rel.notes || ''))) : '';
     return [notesForDates(String((S.release && S.release.notes) || '')), wiki].filter(Boolean).join('\n'); // ([Z-RDE-TRACKPLACES] 3.222.0, S492)
   }
@@ -42480,14 +42646,18 @@
     bs: 'Baritone Saxophone', g: 'Guitar', gt: 'Guitar', git: 'Guitar', 'el-g': 'Electric Guitar', 'e-g': 'Electric Guitar', vln: 'Violin', vn: 'Violin', vla: 'Viola',
     vc: 'Cello', cl: 'Clarinet', 'b-cl': 'Bass Clarinet', bcl: 'Bass Clarinet', tb: 'Trombone', tbn: 'Trombone', fl: 'Flute', voc: 'Vocals', v: 'Vocals', kb: 'Keyboards',
     keys: 'Keyboards', org: 'Organ', syn: 'Synthesizer', synth: 'Synthesizer', elec: 'Electronics', electronics: 'Electronics', acc: 'Accordion', hp: 'Harp', vib: 'Vibraphone' };
-  function titleLineup(rel, source) {
+  function titleLineup(rel, source, { known: more = [], supp = false } = {}) {
     if (!(ruleOn('S450') && ruleOn('S451')) || !rel || !Array.isArray(rel.tracks)) return 0;
-    const known = uniq([...(rel.credits || []).map((c) => c.who && c.who.name), ...(S.releaseCredit || []).flatMap((p) => [p.name, p.artistName])].filter(Boolean));
+    // ([Z-TWOSOURCES] 3.235.0, S576) an added source: the names of the dashboard's entries too ("Vandermark" – Ken Vandermark of Discogs)
+    const known = uniq([...(rel.credits || []).map((c) => c.who && c.who.name), ...(S.releaseCredit || []).flatMap((p) => [p.name, p.artistName]), ...more].filter(Boolean));
     const fold = (x) => looseName(x);
+    const own = new Set((rel.credits || []).map((c) => c.who && c.who.name).filter(Boolean));
     const bySurname = (n) => {
       const k = fold(n);
       const hits = known.filter((x) => fold(x) === k || fold(String(x).split(/\s+/).pop()) === k);
-      return hits.length === 1 ? hits[0] : '';
+      // ([Z-TWOSOURCES] 3.235.0, S576) the same person written by two sources ("Rafał Mazur" – "Rafal Mazur"): the source's own spelling
+      const mine = more.length && hits.length > 1 ? hits.filter((x) => own.has(x)) : [];
+      return hits.length === 1 ? hits[0] : mine.length === 1 ? mine[0] : '';
     };
     const instr = (w) => {
       const k = String(w || '').toLowerCase().replace(/[.:]+$/, '');
@@ -42495,6 +42665,7 @@
     };
     const added = [];
     const missing = new Set();
+    const groupDef = new Map(); // ([Z-TWOSOURCES] 3.235.0, S578) a group and its members as one title names them
     const titleOf = (i) => {
       const own = String((rel.tracks[i] || {}).title || '');
       if (own.includes('//') || !ruleOn('S452')) return own;
@@ -42504,6 +42675,8 @@
       const title = titleOf(i);
       if (!title.includes('//')) continue;
       const body = (title.match(/\(([^()]*\/\/[^()]*)\)\s*$/) || [])[1] || title;
+      // [Z-TWOSOURCES] (3.235.0, S578) the lineup of a group: "Aurora Trio: Fernández p // Guy, db // …" – its members
+      const grp = ruleOn('S578') ? (body.match(/^\s*(\p{Lu}[\p{L}'’.&-]*(?:\s+[\p{Lu}&][\p{L}'’.-]*){0,3})\s*:\s*\S/u) || [])[1] : '';
       for (const seg of body.split(/\s*\/\/\s*/)) {
         const m = seg.match(/(\p{Lu}[\p{L}'’.-]+(?:\s+\p{Lu}[\p{L}'’.-]+)?)\s*,?\s*((?:[\p{Ll}][\p{Ll}.-]*)(?:\s*[,\s]\s*[\p{Ll}][\p{Ll}.-]*)*)\s*\)?\s*$/u);
         if (!m) continue;
@@ -42512,7 +42685,16 @@
         const name = bySurname(m[1]);
         if (!name) {
           missing.add(m[1]);
+          // [Z-TWOSOURCES] (3.235.0, S577) a name only said, with its instruments and track: an added source that knows the person gives them
+          if (!supp) (rel.titleSaid = rel.titleSaid || []).push({ name: m[1], roles: uniq(roles), i });
           continue;
+        }
+        if (grp) {
+          if (!S.titleGroups) S.titleGroups = new Map();
+          if (!S.titleGroups.has(grp)) S.titleGroups.set(grp, new Set());
+          S.titleGroups.get(grp).add(name);
+          if (!groupDef.has(grp)) groupDef.set(grp, { i, members: [] });
+          if (groupDef.get(grp).i === i) groupDef.get(grp).members.push({ name, roles: uniq(roles) });
         }
         const who = ((rel.credits || []).find((c) => c.who && c.who.name === name) || {}).who || { id: 0, name, rawName: name, links: [] };
         for (const role of uniq(roles)) {
@@ -42522,11 +42704,31 @@
         }
       }
     }
+    // [Z-TWOSOURCES] (3.235.0, S578) the group alone in another title ("Aurora Trio // Rasmussen sax"): its members there, with their instruments
+    if (groupDef.size) {
+      for (let i = 0; i < rel.tracks.length; i++) {
+        const title = titleOf(i);
+        if (!title.includes('//')) continue;
+        const body = (title.match(/\(([^()]*\/\/[^()]*)\)\s*$/) || [])[1] || title;
+        for (const seg of body.split(/\s*\/\/\s*/)) {
+          const hit = [...groupDef].find(([g, d]) => d.i !== i && looseName(seg.replace(/^[^(]*\(\s*/, '').trim()) === looseName(g));
+          if (!hit) continue;
+          for (const m of hit[1].members) {
+            const who = ((rel.credits || []).find((c) => c.who && c.who.name === m.name) || {}).who || { id: 0, name: m.name, rawName: m.name, links: [] };
+            for (const role of m.roles) {
+              if ((rel.credits || []).some((c) => c.fromTitle && c.who.name === m.name && c.role === role && (c.tracks.indexes || []).includes(i))) continue;
+              rel.credits.push({ who: { ...who }, role, base: role, details: [], credited: '', tracks: { indexes: [i], position: (rel.tracks[i] || {}).position || String(i + 1) }, fromTitle: true, ofGroup: hit[0] });
+              added.push(`${m.name} – ${role} (${i + 1})`);
+            }
+          }
+        }
+      }
+    }
     if (added.length) {
       log('info', 'titleLineup', { n: added.length, source: source ? source.name : '' });
-      showMessage('info', 'msg.titleLineup', { n: added.length, source: source ? source.name : '' });
+      if (!supp) showMessage('info', 'msg.titleLineup', { n: added.length, source: source ? source.name : '' });
     }
-    if (missing.size) {
+    if (missing.size && !supp) {
       log('warn', 'titleLineupMissing', { list: [...missing].join(', ') });
       showMessage('warn', 'msg.titleLineupMissing', { list: [...missing].join(', ') });
     }
@@ -47894,6 +48096,31 @@
   // recording who plays – "Passacaglia in G minor" by H. I. F. Biber, recorded by Maya Homburger) the artists of its recording
   const tarIds = (t) => uniq([...(t.trackArtists || []), ...(ruleOn('S381') ? t.recArtists || [] : [])]);
   const tarNames = (t) => uniq([...(t.trackArtistNames || []), ...(ruleOn('S381') ? t.recArtistNames || [] : [])]);
+  /** [Z-TWOSOURCES] (3.235.0, S578) A track whose artist credit is open: a join phrase "and Friends", "& Guests", "and his Orchestra" (TRACK_AC_OPEN). */
+  const openCreditTrack = (i) => ((S.mbTracks[i] || {}).trackArtistJoins || []).some((j) => TRACK_AC_OPEN.test(j));
+  /**
+   * [Z-TWOSOURCES] (3.235.0, S578) The groups whose members a source names: name key → the keys of its members – the lineup of a title with the
+   * group's name before it ("Aurora Trio: Fernández p // Guy, db // López, perc, cym"), the members a text lists below the group's name.
+   */
+  function memberGroups() {
+    const out = new Map();
+    const add = (g, ms) => {
+      const k = nameKey(g);
+      if (!k) return;
+      if (!out.has(k)) out.set(k, new Set());
+      ms.map(nameKey).filter(Boolean).forEach((m) => out.get(k).add(m));
+    };
+    for (const [g, ms] of S.titleGroups || []) add(g, [...ms]);
+    for (const g of (S.workNotesRel && S.workNotesRel.groups) || []) if ((g.members || []).length) add(g.name, g.members);
+    return out;
+  }
+  /** [Z-TWOSOURCES] (3.235.0, S578) A track credited to a group (alone or with others) the person is a member of. */
+  function groupMemberTrack(a, i, keys) {
+    const t = S.mbTracks[i];
+    if (!t) return false;
+    const groups = memberGroups();
+    return tarNames(t).some((n) => groups.has(n) && [...groups.get(n)].some((m) => keys.has(m) || [...keys].some((k) => k.split(' ').pop() === m.split(' ').pop() && m.split(' ').pop().length > 2)));
+  }
   function bandTrackFor(a, i, keys) {
     const t = S.mbTracks[i];
     const ids = (t && t.trackArtists) || [];
@@ -47988,6 +48215,30 @@
     log('info', 'guestDup', { n: drop.size });
     return drop.size;
   }
+  /**
+   * [Z-TWOSOURCES] (3.235.0, S580) A composer (or writer) of a list without tracks ("Barry Guy – bass, director, composer") is not the composer of
+   * the tracks whose titles say they are improvisations ("Improv 1", S222) – the improvisations of the groups are no works of his; nothing is
+   * assumed for them (a work only where a text says who improvised: "All music improvised by …"). The row says so; its other tracks stay.
+   */
+  function applyImprovComposers() {
+    if (!ruleOn('S580') || !ruleOn('S222')) return 0;
+    const src = S.srcTracks || [];
+    const imp = selIdx().filter((i) => [((S.mbTracks || [])[i] || {}).title, (src[i] || {}).title].some(improvTitle));
+    if (!imp.length) return 0;
+    let n = 0;
+    for (const r of S.rows) {
+      if (r.company || r.supp || r.manual || r.improv || !r.dAllTracks || (r.dTrackIdx && r.dTrackIdx.size) || r.level !== 'work') continue;
+      if (!['composer', 'writer'].includes(norm((r.types || [])[0] || ''))) continue;
+      const out = imp.filter((i) => r.tracks.has(i));
+      if (!out.length || out.length >= r.tracks.size) continue;
+      out.forEach((i) => { r.tracks.delete(i); if (r.suggested) r.suggested.delete(i); });
+      r.notes = uniq([...(r.notes || []), 'improvNoComposer']);
+      n++;
+    }
+    if (n) log('info', 'improvNoComposer', { list: trackListLabel(imp) });
+    return n;
+  }
+
   function applyTrackArtistTracks() {
     const on = ruleOn('S078');
     let n = 0;
@@ -48035,6 +48286,15 @@
       if (named.length) {
         for (const i of sel) {
           if (!named.includes(i) && r.tracks && r.tracks.has(i) && bandTrackFor(a, i, keys)) named.push(i);
+        }
+        // [Z-TWOSOURCES] (3.235.0, S578) a track whose artist credit is open ("Barry Guy and Friends") excludes nobody – who plays there the
+        // credits say; a group of its artist credit counts its members ("Aurora Trio": the lineup of a title "Aurora Trio: Fernández p // Guy,
+        // db // …", the members a text lists below the group's name); the tracks the source itself names for the person stay
+        if (ruleOn('S578')) {
+          for (const i of sel) {
+            if (named.includes(i) || !r.tracks || !r.tracks.has(i)) continue;
+            if (openCreditTrack(i) || groupMemberTrack(a, i, keys) || (r.dTrackIdx && r.dTrackIdx.has(i))) named.push(i);
+          }
         }
         named.sort((x, y) => x - y);
       }
@@ -67065,6 +67325,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
     // [Z-MILESTONES] (3.158.0) a milestone is a new ability you notice without the docs – a source, a view, a workflow, a
     // file, a changed default –, one line each (at most 120 characters); not a rule of the text recognition, a fix or a test.
     // 3.0.0 and 3.12.0 (rebuilt inside, nothing changed for the user) are none any more.
+    { v: '3.235.0', label: 'Credits Importer 3.235.0' },
     { v: '3.234.0', label: 'Credits Importer 3.234.0' },
     { v: '3.232.0', label: 'Credits Importer 3.232.0' },
     { v: '3.231.0', label: 'Credits Importer 3.231.0 · Companion 1.26.0' },

@@ -1,6 +1,6 @@
 {
   "format": 1,
-  "version": "3.234.0",
+  "version": "3.235.0",
   "about": "MB x Vibecode: Credits Importer – the data of its mapping register (role rules, company roles, questions, tables and word lists, the quick switches). Loaded by the script (@resource mapping); the rules with code stay in the script. Regular expressions are {\"$re\": source, \"$flags\": flags}, sets {\"$set\": [...]}, maps {\"$map\": [[key, value], ...]}.",
   "DEFAULT_OFF_RULES": {"$set":["D023","S452","S046","D026","S114","S155","S160","S297","S339","S343"]},
   "CHECKBOX_DETAILS": [
@@ -1229,6 +1229,7 @@
   "TEXT_MONTHS": {"$re":"\\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\\.?(?=\\s|$)","$flags":"gi"},
   "LIVE_NOTES": {"$re":"\\b(?:recorded|performed)\\s+live\\b|\\bperform(?:ing|s)\\s+live\\s+in\\s+(?:the\\s+)?[^.;\\n]{0,40}?\\bstudios?\\b|\\blive\\s+recording\\b|\\b(?:in|at|during)\\s+(?:a\\s+)?live\\s+(?:concert|performance)\\b|\\blive\\s+in\\s+concert\\b|\\brecorded\\s+in\\s+concert\\b","$flags":"i"},
   "LIVE_TITLE": {"$re":"\\((?:live|live at [^)]*|live in [^)]*|live version)\\)|\\[(?:live|live at [^\\]]*)\\]|\\s[-–—]\\s*live\\b","$flags":"i"},
+  "TRACK_AC_OPEN": {"$re":"(?:^|[\\s,])(?:and|&|with|\\+|und|mit|et|avec|y|con)\\s+(?:(?:his|her|their|seine[nm]?|ihre[nm]?|ses|sus|son|sa)\\s+)?(?:friends|guests|freunde[n]?|gäste[n]?|amis|amies|amigos|amigas|invités|invitados|orchestra|orchester|orchestre|orquesta|band|ensemble|group|gruppe)\\b","$flags":"i"},
   "NOTE_ROLES": [
     [{"$re":"\\b(published|publishing|publisher|verlag|verlegt|sub-?published)\\b","$flags":"i"},"publishing"],
     [{"$re":"\\bcommissioned\\b","$flags":"i"},"commissioned"],

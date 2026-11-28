@@ -41,6 +41,7 @@ The footer counts what is still open: **must** (orange) before staging, **may** 
 
 | Version | |
 |---|---|
+| 3.235 | Two sources complete each other: Discogs’s performers per track, Bandcamp’s instruments in its titles – both ways |
 | 3.234 | “⚡ Fast”: an import without the lookups in the background – the artists’ works on a click |
 | 3.232 | More room for the entries: the head in one line, “＋ Entry” and the pools beside it, a slim head while scrolling |
 | 3.231 | A click on “3 new relationships” goes to them one by one; the filter “Only new relationships”; the companion’s large image in MusicBrainz colours (companion 1.26) |
@@ -54,7 +55,7 @@ All milestones and every version: [changelog](mb-vibecode-credits-importer-CHANG
 
 ## More
 
-- [Full reference](mb-vibecode-credits-importer-v3.234.0-README.md) – every feature and setting in detail; long, written to be searched (and for AI assistants working on the code).
+- [Full reference](mb-vibecode-credits-importer-v3.235.0-README.md) – every feature and setting in detail; long, written to be searched (and for AI assistants working on the code).
 - [Companion](mb-vibecode-credits-importer-companion-v1.26.0-README.md)
 - [Changelog](mb-vibecode-credits-importer-CHANGELOG.md) · [Code changes](mb-vibecode-credits-importer-CODE-CHANGES.md)
 - Problems and ideas: [issues](https://github.com/proto-beep/MBvibecode/issues)
