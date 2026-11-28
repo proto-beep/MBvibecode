@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.232.0
+// @version      3.233.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.232.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.232.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.233.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.233.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.232.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.233.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -1898,6 +1898,12 @@
       "cl.allTracks": "all {n} tracks",
       "cl.track": "track {list}",
       "cl.tracks": "tracks {list}",
+      "cl.mediaRun": "media {from}–{to}",
+      "cl.mediumOne": "medium {n}",
+      "livecom.sameArea": "Places in the same area: {list} – the area in the comment",
+      "ignored.why.engStudio": "the studio of the engineer – the release names the places it was recorded at; the studio keeps mixed at / mastered at",
+      "note.engStudio": "Left out: the studio of the engineer (“Recorded By”) – the release names the places it was recorded at, and MusicBrainz has no “recorded by” of a place.",
+      "typeAsk.askRealization": "“{role}”: the graphic realization (graphic design), the production or miscellaneous support? – please choose:",
       "log.langAsked": "Language chosen after the installation: {lang}",
       "settings.resetTopic": "↺ Defaults of this topic",
       "settings.resetAsk": "Put the settings of “{topic}” back to their defaults?",
@@ -5492,9 +5498,18 @@
 
   /** The role notation: "Guitar [Electric, Rhythm], Vocals" → [{ raw, base: 'Guitar', mods: ['Electric', 'Rhythm'] }, …] */
   function parseRoleNotation(roleString) {
-    return splitTopLevel(roleString).map((raw) => {
+    // [Z-CONCEPTREAL] (3.233.0, S572) "Concept By, Realization" in one credit: the concept and its realization – one role ("Concept By" with the
+    // detail "Realization"), not a creative direction and a graphic design
+    const parts0 = splitTopLevel(roleString);
+    const conceptAt = parts0.findIndex((x) => /^concept(?:\s+by)?$/i.test(x.trim()));
+    const realAt = parts0.findIndex((x) => /^reali[sz](?:ation|ed\s+by)$/i.test(x.trim()));
+    const parts = conceptAt >= 0 && realAt >= 0 && ruleOn('S572')
+      ? parts0.filter((_, k) => k !== realAt).map((x, k) => (k === (realAt < conceptAt ? conceptAt - 1 : conceptAt) ? `${x.trim()} [${parts0[realAt].trim()}]` : x)) : parts0;
+    return parts.map((raw0) => {
+      // (the joined role keeps what the source wrote)
+      const raw = /^concept(?:\s+by)?\s+\[reali/i.test(raw0) && parts !== parts0 ? `${raw0.replace(/\s*\[.*$/, '')}, ${raw0.match(/\[(.*)\]$/)[1]}` : raw0;
       const mods = [];
-      const base = raw.replace(/\[([^\]]*)\]/g, (_, inner) => {
+      const base = raw0.replace(/\[([^\]]*)\]/g, (_, inner) => {
         mods.push(...splitTopLevel(inner));
         return ' ';
       }).replace(/\s+/g, ' ').trim();
@@ -6138,6 +6153,11 @@
     { id: 'S565', where: 'renderDates (.dci-tray), CSS', note: 'Layout (3.232.0; collected item Z-TRAY): "Dates & tracks" folded – the pools kept in the bar and its line ("▼ Dates & tracks 3 dates · …", "not applied yet") in one line, beside "＋ Entry" (S566); "▼ show" is the title\'s button there. Open: as before. Switched off: the pools one below the other and the bar of "Dates & tracks" below them' },
     { id: 'S566', where: 'buildOverlay (.dci-manual-folded), manualFold, manualLeft', note: 'Layout (3.232.0; collected item Z-ADDENTRYFOLD): "Add entry manually" folded to a button "＋ Entry" at the left of the pools\' line – a click opens its fields (the first one focused), another click folds them; they fold by themselves when the focus leaves them empty (nothing typed, no question, error or search links below them). Switched off: the line always open' },
     { id: 'S567', where: 'headShrinkCheck, headPeek, settings (data-set head-shrink)', note: 'Layout (3.232.0; collected item Z-HEADSHRINK): while the entries are scrolled down (more than 160 px) the head is one slim line – the title, the release\'s name, ▾ and ✕ –, "＋ Entry" hidden; the pools stay below it. ▾ shows the whole head until the entries are at the top again, the pointer resting on the head (or the keyboard\'s focus in it) while it is there; at the top it is whole again. ⚙ Settings → Appearance → "Slim head while scrolling" (on) and "Slim head" in "More" of the head switch it off; not in the page. Switched off: the head always whole' },
+    { id: 'S568', where: 'tracksShort', note: 'View (3.233.0; collected item Z-TRACKSMEDIA): the tracks of a row in short with several media – whole media by their numbers ("media 1–4", "medium 5"), the other tracks as runs that go on over the end of a medium ("1.3–2.2"), mixed "media 1–4, 5.1". Switched off: a run ends at each medium ("tracks 1.1–1.4, 2.1–2.4, 3.1–3.4, 4.1–4.5", as since 3.93.0)' },
+    { id: 'S569', where: 'liveGroups, renderLiveComments (the group\'s notes)', note: 'Live comments (3.233.0; collected item Z-LIVECOMGROUP; [168]): recordings with the same comment, the same tick and the same notes are one line ("1.1–4.5 · 17 tracks ▸"), the note said once at it; alone stay only a recording MusicBrainz has another comment for and one whose area is still looked up. Switched off: one with any note alone (as until 3.232.0)' },
+    { id: 'S570', where: 'liveProposals (commonArea)', note: 'Live comments (3.233.0; collected item Z-LIVECOMAREA): a recording "recorded at" two places of the same area ("Alchemia Club, Kraków, Poland" and "Radio Kraków, Kraków, Poland") gets the area in its comment ("live, 2018-10: Kraków, Poland"), said beside it, and is ticked as any other – only an empty comment is ever written. Switched off: no place in the comment and the warning "Different places" (as until 3.232.0)' },
+    { id: 'S571', where: 'addNotesCompanies (engStudioLine), setCompanyEntityType', note: 'Places (3.233.0; collected item Z-ENGSTUDIO): where Discogs lists the places a release was recorded at ("Recorded At – Alchemia", "Recorded At – Radio Kraków"), the studio of its engineer is not one of them – "Recorded, mixed and mastered by Rafał Drewniany (DTS Studio)" in the notes gives DTS Studio no "recorded at" (listed as left out), and Discogs\'s "Recorded By – DTS Studio, Kraków" of a place (MusicBrainz has no such relationship of a place) is left out, said at the row; the studio keeps "mixed at" and "mastered at". A studio the notes name with "at" or "in" stays a place it was recorded at. Switched off: as until 3.232.0' },
+    { id: 'S572', where: 'parseRoleNotation, R131, R132, Q028', note: 'Roles (3.233.0; collected item Z-CONCEPTREAL): "Concept By" is the creative direction (on the release group, credited "concept"; until 3.232.0 miscellaneous support with the task "concept", R095); "Concept By, Realization" in one credit is the concept and its realization – one row each person, credited "concept, realization" (until 3.232.0 also a graphic design "realization"); "Realization" alone is asked – graphic design, the producer or miscellaneous support (Q028; until 3.232.0 graphic design, R073). Switched off: as until 3.232.0' },
     { id: 'S469', where: 'dgLineupApply, sendDiscogsStatus', note: 'Lineup and track credits (3.220.0; collected item Z-LOPEZ; S217): a row the answer leaves out (a lineup row on no track any more, a track credit taken into the lineup row) keeps its line at the source – its places go to the person\'s row still there, so the companion marks the line ("Ramón López – percussion" where the titles give him drums on all of his tracks)' },
     { id: 'S410', where: 'freshForget, repeatImport, loadRelease', note: '"↻ Repeat import" (3.209.0; collected item Z-FRESHALL): "Start afresh" forgets everything the dashboard holds of the release – not only the changes of the rows and the choices of the works matrix (Z-RI, 3.40.16), also the date pool, the track pool and the date matrix, the choices of the box "Dedications & tributes", "✕ No suite", texts and parts of sources switched off, "skip the works", entries joined by hand, the ticks of suggestions, what is remembered of the release ("Remember changes"; nothing of the import before is stored on the way). Kept: what was created in MusicBrainz through the dashboard (the lists of created works and suites), the source and the media chosen, the log' },
     { id: 'S409', where: 'mergeEntries, joinEntry, applyEntryMerges, dmTargetOf (entry-merge), groupHtml (grip)', note: 'Entries (3.208.0; collected item Z-ENTITYMERGE): two entries of the same kind that are one – from different sources, written otherwise – are joined by hand: the grip ⠿ before the kind of an entry dropped onto another entry. The entry dropped onto stays (its link to MusicBrainz counts; without one it takes the other\'s), the rows of the other come to it – the same role once, each row credited as its source writes it, the other\'s name one of its names. Two different entries of MusicBrainz, or entries of different kinds: not joined, a message says why. Remembered for the release (joined again at the next import); ↶ in the message undoes it' },
@@ -6557,6 +6577,16 @@
       R095: { run: () => {
       return out(['misc'], { ...rel, notes: ['misc'], credit: true });
     } },
+      // [Z-CONCEPTREAL] (3.233.0, S572) "Concept By": the creative direction on the release group, credited "concept"; "Concept By, Realization" –
+      // one credit of Discogs, the concept and its realization – one row, credited "concept, realization" (parseRoleNotation joins them). Off:
+      // miscellaneous support, task "concept" (R095 until 3.232.0)
+      R131: { run: () => {
+        if (!ruleOn('S572')) return out(['misc'], { ...rel, notes: ['misc'], credit: true });
+        return out(['creative direction', 'art direction'], { level: 'release_group', credit: has('realization', 'realisation') ? 'concept, realization' : 'concept' });
+      } },
+      // [Z-CONCEPTREAL] (3.233.0, S572) "Realization" alone: graphic design, the producer or miscellaneous support – asked (Q028), nothing assumed. Off:
+      // graphic design credited as written (R073 until 3.232.0)
+      R132: { run: () => (ruleOn('S572') ? out([], { notes: ['askType'] }) : out(['graphic design', 'design'], { level: 'release', credit: true })) },
       // [F-CAMSWITCH] (3.164.0) camera work follows the quick switch of the video credits (S263) like the others MusicBrainz has no type for
       R110: { run: () => {
         const r = ROLE_RULE_DATA.find((x) => x.id === 'R110');
@@ -22611,6 +22641,13 @@
       row.entityType = entityType;
       row.types = row.typeOptions[entityType] || [];
       if (!row.levelTouched && row.level !== 'skip') row.level = row.defaultLevel;
+      // [Z-ENGSTUDIO] (3.233.0, S571) "Recorded By – DTS Studio, Kraków" of a place (MusicBrainz has no such relationship of a place) while the
+      // release names its places recorded at: left out, said at the row – the studio is the engineer's, not where it was recorded
+      if (ruleOn('S571') && entityType === 'place' && !row.types.length && /^recorded by$/i.test(String(row.raw || '').trim()) && !row.levelTouched
+        && S.rows.some((r) => r.company && r.artistKey !== company.key && r.level !== 'skip' && /^recorded at$/i.test(String(r.raw || '').trim()))) {
+        row.level = 'skip';
+        if (!(row.notes || []).includes('engStudio')) row.notes = [...(row.notes || []), 'engStudio'];
+      }
       resolveRowType(row);
     }
     if (entityType === 'event') eventLinked(company);
@@ -32461,6 +32498,13 @@
       .replace(/(\bby\s+)(?:\[(?:\.{3}|…)\]|\.{3}|…)(?=\s|$|[,;(])/gi, `$1${ELIDED}`);
   }
 
+  /** [Z-ENGSTUDIO] (3.233.0, S571) A place of a line only in brackets after a name ("… mastered by X (DTS Studio)"), not "at" or "in" it. */
+  function engStudioLine(c) {
+    const line = String(c.line || '');
+    const n = String((c.who && c.who.name) || '').trim();
+    return !!n && new RegExp(`\\(\\s*${escRe(n)}\\s*\\)`, 'i').test(line) && !new RegExp(`\\b(?:at|in)\\s+(?:the\\s+)?${escRe(n)}`, 'i').test(line);
+  }
+
   function addNotesCompanies(rel) {
     if (!(ruleOn('S042') || ruleOn('S054')) || !rel || !String(rel.notes || '').trim()) return;
     let res;
@@ -32564,6 +32608,15 @@
           alt(sameRole);
           if (!sameRole.fromNotes) (c.pubBlock ? joined : joinedOther).push(`${sameRole.who.name} (${trackListLabel(new Set(c.tracks.indexes))})`);
         }
+        continue;
+      }
+      // [Z-ENGSTUDIO] (3.233.0, S571) "Recorded, mixed and mastered by X (DTS Studio)": the studio of the engineer – where Discogs lists the places it
+      // was recorded at ("Recorded At – Alchemia", "Recorded At – Radio Kraków") it is not one of them; it keeps mixed at / mastered at. Listed as
+      // left out. Off: recorded at it too (as until 3.232.0)
+      if (ruleOn('S571') && /^recorded at$/i.test(String(c.role || '').trim()) && engStudioLine(c)
+        && rel.companies.some((d) => /^recorded at$/i.test(String(d.role || '').trim()) && !d.fromNotes && !sameCompanyName(d.who.name, c.who.name))) {
+        rel.ignored = rel.ignored || [];
+        if (!rel.ignored.some((y) => y.why === 'engStudio' && y.text === `${c.role} – ${c.who.name}`)) rel.ignored.push({ text: `${c.role} – ${c.who.name}`, why: 'engStudio' });
         continue;
       }
       const who = same.length ? same[0].who : { id: 0, name: c.who.name, rawName: c.who.rawName || c.who.name, links: [], area: c.who.area || '' };
@@ -43688,6 +43741,42 @@
     if (on.length === sel.length) return tr('cl.allTracks', { n: on.length });
     const multi = new Set(sel.map((x) => x.medium)).size > 1;
     const label = (x) => (multi ? `${x.medium}.${x.number}` : String(x.number));
+    // [Z-TRACKSMEDIA] (3.233.0, S568) whole media by their numbers ("media 1–4", "medium 5"), the other tracks as runs that go on over the end of a
+    // medium ("1.3–2.2"); mixed: "media 1–4, 5.1". Off: a run ends at each medium ("1.1–1.4, 2.1–2.4, …", as since 3.93.0)
+    if (multi && ruleOn('S568')) {
+      const whole = new Set(uniq(sel.map((x) => x.medium)).filter((md) => sel.filter((x) => x.medium === md).every((x) => row.tracks.has(x.idx))));
+      const parts = [];
+      let run = null;
+      let mrun = null;
+      const flushRun = () => { if (run) parts.push({ a: run[0], b: run[1] }); run = null; };
+      const flushMedia = () => { if (mrun) parts.push({ media: true, a: mrun[0], b: mrun[1] }); mrun = null; };
+      sel.forEach((x, i) => {
+        if (!row.tracks.has(x.idx)) {
+          flushRun();
+          flushMedia();
+        } else if (whole.has(x.medium)) {
+          flushRun();
+          if (mrun && (x.medium === mrun[1] || x.medium === mrun[1] + 1)) mrun[1] = x.medium;
+          else {
+            flushMedia();
+            mrun = [x.medium, x.medium];
+          }
+        } else {
+          flushMedia();
+          if (run && i === run[1] + 1) run[1] = i;
+          else {
+            flushRun();
+            run = [i, i];
+          }
+        }
+      });
+      flushRun();
+      flushMedia();
+      const items = parts.map((p) => (p.media ? (p.a === p.b ? tr('cl.mediumOne', { n: p.a }) : tr('cl.mediaRun', { from: p.a, to: p.b }))
+        : runLabel(p.a, p.b, (i) => label(sel[i]))));
+      if (parts.some((p) => p.media)) return items.join(', ');
+      return tr(on.length === 1 ? 'cl.track' : 'cl.tracks', { list: items.join(', ') });
+    }
     const pos = new Map(sel.map((x, i) => [x.idx, i]));
     const runs = [];
     for (const x of on) {
@@ -47278,7 +47367,7 @@
         if (!a.mbid) return { text: '', unassigned: a.name || '' };
         const area = liveAreaText(kind, a.mbid);
         const head = kind === 'place' ? String(r.credit || '').trim() || a.mbName || a.name : '';
-        return { text: [head, area.text].filter(Boolean).join(', '), pending: area.pending, credit: kind === 'place' ? String(r.credit || '').trim() : '', mbid: a.mbid, name: a.mbName || a.name };
+        return { text: [head, area.text].filter(Boolean).join(', '), area: area.text || '', pending: area.pending, credit: kind === 'place' ? String(r.credit || '').trim() : '', mbid: a.mbid, name: a.mbName || a.name };
       };
       let src = rowsOf('recorded at', 'place');
       let kind = 'place';
@@ -47289,7 +47378,15 @@
       const places = src.map((r) => placeText(r, kind));
       const texts = uniq(places.map((x) => x.text).filter(Boolean));
       places.filter((x) => x.unassigned).forEach((x) => warn.push(tr('livecom.unassigned', { name: x.unassigned })));
-      if (texts.length > 1) warn.push(tr('livecom.places', { list: texts.join(' · ') }));
+      // [Z-LIVECOMAREA] (3.233.0, S570) places in the same area ("Alchemia Club, Kraków, Poland" and "Radio Kraków, Kraków, Poland"): the area in the
+      // comment ("live, 2018-10: Kraków, Poland"), said beside it – no conflict. Off: no place in the comment, a warning (as until 3.232.0)
+      let commonArea = '';
+      if (texts.length > 1 && kind === 'place' && ruleOn('S570') && places.every((x) => x.area && !x.pending && !x.unassigned)) {
+        const areas = uniq(places.map((x) => x.area));
+        if (areas.length === 1) commonArea = areas[0];
+      }
+      const areaNote = commonArea ? tr('livecom.sameArea', { list: texts.join(' · '), area: commonArea }) : '';
+      if (texts.length > 1 && !commonArea) warn.push(tr('livecom.places', { list: texts.join(' · ') }));
       let dates = uniq(src.map((r) => liveDateText(rowDateInfo(r, currentLinkType(r)).value)).filter(Boolean));
       let hint = '';
       // [Z-LVD] (3.62.0, S089) as the seed script (ROpdebee) takes it after "Enter edit": the dates of "recorded at / in" together with
@@ -47308,15 +47405,15 @@
         }
       }
       if (dates.length > 1) warn.push(tr('livecom.dates', { list: dates.join(' · ') }));
-      const place = texts.length === 1 ? texts[0] : '';
+      const place = texts.length === 1 ? texts[0] : commonArea;
       const auto = `live${dates.length === 1 ? `, ${dates[0]}` : ''}${place ? `: ${place}` : ''}`;
       const existing = String(t.recordingComment || '').trim();
       const ascii = (x) => String(x || '').replace(/[“”″]/g, '"').replace(/[‘’′]/g, "'").replace(/[‐‒–]/g, '-');
       const other = !!existing && existing !== 'live' && ascii(existing) !== ascii(auto);
       if (other) warn.push(tr('livecom.existing', { text: existing }));
       out.push({ i, rec: t.recordingGid, pos: multiMedium() ? `${t.medium}.${t.number}` : String(t.number), title: t.title, auto, existing,
-        same: !!existing && ascii(existing) === ascii(auto), pending: places.some((x) => x.pending), conflict: texts.length > 1 || dates.length > 1, other, warn,
-        place: places.length === 1 ? places[0] : null, kind, hint, bySource });
+        same: !!existing && ascii(existing) === ascii(auto), pending: places.some((x) => x.pending), conflict: (texts.length > 1 && !commonArea) || dates.length > 1, other, warn,
+        place: places.length === 1 ? places[0] : null, kind, hint, areaNote, bySource });
     }
     return out;
   }
@@ -47440,8 +47537,11 @@
     const byKey = new Map();
     for (const p of list) {
       const c = liveChoice(p);
-      const alone = p.warn.length || p.other || p.same || p.pending;
-      const key = alone ? `1|${p.rec}` : `g|${c.on ? 1 : 0}|${c.text}`;
+      // [Z-LIVECOMGROUP] (3.233.0, S569) the same comment, the same tick and the same notes are one line, the note said once at it; alone stay only
+      // a recording MusicBrainz has another comment for and one whose area is still looked up. Off: one with any note alone (as until 3.232.0)
+      const grouped = ruleOn('S569');
+      const alone = grouped ? p.other || p.pending : p.warn.length || p.other || p.same || p.pending;
+      const key = alone ? `1|${p.rec}` : `g|${c.on ? 1 : 0}|${c.text}${grouped ? `|${p.warn.join('\n')}|${p.same ? 1 : 0}|${p.areaNote || ''}` : ''}`;
       if (!byKey.has(key)) {
         const g = { key, items: [] };
         byKey.set(key, g);
@@ -47491,7 +47591,7 @@
     if (!S.liveComGroupOpen) S.liveComGroupOpen = new Set();
     const rowOf = (p, sub = false) => {
       const c = liveChoice(p);
-      const notes = [...p.warn, ...(p.hint ? [p.hint] : []), ...(p.same ? [tr('livecom.same')] : []), ...(p.pending ? [tr('livecom.pending')] : []), ...(c.manual ? [tr('livecom.manual')] : [])];
+      const notes = [...p.warn, ...(p.hint ? [p.hint] : []), ...(p.areaNote ? [p.areaNote] : []), ...(p.same ? [tr('livecom.same')] : []), ...(p.pending ? [tr('livecom.pending')] : []), ...(c.manual ? [tr('livecom.manual')] : [])];
       return `<tr data-livecom="${esc(p.rec)}"${sub ? ' class="dci-livecom-sub"' : ''}><td><input type="checkbox" data-f="livecom-on" data-rec="${esc(p.rec)}" ${c.on ? 'checked' : ''} ${p.other ? 'disabled' : ''} aria-label="${esc(tr('livecom.onAria', { pos: p.pos }))}"></td>
         <td class="dci-livecom-pos">${esc(p.pos)}</td><td class="dci-livecom-title">${esc(p.title)}</td>
         <td><input type="text" data-f="livecom-text" data-rec="${esc(p.rec)}" value="${esc(c.text)}" size="44" aria-label="${esc(tr('livecom.textAria', { pos: p.pos }))}"></td>
@@ -47503,12 +47603,16 @@
       const recs = g.items.map((p) => p.rec).join(',');
       const label = liveWhatLabel(g.items.map((p) => p.i), { prefix: false });
       const gOpen = S.liveComGroupOpen.has(g.items[0].rec);
-      const notes = [...(g.items.every((p) => liveChoice(p).manual) ? [tr('livecom.manual')] : []), ...(g.items.every((p) => p.hint && p.hint === g.items[0].hint) ? [g.items[0].hint] : [])];
+      // ([Z-LIVECOMGROUP] 3.233.0, S569) the notes the group shares, once: its warnings, the area, "this comment already")
+      const first = g.items[0];
+      const warns = ruleOn('S569') ? first.warn : [];
+      const notes = [...warns, ...(ruleOn('S569') && first.areaNote ? [first.areaNote] : []), ...(ruleOn('S569') && first.same ? [tr('livecom.same')] : []),
+        ...(g.items.every((p) => liveChoice(p).manual) ? [tr('livecom.manual')] : []), ...(g.items.every((p) => p.hint && p.hint === g.items[0].hint) ? [g.items[0].hint] : [])];
       return `<tr data-livecom-group="${esc(recs)}"><td><input type="checkbox" data-f="livecom-on" data-recs="${esc(recs)}" ${c.on ? 'checked' : ''} aria-label="${esc(tr('livecom.groupOnAria', { list: label }))}"></td>
         <td class="dci-livecom-pos">${esc(label)}</td>
         <td class="dci-livecom-title"><button type="button" class="dci-textbtn dci-livecom-gbtn" data-act="livecom-group" data-rec="${esc(g.items[0].rec)}" aria-expanded="${gOpen}">${gOpen ? '▾' : '▸'} ${esc(tr('livecom.groupN', { n: g.items.length }))}</button></td>
         <td><input type="text" data-f="livecom-text" data-recs="${esc(recs)}" value="${esc(c.text)}" size="44" aria-label="${esc(tr('livecom.groupTextAria', { list: label }))}"></td>
-        <td>${notes.map((x) => `<div class="dci-sub">${esc(x)}</div>`).join('')}</td></tr>${gOpen ? g.items.map((p) => rowOf(p, true)).join('') : ''}`;
+        <td>${notes.map((x) => `<div class="dci-sub${warns.includes(x) ? ' dci-livecom-warn' : ''}">${esc(x)}</div>`).join('')}</td></tr>${gOpen ? g.items.map((p) => rowOf(p, true)).join('') : ''}`;
     }).join('');
     // [Z-LC] (3.40.13) one box for all of them (those MusicBrainz has another comment for cannot be ticked): mixed – neither ticked nor not
     const free = list.filter((p) => !p.other);
