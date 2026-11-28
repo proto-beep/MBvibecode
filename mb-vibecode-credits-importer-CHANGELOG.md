@@ -13,7 +13,7 @@ The names changed on 2026-10-13 (Import 3.1.0, COMPANION 1.6.0), because the mai
 
 | Date | Import | COMPANION |
 |---|---|---|
-| 2026-11-27 | 3.231.0 – 3.236.0 | 1.26.0 |
+| 2026-11-27 | 3.231.0 – 3.237.0 | 1.26.0 |
 | 2026-11-26 | 3.224.0 – 3.230.0 | 1.25.0 |
 | 2026-11-25 | 3.218.0 – 3.223.0 | 1.24.0 |
 | 2026-11-24 | 3.213.0 – 3.217.0 | – |
@@ -70,6 +70,7 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 
 | Date | Version | Milestone |
 |---|---|---|
+| 2026-11-27 | Import 3.237.0 | A tidier toolbar: “For all rows” and “Show”; the date matrix’s help in one line |
 | 2026-11-27 | Import 3.235.0 | Two sources complete each other: Discogs’s performers per track, Bandcamp’s instruments in its titles – both ways |
 | 2026-11-27 | Import 3.234.0 | “⚡ Fast”: an import without the lookups in the background – the artists’ works on a click |
 | 2026-11-27 | Import 3.232.0 | More room for the entries: the head in one line, “＋ Entry” and the pools beside it, a slim head while scrolling |
@@ -166,6 +167,15 @@ A milestone is a new ability you notice without reading the docs – a new sourc
 | 2026-09-28 | Import 0.1.0 | First version: the credits of the linked Discogs release in the release relationship editor |
 
 ## 2026-11-27
+
+### Import 3.237.0
+
+**A tidier toolbar: "For all rows" and "Show"; the date matrix's help in one line; a folded pool lights up.**
+
+- **The toolbar** (rule S582): two groups with a heading column – "For all rows" (Level · Media · Role credits · Artist credits) and "Show" (Works · Order · Medium · the filters · the legend); every control 28 px; grey labels without a colon; "as on Discogs | clear" as a pair of buttons; the filters as switch chips; "Media: all · release level ▾" one button.
+- **The date matrix's help** (rule S583): one line, the rest behind ⓘ; "3 suggestions not applied yet" at "Apply" while yellow suggestions are there.
+- **A folded pool lights up** (rule S584): its number when a date or a track group comes in.
+- **Tests:** case ui3237 (smoke/t_ui_view.py).
 
 ### Import 3.236.0
 
