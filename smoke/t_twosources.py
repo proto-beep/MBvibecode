@@ -3,7 +3,7 @@
 
 Cases: krakow3233 (3.233.0: the engineer's studio, tracks in short by media, live comments grouped and with their area, "Concept By,
 Realization"), fast3234 (3.234.0: "⚡ Fast", the steps of the times named), twosources3235 (3.235.0: Discogs and Bandcamp completing each other,
-both ways); `python3 t_twosources.py <case> …` runs only those."""
+both ways), cover3236 (3.236.0: the back of the box as an added text); `python3 t_twosources.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 H.NO_ANIM = True
 from caserun import run_cases, sync_playwright  # noqa: E402
@@ -226,6 +226,50 @@ def case_twosources3235():
         sc, cc = K.summary(c['rows'])
         print('C) off:', sc)
         results.append(len(cc['extra']) > 50)
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_cover3236():
+    """Credits Importer 3.236.0 (collected item Z-COVERLAYOUT; rule S581): the digital release of "Kraków 2018" with Bandcamp, "＋ Source → Text" the back
+    of the box (its text as the text recognition gives it).
+    A) All 65 people of the tracks with their instruments and dates (Vandermark by his surname, as the box and Bandcamp name him): the track lines
+       "Lopez // Mazur // Pursglove 28:52" under "CD#1 Alchemia Club" are performers of their tracks; "Aurora Trio:" with its members and their
+       instruments on 1.3 and 1.4; the lineup of "this composition" on 5.1 only; the dates on their media ("Recorded: … at the Alchemia Club",
+       "October 13, 2018 at Radio Kraków").
+    B) No entry "Aurora Trio" with a member's line as its role; Alchemia Club on 1.1–4.5, Radio Kraków on 5.1, DTS STUDIO no place recorded at;
+       "ZAIKS/BIEM" no holder of the ℗ (left out, a rights society); "MW1031-2" no date; at most two lines not recognized ("5 CD's BOX",
+       "WWW.NOTTWO.COM").
+    C) S581 off: the track lines not recognized again, people on tracks too many."""
+    results = []
+    with sync_playwright() as p:
+        K.setup('B')
+        b, pg, errs = K.open_import(p, 'B')
+        items = K.add_source(pg, 'text')
+        rows = pg.evaluate(K.ROWS)
+        pool = pg.evaluate("window.__S.datePool.map(d => d.begin ? [d.begin.year, d.begin.month, d.begin.day].filter(Boolean).join('-') : '')")
+        ign = pg.evaluate("((window.__S.supp || {}).rel || {}).ignored || []")
+        lg = pg.evaluate(K.LOG)
+        b.close()
+        sc, cc = K.summary(rows)
+        unrec = [x['line'] for x in items if x['kind'] == 'unrec']
+        print('A)', sc, [x for x in lg if 'layout of the text' in x])
+        results.append(len(cc['ok']) == 65 and not cc['extra'] and not cc['date'] and not errs)
+        places = {r['name']: r['tracks'] for r in rows if r['company'] and r['raw'] == 'Recorded At' and r['level'] != 'skip'}
+        trio = [r for r in rows if r['name'] == 'Aurora Trio']
+        print('B) places:', places, '| Aurora Trio rows:', len(trio), '| pool:', pool, '| ignored:', [(x.get('text'), x.get('why')) for x in ign], '| unrec:', unrec)
+        results.append(places.get('Alchemia Club') == list(range(1, 18)) and places.get('Radio Kraków') == [18] and not any('DTS' in k for k in places)
+                       and not trio and not any(str(x).startswith('1031') for x in pool) and any(x.get('why') == 'society' and 'ZAIKS' in x.get('text', '') for x in ign)
+                       and len(unrec) <= 2)
+        K.setup('B')
+        H.RULES_OFF = ['S581']
+        b, pg, errs = K.open_import(p, 'B')
+        items = K.add_source(pg, 'text')
+        rows = pg.evaluate(K.ROWS)
+        b.close()
+        s2, c2 = K.summary(rows)
+        unrec = [x['line'] for x in items if x['kind'] == 'unrec']
+        print('C) off:', s2, len(unrec), 'not recognized')
+        results.append(len(unrec) > 20 and len(c2['extra']) > 0)
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 
