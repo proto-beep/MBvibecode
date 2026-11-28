@@ -79,8 +79,8 @@ def case_head():
         # [F-HEADCOUNT] (3.170.0) what is used all the time first, the list of "More" after it (in the open for this test: H.CHROME), ✕ last;
         # the case chrome3170 has the default (words, the list folded)
         # (the head with words takes a second line where the source and its buttons are wide: no longer "one line")
-        # ((3.232.0, S567) "Slim head" in "More")
-        results.append([x[0] for x in a1['btns']] == ['search-open', 'rules', 'stats-open', 'settings-open', 'head-more', 'view-toggle', 'head-shrink', 'window-reset', 'log', 'keys-open', 'help-mode', 'close']
+        # ((3.232.0, S567) "Slim head" in "More"; (3.234.0, S573) "⚡ Fast" after it)
+        results.append([x[0] for x in a1['btns']] == ['search-open', 'rules', 'stats-open', 'settings-open', 'head-more', 'view-toggle', 'head-shrink', 'fast-mode', 'window-reset', 'log', 'keys-open', 'help-mode', 'close']
                        and a1['groups'] == [['search-open', 'rules', 'stats-open', 'settings-open', 'dci-head-more'], ['close']]
                        and all(x[1] and x[2] and x[3] for x in a1['btns']) and a1['btns'][3][2] == 'Settings' and a1['btns'][5][2] == 'Compact' and a1['zoom'] == '100 %'
                        and a1['lang'] == 0 and a1['place'] == 0 and a1['switches'] == 0 and a1['status'] and a1['label'] == 'none'
@@ -1186,7 +1186,8 @@ def case_copyname():
 
 def case_headnarrow():
     """Credits Importer 3.40.8 (review of block BA, Z-HB): the symbols of the head in a narrow dashboard – one line while they fit
-    (1500 and 600 px), two lines at 400 px with ✕ inside the dashboard (until 3.40.7 it was pushed out of it)."""
+    (1500 and 600 px), two lines at 400 px with ✕ inside the dashboard (until 3.40.7 it was pushed out of it). (3.234.0) With "⚡ Fast"
+    among the symbols ("More" unfolded, as the tests have it): one line from 640 px."""
     results = []
     HEAD = """(() => { const panel = document.querySelector('#dci-overlay .dci-panel').getBoundingClientRect();
       const x = document.querySelector('.dci-head [data-act=close]').getBoundingClientRect();
@@ -1200,12 +1201,12 @@ def case_headnarrow():
         H.open_dashboard(pg)
         pg.wait_for_timeout(1200)
         out = {}
-        for w in (1500, 600, 400):
+        for w in (1500, 640, 400):
             pg.set_viewport_size({'width': w, 'height': 900})
             pg.wait_for_timeout(500)
             out[w] = pg.evaluate(HEAD)
         print('Kopf:', out, '| Fehler:', errs)
-        results.append(out[1500] == {'inside': True, 'lines': 1} and out[600] == {'inside': True, 'lines': 1} and out[400]['inside'] and out[400]['lines'] == 2)
+        results.append(out[1500] == {'inside': True, 'lines': 1} and out[640] == {'inside': True, 'lines': 1} and out[400]['inside'] and out[400]['lines'] == 2)
         results.append(not errs)
         b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)

@@ -2,7 +2,7 @@
 (Credits Importer 3.233.0 ff.; the data and its target in smoke/data/krakow2018.json, the harness of it in krakow.py).
 
 Cases: krakow3233 (3.233.0: the engineer's studio, tracks in short by media, live comments grouped and with their area, "Concept By,
-Realization"); `python3 t_twosources.py <case> …` runs only those."""
+Realization"), fast3234 (3.234.0: "⚡ Fast", the steps of the times named); `python3 t_twosources.py <case> …` runs only those."""
 import harness as H  # noqa: F401 – used by the cases
 H.NO_ANIM = True
 from caserun import run_cases, sync_playwright  # noqa: E402
@@ -106,6 +106,65 @@ def case_krakow3233():
         print('E)', dts4, o4['short'][:2], len(o4['groups']), len(o4['alone']), cd4)
         results.append(('Recorded At', 'recording') in dts4 and o4['short'][0] == 'tracks 1.1–1.4, 2.1–2.4, 3.1–3.4, 4.1–4.5' and o4['short'][1] == 'tracks 1.3, 1.4, 2.1, 2.2'
                        and not o4['groups'] and len(o4['alone']) == 18 and cd4 == [(['graphic design'], 'realization'), (['misc'], 'concept')])
+    print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
+
+
+def case_fast3234():
+    """Credits Importer 3.234.0 (collected items Z-FASTMODE, Z-TIMINGNAMES2; rules S573, S574): the CD of "Kraków 2018" (its release group Live, the
+    live comments on).
+    A) "⚡ Fast" on (stored before): the log says what is left out; no works on the artists' pages read (no browse of works or recordings), no
+       missing links looked up, no sources of other releases; the works matrix says so with "Read them now"; the works of the writers are still
+       searched; "More" of the head shows ⚡ Fast pressed, ⚙ Settings → General ticked.
+    B) "Read them now": the works of the artists are read (browses), the line goes.
+    C) The times of the import name every step (no "?"; "areas of the live comments"), "⚡ fast" at the end.
+    D) ⚡ Fast off in "More": stored as off; the missing links are looked up now.
+    E) Without the switch stored: an import reads the artists' works at once (as until 3.233.0)."""
+    results = []
+    INIT = "if (!localStorage.getItem('dci-store-epoch')) localStorage.setItem('dci-store-epoch', '4'); if (localStorage.getItem('dci-fast') === null && !sessionStorage.getItem('dci-t')) { localStorage.setItem('dci-fast', 'true'); sessionStorage.setItem('dci-t', '1'); }"
+    with sync_playwright() as p:
+        K.setup('A', live=True)
+        H.BROWSES.clear()
+        b, pg, errs = K.open_import(p, 'A', init=INIT)
+        if pg.evaluate("!!document.querySelector('[data-act=livecom-yes]')"):
+            pg.click('[data-act=livecom-yes]')
+        pg.wait_for_timeout(4000)
+        lg = pg.evaluate(K.LOG)
+        line = pg.evaluate("(document.querySelector('[data-el=aw-line]') || {textContent: ''}).textContent.trim()")
+        more = pg.evaluate("(document.querySelector('#dci-overlay [data-act=fast-mode]') || {}).getAttribute ? document.querySelector('#dci-overlay [data-act=fast-mode]').getAttribute('aria-pressed') : null")
+        H.open_settings(pg, 'general')
+        box = pg.evaluate("(document.querySelector('[data-set=fast-mode]') || {}).checked")
+        timing = [x for x in lg if 'Times of this import' in x]
+        print('A)', [x for x in lg if 'Fast' in x], '| line:', line, '| More:', more, box, '| browses:', len(H.BROWSES))
+        results.append(any('⚡ Fast: left out' in x for x in lg) and len(H.BROWSES) == 0 and 'Read them now' in line and more == 'true' and box is True
+                       and not any('missing links' in x for x in timing) and not any('other releases of the group' in x for x in timing)
+                       and any('works of the writers' in x or 'Work search' in x for x in lg))
+        pg.click('[data-el=aw-line] [data-act=mx-aw-fast]')
+        H.wait_for(pg, f"{len(H.BROWSES)} < 0 || [...document.querySelectorAll('#dci-log li')].some(li => /read now/.test(li.textContent))", 20)
+        pg.wait_for_timeout(3000)
+        line2 = pg.evaluate("(document.querySelector('[data-el=aw-line]') || {textContent: ''}).textContent.trim()")
+        print('B) browses:', len(H.BROWSES), '| line:', line2)
+        results.append(len(H.BROWSES) > 0 and 'Read them now' not in line2)
+        lg = pg.evaluate(K.LOG)
+        timing = [x for x in lg if 'Times of this import' in x]
+        print('C)', timing[-1][:400] if timing else None)
+        results.append(bool(timing) and ' ? ' not in timing[-1] and '; ?' not in timing[-1] and timing[-1].rstrip().endswith('⚡ fast') and 'areas of the live comments' in timing[-1])
+        pg.evaluate("document.querySelector('#dci-overlay [data-act=head-more]').click()")
+        pg.wait_for_timeout(200)
+        pg.evaluate("document.querySelector('#dci-overlay [data-act=fast-mode]').click()")
+        pg.wait_for_timeout(3000)
+        st = pg.evaluate("localStorage.getItem('dci-fast')")
+        lg = pg.evaluate(K.LOG)
+        print('D) stored:', st, [x for x in lg if 'Fast import' in x][-1:])
+        results.append(st is None and any('⚡ Fast import' in x and 'off' in x for x in lg))
+        results.append(not errs)
+        b.close()
+        H.BROWSES.clear()
+        b, pg, errs = K.open_import(p, 'A')
+        pg.wait_for_timeout(3000)
+        lg = pg.evaluate(K.LOG)
+        print('E) browses:', len(H.BROWSES), [x for x in lg if 'Fast' in x])
+        results.append(len(H.BROWSES) > 0 and not any('⚡ Fast: left out' in x for x in lg))
+        b.close()
     print('Ergebnis:', 'OK' if all(results) else 'FEHLER', results)
 
 

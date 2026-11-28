@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         MB x Vibecode: Credits Importer
 // @namespace    https://github.com/proto-beep/MBvibecode
-// @version      3.233.0
+// @version      3.234.0
 // @date         2026-10-23
 // @description  Import dashboard for the release relationship editor: review the credits of the linked Discogs release or Bandcamp album or track (or of a pasted text), match artists via their links or names, map roles, choose level and tracks, and stage them as relationships. Submitting ("Enter edit") is always left to you.
 // @description:de Import-Dashboard im Release-Beziehungseditor: Credits des verknüpften Discogs-Releases oder Bandcamp-Albums (oder eines eingefügten Textes) prüfen, Artists über Links oder Namen zuordnen, Rollen, Ebene und Tracks wählen und als Beziehungen vormerken. Abschicken („Enter edit“) machst du selbst.
@@ -29,8 +29,8 @@
 // @connect      coverartarchive.org
 // @connect      archive.org
 // @connect      *
-// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.233.0
-// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.233.0
+// @resource     mapping https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-mapping.json?v=3.234.0
+// @resource     languages https://raw.githubusercontent.com/proto-beep/MBvibecode/main/mb-vibecode-credits-importer-languages.json?v=3.234.0
 // @sandbox      raw
 // @run-at       document-idle
 // ==/UserScript==
@@ -43,7 +43,7 @@
   // 1. Basics
   // ===========================================================================
 
-  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.233.0';
+  const VERSION = (typeof GM_info !== 'undefined' && GM_info.script && GM_info.script.version) || '3.234.0';
   const EDIT_NOTE_SCRIPT_NAME = 'MB x Vibecode: Credits Importer';
   const SCRIPT_URL = 'https://github.com/proto-beep/MBvibecode';
   const MBID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
@@ -2988,6 +2988,7 @@
       "ms.3.157.0": "Missing links of the entries, with a link to the edit page; Bandcamp editions read with the credits",
       "ms.3.231.0": "A click on “3 new relationships” goes to them one by one; the filter “Only new relationships”; the companion’s large image in MusicBrainz colours",
       "ms.3.232.0": "More room for the entries: the head in one line, “＋ Entry” and the pools beside it, a slim head while scrolling",
+      "ms.3.234.0": "“⚡ Fast”: an import without the lookups in the background – the artists’ works on a click",
       "ms.3.230.0": "The times of an import in the log: which steps took how long, per source",
       "ms.3.227.0": "The companion in the dashboard’s language, Bandcamp’s artwork in high resolution",
       "ms.3.226.0": "“✨ Answer all”: a tie decided by the recordings in MusicBrainz, each work to open with ↗",
@@ -3064,6 +3065,20 @@
       "timing.f.discogsPerson": "members and groups",
       "timing.f.discogsAliases": "aliases",
       "timing.f.discogsImages": "images of the release",
+      "head.fastWord": "Fast",
+      "settings.h.fast": "Import",
+      "settings.fast": "⚡ Fast import",
+      "settings.fastTitle": "Leaves out the artists’ works (read on a click in the works matrix), missing links, other editions’ sources, statistics lookups – stays on until switched off",
+      "log.fastOn": "⚡ Fast: left out – the works on the artists’ pages (a button in the works matrix reads them), missing links, the sources of other releases, the lookups of the statistics (“More” → ⚡ Fast switches it off)",
+      "log.artistWorksFastLoad": "⚡ Fast: the works on the artists’ pages are read now",
+      "matrix.awFast": "⚡ Fast: the works on the artists’ pages were not read.",
+      "matrix.awFastLoad": "Read them now",
+      "matrix.awFastLoadTitle": "Reads the works of the release’s artists (their repertoire) now – “Stop” and “Continue” as always",
+      "matrix.awArtists": "the release’s artists",
+      "timing.fast": "⚡ fast",
+      "timing.ws": "MusicBrainz: {kind}",
+      "timing.f.liveAreaText": "areas of the live comments",
+      "timing.f.tributeCandidates": "dedications and tributes",
       "timing.kind.mb": "MusicBrainz",
       "timing.kind.mbjs": "MusicBrainz (other pages)",
       "timing.kind.discogs": "Discogs",
@@ -6158,6 +6173,8 @@
     { id: 'S570', where: 'liveProposals (commonArea)', note: 'Live comments (3.233.0; collected item Z-LIVECOMAREA): a recording "recorded at" two places of the same area ("Alchemia Club, Kraków, Poland" and "Radio Kraków, Kraków, Poland") gets the area in its comment ("live, 2018-10: Kraków, Poland"), said beside it, and is ticked as any other – only an empty comment is ever written. Switched off: no place in the comment and the warning "Different places" (as until 3.232.0)' },
     { id: 'S571', where: 'addNotesCompanies (engStudioLine), setCompanyEntityType', note: 'Places (3.233.0; collected item Z-ENGSTUDIO): where Discogs lists the places a release was recorded at ("Recorded At – Alchemia", "Recorded At – Radio Kraków"), the studio of its engineer is not one of them – "Recorded, mixed and mastered by Rafał Drewniany (DTS Studio)" in the notes gives DTS Studio no "recorded at" (listed as left out), and Discogs\'s "Recorded By – DTS Studio, Kraków" of a place (MusicBrainz has no such relationship of a place) is left out, said at the row; the studio keeps "mixed at" and "mastered at". A studio the notes name with "at" or "in" stays a place it was recorded at. Switched off: as until 3.232.0' },
     { id: 'S572', where: 'parseRoleNotation, R131, R132, Q028', note: 'Roles (3.233.0; collected item Z-CONCEPTREAL): "Concept By" is the creative direction (on the release group, credited "concept"; until 3.232.0 miscellaneous support with the task "concept", R095); "Concept By, Realization" in one credit is the concept and its realization – one row each person, credited "concept, realization" (until 3.232.0 also a graphic design "realization"); "Realization" alone is asked – graphic design, the producer or miscellaneous support (Q028; until 3.232.0 graphic design, R073). Switched off: as until 3.232.0' },
+    { id: 'S573', where: 'fastOn, setFast, runArtistWorks, awLineHtml (mx-aw-fast), missLinksRun, rgSourcesLoad, autoSearchWorks (statArtistsLookup), head "More" (fast-mode), settings (data-set fast-mode)', note: 'Import (3.234.0; collected item Z-FASTMODE): "⚡ Fast" – an import without what is only looked up in the background to help: the works on the artists\' pages (their repertoire; "Read them now" in the works matrix reads them, with "Stop" and "Continue" as always), the missing links of the entries (S291), the sources of the other releases of the group (S433) and the lookups of the statistics; the works of each track\'s writers are still searched. In "More" of the head and in ⚙ Settings → General; stays on until switched off (off by default). The log says what was left out, its times "⚡ fast". Switched off: no such switch' },
+    { id: 'S574', where: 'mbWs (as), timingName (ws:…), liveAreaText', note: 'Log (3.234.0; collected item Z-TIMINGNAMES2; S557): the times of an import name every step – a request whose function the stack no longer shows (after an await) by what it asks ("MusicBrainz: area"), the areas of the live comments and the dedications and tributes in words. Switched off: "?" as until 3.233.0' },
     { id: 'S469', where: 'dgLineupApply, sendDiscogsStatus', note: 'Lineup and track credits (3.220.0; collected item Z-LOPEZ; S217): a row the answer leaves out (a lineup row on no track any more, a track credit taken into the lineup row) keeps its line at the source – its places go to the person\'s row still there, so the companion marks the line ("Ramón López – percussion" where the titles give him drums on all of his tracks)' },
     { id: 'S410', where: 'freshForget, repeatImport, loadRelease', note: '"↻ Repeat import" (3.209.0; collected item Z-FRESHALL): "Start afresh" forgets everything the dashboard holds of the release – not only the changes of the rows and the choices of the works matrix (Z-RI, 3.40.16), also the date pool, the track pool and the date matrix, the choices of the box "Dedications & tributes", "✕ No suite", texts and parts of sources switched off, "skip the works", entries joined by hand, the ticks of suggestions, what is remembered of the release ("Remember changes"; nothing of the import before is stored on the way). Kept: what was created in MusicBrainz through the dashboard (the lists of created works and suites), the source and the media chosen, the log' },
     { id: 'S409', where: 'mergeEntries, joinEntry, applyEntryMerges, dmTargetOf (entry-merge), groupHtml (grip)', note: 'Entries (3.208.0; collected item Z-ENTITYMERGE): two entries of the same kind that are one – from different sources, written otherwise – are joined by hand: the grip ⠿ before the kind of an entry dropped onto another entry. The entry dropped onto stays (its link to MusicBrainz counts; without one it takes the other\'s), the rows of the other come to it – the same role once, each row credited as its source writes it, the other\'s name one of its names. Two different entries of MusicBrainz, or entries of different kinds: not joined, a message says why. Remembered for the release (joined again at the next import); ↶ in the message undoes it' },
@@ -21364,8 +21381,11 @@
   // of one a second); the queue holds its next request back while one of those waits and while a form of MusicBrainz is open in
   // the dashboard (its searches slowed everything down – at most five minutes)
   let mbPrio = 0;
-  function mbWs(path, { background = false, prio = false } = {}) {
-    const caller = timingCaller(); // ([Z-TIMING] 3.230.0, S557) who asked
+  function mbWs(path, { background = false, prio = false, as = '' } = {}) {
+    // ([Z-TIMING] 3.230.0, S557) who asked; [Z-TIMINGNAMES2] (3.234.0, S574) named by the caller (`as`: a step after an await, whose function the
+    // stack no longer shows), else by what is asked ("area", "place" …) – no "?"
+    const found = as || timingCaller();
+    const caller = found === '?' && ruleOn('S574') ? `ws:${String(path).split(/[/?]/)[0]}` : found;
     const run0 = async () => {
       if (!prio && ruleOn('S356')) {
         const until = Date.now() + 300000;
@@ -24184,10 +24204,12 @@
       const top = xs.slice(0, 8).map((x) => `${timingName(x.caller)} ${x.n} · ${dur(x.ms)}`).join('; ');
       return `${tr(`timing.kind.${kind}`)} ${tr(n === 1 ? 'timing.sum1' : 'timing.sum', { n, time: dur(ms) })}: ${top}${xs.length > 8 ? '; …' : ''}`;
     }).filter(Boolean);
-    log('info', 'timing', { ready: dur(TIMING.ready - TIMING.at), all: dur(Date.now() - TIMING.at), text: parts.join(' — ') });
+    log('info', 'timing', { ready: dur(TIMING.ready - TIMING.at), all: dur(Date.now() - TIMING.at), text: parts.join(' — ') + (fastOn() ? ` — ${tr('timing.fast')}` : '') });
   }
   /** [Z-TIMING] The step a function stands for, in words where the log knows it (else its name). */
   function timingName(f) {
+    // [Z-TIMINGNAMES2] (3.234.0, S574) a request named by what it asks ("ws:area" → "MusicBrainz: area")
+    if (/^ws:/.test(f)) return tr('timing.ws', { kind: f.slice(3) || '?' });
     const k = `timing.f.${f}`;
     const t = tr(k);
     return t && t !== k ? t : f;
@@ -30481,6 +30503,7 @@
         works: S.mbTracks.filter((x) => x.works.length).length,
         links: S.sourceLinks.length,
       });
+      if (fastOn()) log('info', 'fastOn'); // [Z-FASTMODE] (3.234.0, S573) what this import leaves out
       renderSource();
       renderWorks();
       renderPanic();
@@ -31785,7 +31808,7 @@
    */
   async function rgSourcesLoad(seq) {
     const rg = S.releaseGroup && S.releaseGroup.id;
-    if (!ruleOn('S433') || !rg || !S.release) return;
+    if (!ruleOn('S433') || !rg || !S.release || fastOn()) return; // ([Z-FASTMODE] 3.234.0, S573) not with "⚡ Fast"
     const d = await mbWsIdle(`release?release-group=${rg}&inc=url-rels+labels+media&limit=100`);
     if (seq !== importSeq) return;
     const own = (l) => S.sourceLinks.some((x) => x.source === l.source && String(x.id) === String(l.id))
@@ -34132,7 +34155,7 @@
       S.dedForm = null;
       S.artistWorkTargets = new Map();
       S.artistWorksSpecialLogged = new Set();
-      Object.assign(S, { awPaused: '', awPartial: new Map(), awRunIds: new Set(), awLong: false }); // [Z-ARTWORKSSTOP] (3.218.0)
+      Object.assign(S, { awPaused: '', awPartial: new Map(), awRunIds: new Set(), awLong: false, awFastLoad: false, awFastSkipped: false }); // [Z-ARTWORKSSTOP] (3.218.0); [Z-FASTMODE] (3.234.0)
       // [179] (3.38.16) the composers of titles logged anew; [180] (3.38.15) no list "n works ▾" open
       S.titleComposerLogged = new Set();
       S.wtCache = new Map();
@@ -35640,6 +35663,35 @@
     if (shrunk !== o.classList.contains('dci-shrunk')) {
       o.classList.toggle('dci-shrunk', shrunk);
       if (!shrunk) o.classList.remove('dci-shrink-peek');
+    }
+  }
+  /**
+   * [Z-FASTMODE] (3.234.0, S573) "⚡ Fast": an import without what is only looked up in the background to help – the works on the artists' pages
+   * (their repertoire; a button in the works matrix reads it when wanted), the missing links of the entries, the sources of the other releases of
+   * the group and the lookups of the statistics. The works of the writers of each track are still searched. Stays on until switched off (default
+   * off) – "More" of the head or ⚙ Settings → General.
+   */
+  function fastOn() {
+    try {
+      return ruleOn('S573') && !!S.fast;
+    } catch {
+      return false;
+    }
+  }
+  function setFast(on) {
+    S.fast = !!on;
+    writeJson('localStorage', FAST_KEY, on ? true : null);
+    log('info', 'settingValue', { what: tr('settings.fast'), value: tr(on ? 'common.on' : 'common.off') });
+    if (S.overlay) {
+      S.overlay.querySelectorAll('[data-act="fast-mode"]').forEach((b) => b.setAttribute('aria-pressed', String(!!on)));
+      S.overlay.querySelectorAll('[data-set="fast-mode"]').forEach((b) => { b.checked = !!on; });
+    }
+    // switched off with an import open: what it left out now
+    if (!on && S.overlay && S.rows.length) {
+      S.awFastSkipped = false;
+      runArtistWorks();
+      wantData('missLinks');
+      renderWorksBackground();
     }
   }
   /** [Z-HEADSHRINK] (3.232.0, S567) On or off – from ⚙ Settings → Appearance or "More" of the head; both show it. */
@@ -38067,7 +38119,8 @@
     }
   }
   function missLinksRun() {
-    if (!ruleOn('S291') || !S.overlay) {
+    // ([Z-FASTMODE] 3.234.0, S573) not with "⚡ Fast"
+    if (!ruleOn('S291') || !S.overlay || fastOn()) {
       renderMissLinks();
       return;
     }
@@ -46326,6 +46379,7 @@
   // --- [Z-DEDQ] (3.74.0, S109) the box "Dedications & tributes" above the works matrix ------------------------------------------
   const DED_BOX_KEY = 'dci-ded-box';
   const HEAD_SHRINK_KEY = 'dci-head-shrink'; // [Z-HEADSHRINK] (3.232.0, S567) only "off" stored
+  const FAST_KEY = 'dci-fast'; // [Z-FASTMODE] (3.234.0, S573) only "on" stored
   /** A suggestion of the box: a dedication found but not sure (several entries of the name, none, no track) – once per key. */
   /** [Z-DEDPLACE] (3.129.0, S214) Whether a dedication names a place entry of this release. */
   const dedPlaceOf = (d) => [...S.artists.values()].some((a) => a.company && entryKind(a) === 'place' && [a.name, a.mbName].some((n) => n && norm(n) === norm(d.name)));
@@ -47319,12 +47373,12 @@
       try {
         let areaId = mbid;
         if (kind === 'place') {
-          const pl = await mbWs(`place/${mbid}`);
+          const pl = await mbWs(`place/${mbid}`, { as: 'liveAreaText' });
           areaId = pl && pl.area && pl.area.id;
         }
         const chain = [];
         for (let k = 0; k < 7 && areaId; k++) {
-          const a = await mbWs(`area/${areaId}?inc=area-rels`);
+          const a = await mbWs(`area/${areaId}?inc=area-rels`, { as: 'liveAreaText' });
           if (!a) break;
           chain.push(a);
           if (norm(a.type) === 'country') break;
@@ -51828,6 +51882,16 @@
     }
     tracksWithoutWork().forEach((t) => titleComposersOf(t.idx, { logIt: true }));
     const targets = artistWorkTargets();
+    // [Z-FASTMODE] (3.234.0, S573) "⚡ Fast": the works on the artists' pages only once asked for (the button in the works matrix)
+    if (fastOn() && !S.awFastLoad && targets.size) {
+      S.artistWorkTargets = new Map();
+      if (!S.awFastSkipped) {
+        S.awFastSkipped = true;
+        renderWorksBackground();
+      }
+      if (matchArtistWorks() || suggestionChanged()) renderWorksBackground();
+      return;
+    }
     // ([Z-TRIBUTEWORKS2] 3.207.0, S407) lookups not allowed yet: only the artist of the tribute
     if (!allowed) for (const [id, info] of [...targets]) if (!info.tribute) targets.delete(id);
     S.artistWorkTargets = targets;
@@ -51955,9 +52019,14 @@
     return btn('mx-aw-go', 'matrix.awGoAgain', 'matrix.awGoTitle');
   }
   function awLineHtml() {
+    // [Z-FASTMODE] (3.234.0, S573) left out by "⚡ Fast": read on a click
+    if (fastOn() && S.awFastSkipped && !S.awFastLoad) {
+      return `<p class="dci-sub" data-el="aw-line">${esc(tr('matrix.awFast'))} <button type="button" class="dci-textbtn" data-act="mx-aw-fast" title="${esc(tr('matrix.awFastLoadTitle'))}">${esc(tr('matrix.awFastLoad'))}</button></p>`;
+    }
     if (!ruleOn('S456') || !(S.awLong || S.awPaused)) return '';
     if (!S.awPaused && !S.artistWorksRunning && !(ruleOn('S466') && S.awLong)) return '';
-    const names = uniq([...(S.artistWorkTargets || new Map()).values()].map((x) => x && x.name).filter(Boolean)).slice(0, 4).join(', ');
+    // ((3.234.0) before the run knows them: "the release's artists")
+    const names = uniq([...(S.artistWorkTargets || new Map()).values()].map((x) => x && x.name).filter(Boolean)).slice(0, 4).join(', ') || tr('matrix.awArtists');
     const btn = (act, key, title) => `<button type="button" class="dci-textbtn" data-act="${act}" title="${esc(tr(title))}">${esc(tr(key))}</button>`;
     if (!S.awPaused) return `<p class="dci-sub" data-el="aw-line">${esc(tr('matrix.awRunning', { names }))} ${btn('mx-aw-stop', 'matrix.awStop', 'matrix.awStopTitle')}</p>`;
     if (S.awPaused === 'paused') return `<p class="dci-sub" data-el="aw-line">${esc(tr('matrix.awPaused', { names }))} ${btn('mx-aw-go', 'matrix.awGo', 'matrix.awGoTitle')} · ${btn('mx-aw-stop', 'matrix.awDrop', 'matrix.awDropTitle')}</p>`;
@@ -51989,7 +52058,7 @@
     renderWorks();
     if (!worksResting()) log('ok', 'checksDone', { n: done });
     // [Z-AST] (3.54.0) the import checked: the artists of the statistics not looked up yet, after the dashboard's own requests
-    if (statsOn()) statArtistsLookup().catch(() => {});
+    if (statsOn() && !fastOn()) statArtistsLookup().catch(() => {}); // ([Z-FASTMODE] 3.234.0, S573) not with "⚡ Fast"
     if (again) autoSearchWorks();
   }
 
@@ -60329,6 +60398,17 @@
       case 'head-shrink': // [Z-HEADSHRINK] (3.232.0, S567) "Slim head" in "More" of the head: as the setting in ⚙ Settings → Appearance
         setHeadShrink(!S.headShrink);
         break;
+      case 'fast-mode': // [Z-FASTMODE] (3.234.0, S573) "⚡ Fast" in "More" of the head: as the setting in ⚙ Settings → General
+        setFast(!S.fast);
+        break;
+      case 'mx-aw-fast': // [Z-FASTMODE] (3.234.0, S573) the works on the artists' pages read now
+        S.awFastLoad = true;
+        S.awFastSkipped = false;
+        S.awLong = true;
+        log('info', 'artistWorksFastLoad');
+        runArtistWorks();
+        renderWorksBackground();
+        break;
       case 'head-unshrink': // [Z-HEADSHRINK] (3.232.0, S567) the whole head again until the entries are back at the top
         S.shrinkHold = true;
         headShrinkCheck();
@@ -62030,6 +62110,7 @@
     help: '<circle cx="8" cy="8" r="6.2"/><path d="M8 7.3v4M8 4.8h.01"/>',
     compact: '<path d="M2 3.5h12M2 8h12M2 12.5h12"/>',
     slim: '<path d="M2 3h12M2 13h12M8 4.5v2.2M6.6 5.3L8 6.7l1.4-1.4M8 11.5V9.3M6.6 10.7L8 9.3l1.4 1.4"/>', // [Z-HEADSHRINK] (3.232.0)
+    fast: '<path d="M9 1.5L3.5 9H8l-1 5.5L12.5 7H8z"/>', // [Z-FASTMODE] (3.234.0)
     plus: '<path d="M8 3v10M3 8h10"/>',
     // [189] (3.39.3) the statistics: a small bar chart
     stats: '<path d="M2.5 13.5h11M4.5 11V8M8 11V4M11.5 11V6.5"/>',
@@ -62071,6 +62152,7 @@
               <span class="dci-head-morelist" id="dci-head-morelist">
                 ${headBtn('view-toggle', 'compact', tr('view.compact'), tr(S.view === 'compact' ? 'view.toFull' : 'view.toCompact'), `aria-pressed="${S.view === 'compact'}"`)}
                 ${ruleOn('S567') ? headBtn('head-shrink', 'slim', tr('head.shrinkWord'), tr('settings.headShrinkTitle'), `aria-pressed="${!!S.headShrink}"`) : '' /* [Z-HEADSHRINK] (3.232.0, S567) also here */}
+                ${ruleOn('S573') ? headBtn('fast-mode', 'fast', tr('head.fastWord'), tr('settings.fastTitle'), `aria-pressed="${!!S.fast}"`) : '' /* [Z-FASTMODE] (3.234.0, S573) */}
                 <span class="dci-zoom" role="group" aria-label="${esc(tr('zoom.label'))}">
                   <button type="button" class="dci-headbtn" data-act="zoom-out" title="${esc(tr('zoom.smaller'))}" aria-label="${esc(tr('zoom.smaller'))}">A−</button>
                   <span data-el="zoom" aria-live="polite">${Math.round(S.scale * 100)} %</span>
@@ -62536,7 +62618,7 @@
     'em-ev': 'dates', 'em-line': 'dates', 'em-block': 'dates', row: 'dates' };
 
   const TOPIC_KEYS = {
-    general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h', 'dci-log-note-w', LOG_LINES_KEY, DEV_KEY], // ([Z-SETTABS2] 3.137.0) developer mode here again
+    general: ['dci-lang', 'dci-log-open', 'dci-log-place', 'dci-log-dock-h', 'dci-log-note-w', LOG_LINES_KEY, DEV_KEY, FAST_KEY], // ([Z-SETTABS2] 3.137.0) developer mode here again
     profiles: [], // [Z-QSP] (3.75.0) no "↺ Defaults of this topic" – "Standard" is the profile of the defaults
     appearance: ['dci-insts-common', MX_HEADS_KEY, CHROME_KEY, 'dci-sort-on', 'dci-sort', 'dci-scale', 'dci-place', VIEW_KEY, LEVEL_COLORS_KEY, LEVEL_PALETTE_KEY, KIND_COLORS_KEY, KIND_PALETTE_KEY, WORKROW_COLORS_KEY, WORKROW_PALETTE_KEY, RULES_PLACE_KEY, RULES_ROW_KEY, HINT_COMPACT_KEY, ENTRIES_VIEW_KEY, EM_SIDE_KEY, SKIP_HIDE_KEY, DED_BOX_KEY, EMOJI_TEXT_KEY, HEAD_SHRINK_KEY,
       'dci-theme-window', 'dci-theme-page', 'dci-dark-colors', 'dci-level-palette-dark', 'dci-kind-palette-dark',
@@ -62586,6 +62668,7 @@
   S.skipHide = readJson('localStorage', SKIP_HIDE_KEY, false) === true;
   S.dedBox = readJson('localStorage', DED_BOX_KEY, true) !== false; // [Z-DEDQ] (3.74.0) the box of the dedications: on unless switched off
   S.headShrink = readJson('localStorage', HEAD_SHRINK_KEY, true) !== false; // [Z-HEADSHRINK] (3.232.0, S567) on unless switched off
+  S.fast = readJson('localStorage', FAST_KEY, false) === true; // [Z-FASTMODE] (3.234.0, S573) off unless switched on
   S.suiteNaming = ['comma', 'part'].includes(readJson('localStorage', SUITE_NAMING_KEY, 'colon')) ? readJson('localStorage', SUITE_NAMING_KEY, 'colon') : 'colon';
   S.editNoteMode = ['simple', 'none'].includes(readJson('localStorage', EDIT_NOTE_KEY, 'full')) ? 'simple' : 'full';
   // [Z-SNW] (3.83.0) the edit note names works of the same title when new ones are created anyway (on)
@@ -65011,6 +65094,8 @@
         // [Z-QSP] (3.75.0) what was imported and exported, folded; never cleared
         ioLogHtml(),
         // [Z-SETTABS2] (3.137.0) "Developer mode" back here (3.136.0: in its tab) – the tab "Developer" is only there while it is on
+        // [Z-FASTMODE] (3.234.0, S573) an import without the lookups in the background
+        ...(ruleOn('S573') ? [sh('fast'), cb('data-set="fast-mode"', S.fast, tr('settings.fast'), tr('settings.fastTitle'), { def: false })] : []),
         sh('dev'),
         cb('data-set="dev-mode"', S.devMode, tr('settings.dev'), tr('settings.devTitle'), { def: false, hint: tr('settings.devHint', { tab: tr('settings.t.developer') }) }),
       ],
@@ -65908,6 +65993,9 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
     } else if (k === 'head-shrink') {
       // [Z-HEADSHRINK] (3.232.0, S567)
       setHeadShrink(el.checked);
+    } else if (k === 'fast-mode') {
+      // [Z-FASTMODE] (3.234.0, S573)
+      setFast(el.checked);
     } else if (k === 'skip-hide') {
       // [Z-SK] (3.40.15)
       S.skipHide = el.checked;
@@ -66305,7 +66393,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
     // [3.34.23] the arrow at "Compact | Full" comes back (143), the cover art window in front again (138b)
     HINT_COMPACT_KEY, OCR_FRONT_KEY,
     // [E4] (3.34.29) the entries as a matrix or legacy, joining; (3.34.30) shared events, lines of a block
-    ENTRIES_VIEW_KEY, EM_SIDE_KEY, EMOJI_TEXT_KEY, LOG_LINES_KEY, SKIP_HIDE_KEY, SUITE_NAMING_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY, EM_ATTR_KEY, DED_BOX_KEY, HEAD_SHRINK_KEY,
+    ENTRIES_VIEW_KEY, EM_SIDE_KEY, EMOJI_TEXT_KEY, LOG_LINES_KEY, SKIP_HIDE_KEY, SUITE_NAMING_KEY, JOIN_KEY, EV_SHARED_KEY, EM_SHOW_KEY, EM_BY_KEY, EM_ATTR_KEY, DED_BOX_KEY, HEAD_SHRINK_KEY, FAST_KEY,
     // [145b] (3.35.6) the works of the source as track groups; [146] (3.36.0) remembered per release
     WORK_GROUPS_KEY, REMEMBER_ON_KEY, REMEMBER_MAX_KEY,
     // [3.36.2] the diagnosis in the log – [171] (3.38.5) "Developer mode"
@@ -66448,6 +66536,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
     S.skipHide = readJson('localStorage', SKIP_HIDE_KEY, false) === true;
     S.dedBox = readJson('localStorage', DED_BOX_KEY, true) !== false;
     S.headShrink = readJson('localStorage', HEAD_SHRINK_KEY, true) !== false;
+    S.fast = readJson('localStorage', FAST_KEY, false) === true;
     S.suiteNaming = ['comma', 'part'].includes(readJson('localStorage', SUITE_NAMING_KEY, 'colon')) ? readJson('localStorage', SUITE_NAMING_KEY, 'colon') : 'colon';
     S.editNoteMode = ['simple', 'none'].includes(readJson('localStorage', EDIT_NOTE_KEY, 'full')) ? 'simple' : 'full';
     S.noteDupWorks = readJson('localStorage', 'dci-note-dup', true) !== false;
@@ -66976,6 +67065,7 @@ segField(tr('settings.chrome'), 'chrome-mode', 'mode', ['words', 'symbols'], S.c
     // [Z-MILESTONES] (3.158.0) a milestone is a new ability you notice without the docs – a source, a view, a workflow, a
     // file, a changed default –, one line each (at most 120 characters); not a rule of the text recognition, a fix or a test.
     // 3.0.0 and 3.12.0 (rebuilt inside, nothing changed for the user) are none any more.
+    { v: '3.234.0', label: 'Credits Importer 3.234.0' },
     { v: '3.232.0', label: 'Credits Importer 3.232.0' },
     { v: '3.231.0', label: 'Credits Importer 3.231.0 · Companion 1.26.0' },
     { v: '3.230.0', label: 'Credits Importer 3.230.0' },
